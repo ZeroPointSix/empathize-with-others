@@ -97,6 +97,11 @@ class BrainTagRepositoryImpl @Inject constructor(
  *
  * 把BrainTagEntity转换为Domain层的BrainTag。
  *
+ * 异常处理:
+ * - 如果type字段不是有效的TagType枚举值,默认使用RISK_RED(雷区)
+ * - 采用保守策略: 宁可误报为雷区,不可漏报警告信息
+ * - 确保数据库脏数据不会导致应用崩溃
+ *
  * @return Domain层的BrainTag对象
  */
 private fun BrainTagEntity.toDomain(): BrainTag {
@@ -104,7 +109,13 @@ private fun BrainTagEntity.toDomain(): BrainTag {
         id = this.id,
         contactId = this.contactId,
         content = this.content,
-        type = TagType.valueOf(this.type), // 字符串转枚举
+        type = try {
+            TagType.valueOf(this.type) // 字符串转枚举
+        } catch (e: IllegalArgumentException) {
+            // 如果数据库中存储的type值无效,使用RISK_RED作为安全默认值
+            // 保守策略: 将可疑数据视为雷区,避免错过重要警告
+            TagType.RISK_RED
+        },
         source = this.source
     )
 }

@@ -15,6 +15,7 @@ data class ExtractedData(
     val greenTags: List<String> = emptyList()
 )
 
+// MVP Mock实现，Phase2替换为真实AI调用
 /**
  * 核心业务流三: 文本喂养
  *
@@ -44,15 +45,24 @@ class FeedTextUseCase @Inject constructor(
             val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
             val maskedText = PrivacyEngine.mask(rawText, privacyMapping)
 
-            // 2. AI 萃取 (MVP 阶段简化: 暂时返回空数据，等后续实现 AI 解析)
-            // TODO: 调用 aiRepository.extractInfo(maskedText)
-            // TODO: 解析 AI 返回的 JSON 结果
+            // 2. AI 萃取 (MVP Mock实现: 返回模拟数据用于UI测试)
+            // Phase2: 替换为 aiRepository.extractInfo(maskedText) + parseAiResponse()
 
             // 3. 返回提取结果 (供 UI 确认)
             val extractedData = ExtractedData(
-                facts = emptyMap(),
-                redTags = emptyList(),
-                greenTags = emptyList()
+                facts = mapOf(
+                    "爱好" to "阅读",
+                    "职业" to "工程师",
+                    "生日" to "12.21"
+                ),
+                redTags = listOf(
+                    "不要提前任",
+                    "不要催促付款"
+                ),
+                greenTags = listOf(
+                    "多夸衣品好",
+                    "耐心倾听"
+                )
             )
 
             Result.success(extractedData)

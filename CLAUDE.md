@@ -5,9 +5,10 @@
 这是一款基于 Android 平台的共情 AI 助手应用,旨在通过 AI 技术帮助用户在社交场景中提供智能化的沟通辅助。项目采用 Clean Architecture + MVVM 架构模式,严格遵循隐私优先和零后端原则。
 
 **版本**: v1.0.0-dev (MVP)
-**状态**: Domain Layer 已完成，正在开发 Data Layer
-**完成度**: 约 60% (包含文档和测试)
+**状态**: ✅ PrivacyEngine扩展完成，支持正则匹配和自动检测
+**完成度**: 约 65% (包含文档和测试)
 **技术栈**: Kotlin + Jetpack Compose + Room + Retrofit + Hilt
+**最后更新**: 2025-12-04
 
 ---
 
@@ -203,28 +204,28 @@ data class BrainTag(
 
 ## 当前开发进度
 
-### ✅ 已完成 (2025-12-03)
+### ✅ 已完成 (2025-12-04)
 
 | 模块 | 完成度 | 说明 |
 |------|--------|------|
-| **Domain Layer** | 100% | 5 模型 + 5 接口 + 3 UseCase + 1 服务 |
+| **Git版本控制** | 100% | ✅ 初始提交已完成 (commit: 393a0be) |
+| **Domain Layer** | 100% | 5 模型 + 5 接口 + 4 UseCase + 1 服务（PrivacyEngine已扩展） |
 | **Data Layer - Room** | 100% | 完整实现，包含Entity、DAO、Repository |
 | **Data Layer - Retrofit** | 95% | 网络模块完成，支持动态URL和多服务商 |
 | **Data Layer - Hilt** | 100% | DatabaseModule、NetworkModule、RepositoryModule |
-| **单元测试** | 100% | 16/16 测试通过 |
+| **单元测试** | 100% | 38/38 测试通过 (新增PrivacyEngine 16个测试) |
 | **项目文档** | 100% | 完整的架构、开发、测试文档 |
 | **Presentation - UI** | 10% | 基础 MainActivity 和 Theme |
 | **数据层设计实现** | 95% | 架构设计优秀，代码质量极高 |
+| **PrivacyEngine扩展** | 100% | 支持正则匹配、自动检测、混合脱敏 |
 
 ### ⏳ 待开发
 
 | 模块 | 优先级 | 预计耗时 |
 |------|--------|----------|
-| **Data Layer - Room** | P0 | 1-2 天 |
-| **Data Layer - Retrofit** | P0 | 1 天 |
-| **Hilt 配置** | P0 | 0.5 天 |
 | **Presentation - Service** | P1 | 2-3 天 |
 | **Presentation - UI** | P1 | 2-3 天 |
+| **RuleEngine实现** | P2 | 1-2 天 |
 | **集成测试** | P1 | 1 天 |
 
 ### 📊 数据层设计评估
@@ -269,6 +270,7 @@ data class BrainTag(
 
 ---
 
-**最后更新**: 2025-12-03
+**最后更新**: 2025-12-04 (新增SaveProfileUseCase实现)
 **维护者**: hushaokang
-**文档版本**: v1.1.0
+**文档版本**: v1.2.0
+**Git提交**: 393a0be - 🎉 初始提交：共情AI助手项目基础架构完成
