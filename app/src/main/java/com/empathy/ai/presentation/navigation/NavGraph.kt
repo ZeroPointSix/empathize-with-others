@@ -1,0 +1,81 @@
+package com.empathy.ai.presentation.navigation
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.empathy.ai.presentation.ui.screen.chat.ChatScreen
+import com.empathy.ai.presentation.ui.screen.contact.ContactDetailScreen
+import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
+import com.empathy.ai.presentation.ui.screen.tag.BrainTagScreen
+
+/**
+ * 应用导航图
+ *
+ * 定义应用的导航结构和页面跳转逻辑
+ *
+ * @param navController 导航控制器
+ * @param modifier Modifier
+ */
+@Composable
+fun NavGraph(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    NavHost(
+        navController = navController,
+        startDestination = NavRoutes.CONTACT_LIST,
+        modifier = modifier
+    ) {
+        // 联系人列表页面
+        composable(route = NavRoutes.CONTACT_LIST) {
+            ContactListScreen(
+                onNavigateToDetail = { contactId ->
+                    navController.navigate(NavRoutes.createContactDetailRoute(contactId))
+                }
+            )
+        }
+
+        // 联系人详情页面
+        composable(
+            route = NavRoutes.CONTACT_DETAIL,
+            arguments = listOf(
+                navArgument(NavRoutes.CONTACT_DETAIL_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString(NavRoutes.CONTACT_DETAIL_ARG_ID) ?: ""
+            ContactDetailScreen(
+                contactId = contactId,
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // 聊天分析页面
+        composable(
+            route = NavRoutes.CHAT,
+            arguments = listOf(
+                navArgument(NavRoutes.CHAT_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString(NavRoutes.CHAT_ARG_ID) ?: ""
+            ChatScreen(
+                contactId = contactId,
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // 标签管理页面
+        composable(route = NavRoutes.BRAIN_TAG) {
+            BrainTagScreen(
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+    }
+}

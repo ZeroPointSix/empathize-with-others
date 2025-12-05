@@ -8,6 +8,7 @@ import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.domain.model.SafetyCheckResult
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.SettingsRepository
+import com.empathy.ai.domain.usecase.ExtractedData
 import com.squareup.moshi.Moshi
 import javax.inject.Inject
 
@@ -59,6 +60,14 @@ class AiRepositoryImpl @Inject constructor(
         val SYSTEM_CHECK = """你是一个社交风控专家。请检查用户的草稿是否触发了风险规则。
 请严格用 JSON 格式回复：
 {"isSafe": true/false, "triggeredRisks": ["雷区1"], "suggestion": "修正建议"}""".trim()
+
+        val SYSTEM_EXTRACT = """你是一个专业的社交信息分析专家。请从用户提供的文本中提取关键信息，包括：
+1. 事实信息：个人基本信息、爱好、职业、生日等
+2. 雷区标签：不要做的事情、敏感话题等
+3. 策略标签：推荐的沟通方式、话题等
+
+请严格用 JSON 格式回复：
+{"facts": {"生日": "12.21", "爱好": "阅读"}, "redTags": ["不要提前任"], "greenTags": ["耐心倾听"]}""".trim()
     }
 
     /**
@@ -209,6 +218,72 @@ class AiRepositoryImpl @Inject constructor(
     }
 
     /**
+     * 文本信息萃取
+     *
+     * 调用 AI 模型从文本中提取关键信息，包括事实、雷区和策略。
+     *
+     * @param inputText 输入的文本内容
+     * @return 提取的结构化信息
+     */
+    override suspend fun extractTextInfo(inputText: String): Result<ExtractedData> {
+        return try {
+            // 1. 获取配置
+            val urlResult = settingsRepository.getBaseUrl()
+            val headersResult = settingsRepository.getProviderHeaders()
+
+            if (urlResult.isFailure) {
+                return Result.failure(urlResult.exceptionOrNull()!!)
+            }
+            if (headersResult.isFailure) {
+                return Result.failure(headersResult.exceptionOrNull()!!)
+            }
+
+            val url = urlResult.getOrThrow()
+            val headers = headersResult.getOrThrow()
+
+            // 2. 获取模型
+            val providerResult = settingsRepository.getAiProvider()
+            val provider = providerResult.getOrDefault("OpenAI")
+
+            val model = when (provider) {
+                "OpenAI" -> MODEL_OPENAI
+                "DeepSeek" -> MODEL_DEEPSEEK
+                else -> MODEL_OPENAI
+            }
+
+            // 3. 构建萃取 Prompt
+            val extractPrompt = """
+                请分析以下文本并提取关键信息：
+                "$inputText"
+            """.trimIndent()
+
+            val messages = listOf(
+                MessageDto(role = "system", content = SYSTEM_EXTRACT),
+                MessageDto(role = "user", content = extractPrompt)
+            )
+
+            val request = ChatRequestDto(
+                model = model,
+                messages = messages,
+                temperature = 0.5,
+                stream = false
+            )
+
+            val response = api.chatCompletion(url, headers, request)
+
+            val content = response.choices.firstOrNull()
+                ?.message?.content
+                ?: return Result.failure(Exception("Empty response from AI"))
+
+            // 解析 AI 返回的 JSON 为 ExtractedData
+            parseExtractedData(content)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * 媒体转录 (STT / OCR)
      *
      * TODO: Phase 2 实现
@@ -266,6 +341,29 @@ class AiRepositoryImpl @Inject constructor(
                 Result.success(result)
             } else {
                 Result.failure(Exception("Failed to parse AI response as SafetyCheckResult"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 解析 ExtractedData JSON
+     *
+     * 将 AI 返回的 JSON 字符串解析为 ExtractedData Domain 模型。
+     *
+     * @param json AI 返回的 JSON 字符串
+     * @return 解析结果
+     */
+    private fun parseExtractedData(json: String): Result<ExtractedData> {
+        return try {
+            val adapter = moshi.adapter(ExtractedData::class.java)
+            val result = adapter.fromJson(json)
+
+            if (result != null) {
+                Result.success(result)
+            } else {
+                Result.failure(Exception("Failed to parse AI response as ExtractedData"))
             }
         } catch (e: Exception) {
             Result.failure(e)

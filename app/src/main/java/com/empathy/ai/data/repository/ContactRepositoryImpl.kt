@@ -24,11 +24,12 @@ import javax.inject.Inject
  * - toEntity(): Domain Model → Entity
  */
 class ContactRepositoryImpl @Inject constructor(
-    private val dao: ContactDao
+    private val dao: ContactDao,
+    private val moshi: Moshi
 ) : ContactRepository {
 
-    private val moshi = Moshi.Builder().build()
     private val mapType = Types.newParameterizedType(Map::class.java, String::class.java, String::class.java)
+    private val factsAdapter = moshi.adapter<Map<String, String>>(mapType)
 
     /**
      * 获取所有联系人画像
@@ -42,7 +43,7 @@ class ContactRepositoryImpl @Inject constructor(
      */
     override fun getAllProfiles(): Flow<List<ContactProfile>> {
         return dao.getAllProfiles().map { entities ->
-            entities.map { it.toDomain() }
+            entities.map { entityToDomain(it) }
         }
     }
 
@@ -55,7 +56,7 @@ class ContactRepositoryImpl @Inject constructor(
     override suspend fun getProfile(id: String): Result<ContactProfile?> {
         return try {
             val entity = dao.getProfileById(id)
-            Result.success(entity?.toDomain())
+            Result.success(entity?.let { entityToDomain(it) })
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -69,7 +70,7 @@ class ContactRepositoryImpl @Inject constructor(
      */
     override suspend fun saveProfile(profile: ContactProfile): Result<Unit> {
         return try {
-            val entity = profile.toEntity()
+            val entity = domainToEntity(profile)
             dao.insertOrUpdate(entity)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -138,64 +139,55 @@ class ContactRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-}
 
-// ============================================================================
-// 私有映射函数 (写在文件底部)
-// 规范:
-// 1. 禁止使用Repository类外部暴露Entity
-// 2. 必须编写私有的扩展函数toDomain()和toEntity()
-// 3. 位置:直接写在RepositoryImpl.kt文件的底部
-// ============================================================================
+    // ============================================================================
+    // 私有映射函数
+    // ============================================================================
 
-/**
- * Entity → Domain Model 转换
- *
- * 把ContactProfileEntity转换为Domain层的ContactProfile。
- * 核心工作:把factsJson(JSON字符串)还原成Map<String, String>。
- *
- * @return Domain层的ContactProfile对象
- */
-private fun ContactProfileEntity.toDomain(): ContactProfile {
-    val moshi = Moshi.Builder().build()
-    val mapType = Types.newParameterizedType(Map::class.java, String::class.java, String::class.java)
-    val adapter = moshi.adapter<Map<String, String>>(mapType)
+    /**
+     * Entity → Domain Model 转换
+     *
+     * 把ContactProfileEntity转换为Domain层的ContactProfile。
+     * 核心工作:把factsJson(JSON字符串)还原成Map<String, String>。
+     *
+     * @param entity ContactProfileEntity对象
+     * @return Domain层的ContactProfile对象
+     */
+    private fun entityToDomain(entity: ContactProfileEntity): ContactProfile {
+        val factsMap = try {
+            factsAdapter.fromJson(entity.factsJson) ?: emptyMap()
+        } catch (e: Exception) {
+            emptyMap<String, String>()
+        }
 
-    val factsMap = try {
-        adapter.fromJson(this.factsJson) ?: emptyMap()
-    } catch (e: Exception) {
-        emptyMap<String, String>()
+        return ContactProfile(
+            id = entity.id,
+            name = entity.name,
+            targetGoal = entity.targetGoal,
+            contextDepth = entity.contextDepth,
+            facts = factsMap
+        )
     }
 
-    return ContactProfile(
-        id = this.id,
-        name = this.name,
-        targetGoal = this.targetGoal,
-        contextDepth = this.contextDepth,
-        facts = factsMap
-    )
+    /**
+     * Domain Model → Entity 转换
+     *
+     * 把Domain层的ContactProfile转换为ContactProfileEntity。
+     * 核心工作:把facts Map转换为JSON字符串(使用Moshi)。
+     *
+     * @param profile ContactProfile对象
+     * @return Data层的ContactProfileEntity对象
+     */
+    private fun domainToEntity(profile: ContactProfile): ContactProfileEntity {
+        val factsJson = factsAdapter.toJson(profile.facts)
+
+        return ContactProfileEntity(
+            id = profile.id,
+            name = profile.name,
+            targetGoal = profile.targetGoal,
+            contextDepth = profile.contextDepth,
+            factsJson = factsJson
+        )
+    }
 }
 
-/**
- * Domain Model → Entity 转换
- *
- * 把Domain层的ContactProfile转换为ContactProfileEntity。
- * 核心工作:把facts Map转换为JSON字符串(使用Moshi)。
- *
- * @return Data层的ContactProfileEntity对象
- */
-private fun ContactProfile.toEntity(): ContactProfileEntity {
-    val moshi = Moshi.Builder().build()
-    val mapType = Types.newParameterizedType(Map::class.java, String::class.java, String::class.java)
-    val adapter = moshi.adapter<Map<String, String>>(mapType)
-
-    val factsJson = adapter.toJson(this.facts)
-
-    return ContactProfileEntity(
-        id = this.id,
-        name = this.name,
-        targetGoal = this.targetGoal,
-        contextDepth = this.contextDepth,
-        factsJson = factsJson
-    )
-}

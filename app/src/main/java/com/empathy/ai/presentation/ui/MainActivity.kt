@@ -3,64 +3,47 @@ package com.empathy.ai.presentation.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.empathy.ai.presentation.theme.GiveLoveTheme
+import androidx.navigation.compose.rememberNavController
+import com.empathy.ai.presentation.navigation.NavGraph
+import com.empathy.ai.presentation.theme.EmpathyTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * 主 Activity
- *
- * 使用 @AndroidEntryPoint 注解启用 Hilt 注入
+ * 应用主Activity
+ * 
+ * 职责:
+ * 1. 设置Compose内容
+ * 2. 应用主题
+ * 3. 初始化导航
+ * 4. 依赖注入入口
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        
         setContent {
-            GiveLoveTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    WelcomeScreen(modifier = Modifier.padding(innerPadding))
+            // 应用主题
+            EmpathyTheme {
+                // Surface容器,提供背景色
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // 创建导航控制器
+                    val navController = rememberNavController()
+                    
+                    // 导航图
+                    NavGraph(
+                        navController = navController
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun WelcomeScreen(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "欢迎使用共情 AI 助手",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun WelcomeScreenPreview() {
-    GiveLoveTheme {
-        WelcomeScreen()
     }
 }

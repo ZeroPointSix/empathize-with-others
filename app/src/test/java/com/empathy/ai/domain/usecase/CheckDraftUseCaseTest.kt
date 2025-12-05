@@ -1,6 +1,8 @@
 package com.empathy.ai.domain.usecase
 
 import com.empathy.ai.domain.model.BrainTag
+import com.empathy.ai.domain.model.RiskLevel
+import com.empathy.ai.domain.model.SafetyCheckResult
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
@@ -175,5 +177,156 @@ class CheckDraftUseCaseTest {
         assertEquals(2, checkResult.triggeredRisks.size)
         assertTrue(checkResult.triggeredRisks.contains("借钱"))
         assertTrue(checkResult.triggeredRisks.contains("前任"))
+    }
+
+    @Test
+    fun `deep check - safe draft should pass all checks`() = runTest {
+        // Given
+        val redTags = listOf(
+            BrainTag(
+                id = 1,
+                contactId = "contact_1",
+                content = "借钱",
+                type = TagType.RISK_RED
+            )
+        )
+        coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(redTags)
+        coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(emptyMap())
+
+        val safeDraft = "你好，很高兴认识你，今天天气真好"
+        val expectedAiResult = SafetyCheckResult(
+            isSafe = true,
+            triggeredRisks = emptyList(),
+            suggestion = "草稿看起来很安全"
+        )
+        coEvery {
+            aiRepository.checkDraftSafety(any(), any())
+        } returns Result.success(expectedAiResult)
+
+        // When
+        val result = useCase(
+            contactId = "contact_1",
+            draftSnapshot = safeDraft,
+            enableDeepCheck = true
+        )
+
+        // Then
+        assertTrue(result.isSuccess)
+        val checkResult = result.getOrNull()!!
+        assertTrue(checkResult.isSafe)
+        assertEquals(expectedAiResult.suggestion, checkResult.suggestion)
+    }
+
+    @Test
+    fun `deep check - hidden risks should be marked as dangerous`() = runTest {
+        // Given
+        val redTags = listOf(
+            BrainTag(
+                id = 1,
+                contactId = "contact_1",
+                content = "不要催促",
+                type = TagType.RISK_RED
+            )
+        )
+        coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(redTags)
+        coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(emptyMap())
+
+        val riskyDraft = "这个方案看起来不错，但我想尽快推进"
+        val expectedAiResult = SafetyCheckResult(
+            isSafe = false,
+            triggeredRisks = listOf("可能触犯催促雷区"),
+            suggestion = "建议放缓语气，避免给对方造成压力"
+        )
+        coEvery {
+            aiRepository.checkDraftSafety(any(), any())
+        } returns Result.success(expectedAiResult)
+
+        // When
+        val result = useCase(
+            contactId = "contact_1",
+            draftSnapshot = riskyDraft,
+            enableDeepCheck = true
+        )
+
+        // Then
+        assertTrue(result.isSuccess)
+        val checkResult = result.getOrNull()!!
+        assertFalse(checkResult.isSafe)
+        assertEquals(1, checkResult.triggeredRisks.size)
+        assertTrue(checkResult.triggeredRisks.contains("可能触犯催促雷区"))
+        assertEquals("建议放缓语气，避免给对方造成压力", checkResult.suggestion)
+    }
+
+    @Test
+    fun `deep check - AI call failure should fallback to local check`() = runTest {
+        // Given
+        val redTags = listOf(
+            BrainTag(
+                id = 1,
+                contactId = "contact_1",
+                content = "借钱",
+                type = TagType.RISK_RED
+            )
+        )
+        coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(redTags)
+        coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(emptyMap())
+
+        val draft = "我想借点钱应急"
+        coEvery {
+            aiRepository.checkDraftSafety(any(), any())
+        } returns Result.failure(Exception("网络错误"))
+
+        // When
+        val result = useCase(
+            contactId = "contact_1",
+            draftSnapshot = draft,
+            enableDeepCheck = true
+        )
+
+        // Then - 应该被本地检查捕获为危险
+        assertTrue(result.isSuccess)
+        val checkResult = result.getOrNull()!!
+        assertFalse(checkResult.isSafe)
+        assertEquals(1, checkResult.triggeredRisks.size)
+        assertTrue(checkResult.triggeredRisks.contains("借钱"))
+    }
+
+    @Test
+    fun `deep check - privacy masking should work correctly`() = runTest {
+        // Given
+        val redTags = listOf(
+            BrainTag(
+                id = 1,
+                contactId = "contact_1",
+                content = "隐私信息",
+                type = TagType.RISK_RED
+            )
+        )
+        coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(redTags)
+        coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(
+            mapOf("13812345678" to "[PHONE]")
+        )
+
+        val draftWithSensitiveInfo = "我的电话是13812345678，请联系我"
+        val expectedAiResult = SafetyCheckResult(
+            isSafe = true,
+            triggeredRisks = emptyList(),
+            suggestion = "草稿安全"
+        )
+        coEvery {
+            aiRepository.checkDraftSafety("我的电话是[PHONE]，请联系我", listOf("隐私信息"))
+        } returns Result.success(expectedAiResult)
+
+        // When
+        val result = useCase(
+            contactId = "contact_1",
+            draftSnapshot = draftWithSensitiveInfo,
+            enableDeepCheck = true
+        )
+
+        // Then
+        assertTrue(result.isSuccess)
+        val checkResult = result.getOrNull()!!
+        assertTrue(checkResult.isSafe)
     }
 }

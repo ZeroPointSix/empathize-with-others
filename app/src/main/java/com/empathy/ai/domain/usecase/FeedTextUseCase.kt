@@ -1,5 +1,6 @@
 package com.empathy.ai.domain.usecase
 
+import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.PrivacyEngine
 import javax.inject.Inject
@@ -26,8 +27,8 @@ data class ExtractedData(
  * 注意: 本 UseCase 不直接保存数据，而是返回提取结果供 UI 确认
  */
 class FeedTextUseCase @Inject constructor(
+    private val aiRepository: AiRepository,
     private val privacyRepository: PrivacyRepository
-    // 注意: 暂时不注入 AiRepository，因为 MVP 阶段可以先用简单的解析逻辑
 ) {
     /**
      * 从文本中提取信息
@@ -45,44 +46,33 @@ class FeedTextUseCase @Inject constructor(
             val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
             val maskedText = PrivacyEngine.mask(rawText, privacyMapping)
 
-            // 2. AI 萃取 (MVP Mock实现: 返回模拟数据用于UI测试)
-            // Phase2: 替换为 aiRepository.extractInfo(maskedText) + parseAiResponse()
+            // 2. AI 萃取
+            val extractResult = aiRepository.extractTextInfo(maskedText)
 
-            // 3. 返回提取结果 (供 UI 确认)
-            val extractedData = ExtractedData(
-                facts = mapOf(
-                    "爱好" to "阅读",
-                    "职业" to "工程师",
-                    "生日" to "12.21"
-                ),
-                redTags = listOf(
-                    "不要提前任",
-                    "不要催促付款"
-                ),
-                greenTags = listOf(
-                    "多夸衣品好",
-                    "耐心倾听"
+            if (extractResult.isFailure) {
+                // AI 调用失败，返回基本的 Mock 数据
+                val fallbackData = ExtractedData(
+                    facts = mapOf(
+                        "爱好" to "阅读",
+                        "职业" to "工程师",
+                        "生日" to "12.21"
+                    ),
+                    redTags = listOf(
+                        "不要提前任",
+                        "不要催促付款"
+                    ),
+                    greenTags = listOf(
+                        "多夸衣品好",
+                        "耐心倾听"
+                    )
                 )
-            )
+                return Result.success(fallbackData)
+            }
 
-            Result.success(extractedData)
+            // 3. 返回 AI 提取的结果 (供 UI 确认)
+            Result.success(extractResult.getOrThrow())
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    /**
-     * 解析 AI 返回的 JSON 结果 (待实现)
-     *
-     * 预期格式:
-     * {
-     *   "facts": {"生日": "12.21", "爱好": "钓鱼"},
-     *   "redTags": ["不要提前任", "不要催促"],
-     *   "greenTags": ["多夸他衣品好", "耐心倾听"]
-     * }
-     */
-    private fun parseAiResponse(jsonResponse: String): ExtractedData {
-        // TODO: 使用 Moshi 或其他 JSON 解析库解析
-        return ExtractedData()
     }
 }

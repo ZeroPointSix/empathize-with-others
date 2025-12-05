@@ -1,0 +1,46 @@
+package com.empathy.ai.presentation.navigation
+
+/**
+ * 导航路由定义
+ *
+ * 定义应用中所有页面的路由路径和参数
+ */
+object NavRoutes {
+    /**
+     * 联系人列表页面
+     */
+    const val CONTACT_LIST = "contact_list"
+
+    /**
+     * 联系人详情页面
+     * 参数: contactId (String) - 联系人ID，空字符串表示新建
+     */
+    const val CONTACT_DETAIL = "contact_detail/{contactId}"
+    const val CONTACT_DETAIL_ARG_ID = "contactId"
+
+    /**
+     * 聊天分析页面
+     * 参数: contactId (String) - 联系人ID
+     */
+    const val CHAT = "chat/{contactId}"
+    const val CHAT_ARG_ID = "contactId"
+
+    /**
+     * 标签管理页面
+     */
+    const val BRAIN_TAG = "brain_tag"
+
+    /**
+     * 创建联系人详情路由
+     */
+    fun createContactDetailRoute(contactId: String): String {
+        return "contact_detail/$contactId"
+    }
+
+    /**
+     * 创建聊天路由
+     */
+    fun createChatRoute(contactId: String): String {
+        return "chat/$contactId"
+    }
+}

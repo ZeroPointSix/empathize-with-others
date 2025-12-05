@@ -2,6 +2,7 @@ package com.empathy.ai.domain.repository
 
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.SafetyCheckResult
+import com.empathy.ai.domain.usecase.ExtractedData
 
 /**
  * AI 服务仓库接口 - "大脑连接器"
@@ -37,6 +38,16 @@ interface AiRepository {
         draft: String,
         riskRules: List<String>
     ): Result<SafetyCheckResult>
+
+    /**
+     * 文本信息萃取
+     *
+     * [功能 D] 从文本中提取关键信息，包括事实、雷区和策略
+     *
+     * @param inputText 输入的文本内容
+     * @return 提取的结构化信息
+     */
+    suspend fun extractTextInfo(inputText: String): Result<ExtractedData>
 
     /**
      * 多模态转文字 (STT / OCR)
