@@ -80,13 +80,13 @@ object PerformanceTracker {
             // 如果设置了阈值且超过阈值，记录警告
             try {
                 if (threshold > 0 && duration > threshold) {
-                    Log.w(TAG, "$sectionName took ${duration}ms, exceeds threshold ${threshold}ms")
+                    Log.w(TAG, "$sectionName 耗时 ${duration}ms，超过阈值 ${threshold}ms")
                 } else {
-                    Log.d(TAG, "$sectionName took ${duration}ms")
+                    Log.d(TAG, "$sectionName 耗时 ${duration}ms")
                 }
             } catch (e: Exception) {
                 // 在测试环境中 Log 可能不可用，忽略
-                println("$sectionName took ${duration}ms")
+                println("$sectionName 耗时 ${duration}ms")
             }
         }
     }
@@ -128,13 +128,13 @@ object PerformanceTracker {
             
             try {
                 if (threshold > 0 && duration > threshold) {
-                    Log.w(TAG, "$sectionName took ${duration}ms, exceeds threshold ${threshold}ms")
+                    Log.w(TAG, "$sectionName 耗时 ${duration}ms，超过阈值 ${threshold}ms")
                 } else {
-                    Log.d(TAG, "$sectionName took ${duration}ms")
+                    Log.d(TAG, "$sectionName 耗时 ${duration}ms")
                 }
             } catch (e: Exception) {
                 // 在测试环境中 Log 可能不可用，忽略
-                println("$sectionName took ${duration}ms")
+                println("$sectionName 耗时 ${duration}ms")
             }
         }
     }
@@ -151,12 +151,12 @@ object PerformanceTracker {
         
         try {
             if (duration > threshold) {
-                Log.w(TAG, "Performance warning: $operation took ${duration}ms (threshold: ${threshold}ms)")
+                Log.w(TAG, "性能警告：$operation 耗时 ${duration}ms（阈值：${threshold}ms）")
             } else {
-                Log.d(TAG, "Performance: $operation took ${duration}ms")
+                Log.d(TAG, "性能：$operation 耗时 ${duration}ms")
             }
         } catch (e: Exception) {
-            println("Performance: $operation took ${duration}ms")
+            println("性能：$operation 耗时 ${duration}ms")
         }
     }
     
@@ -174,9 +174,9 @@ object PerformanceTracker {
         
         try {
             Trace.beginSection(operation)
-            Log.d(TAG, "Started: $operation")
+            Log.d(TAG, "开始：$operation")
         } catch (e: Exception) {
-            println("Started: $operation")
+            println("开始：$operation")
         }
         return startTime
     }

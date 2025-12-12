@@ -1,6 +1,8 @@
 ---
-description: Generate a custom checklist for the current feature based on user requirements.
+description: 规格检查清单 - 基于用户需求为当前功能生成自定义检查清单
 ---
+
+**中文说明：** 本命令用于为当前功能生成自定义检查清单。检查清单是"需求编写的单元测试"，用于验证特定领域中需求的质量、清晰度和完整性。
 
 ## Checklist Purpose: "Unit Tests for English"
 

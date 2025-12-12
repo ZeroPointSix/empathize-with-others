@@ -1,10 +1,12 @@
 ---
-description: Identify underspecified areas in the current feature spec by asking up to 5 highly targeted clarification questions and encoding answers back into the spec.
+description: 规格澄清 - 通过最多 5 个针对性问题识别并澄清规格说明中的模糊区域
 handoffs: 
-  - label: Build Technical Plan
+  - label: 构建技术计划
     agent: speckit.plan
-    prompt: Create a plan for the spec. I am building with...
+    prompt: 为规格创建计划。我正在使用...
 ---
+
+**中文说明：** 本命令用于检测当前功能规格中未明确的区域，通过提出最多 5 个高度针对性的澄清问题，并将答案编码回规格文件中。建议在执行 `/speckit.plan` 之前运行此命令。
 
 ## User Input
 
