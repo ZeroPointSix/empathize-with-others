@@ -1,5 +1,14 @@
 # 技术栈
 
+## 🔴 必读文档（开始工作前必须阅读）
+
+**在开始任何工作之前，请务必先阅读以下文档：**
+
+1. **[Rules/RulesReadMe.md](../../Rules/RulesReadMe.md)** - 项目通用规则和文档规范
+2. **[WORKSPACE.md](../../WORKSPACE.md)** - 当前工作状态和任务协调
+
+---
+
 ## 语言规范
 
 **所有文档和回答必须使用中文。** 代码注释、变量名、类名等保持英文，但所有说明文档、开发指南和与开发者的沟通必须使用中文。
@@ -15,27 +24,32 @@
 
 ## 核心技术
 
-### UI 层
+### ✅ UI 层
+
 - **Jetpack Compose**：2024.12.01（BOM 管理）
 - **Material 3**：使用 Material Design 3 的声明式 UI
 - **Navigation Compose**：2.8.5
 
-### 架构
+### ✅ 架构
+
 - **模式**：清洁架构 + MVVM
 - **DI**：Hilt 2.52（基于 Dagger 的依赖注入）
 - **生命周期**：AndroidX Lifecycle 2.8.7 与 Compose 集成
 
-### 数据层
+### ✅ 数据层
+
 - **本地数据库**：Room 2.6.1 与 KTX 扩展
 - **网络**：Retrofit 2.11.0 + OkHttp 4.12.0
 - **JSON**：Moshi 1.15.1 与 Kotlin 代码生成
 - **安全**：EncryptedSharedPreferences（androidx.security.crypto 1.1.0-alpha06）
 
-### 异步处理
+### ✅ 异步处理
+
 - **协程**：Kotlin Coroutines 1.9.0
 - **Flow**：用于响应式数据流
 
-### 测试
+## ✅ 测试
+
 - **单元测试**：JUnit 4.13.2
 - **模拟**：MockK 1.13.13
 - **协程测试**：kotlinx-coroutines-test 1.9.0
@@ -44,6 +58,7 @@
 ## 常用命令
 
 ### 构建和运行
+
 ```bash
 # 构建调试 APK
 ./gradlew assembleDebug
@@ -59,6 +74,7 @@
 ```
 
 ### 测试
+
 ```bash
 # 运行所有单元测试
 ./gradlew test
@@ -74,6 +90,7 @@
 ```
 
 ### 代码质量
+
 ```bash
 # 清理构建工件
 ./gradlew clean
@@ -86,6 +103,7 @@
 ```
 
 ### Gradle 同步
+
 ```bash
 # 同步 Gradle 依赖
 ./gradlew --refresh-dependencies
@@ -110,3 +128,37 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **Room**：支持 Flow 的类型安全数据库
 - **Retrofit**：使用 Moshi 转换器的 REST API 客户端
 - **Security Crypto**：敏感数据的硬件支持加密
+
+## 当前实现状态
+
+### ✅ 完全实现的技术栈
+
+- **构建系统**: Gradle 8.13 + Kotlin DSL 完整配置
+- **UI框架**: Jetpack Compose + Material Design 3 完整实现
+- **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
+- **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
+- **网络通信**: Retrofit + OkHttp + Moshi 完整实现
+- **异步编程**: Kotlin Coroutines + Flow 完整实现
+- **安全存储**: EncryptedSharedPreferences 完整实现
+- **依赖注入**: Hilt 模块完整配置
+
+### ⚠️ 部分实现/待完善功能
+
+- **媒体处理**: FeedTextUseCase已实现，但AiRepositoryImpl中transcribeMedia方法未实现
+  - 代码架构已设计：ExtractedData模型、AiRepository接口定义
+  - ❌ 实际实现：AiRepositoryImpl.transcribeMedia直接返回未实现异常
+  - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
+
+- **AI响应解析**: AiResponseParser接口已定义，但实现可能不完整
+  - 代码架构存在：AiResponseParser接口、FallbackHandler等
+  - ⚠️ 集成状态不明：需要验证解析器在实际AI调用中的使用情况
+
+- **无障碍服务**: WeChatDetector等工具类存在，但实际集成状态不明
+  - 代码架构存在：WeChatDetector、FloatingWindowManager等
+  - ❌ 实际集成未验证：需要确认与悬浮窗服务的协作
+
+## 技术债务
+
+- **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
+- **AI解析器**: 需要验证AiResponseParser的完整性和错误处理
+- **无障碍集成**: 需要验证WeChatDetector与FloatingWindowService的实际协作

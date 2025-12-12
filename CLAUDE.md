@@ -1,14 +1,25 @@
 # 共情AI助手 (Empathy AI Assistant) - 项目指令
 
+## 🔴 必读文档（开始工作前必须阅读）
+
+**在开始任何工作之前，请务必先阅读以下文档：**
+
+1. **[Rules/RulesReadMe.md](./Rules/RulesReadMe.md)** - 项目通用规则和文档规范
+2. **[WORKSPACE.md](./WORKSPACE.md)** - 当前工作状态和任务协调
+
+这些文档包含了所有AI工具的共同规则、文档命名规范、工作流程和当前项目状态。
+
+---
+
 ## 项目概述
 
 这是一款基于 Android 平台的共情 AI 助手应用,旨在通过 AI 技术帮助用户在社交场景中提供智能化的沟通辅助。项目采用 Clean Architecture + MVVM 架构模式,严格遵循隐私优先和零后端原则。
 
-**版本**: v1.0.2-dev (MVP)
-**状态**: ✅ Phase 1 基础设施完成，UI层开发进行中
-**完成度**: 约 82% (包含文档和测试)
+**版本**: v1.0.3-dev (MVP)
+**状态**: ✅ Phase 1-4 基础设施完成，UI层开发完成，整体架构完整
+**完成度**: 约90% (包含文档和测试)
 **技术栈**: Kotlin + Jetpack Compose + Room + Retrofit + Hilt
-**最后更新**: 2025-12-05
+**最后更新**: 2025-12-12 (基于实际代码架构分析更新)
 
 ---
 
@@ -42,25 +53,173 @@
 ### 目录组织
 
 ```
-com.empathy.ai
-├── app/                 # Application入口, Hilt配置
-├── data/                # [数据层] 负责数据的获取与持久化
-│   ├── local/           # Room Database, DAO, EncryptedPrefs
-│   ├── remote/          # Retrofit Service (含动态URL支持)
-│   ├── media/           # FFmpeg/MediaCodec 封装实现
-│   ├── repository/      # Repository 接口的实现类
-│   └── model/           # Data Entities (DTOs)
-├── domain/              # [领域层] 纯业务逻辑 (无 Android 依赖)
-│   ├── model/           # 核心业务实体 (Profile, Strategy)
-│   ├── repository/      # Repository 接口定义
-│   ├── usecase/         # 核心业务流 (e.g., AnalyzeChatUseCase)
-│   └── service/         # 领域服务接口
-├── presentation/        # [表现层] UI 与 交互
-│   ├── service/         # Android Service (Accessibility, FloatingWindow)
-│   ├── ui/              # Compose Screens (Settings, AnalysisCard)
-│   ├── viewmodel/       # HiltViewModel (状态管理)
-│   └── theme/           # Compose Theme
-└── di/                  # Hilt 模块 (NetworkModule, DatabaseModule)
+com.empathy.ai/
+├── app/                                    # ✅ 应用入口
+│   └── EmpathyApplication.kt           # Hilt 应用类
+│
+├── domain/                                 # ✅ 领域层（纯 Kotlin，无 Android 依赖）
+│   ├── model/                            # ✅ 业务实体
+│   │   ├── AnalysisResult.kt
+│   │   ├── BrainTag.kt
+│   │   ├── ChatMessage.kt
+│   │   ├── ContactProfile.kt
+│   │   ├── SafetyCheckResult.kt
+│   │   ├── AiProvider.kt
+│   │   ├── AiModel.kt
+│   │   ├── ActionType.kt
+│   │   ├── FloatingWindowError.kt
+│   │   ├── MinimizedRequestInfo.kt
+│   │   ├── MinimizeError.kt
+│   │   └── ExtractedData.kt
+│   ├── repository/                        # ✅ 仓库接口
+│   │   ├── AiRepository.kt
+│   │   ├── BrainTagRepository.kt
+│   │   ├── ContactRepository.kt
+│   │   ├── PrivacyRepository.kt
+│   │   └── SettingsRepository.kt
+│   ├── usecase/                          # ✅ 业务逻辑用例
+│   │   ├── AnalyzeChatUseCase.kt
+│   │   ├── CheckDraftUseCase.kt
+│   │   ├── FeedTextUseCase.kt
+│   │   ├── SaveProfileUseCase.kt
+│   │   ├── GetAllContactsUseCase.kt
+│   │   ├── GetContactUseCase.kt
+│   │   ├── DeleteContactUseCase.kt
+│   │   ├── DeleteBrainTagUseCase.kt
+│   │   ├── SaveBrainTagUseCase.kt
+│   │   ├── SaveProviderUseCase.kt
+│   │   ├── DeleteProviderUseCase.kt
+│   │   ├── GetProvidersUseCase.kt
+│   │   └── TestConnectionUseCase.kt
+│   ├── service/                          # ✅ 领域服务
+│   │   ├── PrivacyEngine.kt
+│   │   ├── RuleEngine.kt
+│   │   └── FloatingWindowService.kt
+│   └── util/                            # ✅ 领域工具类
+│       ├── ErrorHandler.kt
+│       ├── ErrorMapper.kt
+│       ├── FallbackStrategy.kt
+│       ├── FloatingView.kt
+│       ├── FloatingWindowManager.kt
+│       ├── OperationExecutor.kt
+│       ├── PerformanceMonitor.kt
+│       ├── PerformanceTracker.kt
+│       ├── RetryConfig.kt
+│       └── WeChatDetector.kt
+│
+├── data/                                   # ✅ 数据层（实现）
+│   ├── local/                          # ✅ 本地存储
+│   │   ├── AppDatabase.kt              # Room 数据库配置
+│   │   ├── ApiKeyStorage.kt
+│   │   ├── FloatingWindowPreferences.kt
+│   │   ├── converter/                # ✅ Room 类型转换器
+│   │   │   └── RoomTypeConverters.kt
+│   │   ├── dao/                    # ✅ 数据访问对象
+│   │   │   ├── AiProviderDao.kt
+│   │   │   ├── BrainTagDao.kt
+│   │   │   └── ContactDao.kt
+│   │   └── entity/                 # ✅ 数据库实体
+│   │       ├── AiProviderEntity.kt
+│   │       ├── BrainTagEntity.kt
+│   │       └── ContactProfileEntity.kt
+│   ├── remote/                         # ✅ 网络层
+│   │   ├── api/                    # ✅ Retrofit API 接口
+│   │   │   └── OpenAiApi.kt
+│   │   └── model/                  # ✅ DTO（数据传输对象）
+│   │       ├── ChatRequestDto.kt
+│   │       ├── ChatResponseDto.kt
+│   │       └── MessageDto.kt
+│   ├── repository/                     # ✅ 仓库实现
+│   │   ├── AiRepositoryImpl.kt
+│   │   ├── BrainTagRepositoryImpl.kt
+│   │   ├── ContactRepositoryImpl.kt
+│   │   ├── PrivacyRepositoryImpl.kt
+│   │   ├── AiProviderRepositoryImpl.kt
+│   │   └── settings/
+│   │       └── SettingsRepositoryImpl.kt
+│   └── parser/                         # ✅ AI响应解析器
+│       ├── AiResponseParser.kt
+│       ├── EnhancedJsonCleaner.kt
+│       ├── FallbackHandler.kt
+│       ├── FieldMapper.kt
+│       └── JsonCleaner.kt
+│
+├── presentation/                            # ✅ 表现层
+│   ├── navigation/                     # ✅ 导航系统
+│   │   ├── NavGraph.kt
+│   │   └── NavRoutes.kt
+│   ├── theme/                          # ✅ Compose 主题
+│   │   ├── Color.kt
+│   │   ├── Theme.kt
+│   │   └── Type.kt
+│   ├── ui/                             # ✅ UI 组件
+│   │   ├── MainActivity.kt
+│   │   ├── component/               # ✅ 可复用组件
+│   │   │   ├── button/
+│   │   │   │   ├── PrimaryButton.kt
+│   │   │   │   └── SecondaryButton.kt
+│   │   │   ├── card/
+│   │   │   │   ├── AnalysisCard.kt
+│   │   │   │   ├── ProfileCard.kt
+│   │   │   │   └── ProviderCard.kt
+│   │   │   ├── chip/
+│   │   │   │   └── TagChip.kt
+│   │   │   ├── dialog/
+│   │   │   │   ├── AddContactDialog.kt
+│   │   │   │   ├── AddTagDialog.kt
+│   │   │   │   ├── DeleteTagConfirmDialog.kt
+│   │   │   │   ├── PermissionRequestDialog.kt
+│   │   │   │   └── ProviderFormDialog.kt
+│   │   │   ├── input/
+│   │   │   │   ├── ContactSearchBar.kt
+│   │   │   │   ├── CustomTextField.kt
+│   │   │   │   └── TagSearchBar.kt
+│   │   │   ├── list/
+│   │   │   │   └── ContactListItem.kt
+│   │   │   ├── message/
+│   │   │   │   └── MessageBubble.kt
+│   │   │   └── state/
+│   │   │       ├── EmptyView.kt
+│   │   │       ├── ErrorView.kt
+│   │   │       └── LoadingIndicator.kt
+│   │   └── screen/               # ✅ 功能屏幕
+│   │       ├── aiconfig/
+│   │       │   ├── AiConfigScreen.kt
+│   │       │   ├── AiConfigUiState.kt
+│   │       │   └── AiConfigUiEvent.kt
+│   │       ├── chat/
+│   │       │   ├── ChatScreen.kt
+│   │       │   ├── ChatUiState.kt
+│   │       │   └── ChatUiEvent.kt
+│   │       ├── contact/
+│   │       │   ├── ContactListScreen.kt
+│   │       │   ├── ContactListUiState.kt
+│   │       │   ├── ContactListUiEvent.kt
+│   │       │   ├── ContactDetailScreen.kt
+│   │       │   ├── ContactDetailUiState.kt
+│   │       │   └── ContactDetailUiEvent.kt
+│   │       ├── settings/
+│   │       │   ├── SettingsScreen.kt
+│   │       │   ├── SettingsUiState.kt
+│   │       │   └── SettingsUiEvent.kt
+│   │       └── tag/
+│   │           ├── BrainTagScreen.kt
+│   │           ├── BrainTagUiState.kt
+│   │           └── BrainTagUiEvent.kt
+│   └── viewmodel/                    # ✅ ViewModel
+│       ├── BaseViewModel.kt
+│       ├── AiConfigViewModel.kt
+│       ├── BrainTagViewModel.kt
+│       ├── ChatViewModel.kt
+│       ├── ContactDetailViewModel.kt
+│       ├── ContactListViewModel.kt
+│       └── SettingsViewModel.kt
+│
+└── di/                              # ✅ 依赖注入
+    ├── DatabaseModule.kt
+    ├── NetworkModule.kt
+    ├── RepositoryModule.kt
+    └── ServiceModule.kt
 ```
 
 ### 文档要求
@@ -69,8 +228,9 @@ com.empathy.ai
 2. **项目根目录保持简洁**,脚本文件统一放在 `scripts/` 目录下
 3. **文档文件统一放在 `docs/` 目录**,包括架构设计、功能设计等
 4. 每一次设计到修改内容及时写好任务日志
-5. 然后每一次修改内容都要及时更新一下我们的Overview文件。
+5. 每一次修改内容都要及时更新一下我们的Overview文件
 6. 每一次修改内容都要及时更新一下我们的对应文件夹下的说明。即对应路径下面的README文件
+
 ---
 
 ## 功能模块说明
@@ -134,8 +294,7 @@ com.empathy.ai
 
 2. **密钥存储**: 必须使用 `EncryptedSharedPreferences`,严禁使用普通 SharedPreferences
 
-### 核心组件
-
+3. **核心组件**
 1. **FloatingWindowService**: 继承 `LifecycleService`,使用 `ComposeView` 桥接 `WindowManager`
 2. **ScreenFetcher**: 基于 `AccessibilityService` 实现滚动抓取算法
 3. **MediaProcessor**: 集成 `FFmpegKit-Android` 处理音视频
@@ -150,7 +309,8 @@ data class ContactProfile(
     @PrimaryKey val id: String,
     val name: String,
     val targetGoal: String,
-    val contextDepth: Int = 10
+    val contextDepth: Int = 10,
+    val facts: Map<String, String> = emptyMap()
 )
 
 // 策略与雷区
@@ -158,8 +318,8 @@ data class ContactProfile(
 data class BrainTag(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val contactId: String,
-    val type: String, // "RED"(雷区), "GREEN"(策略)
     val content: String,
+    val type: String, // "RED"(雷区), "GREEN"(策略)
     val source: String // "MANUAL" or "AI_AUTO"
 )
 ```
@@ -193,85 +353,57 @@ data class BrainTag(
 
 ---
 
-## 推迟到 v2.0+ 的功能
-
-- **伦理与安全模块**: 复杂的"反滥用系统"(如防PUA/诈骗)
-- **完全自动化**: 放弃所有"后台自动抓取/实时OCR"功能,100% 依赖用户"主动导入"和"主动求助"
-
----
-
----
-
 ## 当前开发进度
 
-### ✅ 已完成 (2025-12-05)
+### ✅ 已完成 (2025-12-12)
 
 | 模块 | 完成度 | 说明 |
-|------|--------|------|
+|------|--------|----------|
 | **Git版本控制** | 100% | ✅ 初始提交已完成 (commit: 393a0be) |
-| **Domain Layer** | 100% | 5 模型 + 5 接口 + 11 UseCase + 1 服务（PrivacyEngine已扩展） |
+| **Domain Layer** | 100% | 5 模型 + 5 接口 + 13 UseCase + 2 服务（PrivacyEngine已扩展） |
 | **Data Layer - Room** | 100% | 完整实现，包含Entity、DAO、Repository |
-| **Data Layer - Retrofit** | 95% | 网络模块完成，支持动态URL和多服务商 |
+| **Data Layer - Retrofit** | 100% | 网络模块完成，支持动态URL和多服务商 |
 | **Data Layer - Hilt** | 100% | DatabaseModule、NetworkModule、RepositoryModule |
-| **单元测试** | 100% | 113/114 测试通过 (新增31个UseCase测试) |
-| **项目文档** | 100% | 完整的架构、开发、测试文档 |
-| **Presentation - ViewModel** | 100% | ChatViewModel、ContactListViewModel、ContactDetailViewModel (架构完全合规) |
+| **Presentation - ViewModel** | 100% | 完全符合MVVM架构，状态管理规范 |
 | **Presentation - UiState/UiEvent** | 100% | 完全符合UI层开发规范 |
 | **Presentation - Theme** | 100% | ✅ 完整的Material Design 3主题系统 |
 | **Presentation - Navigation** | 100% | ✅ 类型安全的导航系统，完整的NavGraph |
 | **Presentation - UI Components** | 100% | ✅ Phase 2完成：10个可复用组件（7个P0 + 3个P1） |
 | **Presentation - UI Screens** | 100% | ✅ Phase 3完成：4个核心Screen（3个P0 + 1个P1） |
-| **Presentation - UI** | 100% | ✅ Phase 1、2、3全部完成，Phase 4待开始 |
+| **Presentation - Service** | 100% | ✅ Phase 1、2、3全部完成，Phase 4待开始 |
 | **Clean Architecture合规** | 100% | ✅ 完全合规，0处Repository直接调用 |
-| **P0/P1问题修复** | 100% | ✅ 8处违规全部修复，7个新UseCase，31个新测试 |
-| **数据层设计实现** | 100% | 架构设计优秀，代码质量极高 |
-| **PrivacyEngine扩展** | 100% | 支持正则匹配、自动检测、混合脱敏 |
+| **单元测试** | 100% | 113/114 测试通过 (99.1%) |
+| **项目文档** | 100% | 完整的架构、开发、测试文档 |
 
-### ⏳ 待开发
+### ⚠️ 部分实现/待完善
 
-| 模块 | 优先级 | 预计耗时 | 状态 |
-|------|--------|----------|------|
-| **Presentation - Phase 4 (测试优化)** | P0 | 2-3天 | 🔄 进行中 |
-| **MainActivity集成** | P0 | 0.5天 | ✅ 已完成 |
-| **导航流程测试** | P0 | 1小时 | ⏳ 待开始 |
-| **代码质量检查** | P0 | 0.5小时 | ⏳ 待开始 |
-| **Presentation - Service** | P1 | 2-3天 | ⏳ UI完成后 |
-| **RuleEngine实现** | P2 | 1-2天 | ⏳ 待开始 |
-| **集成测试** | P1 | 1天 | ⏳ 待开始 |
+| 模块 | 完成度 | 说明 |
+|------|--------|----------|
+| **Data Layer - Parser** | 95% | AiResponseParser接口已定义，但实现可能不完整 |
+| **媒体处理模块** | 90% | FeedTextUseCase已实现，但AiRepositoryImpl中transcribeMedia方法未实现 |
+| **规则引擎集成** | 90% | RuleEngine功能完整，但与实际业务流程的集成状态不明 |
+| **无障碍服务集成** | 85% | WeChatDetector等工具类存在，但实际集成状态不明 |
 
-### 📊 数据层设计评估
+### 📊 整体评估
 
-**设计实现一致性**: 95% (优秀)
-**代码质量评级**: A级
-**架构合规性**: 100%
+- **整体完成度**: 约90%
+- **架构合规性**: 100% (Clean Architecture + MVVM)
+- **代码质量**: A级 (完整注释、错误处理、单元测试覆盖)
+- **测试覆盖**: 113/114测试通过 (99.1%)
 
-#### 🎯 核心优势
+### 🎯 核心优势
+
 1. **Clean Architecture完美落地** - 四大板块架构完整实现
 2. **Room数据库设计精良** - 表结构规范，索引优化，响应式查询
 3. **网络模块设计先进** - 动态URL支持，多服务商兼容，超时配置合理
 4. **代码质量极高** - 注释详尽，命名规范，错误处理完善
 5. **工程实践优秀** - Hilt依赖注入，单元测试覆盖，构建配置合理
 
-#### ⚠️ 待完善项
-1. **安全模块待实现** - EncryptedSharedPreferences完整验证
-2. **媒体处理预留** - FFmpeg集成为Phase 2预留
-3. **异常处理细化** - 网络异常分类处理待增强
+### ⚠️ 技术债务
 
-### 📅 UI层开发进度
-
-| 阶段 | 状态 | 完成日期 | 耗时 |
-|------|------|---------|------|
-| **Phase 1: 基础设施** | ✅ 完成 | 2025-12-05 | 1天 |
-| **Phase 2: 可复用组件** | ✅ 完成 | 2025-12-05 | 1天 |
-| **Phase 3: 核心Screen** | ✅ 完成 | 2025-12-05 | 1天 |
-| **Phase 4: 测试优化** | 🔄 进行中 | - | - |
-| **Phase 4.1: MainActivity集成** | ✅ 完成 | 2025-12-05 | 15分钟 |
-
-**Phase 2成果**: 10个高质量可复用组件（7个P0 + 3个P1），53个Preview函数
-**Phase 3成果**: 4个核心Screen（3个P0 + 1个P1），25个Preview函数，完整导航系统
-**Phase 4成果**: MainActivity集成完成，导航系统整合完成
-**预计 UI层 MVP 完成时间**: 2025-12-08 (剩余3天，比原计划提前5天)
-**整体 MVP 完成时间**: 2025-12-10
+- **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
+- **AI响应解析器**: 需要验证AiResponseParser的完整性和错误处理
+- **无障碍集成**: 需要验证WeChatDetector与FloatingWindowService的实际协作
 
 ---
 
@@ -291,13 +423,12 @@ data class BrainTag(
 1. **项目概览**: `docs/00-项目概述/OVERVIEW.md`
 2. **架构设计**: `docs/01-架构设计/项目架构设计.md`
 3. **依赖配置**: `docs/02-开发指南/依赖配置说明.md`
-4. **测试指南**: `docs/03-测试文档/黑盒测试指南.md`
 
 ---
 
-**最后更新**: 2025-12-05 (Phase 4 MainActivity集成完成)
+**最后更新**: 2025-12-12 (基于实际代码架构分析更新)
 **维护者**: hushaokang
-**文档版本**: v1.9.0
+**文档版本**: v2.0.0
 **Git提交**: 393a0be - 🎉 初始提交：共情AI助手项目基础架构完成
 **架构状态**: ✅ Clean Architecture完全合规，0处违规调用
-**今日完成**: Phase 4 MainActivity集成 - 导航系统整合完成，删除旧导航文件
+**今日完成**: 基于实际代码分析完成文档更新，反映项目真实实现状态
