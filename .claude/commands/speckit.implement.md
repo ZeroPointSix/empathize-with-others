@@ -1,6 +1,8 @@
 ---
-description: Execute the implementation plan by processing and executing all tasks defined in tasks.md
+description: 规格实施 - 执行实施计划，处理并执行 tasks.md 中定义的所有任务
 ---
+
+**中文说明：** 本命令用于执行实施计划，按照 tasks.md 中定义的任务顺序和依赖关系，逐步完成所有实施任务。会先检查检查清单（checklists）的完成状态，然后按阶段执行任务。
 
 ## User Input
 

@@ -1,10 +1,12 @@
 ---
-description: Create or update the project constitution from interactive or provided principle inputs, ensuring all dependent templates stay in sync.
+description: 规格宪法 - 从交互式或提供的原则输入创建或更新项目宪法，确保所有依赖模板保持同步
 handoffs: 
-  - label: Build Specification
+  - label: 构建规格说明
     agent: speckit.specify
-    prompt: Implement the feature specification based on the updated constitution. I want to build...
+    prompt: 基于更新的宪法实施功能规格。我想构建...
 ---
+
+**中文说明：** 本命令用于创建或更新项目宪法（constitution.md），定义项目的核心原则和约束。所有功能规格和设计都必须遵守宪法中定义的原则。
 
 ## User Input
 

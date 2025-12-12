@@ -1,14 +1,16 @@
 ---
-description: Create or update the feature specification from a natural language feature description.
+description: 规格定义 - 从自然语言功能描述创建或更新功能规格说明
 handoffs: 
-  - label: Build Technical Plan
+  - label: 构建技术计划
     agent: speckit.plan
-    prompt: Create a plan for the spec. I am building with...
-  - label: Clarify Spec Requirements
+    prompt: 为规格创建计划。我正在使用...
+  - label: 澄清规格需求
     agent: speckit.clarify
-    prompt: Clarify specification requirements
+    prompt: 澄清规格需求
     send: true
 ---
+
+**中文说明：** 本命令用于从自然语言功能描述创建或更新功能规格说明。会自动生成分支名称、创建规格文件、进行质量验证，并处理需要澄清的问题。
 
 ## User Input
 

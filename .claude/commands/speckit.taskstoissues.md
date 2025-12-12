@@ -1,7 +1,9 @@
 ---
-description: Convert existing tasks into actionable, dependency-ordered GitHub issues for the feature based on available design artifacts.
+description: 任务转 Issue - 将现有任务转换为可执行的、依赖有序的 GitHub Issues
 tools: ['github/github-mcp-server/issue_write']
 ---
+
+**中文说明：** 本命令用于将 tasks.md 中的任务转换为 GitHub Issues，保持依赖关系和执行顺序。需要配置 GitHub MCP 服务器。
 
 ## User Input
 

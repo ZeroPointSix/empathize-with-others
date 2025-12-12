@@ -1,6 +1,8 @@
 ---
-description: Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation.
+description: 规格分析 - 对 spec.md、plan.md 和 tasks.md 进行一致性和质量分析（只读，不修改文件）
 ---
+
+**中文说明：** 本命令用于在任务生成后，对规格说明、计划和任务三个核心文档进行跨文档的一致性和质量分析。这是一个只读命令，不会修改任何文件，只输出结构化的分析报告。
 
 ## User Input
 
