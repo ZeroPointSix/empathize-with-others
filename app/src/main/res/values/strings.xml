@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">共情AI助手</string>
+    
+    <!-- 悬浮窗相关 -->
+    <string name="floating_button_desc">悬浮按钮</string>
 </resources>

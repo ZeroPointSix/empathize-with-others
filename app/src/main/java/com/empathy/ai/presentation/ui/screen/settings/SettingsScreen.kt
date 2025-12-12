@@ -1,0 +1,635 @@
+package com.empathy.ai.presentation.ui.screen.settings
+
+import android.app.Activity
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.ui.component.dialog.PermissionRequestDialog
+import com.empathy.ai.presentation.viewmodel.SettingsViewModel
+
+/**
+ * 设置页面
+ *
+ * 功能：
+ * - API Key 配置
+ * - AI 服务商选择
+ * - 隐私设置
+ * - 关于信息
+ *
+ * @param onNavigateBack 返回回调
+ * @param viewModel 设置 ViewModel
+ */
+@Composable
+fun SettingsScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToAiConfig: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // 处理成功消息
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            // 3秒后自动清除
+            kotlinx.coroutines.delay(3000)
+            viewModel.onEvent(SettingsUiEvent.ClearSuccessMessage)
+        }
+    }
+
+    // 监听权限变化
+    DisposableEffect(Unit) {
+        onDispose {
+            // 当页面销毁时检查权限状态
+            viewModel.checkFloatingWindowPermission()
+        }
+    }
+
+    SettingsScreenContent(
+        uiState = uiState,
+        onEvent = viewModel::onEvent,
+        onNavigateBack = onNavigateBack,
+        onNavigateToAiConfig = onNavigateToAiConfig,
+        onRequestPermission = {
+            (context as? Activity)?.let { activity ->
+                FloatingWindowManager.requestPermission(activity)
+            }
+        },
+        modifier = modifier
+    )
+}
+
+/**
+ * 设置页面内容（无状态）
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreenContent(
+    uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
+    onNavigateBack: () -> Unit,
+    onNavigateToAiConfig: () -> Unit,
+    onRequestPermission: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("设置") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
+                        )
+                    }
+                }
+            )
+        },
+        snackbarHost = {
+            // 显示错误或成功消息
+            uiState.error?.let { error ->
+                Snackbar(
+                    action = {
+                        TextButton(onClick = { onEvent(SettingsUiEvent.ClearError) }) {
+                            Text("关闭")
+                        }
+                    }
+                ) {
+                    Text(error)
+                }
+            }
+            uiState.successMessage?.let { message ->
+                Snackbar {
+                    Text(message)
+                }
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // 悬浮窗设置
+            FloatingWindowSection(
+                uiState = uiState,
+                onEvent = onEvent
+            )
+
+            Divider()
+
+            // AI 服务商选择（API Key 在服务商配置中统一管理）
+            AiProviderSection(
+                uiState = uiState,
+                onEvent = onEvent,
+                onNavigateToAiConfig = onNavigateToAiConfig
+            )
+
+            Divider()
+
+            // 隐私设置
+            PrivacySection(
+                uiState = uiState,
+                onEvent = onEvent
+            )
+
+            Divider()
+
+            // 关于
+            AboutSection(
+                uiState = uiState
+            )
+        }
+
+        // 服务商选择对话框
+        if (uiState.showProviderDialog) {
+            ProviderSelectionDialog(
+                selectedProvider = uiState.selectedProvider,
+                availableProviders = uiState.availableProviders,
+                onProviderSelected = { onEvent(SettingsUiEvent.SelectProvider(it)) },
+                onDismiss = { onEvent(SettingsUiEvent.HideProviderDialog) }
+            )
+        }
+
+        // 清除数据确认对话框
+        if (uiState.showClearDataDialog) {
+            AlertDialog(
+                onDismissRequest = { onEvent(SettingsUiEvent.HideClearDataDialog) },
+                title = { Text("清除所有数据") },
+                text = { Text("确定要清除所有设置和数据吗？此操作不可恢复。") },
+                confirmButton = {
+                    TextButton(
+                        onClick = { onEvent(SettingsUiEvent.ClearAllData) }
+                    ) {
+                        Text("确定", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onEvent(SettingsUiEvent.HideClearDataDialog) }) {
+                        Text("取消")
+                    }
+                }
+            )
+        }
+
+        // 权限说明对话框
+        if (uiState.showPermissionDialog) {
+            PermissionRequestDialog(
+                onConfirm = {
+                    onEvent(SettingsUiEvent.HidePermissionDialog)
+                    onRequestPermission()
+                },
+                onDismiss = { onEvent(SettingsUiEvent.HidePermissionDialog) }
+            )
+        }
+    }
+}
+
+/**
+ * 悬浮窗设置区域
+ */
+@Composable
+private fun FloatingWindowSection(
+    uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "悬浮窗功能",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "启用悬浮窗",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = if (uiState.hasFloatingWindowPermission) {
+                            "在聊天应用上显示快捷按钮"
+                        } else {
+                            "需要悬浮窗权限"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (uiState.hasFloatingWindowPermission) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
+                    )
+                }
+                Switch(
+                    checked = uiState.floatingWindowEnabled,
+                    onCheckedChange = { onEvent(SettingsUiEvent.ToggleFloatingWindow) },
+                    enabled = uiState.hasFloatingWindowPermission || !uiState.floatingWindowEnabled
+                )
+            }
+        }
+
+        // 权限状态提示
+        if (!uiState.hasFloatingWindowPermission) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "警告",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "需要悬浮窗权限",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = "点击查看说明并授权",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                    IconButton(onClick = { onEvent(SettingsUiEvent.ShowPermissionDialog) }) {
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "查看",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        }
+
+        Text(
+            text = "提示：悬浮窗功能用于在聊天应用上显示快捷按钮，方便您快速访问 AI 助手功能",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * AI 服务商选择区域
+ *
+ * API Key 在服务商配置中统一管理
+ */
+@Composable
+private fun AiProviderSection(
+    uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
+    onNavigateToAiConfig: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "AI 服务商",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        // 如果有服务商，显示选择卡片
+        if (uiState.availableProviders.isNotEmpty()) {
+            Card(
+                onClick = { onEvent(SettingsUiEvent.ShowProviderDialog) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "当前服务商",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = uiState.selectedProvider,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = "选择"
+                    )
+                }
+            }
+        } else {
+            // 如果没有服务商，显示提示卡片
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "提示",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            text = "尚未配置 AI 服务商",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                    Text(
+                        text = "请先添加至少一个 AI 服务商才能使用 AI 功能",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+        }
+
+        // 管理服务商按钮
+        OutlinedButton(
+            onClick = onNavigateToAiConfig,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("管理 AI 服务商")
+        }
+
+        Text(
+            text = "提示：您可以添加多个 AI 服务商，每个服务商有独立的 API Key 和模型配置",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * 隐私设置区域
+ */
+@Composable
+private fun PrivacySection(
+    uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "隐私设置",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        // 数据掩码开关
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "数据掩码",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "AI 分析前自动掩码敏感信息",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = uiState.dataMaskingEnabled,
+                    onCheckedChange = { onEvent(SettingsUiEvent.ToggleDataMasking) }
+                )
+            }
+        }
+
+        // 本地优先模式
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "本地优先模式",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "优先使用本地规则，减少 AI 调用",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = uiState.localFirstMode,
+                    onCheckedChange = { onEvent(SettingsUiEvent.ToggleLocalFirstMode) }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 关于区域
+ */
+@Composable
+private fun AboutSection(
+    uiState: SettingsUiState,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "关于",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "应用版本",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = uiState.appVersion,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Text(
+                    text = "共情 AI 助手",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "隐私优先的社交沟通助手",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+
+
+/**
+ * 服务商选择对话框
+ */
+@Composable
+private fun ProviderSelectionDialog(
+    selectedProvider: String,
+    availableProviders: List<String>,
+    onProviderSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("选择 AI 服务商") },
+        text = {
+            Column {
+                availableProviders.forEach { provider ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = provider == selectedProvider,
+                            onClick = { onProviderSelected(provider) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(provider)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("关闭")
+            }
+        }
+    )
+}
+
+// ==================== Previews ====================
+
+@Preview(name = "设置页面 - 无服务商", showBackground = true)
+@Composable
+private fun SettingsScreenPreview() {
+    EmpathyTheme {
+        SettingsScreenContent(
+            uiState = SettingsUiState(
+                selectedProvider = "",
+                availableProviders = emptyList(),
+                hasFloatingWindowPermission = false
+            ),
+            onEvent = {},
+            onNavigateBack = {},
+            onNavigateToAiConfig = {},
+            onRequestPermission = {}
+        )
+    }
+}
+
+@Preview(name = "设置页面 - 已配置服务商", showBackground = true)
+@Composable
+private fun SettingsScreenConfiguredPreview() {
+    EmpathyTheme {
+        SettingsScreenContent(
+            uiState = SettingsUiState(
+                selectedProvider = "DeepSeek",
+                availableProviders = listOf("OpenAI", "DeepSeek"),
+                hasFloatingWindowPermission = true,
+                floatingWindowEnabled = true
+            ),
+            onEvent = {},
+            onNavigateBack = {},
+            onNavigateToAiConfig = {},
+            onRequestPermission = {}
+        )
+    }
+}

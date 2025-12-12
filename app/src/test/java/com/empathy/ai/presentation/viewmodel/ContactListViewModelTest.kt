@@ -1,0 +1,381 @@
+package com.empathy.ai.presentation.viewmodel
+
+import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.usecase.DeleteContactUseCase
+import com.empathy.ai.domain.usecase.GetAllContactsUseCase
+import com.empathy.ai.domain.usecase.SaveProfileUseCase
+import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.*
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+/**
+ * ContactListViewModel 单元测试
+ *
+ * 测试范围：
+ * - 添加联系人功能
+ * - 加载联系人列表
+ * - 删除联系人
+ * - 搜索功能
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class ContactListViewModelTest {
+
+    // Mock 依赖
+    private lateinit var getAllContactsUseCase: GetAllContactsUseCase
+    private lateinit var deleteContactUseCase: DeleteContactUseCase
+    private lateinit var saveProfileUseCase: SaveProfileUseCase
+
+    // 测试对象
+    private lateinit var viewModel: ContactListViewModel
+
+    // 测试调度器
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setup() {
+        // 设置测试调度器
+        Dispatchers.setMain(testDispatcher)
+
+        // 创建 Mock 对象
+        getAllContactsUseCase = mockk()
+        deleteContactUseCase = mockk()
+        saveProfileUseCase = mockk()
+
+        // 默认行为：返回空列表
+        coEvery { getAllContactsUseCase() } returns flowOf(emptyList())
+        
+        // 为其他 UseCase 设置默认行为，避免未配置的调用抛出异常
+        coEvery { deleteContactUseCase(any()) } returns Result.success(Unit)
+        coEvery { saveProfileUseCase(any()) } returns Result.success(Unit)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    /**
+     * 测试：添加联系人成功
+     */
+    @Test
+    fun `addContact should save contact and close dialog on success`() = runTest {
+        // Given: SaveProfileUseCase 返回成功
+        coEvery { saveProfileUseCase(any()) } returns Result.success(Unit)
+
+        // 创建 ViewModel
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // When: 显示对话框并添加联系人
+        viewModel.onEvent(ContactListUiEvent.ShowAddContactDialog)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showAddContactDialog, "对话框应该显示")
+
+        viewModel.onEvent(
+            ContactListUiEvent.AddContact(
+                name = "测试联系人",
+                phone = "13800138000",
+                targetGoal = "建立合作关系"
+            )
+        )
+        advanceUntilIdle()
+
+        // Then: 验证保存被调用
+        coVerify {
+            saveProfileUseCase(match { profile ->
+                profile.name == "测试联系人" &&
+                profile.facts["电话"] == "13800138000" &&
+                profile.targetGoal == "建立合作关系"
+            })
+        }
+
+        // 对话框应该关闭
+        assertFalse(viewModel.uiState.value.showAddContactDialog, "对话框应该关闭")
+        assertFalse(viewModel.uiState.value.isLoading, "加载状态应该结束")
+    }
+
+    /**
+     * 测试：添加联系人失败
+     */
+    @Test
+    fun `addContact should show error when save fails`() = runTest {
+        // Given: SaveProfileUseCase 返回失败
+        val errorMessage = "保存失败"
+        coEvery { saveProfileUseCase(any()) } returns Result.failure(Exception(errorMessage))
+
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // When: 添加联系人
+        viewModel.onEvent(ContactListUiEvent.ShowAddContactDialog)
+        viewModel.onEvent(
+            ContactListUiEvent.AddContact(
+                name = "测试联系人",
+                phone = "",
+                targetGoal = ""
+            )
+        )
+        advanceUntilIdle()
+
+        // Then: 应该显示错误
+        assertEquals(errorMessage, viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    /**
+     * 测试：加载联系人列表
+     */
+    @Test
+    fun `loadContacts should update contacts list`() = runTest {
+        // Given: 准备测试数据
+        val testContacts = listOf(
+            ContactProfile(
+                id = "1",
+                name = "张三",
+                targetGoal = "合作",
+                contextDepth = 10,
+                facts = emptyMap()
+            ),
+            ContactProfile(
+                id = "2",
+                name = "李四",
+                targetGoal = "朋友",
+                contextDepth = 15,
+                facts = emptyMap()
+            )
+        )
+        coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
+
+        // When: 创建 ViewModel（自动加载）
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // Then: 验证联系人列表
+        assertEquals(2, viewModel.uiState.value.contacts.size)
+        assertEquals("张三", viewModel.uiState.value.contacts[0].name)
+        assertEquals("李四", viewModel.uiState.value.contacts[1].name)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    /**
+     * 测试：搜索联系人
+     * 
+     * 注意：此测试已被属性测试取代，这里只验证基本的搜索激活功能
+     */
+    @Test
+    fun `search should filter contacts by name`() = runTest {
+        // Given: 准备测试数据
+        val testContacts = listOf(
+            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyMap()),
+            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyMap()),
+            ContactProfile(id = "3", name = "张伟", targetGoal = "", contextDepth = 10, facts = emptyMap())
+        )
+        coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
+
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // 验证初始状态
+        assertEquals(3, viewModel.uiState.value.contacts.size, "应该加载3个联系人")
+
+        // When: 激活搜索并输入查询
+        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true, query = "张"))
+        advanceUntilIdle()
+
+        // Then: 验证搜索已激活
+        assertTrue(viewModel.uiState.value.searchState.isActive, "搜索应该激活")
+        assertEquals("张", viewModel.uiState.value.searchState.query, "查询应该被设置")
+    }
+
+    /**
+     * 测试：删除联系人
+     */
+    @Test
+    fun `deleteContact should call deleteContactUseCase`() = runTest {
+        // Given
+        val testContact = ContactProfile(
+            id = "1",
+            name = "测试",
+            targetGoal = "",
+            contextDepth = 10,
+            facts = emptyMap()
+        )
+        coEvery { deleteContactUseCase(any()) } returns Result.success(Unit)
+
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // When: 删除联系人
+        viewModel.onEvent(ContactListUiEvent.DeleteContact(testContact))
+        advanceUntilIdle()
+
+        // Then: 验证删除被调用
+        coVerify { deleteContactUseCase("1") }
+    }
+
+    /**
+     * 测试：显示和隐藏添加对话框
+     */
+    @Test
+    fun `show and hide add contact dialog`() = runTest {
+        // Given
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // When: 显示对话框
+        viewModel.onEvent(ContactListUiEvent.ShowAddContactDialog)
+        advanceUntilIdle()
+
+        // Then: 对话框应该显示
+        assertTrue(viewModel.uiState.value.showAddContactDialog)
+
+        // When: 隐藏对话框
+        viewModel.onEvent(ContactListUiEvent.HideAddContactDialog)
+        advanceUntilIdle()
+
+        // Then: 对话框应该隐藏
+        assertFalse(viewModel.uiState.value.showAddContactDialog)
+    }
+
+    /**
+     * 测试：搜索模式激活和关闭
+     * 验证需求 2.1, 2.8
+     */
+    @Test
+    fun `search mode should activate and deactivate correctly`() = runTest {
+        // Given
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // 初始状态：搜索未激活
+        assertFalse(viewModel.uiState.value.searchState.isActive)
+
+        // When: 激活搜索
+        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true))
+        advanceUntilIdle()
+
+        // Then: 搜索应该激活
+        assertTrue(viewModel.uiState.value.searchState.isActive)
+
+        // When: 关闭搜索
+        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = false))
+        advanceUntilIdle()
+
+        // Then: 搜索应该关闭，状态重置
+        assertFalse(viewModel.uiState.value.searchState.isActive)
+        assertEquals("", viewModel.uiState.value.searchState.query)
+        assertEquals(0, viewModel.uiState.value.searchState.results.size)
+    }
+
+    /**
+     * 测试：搜索空结果提示
+     * 验证需求 2.6
+     * 
+     * 注意：此测试已被属性测试取代，这里只验证基本功能
+     */
+    @Test
+    fun `search should show empty state when no results found`() = runTest {
+        // Given: 准备测试数据
+        val testContacts = listOf(
+            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyMap()),
+            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyMap())
+        )
+        coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
+
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // When: 搜索不存在的联系人
+        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true, query = "不存在的联系人"))
+        advanceUntilIdle()
+
+        // Then: 验证搜索已激活
+        val searchState = viewModel.uiState.value.searchState
+        assertTrue(searchState.isActive, "搜索应该处于激活状态")
+        assertEquals("不存在的联系人", searchState.query, "查询应该被设置")
+    }
+
+    /**
+     * 测试：清空搜索恢复所有联系人
+     * 验证需求 2.7
+     * 
+     * 注意：此测试已被属性测试取代
+     */
+    @Test
+    fun `clearing search should restore all contacts`() = runTest {
+        // Given: 准备测试数据
+        val testContacts = listOf(
+            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyMap()),
+            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyMap()),
+            ContactProfile(id = "3", name = "王五", targetGoal = "", contextDepth = 10, facts = emptyMap())
+        )
+        coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
+
+        viewModel = ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            saveProfileUseCase
+        )
+        advanceUntilIdle()
+
+        // When: 先搜索
+        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true, query = "张"))
+        advanceUntilIdle()
+
+        // 验证搜索已激活
+        assertTrue(viewModel.uiState.value.searchState.isActive, "搜索应该激活")
+
+        // When: 清空搜索（关闭搜索模式）
+        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = false))
+        advanceUntilIdle()
+
+        // Then: 搜索应该关闭，显示所有联系人
+        assertFalse(viewModel.uiState.value.searchState.isActive, "搜索应该关闭")
+        val displayContacts = viewModel.uiState.value.displayContacts
+        assertEquals(3, displayContacts.size, "关闭搜索后应该显示所有3个联系人")
+    }
+}

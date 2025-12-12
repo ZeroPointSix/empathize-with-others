@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <!-- 悬浮按钮模式 - 简化版本，移除可能有问题的属性 -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floating_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/floating_button_desc"
+        app:fabSize="normal"
+        app:srcCompat="@drawable/ic_floating_button"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/floating_primary"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp" />
+
+    <!-- 菜单展开模式 - 简化版本，使用标准按钮 -->
+    <LinearLayout
+        android:id="@+id/menu_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="@color/floating_background"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/btn_analyze"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="💡 帮我分析"
+            android:textSize="15sp"
+            android:textColor="@color/text_primary"
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="8dp"
+            android:background="@android:color/transparent"
+            android:gravity="start|center_vertical" />
+
+        <Button
+            android:id="@+id/btn_check"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="🛡️ 帮我检查"
+            android:textSize="15sp"
+            android:textColor="@color/text_primary"
+            android:paddingVertical="12dp"
+            android:background="@android:color/transparent"
+            android:gravity="start|center_vertical" />
+
+    </LinearLayout>
+
+</FrameLayout>
