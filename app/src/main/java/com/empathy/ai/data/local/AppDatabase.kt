@@ -4,8 +4,10 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.empathy.ai.data.local.converter.RoomTypeConverters
+import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.BrainTagDao
 import com.empathy.ai.data.local.dao.ContactDao
+import com.empathy.ai.data.local.entity.AiProviderEntity
 import com.empathy.ai.data.local.entity.BrainTagEntity
 import com.empathy.ai.data.local.entity.ContactProfileEntity
 
@@ -31,9 +33,10 @@ import com.empathy.ai.data.local.entity.ContactProfileEntity
 @Database(
     entities = [
         ContactProfileEntity::class,
-        BrainTagEntity::class
+        BrainTagEntity::class,
+        AiProviderEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false // MVP阶段不导出schema,减少构建复杂度
 )
 @TypeConverters(RoomTypeConverters::class)
@@ -52,4 +55,11 @@ abstract class AppDatabase : RoomDatabase() {
      * @return BrainTagDao实例
      */
     abstract fun brainTagDao(): BrainTagDao
+
+    /**
+     * 获取AI服务商DAO
+     *
+     * @return AiProviderDao实例
+     */
+    abstract fun aiProviderDao(): AiProviderDao
 }

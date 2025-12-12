@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <!-- 悬浮按钮模式 -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floating_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/floating_button_desc"
+        app:fabSize="normal"
+        app:srcCompat="@drawable/ic_floating_button"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/floating_primary"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp"
+        app:rippleColor="@color/floating_accent"
+        app:useCompatPadding="true" />
+
+    <!-- 菜单展开模式 -->
+    <LinearLayout
+        android:id="@+id/menu_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="@color/floating_background"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_analyze"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="💡 帮我分析"
+            android:textSize="15sp"
+            android:textColor="@color/text_primary"
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="8dp"
+            app:icon="@drawable/ic_analyze"
+            app:iconTint="@color/analyze_color"
+            app:iconGravity="start"
+            app:cornerRadius="8dp"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_check"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="🛡️ 帮我检查"
+            android:textSize="15sp"
+            android:textColor="@color/text_primary"
+            android:paddingVertical="12dp"
+            app:icon="@drawable/ic_check"
+            app:iconTint="@color/check_color"
+            app:iconGravity="start"
+            app:cornerRadius="8dp"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+    </LinearLayout>
+
+</FrameLayout>

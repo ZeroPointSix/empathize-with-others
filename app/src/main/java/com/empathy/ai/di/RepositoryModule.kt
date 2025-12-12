@@ -1,10 +1,12 @@
 package com.empathy.ai.di
 
+import com.empathy.ai.data.repository.AiProviderRepositoryImpl
 import com.empathy.ai.data.repository.AiRepositoryImpl
 import com.empathy.ai.data.repository.BrainTagRepositoryImpl
 import com.empathy.ai.data.repository.ContactRepositoryImpl
 import com.empathy.ai.data.repository.PrivacyRepositoryImpl
 import com.empathy.ai.data.repository.settings.SettingsRepositoryImpl
+import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
@@ -81,4 +83,15 @@ abstract class RepositoryModule {
      */
     @Binds
     abstract fun bindPrivacyRepository(impl: PrivacyRepositoryImpl): PrivacyRepository
+
+    /**
+     * 绑定 AiProviderRepository
+     *
+     * 将 AiProviderRepository 接口绑定到其实现类 AiProviderRepositoryImpl。
+     *
+     * @param impl AiProviderRepositoryImpl 实例
+     * @return AiProviderRepository 接口
+     */
+    @Binds
+    abstract fun bindAiProviderRepository(impl: AiProviderRepositoryImpl): AiProviderRepository
 }

@@ -2,4 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- 悬浮窗颜色 -->
+    <color name="floating_background">#F5F5F5</color>
+    <color name="floating_primary">#2196F3</color>
+    <color name="floating_accent">#FF4081</color>
+    
+    <!-- 文本颜色 -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    
+    <!-- 功能颜色 -->
+    <color name="analyze_color">#4CAF50</color>
+    <color name="check_color">#FF9800</color>
 </resources>
