@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,12 +35,14 @@ import com.empathy.ai.presentation.viewmodel.ContactListViewModel
  * - 支持下拉刷新
  *
  * @param onNavigateToDetail 导航到详情页的回调，参数为联系人ID
+ * @param onNavigateToSettings 导航到设置页的回调
  * @param viewModel 联系人列表ViewModel
  * @param modifier Modifier
  */
 @Composable
 fun ContactListScreen(
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     viewModel: ContactListViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -49,6 +52,7 @@ fun ContactListScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateToDetail = onNavigateToDetail,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }
@@ -64,6 +68,7 @@ private fun ContactListScreenContent(
     uiState: ContactListUiState,
     onEvent: (ContactListUiEvent) -> Unit,
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -76,6 +81,12 @@ private fun ContactListScreenContent(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "搜索"
+                        )
+                    }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "设置"
                         )
                     }
                 }

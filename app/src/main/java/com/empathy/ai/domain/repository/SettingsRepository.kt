@@ -54,4 +54,34 @@ interface SettingsRepository {
      * @return 包含 Headers Map 的 Result
      */
     suspend fun getProviderHeaders(): Result<Map<String, String>>
+    
+    /**
+     * 获取数据掩码启用状态
+     *
+     * @return 包含启用状态的 Result，默认为 true
+     */
+    suspend fun getDataMaskingEnabled(): Result<Boolean>
+    
+    /**
+     * 设置数据掩码启用状态
+     *
+     * @param enabled 是否启用
+     * @return 操作结果
+     */
+    suspend fun setDataMaskingEnabled(enabled: Boolean): Result<Unit>
+    
+    /**
+     * 获取本地优先模式启用状态
+     *
+     * @return 包含启用状态的 Result，默认为 true
+     */
+    suspend fun getLocalFirstModeEnabled(): Result<Boolean>
+    
+    /**
+     * 设置本地优先模式启用状态
+     *
+     * @param enabled 是否启用
+     * @return 操作结果
+     */
+    suspend fun setLocalFirstModeEnabled(enabled: Boolean): Result<Unit>
 }

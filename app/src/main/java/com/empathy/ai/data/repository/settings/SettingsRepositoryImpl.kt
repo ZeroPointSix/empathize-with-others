@@ -20,10 +20,12 @@ import javax.inject.Singleton
  * - 即使设备被 Root，也能提供一定的安全保护
  *
  * @property context 应用上下文
+ * @property privacyPreferences 隐私设置持久化
  */
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val privacyPreferences: com.empathy.ai.data.local.PrivacyPreferences
 ) : SettingsRepository {
 
     companion object {
@@ -236,6 +238,62 @@ class SettingsRepositoryImpl @Inject constructor(
             encryptedPrefs.edit()
                 .remove(KEY_API_KEY)
                 .apply()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * 获取数据掩码启用状态
+     *
+     * @return 包含启用状态的 Result，默认为 true
+     */
+    override suspend fun getDataMaskingEnabled(): Result<Boolean> {
+        return try {
+            Result.success(privacyPreferences.isDataMaskingEnabled())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * 设置数据掩码启用状态
+     *
+     * @param enabled 是否启用
+     * @return 操作结果
+     */
+    override suspend fun setDataMaskingEnabled(enabled: Boolean): Result<Unit> {
+        return try {
+            privacyPreferences.setDataMaskingEnabled(enabled)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * 获取本地优先模式启用状态
+     *
+     * @return 包含启用状态的 Result，默认为 true
+     */
+    override suspend fun getLocalFirstModeEnabled(): Result<Boolean> {
+        return try {
+            Result.success(privacyPreferences.isLocalFirstModeEnabled())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * 设置本地优先模式启用状态
+     *
+     * @param enabled 是否启用
+     * @return 操作结果
+     */
+    override suspend fun setLocalFirstModeEnabled(enabled: Boolean): Result<Unit> {
+        return try {
+            privacyPreferences.setLocalFirstModeEnabled(enabled)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

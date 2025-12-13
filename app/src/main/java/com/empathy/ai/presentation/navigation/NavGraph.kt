@@ -7,9 +7,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.empathy.ai.presentation.ui.screen.aiconfig.AiConfigScreen
 import com.empathy.ai.presentation.ui.screen.chat.ChatScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
+import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.presentation.ui.screen.tag.BrainTagScreen
 
 /**
@@ -35,6 +37,9 @@ fun NavGraph(
             ContactListScreen(
                 onNavigateToDetail = { contactId ->
                     navController.navigate(NavRoutes.createContactDetailRoute(contactId))
+                },
+                onNavigateToSettings = {
+                    navController.navigate(NavRoutes.SETTINGS)
                 }
             )
         }
@@ -74,6 +79,23 @@ fun NavGraph(
         // 标签管理页面
         composable(route = NavRoutes.BRAIN_TAG) {
             BrainTagScreen(
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // 设置页面
+        composable(route = NavRoutes.SETTINGS) {
+            SettingsScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToAiConfig = {
+                    navController.navigate(NavRoutes.AI_CONFIG)
+                }
+            )
+        }
+
+        // AI服务商配置页面
+        composable(route = NavRoutes.AI_CONFIG) {
+            AiConfigScreen(
                 onNavigateBack = { navController.navigateUp() }
             )
         }
