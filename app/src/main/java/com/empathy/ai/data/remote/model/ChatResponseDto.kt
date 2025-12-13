@@ -49,18 +49,71 @@ data class ChatResponseDto(
  *
  * @property message 回复消息
  * @property index 选项索引 (通常为 0)
- * @property finishReason 完成原因 (例如: "stop" 表示自然结束)
+ * @property finishReason 完成原因 (例如: "stop" 表示自然结束, "tool_calls" 表示调用工具)
  */
 @JsonClass(generateAdapter = true)
 data class ChoiceDto(
     @Json(name = "message")
-    val message: MessageDto?,
+    val message: ResponseMessageDto?,
 
     @Json(name = "index")
     val index: Int?,
 
     @Json(name = "finish_reason")
     val finishReason: String?
+)
+
+/**
+ * 响应消息 DTO（扩展版，支持 tool_calls）
+ *
+ * @property role 角色 (assistant)
+ * @property content 文本内容（普通响应时有值）
+ * @property toolCalls 工具调用列表（Function Calling 响应时有值）
+ */
+@JsonClass(generateAdapter = true)
+data class ResponseMessageDto(
+    @Json(name = "role")
+    val role: String?,
+
+    @Json(name = "content")
+    val content: String?,
+    
+    @Json(name = "tool_calls")
+    val toolCalls: List<ToolCallDto>? = null
+)
+
+/**
+ * 工具调用 DTO
+ *
+ * @property id 调用 ID
+ * @property type 类型，固定为 "function"
+ * @property function 函数调用详情
+ */
+@JsonClass(generateAdapter = true)
+data class ToolCallDto(
+    @Json(name = "id")
+    val id: String?,
+    
+    @Json(name = "type")
+    val type: String?,
+    
+    @Json(name = "function")
+    val function: FunctionCallDto?
+)
+
+/**
+ * 函数调用详情 DTO
+ *
+ * @property name 函数名称
+ * @property arguments 函数参数（JSON 字符串）
+ */
+@JsonClass(generateAdapter = true)
+data class FunctionCallDto(
+    @Json(name = "name")
+    val name: String?,
+    
+    @Json(name = "arguments")
+    val arguments: String?
 )
 
 /**

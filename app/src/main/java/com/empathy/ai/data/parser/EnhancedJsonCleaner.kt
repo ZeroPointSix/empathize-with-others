@@ -86,16 +86,21 @@ class EnhancedJsonCleaner : JsonCleaner {
     
     private fun fixUnicodeAndEscapeCharacters(json: String): String {
         var result = json
+        
+        // 只处理 Unicode 转义序列，不要破坏 JSON 的合法转义字符
+        // JSON 中的 \" \n \t \\ 都是合法的，不应该被替换
         result = result.replace(Regex("\\\\u([0-9a-fA-F]{4})")) { 
             val codePoint = it.groupValues[1].toInt(16)
             codePoint.toChar().toString()
         }
-        result = result.replace("\\\"", "\"")
-        result = result.replace("\\n", "\n")
-        result = result.replace("\\t", "\t")
-        while (result.contains("\\\\")) {
-            result = result.replace("\\\\", "\\")
-        }
+        
+        // 注意：不要替换 \" \n \t \\，这些是 JSON 字符串中的合法转义字符
+        // 之前的代码会破坏 JSON 格式：
+        // - result.replace("\\\"", "\"")  // 错误！会破坏字符串中的引号转义
+        // - result.replace("\\n", "\n")   // 错误！会破坏字符串中的换行转义
+        // - result.replace("\\t", "\t")   // 错误！会破坏字符串中的制表符转义
+        // - result.replace("\\\\", "\\")  // 错误！会破坏字符串中的反斜杠转义
+        
         return result
     }
     
