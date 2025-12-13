@@ -6,7 +6,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -157,7 +161,8 @@ private fun SettingsScreenContent(
 
             // 关于
             AboutSection(
-                uiState = uiState
+                uiState = uiState,
+                onEvent = onEvent
             )
         }
 
@@ -175,13 +180,44 @@ private fun SettingsScreenContent(
         if (uiState.showClearDataDialog) {
             AlertDialog(
                 onDismissRequest = { onEvent(SettingsUiEvent.HideClearDataDialog) },
-                title = { Text("清除所有数据") },
-                text = { Text("确定要清除所有设置和数据吗？此操作不可恢复。") },
+                title = { Text("清除所有设置") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("确定要清除以下数据吗？")
+                        
+                        Text(
+                            text = "将被清除：",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text("• AI服务商配置", style = MaterialTheme.typography.bodySmall)
+                        Text("• 隐私保护设置", style = MaterialTheme.typography.bodySmall)
+                        Text("• 悬浮窗设置", style = MaterialTheme.typography.bodySmall)
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        Text(
+                            text = "不会清除：",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Text("• 联系人数据", style = MaterialTheme.typography.bodySmall)
+                        Text("• 标签数据", style = MaterialTheme.typography.bodySmall)
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        Text(
+                            text = "此操作不可恢复！",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
                 confirmButton = {
                     TextButton(
                         onClick = { onEvent(SettingsUiEvent.ClearAllData) }
                     ) {
-                        Text("确定", color = MaterialTheme.colorScheme.error)
+                        Text("确定清除", color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
@@ -503,6 +539,7 @@ private fun PrivacySection(
 @Composable
 private fun AboutSection(
     uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -550,6 +587,35 @@ private fun AboutSection(
                 )
             }
         }
+        
+        // 数据管理
+        Text(
+            text = "数据管理",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        OutlinedButton(
+            onClick = { onEvent(SettingsUiEvent.ShowClearDataDialog) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("清除所有设置")
+        }
+        
+        Text(
+            text = "注意：此操作将清除所有设置数据，但不会删除联系人和标签",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

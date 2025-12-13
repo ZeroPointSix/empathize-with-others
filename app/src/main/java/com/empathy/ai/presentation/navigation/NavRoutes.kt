@@ -31,6 +31,16 @@ object NavRoutes {
     const val BRAIN_TAG = "brain_tag"
 
     /**
+     * 设置页面
+     */
+    const val SETTINGS = "settings"
+
+    /**
+     * AI服务商配置页面
+     */
+    const val AI_CONFIG = "ai_config"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {

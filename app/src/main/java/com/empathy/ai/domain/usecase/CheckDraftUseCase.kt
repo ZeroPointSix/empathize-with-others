@@ -19,7 +19,8 @@ import javax.inject.Inject
 class CheckDraftUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository,
     private val privacyRepository: PrivacyRepository,
-    private val aiRepository: AiRepository
+    private val aiRepository: AiRepository,
+    private val settingsRepository: com.empathy.ai.domain.repository.SettingsRepository
 ) {
     /**
      * 执行草稿安全检查
@@ -35,6 +36,10 @@ class CheckDraftUseCase @Inject constructor(
         enableDeepCheck: Boolean = false
     ): Result<SafetyCheckResult> {
         return try {
+            // 读取本地优先模式设置
+            val localFirstEnabled = settingsRepository.getLocalFirstModeEnabled()
+                .getOrDefault(true)
+            
             // 1. 极速加载: 仅读取该联系人的雷区标签
             val redTags = brainTagRepository.getTagsForContact(contactId)
                 .first()
@@ -46,27 +51,36 @@ class CheckDraftUseCase @Inject constructor(
             }
 
             // 2. Layer 1: 本地匹配 (关键词检测)
-            val triggeredTags = mutableListOf<String>()
+            // 如果启用了本地优先模式，优先使用本地规则
+            if (localFirstEnabled) {
+                val triggeredTags = mutableListOf<String>()
 
-            redTags.forEach { tag ->
-                if (draftSnapshot.contains(tag.content, ignoreCase = true)) {
-                    triggeredTags.add(tag.content)
+                redTags.forEach { tag ->
+                    if (draftSnapshot.contains(tag.content, ignoreCase = true)) {
+                        triggeredTags.add(tag.content)
+                    }
+                }
+
+                // 如果本地匹配命中，立即返回危险
+                if (triggeredTags.isNotEmpty()) {
+                    return Result.success(
+                        SafetyCheckResult(
+                            isSafe = false,
+                            triggeredRisks = triggeredTags,
+                            suggestion = "检测到敏感内容: ${triggeredTags.joinToString(", ")}"
+                        )
+                    )
+                }
+                
+                // 本地检查通过，如果未启用深度检查，直接返回安全
+                if (!enableDeepCheck) {
+                    return Result.success(SafetyCheckResult(isSafe = true))
                 }
             }
 
-            // 如果本地匹配命中，立即返回危险
-            if (triggeredTags.isNotEmpty()) {
-                return Result.success(
-                    SafetyCheckResult(
-                        isSafe = false,
-                        triggeredRisks = triggeredTags,
-                        suggestion = "检测到敏感内容: ${triggeredTags.joinToString(", ")}"
-                    )
-                )
-            }
-
-            // 3. Layer 2: 云端语义检查 (可选)
-            if (enableDeepCheck) {
+            // 3. Layer 2: 云端语义检查
+            // 当本地优先模式关闭，或本地检查通过且启用深度检查时执行
+            if (!localFirstEnabled || enableDeepCheck) {
                 // 先脱敏
                 val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
                 val maskedDraft = PrivacyEngine.mask(draftSnapshot, privacyMapping)

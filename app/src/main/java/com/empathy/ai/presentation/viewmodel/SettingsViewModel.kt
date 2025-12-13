@@ -98,7 +98,20 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true, error = null) }
-                _uiState.update { it.copy(isLoading = false) }
+                
+                // 加载隐私设置
+                val dataMasking = settingsRepository.getDataMaskingEnabled()
+                    .getOrDefault(true)
+                val localFirst = settingsRepository.getLocalFirstModeEnabled()
+                    .getOrDefault(true)
+                
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        dataMaskingEnabled = dataMasking,
+                        localFirstMode = localFirst
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -214,14 +227,64 @@ class SettingsViewModel @Inject constructor(
 
     // === 隐私设置方法 ===
 
+    /**
+     * 切换数据掩码开关
+     */
     private fun toggleDataMasking() {
-        _uiState.update { it.copy(dataMaskingEnabled = !it.dataMaskingEnabled) }
-        // TODO: 保存到 SharedPreferences
+        viewModelScope.launch {
+            try {
+                val newValue = !_uiState.value.dataMaskingEnabled
+                
+                // 保存到 Repository
+                settingsRepository.setDataMaskingEnabled(newValue).onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            dataMaskingEnabled = newValue,
+                            successMessage = "数据掩码已${if (newValue) "开启" else "关闭"}"
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = "保存设置失败: ${error.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "切换数据掩码失败", e)
+                _uiState.update {
+                    it.copy(error = "切换数据掩码失败: ${e.message}")
+                }
+            }
+        }
     }
 
+    /**
+     * 切换本地优先模式开关
+     */
     private fun toggleLocalFirstMode() {
-        _uiState.update { it.copy(localFirstMode = !it.localFirstMode) }
-        // TODO: 保存到 SharedPreferences
+        viewModelScope.launch {
+            try {
+                val newValue = !_uiState.value.localFirstMode
+                
+                // 保存到 Repository
+                settingsRepository.setLocalFirstModeEnabled(newValue).onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            localFirstMode = newValue,
+                            successMessage = "本地优先模式已${if (newValue) "开启" else "关闭"}"
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = "保存设置失败: ${error.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "切换本地优先模式失败", e)
+                _uiState.update {
+                    it.copy(error = "切换本地优先模式失败: ${e.message}")
+                }
+            }
+        }
     }
 
     // === 数据管理方法 ===
@@ -234,15 +297,37 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(showClearDataDialog = false) }
     }
 
+    /**
+     * 清除所有设置数据
+     * 
+     * MVP阶段清除范围：
+     * - AI服务商配置
+     * - 隐私保护设置
+     * - 悬浮窗设置
+     * 
+     * 不清除：
+     * - 联系人数据
+     * - 标签数据
+     */
     private fun clearAllData() {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true, error = null) }
 
-                // 清除所有服务商数据
+                // 1. 清除所有服务商数据
                 val providers = _uiState.value.providersList
                 providers.forEach { provider ->
                     aiProviderRepository.deleteProvider(provider.id)
+                }
+                
+                // 2. 重置隐私设置为默认值
+                settingsRepository.setDataMaskingEnabled(true)
+                settingsRepository.setLocalFirstModeEnabled(true)
+                
+                // 3. 清除悬浮窗设置
+                floatingWindowPreferences.saveEnabled(false)
+                if (_uiState.value.floatingWindowEnabled) {
+                    com.empathy.ai.domain.util.FloatingWindowManager.stopService(getApplication())
                 }
 
                 _uiState.update {
@@ -251,11 +336,15 @@ class SettingsViewModel @Inject constructor(
                         selectedProvider = "",
                         availableProviders = emptyList(),
                         providersList = emptyList(),
+                        dataMaskingEnabled = true,
+                        localFirstMode = true,
+                        floatingWindowEnabled = false,
                         showClearDataDialog = false,
-                        successMessage = "所有数据已清除"
+                        successMessage = "所有设置已清除"
                     )
                 }
             } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "清除数据失败", e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,

@@ -56,7 +56,17 @@ class AnalyzeChatUseCase @Inject constructor(
                 .takeLast(profile.contextDepth) // 保留最近 N 条
 
             // 4. 安全脱敏
-            val maskedContext = PrivacyEngine.maskBatch(cleanedContext, privacyMapping)
+            // 读取数据掩码设置
+            val dataMaskingEnabled = settingsRepository.getDataMaskingEnabled()
+                .getOrDefault(true)
+            
+            val maskedContext = if (dataMaskingEnabled) {
+                // 启用数据掩码，进行脱敏处理
+                PrivacyEngine.maskBatch(cleanedContext, privacyMapping)
+            } else {
+                // 未启用数据掩码，直接使用原始数据
+                cleanedContext
+            }
 
             // 5. Prompt 组装
             val prompt = buildPrompt(
