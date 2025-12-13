@@ -12,6 +12,7 @@ package com.empathy.ai.domain.model
  * @property models 可用模型列表
  * @property defaultModelId 默认模型 ID
  * @property isDefault 是否为默认服务商
+ * @property timeoutMs 请求超时时间（毫秒），不同服务商响应速度不同
  * @property createdAt 创建时间戳
  */
 data class AiProvider(
@@ -22,6 +23,7 @@ data class AiProvider(
     val models: List<AiModel>,
     val defaultModelId: String,
     val isDefault: Boolean = false,
+    val timeoutMs: Long = 30000L,  // 默认 30 秒
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /**

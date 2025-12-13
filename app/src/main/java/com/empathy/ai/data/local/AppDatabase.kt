@@ -36,7 +36,7 @@ import com.empathy.ai.data.local.entity.ContactProfileEntity
         BrainTagEntity::class,
         AiProviderEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false // MVP阶段不导出schema,减少构建复杂度
 )
 @TypeConverters(RoomTypeConverters::class)

@@ -29,6 +29,7 @@ import androidx.room.PrimaryKey
  * @property modelsJson 可用模型列表 (JSON 字符串格式, 存储 List<AiModel>)
  * @property defaultModelId 默认模型 ID
  * @property isDefault 是否为默认服务商
+ * @property timeoutMs 请求超时时间（毫秒）
  * @property createdAt 创建时间戳
  *
  * @see com.empathy.ai.domain.model.AiProvider
@@ -60,6 +61,9 @@ data class AiProviderEntity(
 
     @ColumnInfo(name = "is_default")
     val isDefault: Boolean = false,
+
+    @ColumnInfo(name = "timeout_ms")
+    val timeoutMs: Long = 30000L,
 
     @ColumnInfo(name = "created_at")
     val createdAt: Long

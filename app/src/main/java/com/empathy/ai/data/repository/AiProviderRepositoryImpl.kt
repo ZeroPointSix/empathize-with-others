@@ -362,6 +362,7 @@ class AiProviderRepositoryImpl @Inject constructor(
             models = models,
             defaultModelId = entity.defaultModelId,
             isDefault = entity.isDefault,
+            timeoutMs = entity.timeoutMs,
             createdAt = entity.createdAt
         )
     }
@@ -389,6 +390,7 @@ class AiProviderRepositoryImpl @Inject constructor(
             modelsJson = modelsJson,
             defaultModelId = provider.defaultModelId,
             isDefault = provider.isDefault,
+            timeoutMs = provider.timeoutMs,
             createdAt = provider.createdAt
         )
     }

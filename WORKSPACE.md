@@ -10,13 +10,15 @@
 | - | - | - | - | - | - | - |
 
 ### 待办任务队列
-- [ ] 暂无待办任务
+- [ ] 验证悬浮窗功能在实际设备上的运行情况
+- [ ] 编写悬浮窗功能的集成测试
 
 ### 已完成任务（最近5条）
+- [x] 2025-12-13 - 完成 JSON 格式强制约束全面实施，启用所有三个 API 方法的 response_format - Kiro
+- [x] 2025-12-13 - 修复悬浮窗Material主题错误，完成功能集成 - Kiro
 - [x] 2025-12-12 - 完善项目汉化工作：PerformanceTracker日志中文化及命令文档规范化 - Roo
 - [x] 2024-12-12 - 创建代码审查命令（CodeReview.md）- Kiro
 - [x] 2024-12-12 - 创建文档审查命令（DocReview.md）- Kiro
-- [x] 2024-12-12 - 增强文档审查命令，增加质量评估功能 - Kiro
 
 ---
 
@@ -55,7 +57,8 @@
 ### 已知问题
 | 问题ID | 描述 | 严重程度 | 负责人 | 状态 |
 |--------|------|---------|--------|------|
-| - | - | - | - | - |
+| #002 | 编译错误：packageDebug 任务 NullPointerException | 中 | Kiro | ⏳ 诊断中 |
+| ~~#001~~ | ~~悬浮窗服务启动失败：Material主题错误~~ | ~~高~~ | ~~Kiro~~ | ✅ 已解决 |
 
 ---
 
@@ -67,7 +70,7 @@
 - **待处理**: 无
 
 ### Kiro (Code & Debug)
-- **最后活动**: 2024-12-12 - 创建审查命令
+- **最后活动**: 2025-12-13 - 修复悬浮窗Material主题错误
 - **当前任务**: 无
 - **待处理**: 无
 
@@ -86,8 +89,8 @@
 - **技术债务**: 0 项
 
 ### 文档统计
-- **开发文档**: 0 份
-- **项目文档**: 0 份
+- **开发文档**: 7 份（PRD-00001, PRD-00002, FD-00001, FD-00002, TDD-00001, TDD-00002, IMPL-00001）
+- **项目文档**: 4 份（RulesReadMe, workspace-rules, 汉化清单, 命令汉化清单）
 - **待更新文档**: 0 份
 
 ### 进度统计
@@ -122,6 +125,21 @@
 ---
 
 ## 📝 变更日志
+
+### 2025-12-13 - Kiro
+- 修复悬浮窗Material主题错误
+- 修改文件：
+  - `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
+  - `app/src/main/res/values/themes.xml`
+  - `app/src/main/res/values-night/themes.xml`
+  - `app/src/main/res/values/colors.xml`
+- 新增文档：`文档/开发文档/IMPL/IMPL-00001-悬浮窗主题修复.md`
+- 问题：Service的Context没有主题，导致Material Components组件无法使用
+- 解决方案：
+  1. 使用ContextThemeWrapper包装Service Context
+  2. 统一日间和夜间主题为Material Components主题
+  3. 添加完整的Material Design 3颜色资源
+- 状态：✅ 修复完成，待验证
 
 ### 2025-12-13 - Roo
 - 完善项目文档体系：设置功能设计与AI工具规范化

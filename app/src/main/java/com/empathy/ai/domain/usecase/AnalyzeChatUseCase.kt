@@ -23,7 +23,8 @@ class AnalyzeChatUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository,
     private val privacyRepository: PrivacyRepository,
     private val aiRepository: AiRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
 ) {
     /**
      * 执行聊天分析
@@ -37,10 +38,13 @@ class AnalyzeChatUseCase @Inject constructor(
         rawScreenContext: List<String>
     ): Result<AnalysisResult> {
         return try {
-            // 1. 前置检查: 确保已配置 API Key
-            val apiKey = settingsRepository.getApiKey().getOrNull()
-            if (apiKey.isNullOrBlank()) {
-                return Result.failure(IllegalStateException("未配置 API Key，请先在设置中配置"))
+            // 1. 前置检查: 确保已配置默认 AI 服务商
+            val defaultProvider = aiProviderRepository.getDefaultProvider().getOrNull()
+            if (defaultProvider == null) {
+                return Result.failure(IllegalStateException("未配置默认 AI 服务商，请先在设置中配置"))
+            }
+            if (defaultProvider.apiKey.isBlank()) {
+                return Result.failure(IllegalStateException("默认服务商的 API Key 为空，请检查配置"))
             }
 
             // 2. 并行加载数据
@@ -79,8 +83,12 @@ class AnalyzeChatUseCase @Inject constructor(
 
             val systemInstruction = buildSystemInstruction()
 
-            // 6. AI 推理
-            val analysisResult = aiRepository.analyzeChat(prompt, systemInstruction).getOrThrow()
+            // 6. AI 推理（传递provider配置）
+            val analysisResult = aiRepository.analyzeChat(
+                provider = defaultProvider,
+                promptContext = prompt,
+                systemInstruction = systemInstruction
+            ).getOrThrow()
 
             Result.success(analysisResult)
         } catch (e: Exception) {

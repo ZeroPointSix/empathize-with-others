@@ -28,7 +28,8 @@ data class ExtractedData(
  */
 class FeedTextUseCase @Inject constructor(
     private val aiRepository: AiRepository,
-    private val privacyRepository: PrivacyRepository
+    private val privacyRepository: PrivacyRepository,
+    private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
 ) {
     /**
      * 从文本中提取信息
@@ -42,12 +43,24 @@ class FeedTextUseCase @Inject constructor(
         rawText: String
     ): Result<ExtractedData> {
         return try {
-            // 1. 前置脱敏
+            // 1. 获取默认服务商
+            val defaultProvider = aiProviderRepository.getDefaultProvider().getOrNull()
+            if (defaultProvider == null) {
+                return Result.failure(IllegalStateException("未配置默认 AI 服务商，请先在设置中配置"))
+            }
+            if (defaultProvider.apiKey.isBlank()) {
+                return Result.failure(IllegalStateException("默认服务商的 API Key 为空，请检查配置"))
+            }
+            
+            // 2. 前置脱敏
             val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
             val maskedText = PrivacyEngine.mask(rawText, privacyMapping)
 
-            // 2. AI 萃取
-            val extractResult = aiRepository.extractTextInfo(maskedText)
+            // 3. AI 萃取（传递provider配置）
+            val extractResult = aiRepository.extractTextInfo(
+                provider = defaultProvider,
+                inputText = maskedText
+            )
 
             if (extractResult.isFailure) {
                 // AI 调用失败，返回基本的 Mock 数据

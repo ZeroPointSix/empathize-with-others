@@ -20,7 +20,8 @@ class CheckDraftUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository,
     private val privacyRepository: PrivacyRepository,
     private val aiRepository: AiRepository,
-    private val settingsRepository: com.empathy.ai.domain.repository.SettingsRepository
+    private val settingsRepository: com.empathy.ai.domain.repository.SettingsRepository,
+    private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
 ) {
     /**
      * 执行草稿安全检查
@@ -81,13 +82,26 @@ class CheckDraftUseCase @Inject constructor(
             // 3. Layer 2: 云端语义检查
             // 当本地优先模式关闭，或本地检查通过且启用深度检查时执行
             if (!localFirstEnabled || enableDeepCheck) {
+                // 获取默认服务商
+                val defaultProvider = aiProviderRepository.getDefaultProvider().getOrNull()
+                if (defaultProvider == null) {
+                    return Result.failure(IllegalStateException("未配置默认 AI 服务商，请先在设置中配置"))
+                }
+                if (defaultProvider.apiKey.isBlank()) {
+                    return Result.failure(IllegalStateException("默认服务商的 API Key 为空，请检查配置"))
+                }
+                
                 // 先脱敏
                 val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
                 val maskedDraft = PrivacyEngine.mask(draftSnapshot, privacyMapping)
 
-                // 调用 AI 进行语义风险检查
+                // 调用 AI 进行语义风险检查（传递provider配置）
                 val riskRules = redTags.map { it.content }
-                val deepCheckResult = aiRepository.checkDraftSafety(maskedDraft, riskRules).getOrThrow()
+                val deepCheckResult = aiRepository.checkDraftSafety(
+                    provider = defaultProvider,
+                    draft = maskedDraft,
+                    riskRules = riskRules
+                ).getOrThrow()
 
                 return Result.success(deepCheckResult)
             }

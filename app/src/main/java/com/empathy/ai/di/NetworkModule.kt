@@ -58,6 +58,11 @@ object NetworkModule {
      * 提供 OkHttpClient
      *
      * 配置 HTTP 客户端的超时时间和日志拦截器。
+     * 
+     * 超时策略：
+     * - HTTP 层超时应该比协程超时短，让 HTTP 层先处理超时
+     * - 协程超时作为最后的兜底机制
+     * - 这样可以优雅地处理网络超时，而不是强制取消请求
      *
      * @return OkHttpClient 实例
      */
@@ -67,10 +72,11 @@ object NetworkModule {
         val clientBuilder = OkHttpClient.Builder()
 
         // 超时设置 (LLM 应用需要较长的超时时间)
+        // 注意：这些超时应该比协程超时短，让 HTTP 层先超时
         clientBuilder
-            .connectTimeout(30, TimeUnit.SECONDS)  // 连接超时:30秒
-            .readTimeout(60, TimeUnit.SECONDS)     // 读取超时:60秒 (AI回复可能需要20-40秒)
-            .writeTimeout(30, TimeUnit.SECONDS)    // 写入超时:30秒
+            .connectTimeout(15, TimeUnit.SECONDS)  // 连接超时:15秒
+            .readTimeout(45, TimeUnit.SECONDS)     // 读取超时:45秒 (比协程超时短5-10秒)
+            .writeTimeout(15, TimeUnit.SECONDS)    // 写入超时:15秒
 
         // 日志拦截器 (仅在 DEBUG 模式下启用详细日志)
         if (BuildConfig.DEBUG) {

@@ -60,6 +60,9 @@ class FloatingWindowService : Service() {
     @Inject
     lateinit var floatingWindowPreferences: com.empathy.ai.data.local.FloatingWindowPreferences
     
+    @Inject
+    lateinit var aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
+    
     private lateinit var windowManager: WindowManager
     private var floatingView: FloatingView? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -244,8 +247,10 @@ class FloatingWindowService : Service() {
                 
                 // 创建 FloatingView 实例，添加详细的错误日志
                 try {
-                    floatingView = FloatingView(this)
-                    android.util.Log.d("FloatingWindowService", "FloatingView 实例创建成功")
+                    // Bug修复：Service的Context没有主题，需要使用ContextThemeWrapper包装
+                    val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+                    floatingView = FloatingView(themedContext)
+                    android.util.Log.d("FloatingWindowService", "FloatingView 实例创建成功（使用主题包装）")
                 } catch (e: Exception) {
                     android.util.Log.e("FloatingWindowService", "创建 FloatingView 实例失败，可能是XML解析错误", e)
                     throw e
@@ -462,8 +467,11 @@ class FloatingWindowService : Service() {
                 
                 floatingView?.showLoading("正在分析聊天内容...")
                 
+                // 获取动态超时时间
+                val timeoutMs = getAiTimeout()
+                
                 // 在后台线程执行 AI 分析
-                val result = withTimeout(AI_TIMEOUT_MS) {
+                val result = withTimeout(timeoutMs) {
                     kotlinx.coroutines.withContext(Dispatchers.IO) {
                         analyzeChatUseCase(contactId, listOf(text))
                     }
@@ -712,8 +720,11 @@ class FloatingWindowService : Service() {
                 
                 floatingView?.showLoading("正在检查内容安全...")
                 
+                // 获取动态超时时间
+                val timeoutMs = getAiTimeout()
+                
                 // 在后台线程执行安全检查
-                val result = withTimeout(AI_TIMEOUT_MS) {
+                val result = withTimeout(timeoutMs) {
                     kotlinx.coroutines.withContext(Dispatchers.IO) {
                         checkDraftUseCase(contactId, text)
                     }
@@ -1701,6 +1712,33 @@ class FloatingWindowService : Service() {
         }
     }
     
+    /**
+     * 获取 AI 操作的动态超时时间
+     * 
+     * 根据当前默认服务商的配置动态计算超时时间
+     * 协程超时 = Provider 超时 + 缓冲时间
+     * 
+     * @return 超时时间（毫秒）
+     */
+    private suspend fun getAiTimeout(): Long {
+        return try {
+            val provider = aiProviderRepository.getDefaultProvider().getOrNull()
+            if (provider != null) {
+                val timeout = provider.timeoutMs + AI_TIMEOUT_BUFFER_MS
+                android.util.Log.d("FloatingWindowService", 
+                    "使用 Provider 超时配置: ${provider.name} = ${provider.timeoutMs}ms + ${AI_TIMEOUT_BUFFER_MS}ms = ${timeout}ms")
+                timeout
+            } else {
+                android.util.Log.w("FloatingWindowService", 
+                    "未找到默认 Provider，使用默认超时: ${DEFAULT_AI_TIMEOUT_MS}ms")
+                DEFAULT_AI_TIMEOUT_MS
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "获取 Provider 超时配置失败，使用默认值", e)
+            DEFAULT_AI_TIMEOUT_MS
+        }
+    }
+    
     companion object {
         /**
          * 通知 ID
@@ -1737,11 +1775,19 @@ class FloatingWindowService : Service() {
         private const val OPERATION_TIMEOUT_MS = 5000L
         
         /**
-         * AI 超时时间（毫秒）
+         * AI 超时缓冲时间（毫秒）
          * 
-         * 根据需求 6.2，AI 分析应在 10 秒内返回结果或超时提示
+         * 协程超时 = Provider 超时 + 缓冲时间
+         * 这样可以让 HTTP 层先超时，协程超时作为兜底
          */
-        private const val AI_TIMEOUT_MS = 10000L
+        private const val AI_TIMEOUT_BUFFER_MS = 5000L
+        
+        /**
+         * 默认 AI 超时时间（毫秒）
+         * 
+         * 当无法获取 Provider 配置时使用
+         */
+        private const val DEFAULT_AI_TIMEOUT_MS = 50000L
         
         /**
          * 清理延迟时间（毫秒）
