@@ -1,91 +1,104 @@
 ---
-description: 规格计划 - 使用计划模板执行实施计划工作流，生成设计文档
+description: 技术设计 - 使用 TDD 模板执行技术设计工作流，生成设计文档
 handoffs: 
   - label: 创建任务
     agent: speckit.tasks
-    prompt: 将计划分解为任务
+    prompt: 将设计分解为任务
     send: true
   - label: 创建检查清单
     agent: speckit.checklist
     prompt: 为以下领域创建检查清单...
 ---
 
-**中文说明：** 本命令用于执行实施计划工作流，使用计划模板生成设计文档。包括技术上下文填充、宪法检查、研究文档生成、数据模型和合约生成等阶段。
+**说明：** 本命令用于执行技术设计工作流，使用 TDD 模板生成技术设计文档。包括技术上下文填充、架构检查、研究文档生成、数据模型和接口定义等阶段。
 
-## User Input
+## 用户输入
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+在继续之前，**必须**考虑用户输入（如果非空）。
 
-## Outline
+## 执行流程
 
-1. **Setup**: Run `.specify/scripts/powershell/setup-plan.ps1 -Json` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. **设置**: 
+   - 查找对应的 PRD 文档：`文档/开发文档/PRD/PRD-xxxxx-功能名称.md`
+   - 确定文档编号（与 PRD 相同）
+   - 创建 TDD 文档路径：`文档/开发文档/TDD/TDD-xxxxx-功能名称.md`
 
-2. **Load context**: Read FEATURE_SPEC and `.specify/memory/constitution.md`. Load IMPL_PLAN template (already copied).
+2. **加载上下文**: 
+   - 读取对应的 PRD 需求文档
+   - 读取 `.specify/memory/constitution.md` 项目宪法
+   - 加载 `.specify/templates/plan-template.md` TDD 模板
 
-3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
-   - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")
-   - Fill Constitution Check section from constitution
-   - Evaluate gates (ERROR if violations unjustified)
-   - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
-   - Phase 1: Generate data-model.md, contracts/, quickstart.md
-   - Phase 1: Update agent context by running the agent script
-   - Re-evaluate Constitution Check post-design
+3. **执行设计工作流**: 按照 TDD 模板结构：
+   - 填写技术上下文（标记未知项为"待澄清"）
+   - 填写架构检查章节（从宪法中提取）
+   - 评估门禁（如有违规且未说明则报错）
+   - 阶段 0: 生成 research.md（解决所有待澄清项）
+   - 阶段 1: 生成 data-model.md、contracts/、quickstart.md
+   - 重新评估设计后的架构检查
 
-4. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
+4. **停止并报告**: 命令在阶段 2 规划后结束。报告文档编号、TDD 路径和生成的产物。
 
-## Phases
+## 阶段详情
 
-### Phase 0: Outline & Research
+### 阶段 0: 大纲与研究
 
-1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
+1. **从技术上下文中提取未知项**：
+   - 对于每个"待澄清" → 研究任务
+   - 对于每个依赖 → 最佳实践任务
+   - 对于每个集成 → 模式任务
 
-2. **Generate and dispatch research agents**:
+2. **生成并分派研究任务**：
 
    ```text
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
+   对于技术上下文中的每个未知项:
+     任务: "研究 {未知项} 用于 {功能上下文}"
+   对于每个技术选择:
+     任务: "查找 {技术} 在 {领域} 中的最佳实践"
    ```
 
-3. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
-   - Rationale: [why chosen]
-   - Alternatives considered: [what else evaluated]
+3. **整合发现** 到 `research.md`，使用格式：
+   - 决策: [选择了什么]
+   - 理由: [为什么选择]
+   - 考虑的替代方案: [还评估了什么]
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+**输出**: research.md，所有"待澄清"已解决
 
-### Phase 1: Design & Contracts
+### 阶段 1: 设计与接口
 
-**Prerequisites:** `research.md` complete
+**前提条件:** `research.md` 完成
 
-1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
+1. **从需求文档提取实体** → `data-model.md`：
+   - 实体名称、字段、关系
+   - 来自需求的验证规则
+   - 状态转换（如适用）
 
-2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+2. **从功能需求生成 API 接口**：
+   - 对于每个用户操作 → 端点/方法
+   - 使用标准 REST/Repository 模式
+   - 输出接口定义到 `/contracts/`
 
-3. **Agent context update**:
-   - Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude`
-   - These scripts detect which AI agent is in use
-   - Update the appropriate agent-specific context file
-   - Add only new technology from current plan
-   - Preserve manual additions between markers
+3. **更新项目上下文**：
+   - 仅添加当前设计中的新技术
+   - 保留标记之间的手动添加
 
-**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
+**输出**: data-model.md, /contracts/*, quickstart.md
 
-## Key rules
+## 关键规则
 
-- Use absolute paths
-- ERROR on gate failures or unresolved clarifications
+- 使用绝对路径
+- 门禁失败或未解决的澄清项时报错
+- 遵循 Clean Architecture + MVVM 架构
+- 确保领域层无 Android 依赖
+
+## 文档信息
+
+**存放路径**: `文档/开发文档/TDD/TDD-xxxxx-功能名称.md`
+
+**相关文档**:
+- 需求文档: `文档/开发文档/PRD/PRD-xxxxx-功能名称.md`
+- 功能文档: `文档/开发文档/FD/FD-xxxxx-功能名称.md`
+- 测试计划: `文档/开发文档/TP/TP-xxxxx-功能名称.md`

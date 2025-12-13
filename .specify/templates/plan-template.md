@@ -1,104 +1,142 @@
-# Implementation Plan: [FEATURE]
+# 技术设计文档 (TDD): [功能名称]
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**文档编号**: TDD-[xxxxx]-[功能名称]  
+**创建日期**: [日期]  
+**需求文档**: `文档/开发文档/PRD/PRD-[xxxxx]-[功能名称].md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+---
 
-## Summary
+## 概述
 
-[Extract from feature spec: primary requirement + technical approach from research]
+[从需求文档提取: 主要需求 + 技术方案]
 
-## Technical Context
+## 技术上下文
 
 <!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
+  操作要求: 根据项目实际情况替换本节内容。
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**语言/版本**: Kotlin 2.0.21  
+**构建工具**: Gradle 8.13 + Kotlin DSL  
+**主要依赖**: Jetpack Compose, Hilt, Room, Retrofit  
+**存储**: Room 数据库 + EncryptedSharedPreferences  
+**测试**: JUnit 4.13.2, MockK 1.13.13  
+**目标平台**: Android (Min SDK 24, Target SDK 35)  
+**项目类型**: Android 移动应用  
+**性能目标**: [根据功能指定，例如 "UI响应 < 100ms"]  
+**约束条件**: [根据功能指定，例如 "内存占用 < 50MB"]
 
-## Constitution Check
+## 架构检查
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*门禁: 必须在设计前通过。设计完成后重新检查。*
 
-[Gates determined based on constitution file]
+- [ ] 符合 Clean Architecture + MVVM 架构
+- [ ] 遵循依赖注入规范 (Hilt)
+- [ ] 数据层与表现层分离
+- [ ] 使用 Result<T> 进行错误处理
 
-## Project Structure
+## 项目结构
 
-### Documentation (this feature)
+### 文档结构 (本功能)
 
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+文档/开发文档/
+├── PRD/PRD-[xxxxx]-[功能名称].md    # 需求文档
+├── TDD/TDD-[xxxxx]-[功能名称].md    # 本文档
+├── FD/FD-[xxxxx]-[功能名称].md      # 功能文档
+└── TP/TP-[xxxxx]-[功能名称].md      # 测试计划
 ```
 
-### Source Code (repository root)
+### 代码结构 (涉及的模块)
+
 <!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
+  操作要求: 根据功能实际涉及的模块替换下面的结构。
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+com.empathy.ai/
+├── domain/                          # 领域层
+│   ├── model/                       # 业务实体
+│   │   └── [新增模型].kt
+│   ├── repository/                  # 仓库接口
+│   │   └── [新增接口].kt
+│   └── usecase/                     # 用例
+│       └── [新增用例].kt
+│
+├── data/                            # 数据层
+│   ├── local/                       # 本地存储
+│   │   ├── dao/                     # DAO
+│   │   └── entity/                  # 数据库实体
+│   └── repository/                  # 仓库实现
+│       └── [新增实现].kt
+│
+└── presentation/                    # 表现层
+    ├── ui/screen/[功能]/            # UI 屏幕
+    │   ├── [功能]Screen.kt
+    │   ├── [功能]UiState.kt
+    │   └── [功能]UiEvent.kt
+    └── viewmodel/                   # ViewModel
+        └── [功能]ViewModel.kt
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**结构决策**: [记录选择的结构和原因]
 
-## Complexity Tracking
+## 详细设计
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+### 数据模型
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+<!--
+  操作要求: 定义本功能涉及的数据模型。
+-->
+
+```kotlin
+// 示例: 领域模型
+data class [EntityName](
+    val id: String,
+    val name: String,
+    // ...
+)
+```
+
+### 接口定义
+
+<!--
+  操作要求: 定义本功能涉及的接口。
+-->
+
+```kotlin
+// 示例: Repository 接口
+interface [RepositoryName] {
+    suspend fun getData(): Result<List<Entity>>
+    suspend fun saveData(entity: Entity): Result<Unit>
+}
+```
+
+### 关键流程
+
+<!--
+  操作要求: 描述关键业务流程。
+-->
+
+1. [步骤1描述]
+2. [步骤2描述]
+3. [步骤3描述]
+
+## 复杂度追踪
+
+> **仅在架构检查有违规需要说明时填写**
+
+| 违规项 | 必要原因 | 拒绝更简单方案的原因 |
+|--------|----------|---------------------|
+| [例如: 额外的抽象层] | [当前需求] | [为什么简单方案不够] |
+
+---
+
+## 文档信息
+
+**存放路径**: `文档/开发文档/TDD/TDD-[xxxxx]-[功能名称].md`
+
+**相关文档**:
+- 需求文档: `文档/开发文档/PRD/PRD-[xxxxx]-[功能名称].md`
+- 功能文档: `文档/开发文档/FD/FD-[xxxxx]-[功能名称].md`
+- 测试计划: `文档/开发文档/TP/TP-[xxxxx]-[功能名称].md`
