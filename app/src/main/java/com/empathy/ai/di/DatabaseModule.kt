@@ -42,6 +42,7 @@ object DatabaseModule {
                     models_json TEXT NOT NULL,
                     default_model_id TEXT NOT NULL,
                     is_default INTEGER NOT NULL DEFAULT 0,
+                    timeout_ms INTEGER NOT NULL DEFAULT 30000,
                     created_at INTEGER NOT NULL
                 )
             """.trimIndent())
@@ -50,6 +51,20 @@ object DatabaseModule {
             db.execSQL("""
                 CREATE INDEX IF NOT EXISTS idx_ai_providers_is_default 
                 ON ai_providers(is_default)
+            """.trimIndent())
+        }
+    }
+    
+    /**
+     * 数据库迁移: 版本 2 -> 3
+     * 为 ai_providers 表添加 timeout_ms 字段
+     */
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 添加 timeout_ms 列，默认值 30000 (30秒)
+            db.execSQL("""
+                ALTER TABLE ai_providers 
+                ADD COLUMN timeout_ms INTEGER NOT NULL DEFAULT 30000
             """.trimIndent())
         }
     }
@@ -70,7 +85,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "empathy_ai_database"
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             // MVP阶段简化:如果表结构变更,卸载重装APP即可
             // 正式发布后需要添加 Migration 策略
             .fallbackToDestructiveMigration()

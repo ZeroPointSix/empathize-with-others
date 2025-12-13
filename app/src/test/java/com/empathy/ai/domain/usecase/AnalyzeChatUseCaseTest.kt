@@ -5,6 +5,8 @@ import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
@@ -37,7 +39,19 @@ class AnalyzeChatUseCaseTest {
     private lateinit var privacyRepository: PrivacyRepository
     private lateinit var aiRepository: AiRepository
     private lateinit var settingsRepository: SettingsRepository
+    private lateinit var aiProviderRepository: AiProviderRepository
     private lateinit var useCase: AnalyzeChatUseCase
+
+    // 测试用的默认服务商
+    private val testProvider = AiProvider(
+        id = "test_provider",
+        name = "Test Provider",
+        baseUrl = "https://api.test.com",
+        apiKey = "test_api_key",
+        models = emptyList(),
+        defaultModelId = "test-model",
+        isDefault = true
+    )
 
     @Before
     fun setup() {
@@ -46,12 +60,14 @@ class AnalyzeChatUseCaseTest {
         privacyRepository = mockk()
         aiRepository = mockk()
         settingsRepository = mockk()
+        aiProviderRepository = mockk()
         useCase = AnalyzeChatUseCase(
             contactRepository = contactRepository,
             brainTagRepository = brainTagRepository,
             privacyRepository = privacyRepository,
             aiRepository = aiRepository,
-            settingsRepository = settingsRepository
+            settingsRepository = settingsRepository,
+            aiProviderRepository = aiProviderRepository
         )
     }
 
@@ -90,7 +106,8 @@ class AnalyzeChatUseCaseTest {
         val allTags = redTags + greenTags
 
         // Mock repository 行为
-        coEvery { settingsRepository.getApiKey() } returns Result.success("test_api_key")
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { settingsRepository.getDataMaskingEnabled() } returns Result.success(true)
         coEvery { contactRepository.getProfile("contact_1") } returns Result.success(profile)
         coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(allTags)
         coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(emptyMap())
@@ -101,7 +118,7 @@ class AnalyzeChatUseCaseTest {
             strategyAnalysis = "测试分析",
             riskLevel = RiskLevel.SAFE
         )
-        coEvery { aiRepository.analyzeChat(any(), any()) } returns Result.success(expectedResult)
+        coEvery { aiRepository.analyzeChat(any(), any(), any()) } returns Result.success(expectedResult)
 
         val rawContext = listOf("你好", "最近怎么样")
 
@@ -115,6 +132,7 @@ class AnalyzeChatUseCaseTest {
         val promptSlot = slot<String>()
         coVerify {
             aiRepository.analyzeChat(
+                provider = any(),
                 promptContext = capture(promptSlot),
                 systemInstruction = any()
             )
@@ -146,7 +164,8 @@ class AnalyzeChatUseCaseTest {
             "13800138000" to "[PHONE_01]"
         )
 
-        coEvery { settingsRepository.getApiKey() } returns Result.success("test_api_key")
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { settingsRepository.getDataMaskingEnabled() } returns Result.success(true)
         coEvery { contactRepository.getProfile("contact_1") } returns Result.success(profile)
         coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(emptyList())
         coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(privacyMapping)
@@ -156,7 +175,7 @@ class AnalyzeChatUseCaseTest {
             strategyAnalysis = "测试",
             riskLevel = RiskLevel.SAFE
         )
-        coEvery { aiRepository.analyzeChat(any(), any()) } returns Result.success(expectedResult)
+        coEvery { aiRepository.analyzeChat(any(), any(), any()) } returns Result.success(expectedResult)
 
         val rawContext = listOf("我是张三", "我的电话是13800138000")
 
@@ -170,6 +189,7 @@ class AnalyzeChatUseCaseTest {
         val promptSlot = slot<String>()
         coVerify {
             aiRepository.analyzeChat(
+                provider = any(),
                 promptContext = capture(promptSlot),
                 systemInstruction = any()
             )
@@ -192,7 +212,8 @@ class AnalyzeChatUseCaseTest {
             facts = emptyMap()
         )
 
-        coEvery { settingsRepository.getApiKey() } returns Result.success("test_api_key")
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { settingsRepository.getDataMaskingEnabled() } returns Result.success(true)
         coEvery { contactRepository.getProfile("contact_1") } returns Result.success(profile)
         coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(emptyList())
         coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(emptyMap())
@@ -202,7 +223,7 @@ class AnalyzeChatUseCaseTest {
             strategyAnalysis = "测试",
             riskLevel = RiskLevel.SAFE
         )
-        coEvery { aiRepository.analyzeChat(any(), any()) } returns Result.success(expectedResult)
+        coEvery { aiRepository.analyzeChat(any(), any(), any()) } returns Result.success(expectedResult)
 
         val rawContext = listOf("你好")
 
@@ -215,9 +236,9 @@ class AnalyzeChatUseCaseTest {
     }
 
     @Test
-    fun `should return failure when API key is missing`() = runTest {
-        // Given - 没有 API Key
-        coEvery { settingsRepository.getApiKey() } returns Result.success(null)
+    fun `should return failure when default provider is not configured`() = runTest {
+        // Given - 没有配置默认服务商
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(null)
 
         val rawContext = listOf("你好")
 
@@ -228,13 +249,31 @@ class AnalyzeChatUseCaseTest {
         assertTrue(result.isFailure)
         val exception = result.exceptionOrNull()
         assertTrue(exception is IllegalStateException)
-        assertTrue(exception!!.message!!.contains("未配置 API Key"))
+        assertTrue(exception!!.message!!.contains("未配置默认 AI 服务商"))
+    }
+
+    @Test
+    fun `should return failure when provider API key is empty`() = runTest {
+        // Given - 服务商的 API Key 为空
+        val providerWithoutKey = testProvider.copy(apiKey = "")
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(providerWithoutKey)
+
+        val rawContext = listOf("你好")
+
+        // When
+        val result = useCase(contactId = "contact_1", rawScreenContext = rawContext)
+
+        // Then
+        assertTrue(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is IllegalStateException)
+        assertTrue(exception!!.message!!.contains("API Key 为空"))
     }
 
     @Test
     fun `should return failure when contact profile not found`() = runTest {
         // Given - 联系人不存在
-        coEvery { settingsRepository.getApiKey() } returns Result.success("test_api_key")
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
         coEvery { contactRepository.getProfile("contact_1") } returns Result.success(null)
 
         val rawContext = listOf("你好")
@@ -260,7 +299,8 @@ class AnalyzeChatUseCaseTest {
             facts = emptyMap()
         )
 
-        coEvery { settingsRepository.getApiKey() } returns Result.success("test_api_key")
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { settingsRepository.getDataMaskingEnabled() } returns Result.success(true)
         coEvery { contactRepository.getProfile("contact_1") } returns Result.success(profile)
         coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(emptyList())
         coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(emptyMap())
@@ -270,7 +310,7 @@ class AnalyzeChatUseCaseTest {
             strategyAnalysis = "测试",
             riskLevel = RiskLevel.SAFE
         )
-        coEvery { aiRepository.analyzeChat(any(), any()) } returns Result.success(expectedResult)
+        coEvery { aiRepository.analyzeChat(any(), any(), any()) } returns Result.success(expectedResult)
 
         // 提供 5 条消息，但只应该取最近 3 条
         val rawContext = listOf("msg1", "msg2", "msg3", "msg4", "msg5")
@@ -284,6 +324,7 @@ class AnalyzeChatUseCaseTest {
         val promptSlot = slot<String>()
         coVerify {
             aiRepository.analyzeChat(
+                provider = any(),
                 promptContext = capture(promptSlot),
                 systemInstruction = any()
             )

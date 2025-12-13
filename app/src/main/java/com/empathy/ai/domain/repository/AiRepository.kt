@@ -16,11 +16,13 @@ interface AiRepository {
      *
      * [功能 A] 对聊天上下文进行深度分析，给出策略建议
      *
+     * @param provider AI服务商配置（包含baseUrl、apiKey、model等）
      * @param promptContext 构建好的 Prompt (已包含脱敏后的上下文 + 目标 + 画像)
      * @param systemInstruction 系统指令
      * @return 包含建议回复、心理分析、风险等级的结构体
      */
     suspend fun analyzeChat(
+        provider: com.empathy.ai.domain.model.AiProvider,
         promptContext: String,
         systemInstruction: String
     ): Result<AnalysisResult>
@@ -30,11 +32,13 @@ interface AiRepository {
      *
      * [功能 B] 实时检查用户正在输入的草稿是否触发雷区
      *
+     * @param provider AI服务商配置（包含baseUrl、apiKey、model等）
      * @param draft 用户正在输入的草稿
      * @param riskRules 相关的雷区标签列表(文本形式)
      * @return 详细的安全检查结果
      */
     suspend fun checkDraftSafety(
+        provider: com.empathy.ai.domain.model.AiProvider,
         draft: String,
         riskRules: List<String>
     ): Result<SafetyCheckResult>
@@ -44,10 +48,14 @@ interface AiRepository {
      *
      * [功能 D] 从文本中提取关键信息，包括事实、雷区和策略
      *
+     * @param provider AI服务商配置（包含baseUrl、apiKey、model等）
      * @param inputText 输入的文本内容
      * @return 提取的结构化信息
      */
-    suspend fun extractTextInfo(inputText: String): Result<ExtractedData>
+    suspend fun extractTextInfo(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        inputText: String
+    ): Result<ExtractedData>
 
     /**
      * 多模态转文字 (STT / OCR)
