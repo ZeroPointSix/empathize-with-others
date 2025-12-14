@@ -21,25 +21,29 @@
 - **JDK**: 17
 - **Min SDK**: 24 (Android 7.0)
 - **Target SDK**: 35
+- **KSP**: 2.0.21-1.0.28
 
 ## 核心技术
 
 ### ✅ UI 层
 
 - **Jetpack Compose**：2024.12.01（BOM 管理）
-- **Material 3**：使用 Material Design 3 的声明式 UI
+- **Material 3**：1.3.1（使用 Material Design 3 的声明式 UI）
 - **Navigation Compose**：2.8.5
+- **Activity Compose**：1.9.3
+- **Material Icons Extended**：完整图标库
 
 ### ✅ 架构
 
 - **模式**：清洁架构 + MVVM
 - **DI**：Hilt 2.52（基于 Dagger 的依赖注入）
+- **Hilt Navigation Compose**：1.2.0
 - **生命周期**：AndroidX Lifecycle 2.8.7 与 Compose 集成
 
 ### ✅ 数据层
 
 - **本地数据库**：Room 2.6.1 与 KTX 扩展
-- **网络**：Retrofit 2.11.0 + OkHttp 4.12.0
+- **网络**：Retrofit 2.11.0 + OkHttp 4.12.0 + OkHttp Logging Interceptor
 - **JSON**：Moshi 1.15.1 与 Kotlin 代码生成
 - **安全**：EncryptedSharedPreferences（androidx.security.crypto 1.1.0-alpha06）
 
@@ -48,12 +52,17 @@
 - **协程**：Kotlin Coroutines 1.9.0
 - **Flow**：用于响应式数据流
 
+### ✅ 媒体处理（已配置但未实现）
+
+- **FFmpeg Kit**：6.0.LTS（音视频处理）
+
 ## ✅ 测试
 
 - **单元测试**：JUnit 4.13.2
+- **Android 测试**：AndroidX JUnit 1.2.1
 - **模拟**：MockK 1.13.13
 - **协程测试**：kotlinx-coroutines-test 1.9.0
-- **UI 测试**：Compose UI Test + Espresso
+- **UI 测试**：Compose UI Test + Espresso 3.6.1
 
 ## 常用命令
 
@@ -160,5 +169,18 @@ implementation("androidx.core:core-ktx:1.15.0")
 ## 技术债务
 
 - **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
-- **AI解析器**: 需要验证AiResponseParser的完整性和错误处理
+  - 代码架构已设计：ExtractedData模型、AiRepository接口定义
+  - ❌ 实际实现：AiRepositoryImpl.transcribeMedia直接返回未实现异常
+  - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
+
+- **AI响应解析器**: 需要验证AiResponseParser的完整性和错误处理
+  - 代码架构存在：AiResponseParser接口、FallbackHandler等
+  - ⚠️ 集成状态不明：需要验证解析器在实际AI调用中的使用情况
+
 - **无障碍集成**: 需要验证WeChatDetector与FloatingWindowService的实际协作
+  - 代码架构存在：WeChatDetector、FloatingWindowManager等
+  - ❌ 实际集成未验证：需要确认与悬浮窗服务的协作
+
+- **规则引擎集成**: 需要验证RuleEngine与CheckDraftUseCase的集成情况
+  - 代码架构完整：RuleEngine、多种匹配策略
+  - ⚠️ 集成状态不明：可能未在实际业务流程中被调用
