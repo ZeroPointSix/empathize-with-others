@@ -30,4 +30,10 @@ data class BrainTag(
     val content: String,
     val type: TagType,
     val source: String = "MANUAL"
-)
+) {
+    /**
+     * 是否为AI推断的标签
+     */
+    val isAiInferred: Boolean
+        get() = source == "AI_INFERRED"
+}

@@ -26,8 +26,9 @@ import com.empathy.ai.presentation.ui.component.button.SecondaryButton
 import com.empathy.ai.presentation.ui.component.card.ProfileCard
 import com.empathy.ai.presentation.ui.component.chip.TagChip
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
+import com.empathy.ai.presentation.ui.component.relationship.FactList
+import com.empathy.ai.presentation.ui.component.relationship.RelationshipScoreSection
 import com.empathy.ai.presentation.ui.component.state.ErrorView
-import com.empathy.ai.presentation.ui.component.state.LoadingIndicator
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.viewmodel.ContactDetailViewModel
 
@@ -57,6 +58,9 @@ fun ContactDetailScreen(
     // 加载联系人数据
     LaunchedEffect(contactId) {
         viewModel.onEvent(ContactDetailUiEvent.LoadContact(contactId))
+        if (contactId.isNotBlank()) {
+            viewModel.onEvent(ContactDetailUiEvent.LoadRelationshipData(contactId))
+        }
     }
 
     // 监听保存成功，自动返回
@@ -209,6 +213,33 @@ private fun ContactDetailContent(
                     contact = uiState.originalProfile,
                     onEdit = { onEvent(ContactDetailUiEvent.StartEdit) }
                 )
+            }
+
+            // 关系进展展示（阶段6新增）
+            item {
+                RelationshipScoreSection(
+                    score = uiState.relationshipScore,
+                    level = uiState.relationshipLevel,
+                    trend = uiState.relationshipTrend,
+                    lastInteractionDate = uiState.lastInteractionDate
+                )
+            }
+
+            // Facts列表展示（阶段6新增）
+            if (uiState.facts.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "画像记录",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                item {
+                    FactList(
+                        facts = uiState.facts,
+                        isEditMode = false
+                    )
+                }
             }
         }
 
@@ -405,20 +436,12 @@ private fun ContactDetailScreenViewPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系，促进项目顺利进行",
                     contextDepth = 10,
-                    facts = mapOf(
-                        "职业" to "产品经理",
-                        "爱好" to "摄影、旅行",
-                        "性格" to "外向、热情"
-                    )
+                    facts = emptyList()
                 ),
                 name = "张三",
                 targetGoal = "建立良好的合作关系，促进项目顺利进行",
                 contextDepth = 10,
-                facts = mapOf(
-                    "职业" to "产品经理",
-                    "爱好" to "摄影、旅行",
-                    "性格" to "外向、热情"
-                ),
+                facts = emptyList(),
                 brainTags = listOf(
                     BrainTag(
                         id = 1,
@@ -514,7 +537,7 @@ private fun ContactDetailScreenDarkPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系",
                     contextDepth = 10,
-                    facts = mapOf("职业" to "产品经理")
+                    facts = emptyList()
                 ),
                 name = "张三",
                 targetGoal = "建立良好的合作关系",
@@ -534,3 +557,6 @@ private fun ContactDetailScreenDarkPreview() {
         )
     }
 }
+
+
+

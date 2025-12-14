@@ -348,7 +348,7 @@ private fun ChatScreenPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系",
                     contextDepth = 10,
-                    facts = emptyMap()
+                    facts = emptyList()
                 ),
                 messages = listOf(
                     ChatMessage(
@@ -396,7 +396,7 @@ private fun ChatScreenEmptyPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系",
                     contextDepth = 10,
-                    facts = emptyMap()
+                    facts = emptyList()
                 ),
                 messages = emptyList()
             ),
@@ -418,7 +418,7 @@ private fun ChatScreenSafetyWarningPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系",
                     contextDepth = 10,
-                    facts = emptyMap()
+                    facts = emptyList()
                 ),
                 messages = listOf(
                     ChatMessage(
@@ -449,7 +449,7 @@ private fun ChatScreenAnalyzingPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系",
                     contextDepth = 10,
-                    facts = emptyMap()
+                    facts = emptyList()
                 ),
                 messages = listOf(
                     ChatMessage(
@@ -483,7 +483,7 @@ private fun ChatScreenDarkPreview() {
                     name = "张三",
                     targetGoal = "建立良好的合作关系",
                     contextDepth = 10,
-                    facts = emptyMap()
+                    facts = emptyList()
                 ),
                 messages = listOf(
                     ChatMessage(
@@ -505,3 +505,4 @@ private fun ChatScreenDarkPreview() {
         )
     }
 }
+

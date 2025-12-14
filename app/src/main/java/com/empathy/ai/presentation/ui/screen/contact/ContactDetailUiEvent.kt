@@ -240,4 +240,18 @@ sealed interface ContactDetailUiEvent {
      * 确认导航返回（忽略未保存的更改）
      */
     data object ConfirmNavigateBack : ContactDetailUiEvent
+
+    // === 关系进展事件（阶段6新增）===
+
+    /**
+     * 加载关系进展数据
+     * @param contactId 联系人ID
+     */
+    data class LoadRelationshipData(val contactId: String) : ContactDetailUiEvent
+
+    /**
+     * 删除Fact事实
+     * @param fact 要删除的事实
+     */
+    data class DeleteFactItem(val fact: com.empathy.ai.domain.model.Fact) : ContactDetailUiEvent
 }

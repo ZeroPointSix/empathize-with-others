@@ -8,6 +8,9 @@ import com.empathy.ai.data.local.AppDatabase
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.BrainTagDao
 import com.empathy.ai.data.local.dao.ContactDao
+import com.empathy.ai.data.local.dao.ConversationLogDao
+import com.empathy.ai.data.local.dao.DailySummaryDao
+import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,8 +22,6 @@ import javax.inject.Singleton
  * 数据库模块
  *
  * 提供 Room Database 和 DAO 的依赖注入配置。
- *
- * @constructor 创建数据库模块
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -32,8 +33,8 @@ object DatabaseModule {
      */
     private val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // 创建 ai_providers 表
-            db.execSQL("""
+            db.execSQL(
+                """
                 CREATE TABLE IF NOT EXISTS ai_providers (
                     id TEXT PRIMARY KEY NOT NULL,
                     name TEXT NOT NULL,
@@ -45,37 +46,110 @@ object DatabaseModule {
                     timeout_ms INTEGER NOT NULL DEFAULT 30000,
                     created_at INTEGER NOT NULL
                 )
-            """.trimIndent())
-            
-            // 创建索引以优化默认服务商查询
-            db.execSQL("""
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
                 CREATE INDEX IF NOT EXISTS idx_ai_providers_is_default 
                 ON ai_providers(is_default)
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
     }
-    
+
     /**
      * 数据库迁移: 版本 2 -> 3
      * 为 ai_providers 表添加 timeout_ms 字段
      */
     private val MIGRATION_2_3 = object : Migration(2, 3) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // 添加 timeout_ms 列，默认值 30000 (30秒)
-            db.execSQL("""
+            db.execSQL(
+                """
                 ALTER TABLE ai_providers 
                 ADD COLUMN timeout_ms INTEGER NOT NULL DEFAULT 30000
-            """.trimIndent())
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 3 -> 4
+     * 添加记忆系统相关表和字段
+     */
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 创建conversation_logs表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS conversation_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    user_input TEXT NOT NULL,
+                    ai_response TEXT,
+                    timestamp INTEGER NOT NULL,
+                    is_summarized INTEGER NOT NULL DEFAULT 0,
+                    FOREIGN KEY(contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_conv_contact ON conversation_logs(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_conv_timestamp ON conversation_logs(timestamp)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_conv_summarized ON conversation_logs(is_summarized)")
+
+            // 2. 创建daily_summaries表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS daily_summaries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    summary_date TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    key_events_json TEXT NOT NULL,
+                    relationship_score INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    FOREIGN KEY(contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_summary_contact ON daily_summaries(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_summary_date ON daily_summaries(summary_date)")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_summary_contact_date " +
+                    "ON daily_summaries(contact_id, summary_date)"
+            )
+
+            // 3. 添加profiles新字段
+            db.execSQL("ALTER TABLE profiles ADD COLUMN relationship_score INTEGER NOT NULL DEFAULT 50")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN last_interaction_date TEXT")
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 4 -> 5
+     * 添加失败任务表
+     */
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS failed_summary_tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    summary_date TEXT NOT NULL,
+                    failure_reason TEXT NOT NULL,
+                    retry_count INTEGER NOT NULL DEFAULT 0,
+                    failed_at INTEGER NOT NULL,
+                    last_retry_at INTEGER
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_failed_contact ON failed_summary_tasks(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_failed_at ON failed_summary_tasks(failed_at)")
         }
     }
 
     /**
      * 提供 AppDatabase 实例
-     *
-     * 使用单例模式确保整个应用共享同一个数据库实例。
-     *
-     * @param context 应用上下文
-     * @return AppDatabase 实例
      */
     @Provides
     @Singleton
@@ -85,43 +159,29 @@ object DatabaseModule {
             AppDatabase::class.java,
             "empathy_ai_database"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-            // MVP阶段简化:如果表结构变更,卸载重装APP即可
-            // 正式发布后需要添加 Migration 策略
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .fallbackToDestructiveMigration()
             .build()
     }
 
-    /**
-     * 提供 ContactDao
-     *
-     * @param database AppDatabase 实例
-     * @return ContactDao 实例
-     */
     @Provides
-    fun provideContactDao(database: AppDatabase): ContactDao {
-        return database.contactDao()
-    }
+    fun provideContactDao(database: AppDatabase): ContactDao = database.contactDao()
 
-    /**
-     * 提供 BrainTagDao
-     *
-     * @param database AppDatabase 实例
-     * @return BrainTagDao 实例
-     */
     @Provides
-    fun provideBrainTagDao(database: AppDatabase): BrainTagDao {
-        return database.brainTagDao()
-    }
+    fun provideBrainTagDao(database: AppDatabase): BrainTagDao = database.brainTagDao()
 
-    /**
-     * 提供 AiProviderDao
-     *
-     * @param database AppDatabase 实例
-     * @return AiProviderDao 实例
-     */
     @Provides
-    fun provideAiProviderDao(database: AppDatabase): AiProviderDao {
-        return database.aiProviderDao()
-    }
+    fun provideAiProviderDao(database: AppDatabase): AiProviderDao = database.aiProviderDao()
+
+    @Provides
+    fun provideConversationLogDao(database: AppDatabase): ConversationLogDao =
+        database.conversationLogDao()
+
+    @Provides
+    fun provideDailySummaryDao(database: AppDatabase): DailySummaryDao =
+        database.dailySummaryDao()
+
+    @Provides
+    fun provideFailedSummaryTaskDao(database: AppDatabase): FailedSummaryTaskDao =
+        database.failedSummaryTaskDao()
 }

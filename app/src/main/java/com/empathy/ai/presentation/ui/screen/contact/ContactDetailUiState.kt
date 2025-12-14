@@ -2,6 +2,10 @@ package com.empathy.ai.presentation.ui.screen.contact
 
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.RelationshipLevel
+import com.empathy.ai.domain.model.RelationshipTrend
+import com.empathy.ai.domain.util.MemoryConstants
 
 /**
  * 联系人详情界面的UI状态
@@ -31,7 +35,6 @@ data class ContactDetailUiState(
     val name: String = "",
     val targetGoal: String = "",
     val contextDepth: Int = 10,
-    val facts: Map<String, String> = emptyMap(),
     val newFactKey: String = "",
     val newFactValue: String = "",
 
@@ -59,7 +62,15 @@ data class ContactDetailUiState(
 
     // 导航状态
     val shouldNavigateBack: Boolean = false,
-    val shouldNavigateToChat: String = ""
+    val shouldNavigateToChat: String = "",
+
+    // 关系进展状态（阶段6新增）
+    val relationshipScore: Int = MemoryConstants.DEFAULT_RELATIONSHIP_SCORE,
+    val relationshipLevel: RelationshipLevel = RelationshipLevel.ACQUAINTANCE,
+    val relationshipTrend: RelationshipTrend = RelationshipTrend.STABLE,
+    val lastInteractionDate: String? = null,
+    val facts: List<Fact> = emptyList(),
+    val isLoadingRelationship: Boolean = false
 ) {
     // 计算属性：是否为新建联系人
     val isNewContact: Boolean
@@ -84,6 +95,14 @@ data class ContactDetailUiState(
     // 计算属性：事实数量
     val factsCount: Int
         get() = facts.size
+    
+    // 计算属性：最近的事实（7天内）
+    val recentFacts: List<Fact>
+        get() {
+            val recentThreshold = System.currentTimeMillis() - 
+                MemoryConstants.RECENT_DAYS * MemoryConstants.ONE_DAY_MILLIS
+            return facts.filter { it.timestamp >= recentThreshold }
+        }
 
     // 计算属性：标签数量（按类型分组统计）
     val tagStats: Map<String, Int>

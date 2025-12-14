@@ -206,7 +206,10 @@ class ContactListViewModel @Inject constructor(
         val filteredContacts = currentState.contacts.filter { contact ->
             contact.name.contains(query, ignoreCase = true) ||
             contact.targetGoal.contains(query, ignoreCase = true) ||
-            contact.facts.values.any { it.contains(query, ignoreCase = true) }
+            contact.facts.any { fact -> 
+                fact.key.contains(query, ignoreCase = true) || 
+                fact.value.contains(query, ignoreCase = true) 
+            }
         }
 
         _uiState.update {

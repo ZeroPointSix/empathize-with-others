@@ -1154,4 +1154,88 @@ $COMMON_JSON_RULES""".trim()
             Result.failure(e)
         }
     }
+
+    /**
+     * 通用文本生成
+     *
+     * 调用 AI 模型生成文本，用于每日总结等场景。
+     *
+     * @param provider AI服务商配置
+     * @param prompt 用户提示词
+     * @param systemInstruction 系统指令
+     * @return 生成的文本
+     */
+    override suspend fun generateText(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        prompt: String,
+        systemInstruction: String
+    ): Result<String> {
+        return try {
+            // 1. 从provider获取配置并构建完整URL
+            val url = buildChatCompletionsUrl(provider.baseUrl)
+            val headers = mapOf(
+                "Authorization" to "Bearer ${provider.apiKey}",
+                "Content-Type" to "application/json"
+            )
+
+            // 2. 选择模型
+            val model = if (provider.defaultModelId.isNotBlank()) {
+                provider.defaultModelId
+            } else {
+                when {
+                    provider.name.contains("DeepSeek", ignoreCase = true) -> MODEL_DEEPSEEK
+                    provider.name.contains("OpenAI", ignoreCase = true) -> MODEL_OPENAI
+                    else -> MODEL_OPENAI
+                }
+            }
+
+            // 3. 构建消息
+            val messages = listOf(
+                MessageDto(role = "system", content = systemInstruction),
+                MessageDto(role = "user", content = prompt)
+            )
+
+            val request = ChatRequestDto(
+                model = model,
+                messages = messages,
+                temperature = 0.7,
+                stream = false
+            )
+
+            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (generateText) ===")
+            android.util.Log.d("AiRepositoryImpl", "URL: $url")
+            android.util.Log.d("AiRepositoryImpl", "Model: $model")
+            android.util.Log.d("AiRepositoryImpl", "Provider: ${provider.name}")
+
+            // 4. 调用 API（带重试）
+            val response = withRetry {
+                api.chatCompletion(url, headers, request)
+            }
+
+            // 5. 提取响应内容
+            val content = response.choices.firstOrNull()
+                ?.message?.content
+                ?: return Result.failure(Exception("Empty response from AI"))
+
+            Result.success(content)
+
+        } catch (e: retrofit2.HttpException) {
+            val errorBody = try {
+                e.response()?.errorBody()?.string() ?: "No error body"
+            } catch (ex: Exception) {
+                "Failed to read error body: ${ex.message}"
+            }
+
+            android.util.Log.e("AiRepositoryImpl", "=== HTTP错误详情 (generateText) ===")
+            android.util.Log.e("AiRepositoryImpl", "状态码: ${e.code()}")
+            android.util.Log.e("AiRepositoryImpl", "错误信息: ${e.message()}")
+            android.util.Log.e("AiRepositoryImpl", "错误体: $errorBody")
+            android.util.Log.e("AiRepositoryImpl", "Provider: ${provider.name}")
+
+            Result.failure(Exception("HTTP ${e.code()}: $errorBody"))
+        } catch (e: Exception) {
+            android.util.Log.e("AiRepositoryImpl", "文本生成失败 (generateText)", e)
+            Result.failure(e)
+        }
+    }
 }
