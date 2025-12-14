@@ -104,12 +104,15 @@ class PrivacyPreferences @Inject constructor(
 ```kotlin
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    application: Application,
+    @ApplicationContext private val application: Application,
     private val settingsRepository: SettingsRepository,
     private val floatingWindowPreferences: FloatingWindowPreferences,
     private val privacyPreferences: PrivacyPreferences,  // 🆕 注入
     private val aiProviderRepository: AiProviderRepository
 ) : AndroidViewModel(application) {
+    
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
     
     // 加载设置
     private fun loadSettings() {
@@ -136,6 +139,14 @@ class SettingsViewModel @Inject constructor(
         privacyPreferences.setLocalFirstModeEnabled(newValue)
         _uiState.update { it.copy(localFirstMode = newValue) }
     }
+    
+    fun onEvent(event: SettingsUiEvent) {
+        when (event) {
+            is SettingsUiEvent.ToggleDataMasking -> toggleDataMasking()
+            is SettingsUiEvent.ToggleLocalFirstMode -> toggleLocalFirstMode()
+            // 其他事件处理...
+        }
+    }
 }
 ```
 
@@ -144,8 +155,10 @@ class SettingsViewModel @Inject constructor(
 **在 `PrivacyEngine` 中**：
 
 ```kotlin
+@Singleton
 class PrivacyEngine @Inject constructor(
-    private val privacyPreferences: PrivacyPreferences
+    private val privacyPreferences: PrivacyPreferences,
+    private val privacyRepository: PrivacyRepository
 ) {
     suspend fun maskSensitiveData(text: String): String {
         // 检查是否启用数据掩码
@@ -154,7 +167,9 @@ class PrivacyEngine @Inject constructor(
         }
         
         // 执行掩码逻辑
-        // ...
+        val mappings = privacyRepository.getAllMappingRules()
+        // 应用掩码规则...
+        return maskedText
     }
 }
 ```
@@ -162,22 +177,24 @@ class PrivacyEngine @Inject constructor(
 **在 `CheckDraftUseCase` 中**：
 
 ```kotlin
+@Singleton
 class CheckDraftUseCase @Inject constructor(
     private val privacyPreferences: PrivacyPreferences,
-    private val aiRepository: AiRepository
+    private val aiRepository: AiRepository,
+    private val ruleEngine: RuleEngine
 ) {
     suspend operator fun invoke(draft: String): Result<SafetyCheckResult> {
         // 检查是否启用本地优先模式
         if (privacyPreferences.isLocalFirstModeEnabled()) {
             // 先使用本地规则检查
-            val localResult = checkWithLocalRules(draft)
+            val localResult = ruleEngine.checkSafety(draft)
             if (localResult.isSafe) {
                 return Result.success(localResult)
             }
         }
         
         // 使用AI检查
-        return checkWithAi(draft)
+        return aiRepository.checkSafety(draft)
     }
 }
 ```
@@ -214,6 +231,7 @@ class CheckDraftUseCase @Inject constructor(
 @Test
 fun `数据掩码开关能正确保存和读取`() {
     // Given
+    val context = ApplicationProvider.getApplicationContext<Context>()
     val preferences = PrivacyPreferences(context)
     
     // When
@@ -221,6 +239,19 @@ fun `数据掩码开关能正确保存和读取`() {
     
     // Then
     assertFalse(preferences.isDataMaskingEnabled())
+}
+
+@Test
+fun `本地优先模式开关能正确保存和读取`() {
+    // Given
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val preferences = PrivacyPreferences(context)
+    
+    // When
+    preferences.setLocalFirstModeEnabled(false)
+    
+    // Then
+    assertFalse(preferences.isLocalFirstModeEnabled())
 }
 ```
 
@@ -230,14 +261,33 @@ fun `数据掩码开关能正确保存和读取`() {
 @Test
 fun `点击数据掩码开关能正确切换状态`() {
     composeTestRule.setContent {
-        SettingsScreen(...)
+        SettingsScreen(
+            uiState = SettingsUiState(),
+            onEvent = {}
+        )
     }
     
     // 点击开关
     composeTestRule.onNodeWithText("数据掩码").performClick()
     
     // 验证状态已改变
-    // ...
+    composeTestRule.onNodeWithText("已关闭").assertIsDisplayed()
+}
+
+@Test
+fun `点击本地优先模式开关能正确切换状态`() {
+    composeTestRule.setContent {
+        SettingsScreen(
+            uiState = SettingsUiState(),
+            onEvent = {}
+        )
+    }
+    
+    // 点击开关
+    composeTestRule.onNodeWithText("本地优先模式").performClick()
+    
+    // 验证状态已改变
+    composeTestRule.onNodeWithText("已关闭").assertIsDisplayed()
 }
 ```
 
