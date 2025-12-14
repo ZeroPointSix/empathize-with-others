@@ -66,4 +66,35 @@ interface ContactDao {
      */
     @Query("DELETE FROM profiles WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    // ============================================================================
+    // 记忆系统扩展方法
+    // ============================================================================
+
+    /**
+     * 更新关系分数
+     *
+     * @param id 联系人ID
+     * @param score 新的关系分数
+     */
+    @Query("UPDATE profiles SET relationship_score = :score WHERE id = :id")
+    suspend fun updateRelationshipScore(id: String, score: Int)
+
+    /**
+     * 更新Facts
+     *
+     * @param id 联系人ID
+     * @param factsJson Facts的JSON字符串
+     */
+    @Query("UPDATE profiles SET facts_json = :factsJson WHERE id = :id")
+    suspend fun updateFacts(id: String, factsJson: String)
+
+    /**
+     * 更新最后互动日期
+     *
+     * @param id 联系人ID
+     * @param date 日期字符串
+     */
+    @Query("UPDATE profiles SET last_interaction_date = :date WHERE id = :id")
+    suspend fun updateLastInteractionDate(id: String, date: String)
 }

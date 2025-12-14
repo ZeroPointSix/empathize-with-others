@@ -4,20 +4,24 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.RelationshipLevel
+import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TagType
-import com.empathy.ai.domain.usecase.GetContactUseCase
+import com.empathy.ai.domain.repository.DailySummaryRepository
+import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
+import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
-import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.domain.usecase.SaveProfileUseCase
+import com.empathy.ai.domain.util.MemoryConstants
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -40,7 +44,8 @@ class ContactDetailViewModel @Inject constructor(
     private val getBrainTagsUseCase: GetBrainTagsUseCase,
     private val saveBrainTagUseCase: SaveBrainTagUseCase,
     private val deleteBrainTagUseCase: DeleteBrainTagUseCase,
-    private val saveProfileUseCase: SaveProfileUseCase
+    private val saveProfileUseCase: SaveProfileUseCase,
+    private val dailySummaryRepository: DailySummaryRepository
 ) : ViewModel() {
 
     // 私有可变状态（只能内部修改）
@@ -112,6 +117,10 @@ class ContactDetailViewModel @Inject constructor(
             is ContactDetailUiEvent.NavigateToChat -> navigateToChat(event.contactId)
             is ContactDetailUiEvent.NavigateBack -> navigateBack()
             is ContactDetailUiEvent.ConfirmNavigateBack -> confirmNavigateBack()
+
+            // === 关系进展事件 ===
+            is ContactDetailUiEvent.LoadRelationshipData -> loadRelationshipData(event.contactId)
+            is ContactDetailUiEvent.DeleteFactItem -> deleteFactItem(event.fact)
         }
     }
 
@@ -350,8 +359,25 @@ class ContactDetailViewModel @Inject constructor(
         if (key.isBlank() || value.isBlank()) return
 
         val currentState = _uiState.value
-        val newFacts = currentState.facts.toMutableMap()
-        newFacts[key] = value
+        val newFacts = currentState.facts.toMutableList()
+        
+        // 检查是否已存在相同key的Fact，如果存在则更新，否则添加
+        val existingIndex = newFacts.indexOfFirst { it.key == key }
+        if (existingIndex >= 0) {
+            newFacts[existingIndex] = newFacts[existingIndex].copy(
+                value = value,
+                timestamp = System.currentTimeMillis()
+            )
+        } else {
+            newFacts.add(
+                Fact(
+                    key = key,
+                    value = value,
+                    timestamp = System.currentTimeMillis(),
+                    source = com.empathy.ai.domain.model.FactSource.MANUAL
+                )
+            )
+        }
 
         _uiState.update {
             it.copy(
@@ -371,12 +397,20 @@ class ContactDetailViewModel @Inject constructor(
         if (key.isBlank()) return
 
         val currentState = _uiState.value
-        val newFacts = currentState.facts.toMutableMap()
+        val newFacts = currentState.facts.toMutableList()
 
         if (value.isBlank()) {
-            newFacts.remove(key)
+            // 删除该Fact
+            newFacts.removeAll { it.key == key }
         } else {
-            newFacts[key] = value
+            // 更新该Fact
+            val existingIndex = newFacts.indexOfFirst { it.key == key }
+            if (existingIndex >= 0) {
+                newFacts[existingIndex] = newFacts[existingIndex].copy(
+                    value = value,
+                    timestamp = System.currentTimeMillis()
+                )
+            }
         }
 
         _uiState.update {
@@ -393,8 +427,8 @@ class ContactDetailViewModel @Inject constructor(
 
     private fun deleteFact(key: String) {
         val currentState = _uiState.value
-        val newFacts = currentState.facts.toMutableMap()
-        newFacts.remove(key)
+        val newFacts = currentState.facts.toMutableList()
+        newFacts.removeAll { it.key == key }
 
         _uiState.update {
             it.copy(
@@ -662,7 +696,7 @@ class ContactDetailViewModel @Inject constructor(
         val currentState = _uiState.value
         val factKeyError = if (currentState.newFactKey.isBlank()) {
             "事实键不能为空"
-        } else if (currentState.facts.containsKey(currentState.newFactKey)) {
+        } else if (currentState.facts.any { it.key == currentState.newFactKey }) {
             "事实键已存在"
         } else null
 
@@ -739,7 +773,7 @@ class ContactDetailViewModel @Inject constructor(
                     name = "",
                     targetGoal = "",
                     contextDepth = 10,
-                    facts = emptyMap(),
+                    facts = emptyList(),
                     editedProfile = null,
                     // 清除错误
                     nameError = null,
@@ -768,4 +802,124 @@ class ContactDetailViewModel @Inject constructor(
     private fun confirmNavigateBack() {
         _uiState.update { it.copy(shouldNavigateBack = true) }
     }
+
+    // === 关系进展相关方法（阶段6新增）===
+
+    /**
+     * 加载关系进展数据
+     */
+    private fun loadRelationshipData(contactId: String) {
+        if (contactId.isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoadingRelationship = true) }
+
+                // 获取联系人信息
+                val profile = getContactUseCase(contactId).getOrNull()
+                if (profile != null) {
+                    val score = profile.relationshipScore
+                    val level = calculateRelationshipLevel(score)
+                    val trend = calculateRelationshipTrend(contactId)
+
+                    _uiState.update {
+                        it.copy(
+                            isLoadingRelationship = false,
+                            relationshipScore = score,
+                            relationshipLevel = level,
+                            relationshipTrend = trend,
+                            lastInteractionDate = profile.lastInteractionDate,
+                            facts = profile.facts
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoadingRelationship = false) }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingRelationship = false,
+                        error = e.message ?: "加载关系数据失败"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 根据分数计算关系等级
+     */
+    private fun calculateRelationshipLevel(score: Int): RelationshipLevel {
+        return when {
+            score <= MemoryConstants.STRANGER_THRESHOLD -> RelationshipLevel.STRANGER
+            score <= MemoryConstants.ACQUAINTANCE_THRESHOLD -> RelationshipLevel.ACQUAINTANCE
+            score <= MemoryConstants.FAMILIAR_THRESHOLD -> RelationshipLevel.FAMILIAR
+            else -> RelationshipLevel.CLOSE
+        }
+    }
+
+    /**
+     * 计算关系趋势
+     * 基于最近7天的总结记录分析趋势
+     */
+    private suspend fun calculateRelationshipTrend(contactId: String): RelationshipTrend {
+        return try {
+            val recentSummaries = dailySummaryRepository.getRecentSummaries(
+                contactId = contactId,
+                days = 7
+            )
+
+            if (recentSummaries.size < 2) {
+                return RelationshipTrend.STABLE
+            }
+
+            // 计算分数变化总和
+            val totalChange = recentSummaries.sumOf { it.relationshipScoreChange }
+
+            when {
+                totalChange > 5 -> RelationshipTrend.IMPROVING
+                totalChange < -5 -> RelationshipTrend.DECLINING
+                else -> RelationshipTrend.STABLE
+            }
+        } catch (e: Exception) {
+            RelationshipTrend.STABLE
+        }
+    }
+
+    /**
+     * 删除Fact事实
+     */
+    private fun deleteFactItem(fact: Fact) {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val newFacts = currentState.facts.filter { it.key != fact.key }
+
+                // 更新联系人的facts
+                val profile = currentState.originalProfile?.copy(
+                    facts = newFacts
+                )
+
+                if (profile != null) {
+                    saveProfileUseCase(profile).onSuccess {
+                        _uiState.update {
+                            it.copy(
+                                facts = newFacts,
+                                originalProfile = profile
+                            )
+                        }
+                    }.onFailure { error ->
+                        _uiState.update {
+                            it.copy(error = error.message ?: "删除事实失败")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "删除事实失败")
+                }
+            }
+        }
+    }
 }
+

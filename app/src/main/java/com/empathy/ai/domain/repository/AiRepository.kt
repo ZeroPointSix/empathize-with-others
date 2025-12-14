@@ -66,4 +66,20 @@ interface AiRepository {
      * @return 转录后的纯文本
      */
     suspend fun transcribeMedia(mediaFilePath: String): Result<String>
+
+    /**
+     * 通用文本生成
+     *
+     * [功能 E] 通用的AI文本生成接口，用于每日总结等场景
+     *
+     * @param provider AI服务商配置
+     * @param prompt 用户提示词
+     * @param systemInstruction 系统指令
+     * @return 生成的文本
+     */
+    suspend fun generateText(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        prompt: String,
+        systemInstruction: String
+    ): Result<String>
 }

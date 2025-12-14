@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import com.empathy.ai.domain.model.Fact
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -199,12 +200,12 @@ private fun ProfileCardFullPreview() {
                 name = "张三",
                 targetGoal = "建立长期合作关系，拿下年度大单",
                 contextDepth = 15,
-                facts = mapOf(
-                    "电话" to "138****1234",
-                    "公司" to "某某科技有限公司",
-                    "职位" to "技术总监",
-                    "性格" to "吃软不吃硬",
-                    "爱好" to "钓鱼、喝茶"
+                facts = listOf(
+                    Fact("电话", "138****1234", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact("公司", "某某科技有限公司", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact("职位", "技术总监", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact("性格", "吃软不吃硬", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact("爱好", "钓鱼、喝茶", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
                 )
             ),
             onEdit = {}
@@ -222,7 +223,7 @@ private fun ProfileCardBasicPreview() {
                 name = "李四",
                 targetGoal = "修复关系",
                 contextDepth = 10,
-                facts = emptyMap()
+                facts = emptyList()
             ),
             onEdit = {}
         )
@@ -239,8 +240,8 @@ private fun ProfileCardNoGoalPreview() {
                 name = "王五",
                 targetGoal = "",
                 contextDepth = 10,
-                facts = mapOf(
-                    "电话" to "139****5678"
+                facts = listOf(
+                    Fact("电话", "139****5678", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
                 )
             ),
             onEdit = {}
@@ -258,9 +259,9 @@ private fun ProfileCardDarkPreview() {
                 name = "张三",
                 targetGoal = "建立长期合作关系",
                 contextDepth = 15,
-                facts = mapOf(
-                    "电话" to "138****1234",
-                    "性格" to "吃软不吃硬"
+                facts = listOf(
+                    Fact("电话", "138****1234", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact("性格", "吃软不吃硬", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
                 )
             ),
             onEdit = {}

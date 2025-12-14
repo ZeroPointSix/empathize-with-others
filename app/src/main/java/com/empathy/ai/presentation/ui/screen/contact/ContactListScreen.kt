@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.list.ContactListItem
 import com.empathy.ai.presentation.ui.component.state.EmptyView
@@ -178,21 +179,26 @@ private fun ContactListScreenPreview() {
                         name = "张三",
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
-                        facts = mapOf("职业" to "产品经理", "爱好" to "摄影")
+                        facts = listOf(
+                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                            Fact("爱好", "摄影", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
                     ),
                     ContactProfile(
                         id = "2",
                         name = "李四",
                         targetGoal = "成为好朋友",
                         contextDepth = 15,
-                        facts = mapOf("职业" to "设计师")
+                        facts = listOf(
+                            Fact("职业", "设计师", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
                     ),
                     ContactProfile(
                         id = "3",
                         name = "王五",
                         targetGoal = "保持联系",
                         contextDepth = 8,
-                        facts = emptyMap()
+                        facts = emptyList()
                     )
                 ),
                 filteredContacts = listOf(
@@ -201,21 +207,26 @@ private fun ContactListScreenPreview() {
                         name = "张三",
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
-                        facts = mapOf("职业" to "产品经理", "爱好" to "摄影")
+                        facts = listOf(
+                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
+                            Fact("爱好", "摄影", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
                     ),
                     ContactProfile(
                         id = "2",
                         name = "李四",
                         targetGoal = "成为好朋友",
                         contextDepth = 15,
-                        facts = mapOf("职业" to "设计师")
+                        facts = listOf(
+                            Fact("职业", "设计师", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
                     ),
                     ContactProfile(
                         id = "3",
                         name = "王五",
                         targetGoal = "保持联系",
                         contextDepth = 8,
-                        facts = emptyMap()
+                        facts = emptyList()
                     )
                 )
             ),
@@ -277,7 +288,9 @@ private fun ContactListScreenDarkPreview() {
                         name = "张三",
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
-                        facts = mapOf("职业" to "产品经理")
+                        facts = listOf(
+                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
                     )
                 ),
                 filteredContacts = listOf(
@@ -286,7 +299,9 @@ private fun ContactListScreenDarkPreview() {
                         name = "张三",
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
-                        facts = mapOf("职业" to "产品经理")
+                        facts = listOf(
+                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
                     )
                 )
             ),

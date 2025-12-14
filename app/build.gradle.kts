@@ -102,7 +102,12 @@ dependencies {
     // Room (本地数据库)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
+
+    // Paging (分页加载)
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
 
     // Retrofit & Networking (网络请求)
     implementation(libs.retrofit)

@@ -3,13 +3,20 @@ package com.empathy.ai.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.empathy.ai.data.local.converter.FactListConverter
 import com.empathy.ai.data.local.converter.RoomTypeConverters
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.BrainTagDao
 import com.empathy.ai.data.local.dao.ContactDao
+import com.empathy.ai.data.local.dao.ConversationLogDao
+import com.empathy.ai.data.local.dao.DailySummaryDao
+import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
 import com.empathy.ai.data.local.entity.AiProviderEntity
 import com.empathy.ai.data.local.entity.BrainTagEntity
 import com.empathy.ai.data.local.entity.ContactProfileEntity
+import com.empathy.ai.data.local.entity.ConversationLogEntity
+import com.empathy.ai.data.local.entity.DailySummaryEntity
+import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
 
 /**
  * 应用数据库配置类
@@ -21,7 +28,7 @@ import com.empathy.ai.data.local.entity.ContactProfileEntity
  * 4. 提供DAO访问接口
  *
  * 版本控制:
- * - 当前版本: 1 (MVP阶段)
+ * - 当前版本: 5 (记忆系统)
  * - 升级策略:MVP阶段如果修改表结构,直接卸载重装APP即可,
  *   无需编写Migration脚本。正式发布后才需要Migration。
  *
@@ -34,32 +41,44 @@ import com.empathy.ai.data.local.entity.ContactProfileEntity
     entities = [
         ContactProfileEntity::class,
         BrainTagEntity::class,
-        AiProviderEntity::class
+        AiProviderEntity::class,
+        ConversationLogEntity::class,
+        DailySummaryEntity::class,
+        FailedSummaryTaskEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false // MVP阶段不导出schema,减少构建复杂度
 )
-@TypeConverters(RoomTypeConverters::class)
+@TypeConverters(RoomTypeConverters::class, FactListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
 
     /**
      * 获取联系人DAO
-     *
-     * @return ContactDao实例
      */
     abstract fun contactDao(): ContactDao
 
     /**
      * 获取标签DAO
-     *
-     * @return BrainTagDao实例
      */
     abstract fun brainTagDao(): BrainTagDao
 
     /**
      * 获取AI服务商DAO
-     *
-     * @return AiProviderDao实例
      */
     abstract fun aiProviderDao(): AiProviderDao
+
+    /**
+     * 获取对话记录DAO
+     */
+    abstract fun conversationLogDao(): ConversationLogDao
+
+    /**
+     * 获取每日总结DAO
+     */
+    abstract fun dailySummaryDao(): DailySummaryDao
+
+    /**
+     * 获取失败任务DAO
+     */
+    abstract fun failedSummaryTaskDao(): FailedSummaryTaskDao
 }
