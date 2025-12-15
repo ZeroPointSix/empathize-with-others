@@ -90,8 +90,12 @@ class ContactDetailTabViewModel @Inject constructor(
                     val summariesResult = dailySummaryRepository.getSummariesByContact(contactId)
                     val summaries = summariesResult.getOrDefault(emptyList())
                     
-                    // 构建时间线（暂时只使用总结数据）
-                    val timelineItems = buildTimelineItems(emptyList(), summaries)
+                    // 加载对话记录
+                    val conversationsResult = conversationRepository.getConversationsByContact(contactId)
+                    val conversations = conversationsResult.getOrDefault(emptyList())
+                    
+                    // 构建时间线（使用对话记录和总结数据）
+                    val timelineItems = buildTimelineItems(conversations, summaries)
                     
                     // 计算相识天数（使用当前时间作为默认值）
                     val daysSinceFirstMet = 0 // TODO: 需要添加createdAt字段到ContactProfile
@@ -115,7 +119,7 @@ class ContactDetailTabViewModel @Inject constructor(
                             topTags = topTags,
                             latestFact = latestFact,
                             daysSinceFirstMet = daysSinceFirstMet,
-                            conversationCount = 0, // TODO: 需要实现对话记录查询
+                            conversationCount = conversations.size,
                             summaryCount = summaries.size
                         )
                     }

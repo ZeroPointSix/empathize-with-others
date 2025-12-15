@@ -56,6 +56,10 @@
 
 - **FFmpeg Kit**：6.0.LTS（音视频处理）
 
+### ✅ 图片加载
+
+- **Coil**：2.7.0（图片加载和缓存）
+
 ## ✅ 测试
 
 - **单元测试**：JUnit 4.13.2
@@ -63,6 +67,7 @@
 - **模拟**：MockK 1.13.13
 - **协程测试**：kotlinx-coroutines-test 1.9.0
 - **UI 测试**：Compose UI Test + Espresso 3.6.1
+- **Room 测试**：androidx-room-testing 2.6.1
 
 ## 常用命令
 
@@ -150,6 +155,8 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **异步编程**: Kotlin Coroutines + Flow 完整实现
 - **安全存储**: EncryptedSharedPreferences 完整实现
 - **依赖注入**: Hilt 模块完整配置
+- **图片加载**: Coil 图片加载和缓存完整实现
+- **测试框架**: Room Testing、单元测试、UI测试完整实现
 
 ### ⚠️ 部分实现/待完善功能
 
@@ -184,3 +191,12 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **规则引擎集成**: 需要验证RuleEngine与CheckDraftUseCase的集成情况
   - 代码架构完整：RuleEngine、多种匹配策略
   - ⚠️ 集成状态不明：可能未在实际业务流程中被调用
+
+### ✅ 已解决的技术债务
+
+- **Room数据库迁移问题**: 已完成完整的Migration脚本和测试
+  - ✅ 移除fallbackToDestructiveMigration()，确保数据安全
+  - ✅ 启用Schema导出（exportSchema = true）
+  - ✅ 配置schema导出目录（$projectDir/schemas）
+  - ✅ 添加Room Testing依赖
+  - ✅ 完善DatabaseMigrationTest（8个测试用例）

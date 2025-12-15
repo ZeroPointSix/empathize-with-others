@@ -5,6 +5,8 @@ import com.empathy.ai.data.local.entity.ConversationLogEntity
 import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.repository.ConversationRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -104,6 +106,21 @@ class ConversationRepositoryImpl @Inject constructor(
             Result.success(count)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun getConversationsByContact(contactId: String): Result<List<ConversationLog>> = withContext(Dispatchers.IO) {
+        try {
+            val entities = dao.getConversationsByContact(contactId)
+            Result.success(entities.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override fun getConversationsByContactFlow(contactId: String): Flow<List<ConversationLog>> {
+        return dao.getConversationsByContactFlow(contactId).map { entities ->
+            entities.map { it.toDomain() }
         }
     }
 

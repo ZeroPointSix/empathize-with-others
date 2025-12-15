@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.empathy.ai.data.local.entity.ConversationLogEntity
+import kotlinx.coroutines.flow.Flow
 
 /**
  * 对话记录DAO
@@ -69,9 +70,21 @@ interface ConversationLogDao {
      * 获取分页数据源（用于Paging 3）
      */
     @Query("""
-        SELECT * FROM conversation_logs 
-        WHERE contact_id = :contactId 
+        SELECT * FROM conversation_logs
+        WHERE contact_id = :contactId
         ORDER BY timestamp DESC
     """)
     fun getPagingSource(contactId: String): PagingSource<Int, ConversationLogEntity>
+
+    /**
+     * 获取指定联系人的所有对话记录
+     */
+    @Query("SELECT * FROM conversation_logs WHERE contact_id = :contactId ORDER BY timestamp DESC")
+    suspend fun getConversationsByContact(contactId: String): List<ConversationLogEntity>
+
+    /**
+     * 获取指定联系人的对话记录流
+     */
+    @Query("SELECT * FROM conversation_logs WHERE contact_id = :contactId ORDER BY timestamp DESC")
+    fun getConversationsByContactFlow(contactId: String): Flow<List<ConversationLogEntity>>
 }

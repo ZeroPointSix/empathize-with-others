@@ -1,6 +1,7 @@
 package com.empathy.ai.domain.repository
 
 import com.empathy.ai.domain.model.ConversationLog
+import kotlinx.coroutines.flow.Flow
 
 /**
  * 对话记录仓库接口
@@ -72,4 +73,20 @@ interface ConversationRepository {
      * @return 删除的记录数
      */
     suspend fun cleanupOldSummarizedLogs(beforeTimestamp: Long): Result<Int>
+
+    /**
+     * 获取指定联系人的所有对话记录
+     *
+     * @param contactId 联系人ID
+     * @return 对话记录列表
+     */
+    suspend fun getConversationsByContact(contactId: String): Result<List<ConversationLog>>
+
+    /**
+     * 获取指定联系人的对话记录流
+     *
+     * @param contactId 联系人ID
+     * @return 对话记录流，按时间戳倒序排列
+     */
+    fun getConversationsByContactFlow(contactId: String): Flow<List<ConversationLog>>
 }
