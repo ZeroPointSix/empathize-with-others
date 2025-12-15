@@ -64,14 +64,14 @@ data/
 │   └── SettingsRepositoryImpl.kt  ✅ 已存在
 └── local/
     ├── FloatingWindowPreferences.kt  ✅ 已存在
-    └── PrivacyPreferences.kt         🆕 需要创建
+    └── PrivacyPreferences.kt         ✅ 已创建
 ```
 
 ### 关键实现点
 
 #### 1. 隐私设置持久化
 
-**需要创建 `PrivacyPreferences.kt`**：
+**已创建 `PrivacyPreferences.kt`**：
 
 ```kotlin
 @Singleton
@@ -294,6 +294,20 @@ fun `点击本地优先模式开关能正确切换状态`() {
 ---
 
 ## 待解决问题
+
+### ✅ 已解决问题
+
+1. **PrivacyPreferences.kt创建状态**: 已完成
+   - ✅ PrivacyPreferences.kt已创建并实现
+   - ✅ 包含数据掩码和本地优先模式的持久化功能
+   - ✅ 与SettingsViewModel正确集成
+
+2. **示例代码一致性**: 已验证
+   - ✅ SettingsViewModel中的注入和调用方式与当前实现一致
+   - ✅ PrivacyEngine中的设置读取方式与当前实现一致
+   - ✅ CheckDraftUseCase中的设置检查逻辑与当前实现一致
+
+### ⚠️ 待解决问题
 
 ### 1. 清除数据范围
 **问题**: 当前"清除所有数据"只清除AI服务商，是否需要清除联系人和标签？
