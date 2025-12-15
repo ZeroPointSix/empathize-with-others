@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,11 +26,12 @@ import com.empathy.ai.presentation.ui.component.control.SegmentedControl
 /**
  * 事实流顶部控件组件
  *
- * 包含视图切换和筛选按钮
+ * 包含视图切换、添加事实和筛选按钮
  *
  * @param viewMode 当前视图模式
  * @param onViewModeChange 视图模式切换回调
  * @param onFilterClick 筛选按钮点击回调
+ * @param onAddFactClick 添加事实按钮点击回调
  * @param modifier Modifier
  */
 @Composable
@@ -37,7 +39,8 @@ fun FactStreamTopBar(
     viewMode: ViewMode,
     onViewModeChange: (ViewMode) -> Unit,
     onFilterClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddFactClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -56,13 +59,26 @@ fun FactStreamTopBar(
             modifier = Modifier.weight(1f)
         )
         
-        // 筛选按钮
-        IconButton(onClick = onFilterClick) {
-            Icon(
-                imageVector = Icons.Default.FilterList,
-                contentDescription = "筛选",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+        Row {
+            // 添加事实按钮
+            if (onAddFactClick != null) {
+                IconButton(onClick = onAddFactClick) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "添加事实",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            
+            // 筛选按钮
+            IconButton(onClick = onFilterClick) {
+                Icon(
+                    imageVector = Icons.Default.FilterList,
+                    contentDescription = "筛选",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

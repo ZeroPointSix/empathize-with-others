@@ -87,4 +87,16 @@ interface ConversationLogDao {
      */
     @Query("SELECT * FROM conversation_logs WHERE contact_id = :contactId ORDER BY timestamp DESC")
     fun getConversationsByContactFlow(contactId: String): Flow<List<ConversationLogEntity>>
+
+    /**
+     * 更新用户输入内容
+     */
+    @Query("UPDATE conversation_logs SET user_input = :userInput WHERE id = :logId")
+    suspend fun updateUserInput(logId: Long, userInput: String)
+
+    /**
+     * 删除单条对话记录
+     */
+    @Query("DELETE FROM conversation_logs WHERE id = :logId")
+    suspend fun deleteById(logId: Long)
 }

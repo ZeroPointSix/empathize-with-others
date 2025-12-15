@@ -34,20 +34,23 @@ import java.util.Locale
  * 对话记录卡片组件
  *
  * 展示具体的对话内容，包括用户输入和AI响应
+ * 支持长按编辑/删除
  *
  * @param item 对话记录数据
  * @param onClick 点击回调
+ * @param onLongClick 长按回调（用于编辑/删除）
  * @param modifier Modifier
  */
 @Composable
 fun ConversationCard(
     item: TimelineItem.Conversation,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null
 ) {
     GlassmorphicCard(
         modifier = modifier.fillMaxWidth(),
-        onClick = onClick
+        onClick = onClick ?: onLongClick // 点击时触发编辑
     ) {
         Column(modifier = Modifier.padding(Dimensions.SpacingMedium)) {
             // 时间和状态
@@ -104,17 +107,9 @@ fun ConversationCard(
                 overflow = TextOverflow.Ellipsis
             )
             
-            // AI响应（如果有）
-            item.log.aiResponse?.let { response ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "AI：${response}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            // AI响应已移除 - BUG-00001修复
+            // 原因：AI回复显示为格式化摘要而非完整建议，影响用户体验
+            // 对话记录只保留用户输入，AI建议在分析时实时生成
         }
     }
 }

@@ -124,6 +124,29 @@ class ConversationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateUserInput(
+        logId: Long,
+        userInput: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            dao.updateUserInput(logId, userInput)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteConversation(
+        logId: Long
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            dao.deleteById(logId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ============================================================================
     // 私有映射函数
     // ============================================================================

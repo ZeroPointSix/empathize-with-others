@@ -349,11 +349,15 @@ $COMMON_JSON_RULES""".trim()
 
             // 3. 根据 Provider 能力选择结构化输出策略
             val strategy = ProviderCompatibility.getStructuredOutputStrategy(provider)
-            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 ===")
+            
+            // BUG-00002: 添加详细日志用于调试AI上下文传递
+            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (analyzeChat) ===")
             android.util.Log.d("AiRepositoryImpl", "URL: $url")
             android.util.Log.d("AiRepositoryImpl", "Model: $model")
             android.util.Log.d("AiRepositoryImpl", "Provider: ${provider.name}")
             android.util.Log.d("AiRepositoryImpl", "Strategy: $strategy")
+            android.util.Log.d("AiRepositoryImpl", "PromptContext长度: ${promptContext.length} 字符")
+            android.util.Log.d("AiRepositoryImpl", "PromptContext预览(前800字符): ${promptContext.take(800)}")
 
             val request = when (strategy) {
                 ProviderCompatibility.StructuredOutputStrategy.FUNCTION_CALLING -> {

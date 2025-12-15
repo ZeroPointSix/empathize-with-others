@@ -89,4 +89,21 @@ interface ConversationRepository {
      * @return 对话记录流，按时间戳倒序排列
      */
     fun getConversationsByContactFlow(contactId: String): Flow<List<ConversationLog>>
+
+    /**
+     * 更新对话记录的用户输入
+     *
+     * @param logId 对话记录ID
+     * @param userInput 新的用户输入内容
+     * @return 操作结果
+     */
+    suspend fun updateUserInput(logId: Long, userInput: String): Result<Unit>
+
+    /**
+     * 删除单条对话记录
+     *
+     * @param logId 对话记录ID
+     * @return 操作结果
+     */
+    suspend fun deleteConversation(logId: Long): Result<Unit>
 }

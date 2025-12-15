@@ -16,6 +16,7 @@ import com.empathy.ai.domain.repository.DailySummaryRepository
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
+import com.empathy.ai.domain.usecase.SaveProfileUseCase
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
@@ -45,6 +46,7 @@ class ContactDetailTabViewModel @Inject constructor(
     private val getContactUseCase: GetContactUseCase,
     private val getBrainTagsUseCase: GetBrainTagsUseCase,
     private val saveBrainTagUseCase: SaveBrainTagUseCase,
+    private val saveProfileUseCase: SaveProfileUseCase,
     private val deleteBrainTagUseCase: DeleteBrainTagUseCase,
     private val conversationRepository: ConversationRepository,
     private val dailySummaryRepository: DailySummaryRepository
@@ -60,18 +62,45 @@ class ContactDetailTabViewModel @Inject constructor(
      * 其他事件由ContactDetailViewModel处理
      */
     fun onEvent(event: ContactDetailUiEvent) {
-        when (event) {
-            is ContactDetailUiEvent.SwitchTab -> switchTab(event.tab)
-            is ContactDetailUiEvent.SwitchViewMode -> switchViewMode(event.mode)
-            is ContactDetailUiEvent.ToggleFilter -> toggleFilter(event.filter)
-            is ContactDetailUiEvent.ConfirmTag -> confirmTag(event.factId)
-            is ContactDetailUiEvent.RejectTag -> rejectTag(event.factId)
-            is ContactDetailUiEvent.RefreshData -> refreshData()
-            is ContactDetailUiEvent.ClearError -> clearError()
-            is ContactDetailUiEvent.ClearSuccessMessage -> clearSuccessMessage()
-            // 其他事件不在此ViewModel处理
-            else -> { /* 由ContactDetailViewModel处理 */ }
+        // 使用if-else链避免when表达式的类型推断问题
+        if (event is ContactDetailUiEvent.SwitchTab) {
+            switchTab(event.tab)
+        } else if (event is ContactDetailUiEvent.SwitchViewMode) {
+            switchViewMode(event.mode)
+        } else if (event is ContactDetailUiEvent.ToggleFilter) {
+            toggleFilter(event.filter)
+        } else if (event is ContactDetailUiEvent.ConfirmTag) {
+            confirmTag(event.factId)
+        } else if (event is ContactDetailUiEvent.RejectTag) {
+            rejectTag(event.factId)
+        } else if (event is ContactDetailUiEvent.RefreshData) {
+            refreshData()
+        } else if (event is ContactDetailUiEvent.ClearError) {
+            clearError()
+        } else if (event is ContactDetailUiEvent.ClearSuccessMessage) {
+            clearSuccessMessage()
         }
+        // 对话记录管理事件
+        else if (event is ContactDetailUiEvent.EditConversation) {
+            editConversation(event.logId, event.newContent)
+        } else if (event is ContactDetailUiEvent.DeleteConversation) {
+            deleteConversation(event.logId)
+        } else if (event is ContactDetailUiEvent.ShowEditConversationDialog) {
+            showEditConversationDialog()
+        } else if (event is ContactDetailUiEvent.HideEditConversationDialog) {
+            hideEditConversationDialog()
+        } else if (event is ContactDetailUiEvent.SelectConversation) {
+            selectConversation(event.logId)
+        }
+        // 事实流添加事实事件
+        else if (event is ContactDetailUiEvent.ShowAddFactToStreamDialog) {
+            showAddFactToStreamDialog()
+        } else if (event is ContactDetailUiEvent.HideAddFactToStreamDialog) {
+            hideAddFactToStreamDialog()
+        } else if (event is ContactDetailUiEvent.AddFactToStream) {
+            addFactToStream(event.key, event.value)
+        }
+        // 其他事件不在此ViewModel处理
     }
 
     /**
@@ -94,8 +123,12 @@ class ContactDetailTabViewModel @Inject constructor(
                     val conversationsResult = conversationRepository.getConversationsByContact(contactId)
                     val conversations = conversationsResult.getOrDefault(emptyList())
                     
-                    // 构建时间线（使用对话记录和总结数据）
-                    val timelineItems = buildTimelineItems(conversations, summaries)
+                    // 构建时间线（使用对话记录、总结数据和用户事实）
+                    val timelineItems = buildTimelineItems(
+                        conversations, 
+                        summaries, 
+                        contact?.facts ?: emptyList()
+                    )
                     
                     // 计算相识天数（使用当前时间作为默认值）
                     val daysSinceFirstMet = 0 // TODO: 需要添加createdAt字段到ContactProfile
@@ -171,10 +204,13 @@ class ContactDetailTabViewModel @Inject constructor(
 
     /**
      * 构建时间线项目
+     *
+     * 包含对话记录、AI总结和用户添加的事实
      */
     private fun buildTimelineItems(
         conversations: List<ConversationLog>,
-        summaries: List<DailySummary>
+        summaries: List<DailySummary>,
+        facts: List<Fact> = emptyList()
     ): List<TimelineItem> {
         val items = mutableListOf<TimelineItem>()
         
@@ -205,6 +241,18 @@ class ContactDetailTabViewModel @Inject constructor(
                     timestamp = timestamp,
                     emotionType = EmotionType.NEUTRAL,
                     summary = summary
+                )
+            )
+        }
+        
+        // 添加用户手动添加的事实
+        facts.forEach { fact ->
+            items.add(
+                TimelineItem.UserFact(
+                    id = "fact_${fact.timestamp}_${fact.key.hashCode()}",
+                    timestamp = fact.timestamp,
+                    emotionType = EmotionType.NEUTRAL,
+                    fact = fact
                 )
             )
         }
@@ -335,5 +383,191 @@ class ContactDetailTabViewModel @Inject constructor(
      */
     private fun clearSuccessMessage() {
         _uiState.update { it.copy(successMessage = null) }
+    }
+
+    // ========== 对话记录管理方法 ==========
+
+    /**
+     * 编辑对话记录
+     */
+    private fun editConversation(logId: Long, newContent: String) {
+        if (newContent.isBlank()) return
+        
+        viewModelScope.launch {
+            try {
+                conversationRepository.updateUserInput(logId, newContent).onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            showEditConversationDialog = false,
+                            selectedConversationId = null,
+                            editingConversationContent = "",
+                            successMessage = "对话已更新"
+                        )
+                    }
+                    // 刷新数据
+                    _uiState.value.contact?.id?.let { contactId ->
+                        loadContactDetail(contactId)
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = error.message ?: "更新对话失败")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "更新对话失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 删除对话记录
+     */
+    private fun deleteConversation(logId: Long) {
+        viewModelScope.launch {
+            try {
+                conversationRepository.deleteConversation(logId).onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            showEditConversationDialog = false,
+                            selectedConversationId = null,
+                            successMessage = "对话已删除"
+                        )
+                    }
+                    // 刷新数据
+                    _uiState.value.contact?.id?.let { contactId ->
+                        loadContactDetail(contactId)
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = error.message ?: "删除对话失败")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "删除对话失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 显示编辑对话对话框
+     */
+    private fun showEditConversationDialog() {
+        _uiState.update { it.copy(showEditConversationDialog = true) }
+    }
+
+    /**
+     * 隐藏编辑对话对话框
+     */
+    private fun hideEditConversationDialog() {
+        _uiState.update {
+            it.copy(
+                showEditConversationDialog = false,
+                selectedConversationId = null,
+                editingConversationContent = ""
+            )
+        }
+    }
+
+    /**
+     * 选中对话记录
+     */
+    private fun selectConversation(logId: Long) {
+        val currentState = _uiState.value
+        val conversation = currentState.timelineItems
+            .filterIsInstance<TimelineItem.Conversation>()
+            .find { it.log.id == logId }
+        
+        _uiState.update {
+            it.copy(
+                selectedConversationId = logId,
+                editingConversationContent = conversation?.log?.userInput ?: "",
+                showEditConversationDialog = true
+            )
+        }
+    }
+
+    // ========== 事实流添加事实方法 ==========
+
+    /**
+     * 显示添加事实对话框
+     */
+    private fun showAddFactToStreamDialog() {
+        _uiState.update { it.copy(showAddFactToStreamDialog = true) }
+    }
+
+    /**
+     * 隐藏添加事实对话框
+     */
+    private fun hideAddFactToStreamDialog() {
+        _uiState.update { it.copy(showAddFactToStreamDialog = false) }
+    }
+
+    /**
+     * 添加事实到事实流
+     * 
+     * 修复BUG-00003: 添加持久化逻辑，确保事实保存到数据库
+     * 修复BUG-00006: 使用增量更新，避免重新加载导致AI对话丢失
+     */
+    private fun addFactToStream(key: String, value: String) {
+        if (key.isBlank() || value.isBlank()) return
+        
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val contact = currentState.contact ?: return@launch
+                
+                // 创建新的Fact
+                val newFact = Fact(
+                    key = key,
+                    value = value,
+                    timestamp = System.currentTimeMillis(),
+                    source = FactSource.MANUAL
+                )
+                
+                // 更新联系人的facts列表
+                val updatedFacts = contact.facts + newFact
+                
+                // 创建更新后的联系人对象
+                val updatedContact = contact.copy(facts = updatedFacts)
+                
+                // 持久化到数据库
+                saveProfileUseCase(updatedContact).onSuccess {
+                    // 创建新的时间线项目（用户添加的事实）
+                    val newTimelineItem = TimelineItem.UserFact(
+                        id = "fact_${newFact.timestamp}_${newFact.key.hashCode()}",
+                        timestamp = newFact.timestamp,
+                        emotionType = EmotionType.NEUTRAL,
+                        fact = newFact
+                    )
+                    
+                    // 增量更新状态，保留现有的 timelineItems（关键修复！）
+                    _uiState.update {
+                        it.copy(
+                            contact = updatedContact,
+                            facts = updatedFacts,
+                            topTags = updatedFacts.sortedByDescending { f -> f.timestamp }.take(5),
+                            latestFact = newFact,
+                            timelineItems = (it.timelineItems + newTimelineItem)
+                                .sortedByDescending { item -> item.timestamp },
+                            showAddFactToStreamDialog = false,
+                            successMessage = "事实已添加"
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = "保存失败: ${error.message}")
+                    }
+                }
+                
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "添加事实失败")
+                }
+            }
+        }
     }
 }

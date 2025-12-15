@@ -89,4 +89,18 @@ sealed class TimelineItem {
         override val emotionType: EmotionType,
         val log: ConversationLog
     ) : TimelineItem()
+
+    /**
+     * 用户添加的事实
+     *
+     * 展示用户手动添加的事实记录
+     *
+     * @property fact 事实对象
+     */
+    data class UserFact(
+        override val id: String,
+        override val timestamp: Long,
+        override val emotionType: EmotionType,
+        val fact: Fact
+    ) : TimelineItem()
 }

@@ -138,6 +138,12 @@ class ContactDetailViewModel @Inject constructor(
             showAddTagDialog()
         } else if (event is ContactDetailUiEvent.HideAddTagDialog) {
             hideAddTagDialog()
+        } else if (event is ContactDetailUiEvent.UpdateNewTagContent) {
+            updateNewTagContent(event.content)
+        } else if (event is ContactDetailUiEvent.UpdateNewTagType) {
+            updateNewTagType(event.type)
+        } else if (event is ContactDetailUiEvent.ConfirmAddTag) {
+            confirmAddTag()
         }
         // === 字段验证事件 ===
         else if (event is ContactDetailUiEvent.ValidateName) {
@@ -196,13 +202,18 @@ class ContactDetailViewModel @Inject constructor(
                 }
 
                 if (contactId.isBlank()) {
-                    // 新建联系人
+                    // 新建联系人 - 生成临时ID以支持标签添加
+                    val newContactId = UUID.randomUUID().toString()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            isEditMode = true
+                            isEditMode = true,
+                            isNewContact = true,
+                            contactId = newContactId  // 设置临时ID
                         )
                     }
+                    // 启动标签监听，确保新建联系人时添加的标签能正确显示
+                    loadBrainTags(newContactId)
                     return@launch
                 }
 
@@ -260,7 +271,8 @@ class ContactDetailViewModel @Inject constructor(
             contextDepth = currentState.contextDepth,
             facts = currentState.facts
         ) ?: ContactProfile(
-            id = UUID.randomUUID().toString(),
+            // 使用已生成的临时 contactId，确保与 BrainTag 的 contactId 一致
+            id = currentState.contactId.ifBlank { UUID.randomUUID().toString() },
             name = currentState.name,
             targetGoal = currentState.targetGoal,
             contextDepth = currentState.contextDepth,
@@ -712,7 +724,43 @@ class ContactDetailViewModel @Inject constructor(
     }
 
     private fun hideAddTagDialog() {
-        _uiState.update { it.copy(showAddTagDialog = false) }
+        _uiState.update { 
+            it.copy(
+                showAddTagDialog = false,
+                newTagContent = "",
+                newTagType = TagType.STRATEGY_GREEN,
+                newTagContentError = null
+            ) 
+        }
+    }
+
+    private fun updateNewTagContent(content: String) {
+        _uiState.update { 
+            it.copy(
+                newTagContent = content,
+                newTagContentError = null
+            ) 
+        }
+    }
+
+    private fun updateNewTagType(type: TagType) {
+        _uiState.update { it.copy(newTagType = type) }
+    }
+
+    private fun confirmAddTag() {
+        val currentState = _uiState.value
+        
+        // 验证内容
+        if (currentState.newTagContent.isBlank()) {
+            _uiState.update { it.copy(newTagContentError = "标签内容不能为空") }
+            return
+        }
+        
+        // 调用添加标签方法
+        addBrainTag(currentState.newTagContent, currentState.newTagType)
+        
+        // 关闭对话框并重置状态
+        hideAddTagDialog()
     }
 
     // === 字段验证方法 ===
@@ -768,6 +816,12 @@ class ContactDetailViewModel @Inject constructor(
 
     private fun updateEditedProfile() {
         val currentState = _uiState.value
+        
+        // 空值检查：name为空时不更新editedProfile，避免触发require断言
+        if (currentState.name.isBlank()) {
+            return
+        }
+        
         val editedProfile = ContactProfile(
             id = currentState.contactId.ifBlank { UUID.randomUUID().toString() },
             name = currentState.name,

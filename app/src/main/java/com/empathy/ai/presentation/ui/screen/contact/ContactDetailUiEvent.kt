@@ -1,4 +1,4 @@
-﻿package com.empathy.ai.presentation.ui.screen.contact
+package com.empathy.ai.presentation.ui.screen.contact
 
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FilterType
@@ -51,7 +51,19 @@ sealed class ContactDetailUiEvent {
     data class ToggleFilter(val filter: FilterType) : ContactDetailUiEvent()
     data class ConfirmTag(val factId: Long) : ContactDetailUiEvent()
     data class RejectTag(val factId: Long) : ContactDetailUiEvent()
-    
+
+    // ========== 对话记录管理事件 ==========
+    data class EditConversation(val logId: Long, val newContent: String) : ContactDetailUiEvent()
+    data class DeleteConversation(val logId: Long) : ContactDetailUiEvent()
+    data object ShowEditConversationDialog : ContactDetailUiEvent()
+    data object HideEditConversationDialog : ContactDetailUiEvent()
+    data class SelectConversation(val logId: Long) : ContactDetailUiEvent()
+
+    // ========== 事实流添加事实事件 ==========
+    data object ShowAddFactToStreamDialog : ContactDetailUiEvent()
+    data object HideAddFactToStreamDialog : ContactDetailUiEvent()
+    data class AddFactToStream(val key: String, val value: String) : ContactDetailUiEvent()
+
     // ========== 对话框事件 ==========
     data object ShowDeleteConfirmDialog : ContactDetailUiEvent()
     data object HideDeleteConfirmDialog : ContactDetailUiEvent()
@@ -61,6 +73,9 @@ sealed class ContactDetailUiEvent {
     data object HideAddFactDialog : ContactDetailUiEvent()
     data object ShowAddTagDialog : ContactDetailUiEvent()
     data object HideAddTagDialog : ContactDetailUiEvent()
+    data class UpdateNewTagContent(val content: String) : ContactDetailUiEvent()
+    data class UpdateNewTagType(val type: TagType) : ContactDetailUiEvent()
+    data object ConfirmAddTag : ContactDetailUiEvent()
     
     // ========== 字段验证事件 ==========
     data object ValidateName : ContactDetailUiEvent()
