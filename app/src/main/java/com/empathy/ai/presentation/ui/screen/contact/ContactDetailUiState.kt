@@ -136,7 +136,7 @@ data class ContactDetailUiState(
     // ========== 标签相关 ==========
     
     /**
-     * 脑标签列表
+     * 标签列表
      */
     val brainTags: List<BrainTag> = emptyList(),
     
@@ -181,6 +181,21 @@ data class ContactDetailUiState(
      * 是否显示添加标签对话框
      */
     val showAddTagDialog: Boolean = false,
+    
+    /**
+     * 添加标签对话框 - 标签内容
+     */
+    val newTagContent: String = "",
+    
+    /**
+     * 添加标签对话框 - 选中的标签类型
+     */
+    val newTagType: TagType = TagType.STRATEGY_GREEN,
+    
+    /**
+     * 添加标签对话框 - 内容验证错误
+     */
+    val newTagContentError: String? = null,
     
     // ========== 关系进展（阶段6新增） ==========
     
@@ -314,7 +329,29 @@ data class ContactDetailUiState(
     /**
      * 成功提示信息
      */
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    
+    // ========== 对话记录编辑相关 ==========
+    
+    /**
+     * 是否显示编辑对话对话框
+     */
+    val showEditConversationDialog: Boolean = false,
+    
+    /**
+     * 当前选中的对话记录ID
+     */
+    val selectedConversationId: Long? = null,
+    
+    /**
+     * 编辑中的对话内容
+     */
+    val editingConversationContent: String = "",
+    
+    /**
+     * 是否显示添加事实到事实流对话框
+     */
+    val showAddFactToStreamDialog: Boolean = false
 ) {
     // ========== 派生状态 ==========
     

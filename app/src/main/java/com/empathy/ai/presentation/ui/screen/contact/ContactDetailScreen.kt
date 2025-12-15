@@ -28,6 +28,7 @@ import com.empathy.ai.presentation.ui.component.chip.TagChip
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.relationship.FactList
 import com.empathy.ai.presentation.ui.component.relationship.RelationshipScoreSection
+import com.empathy.ai.presentation.ui.component.dialog.AddTagDialog
 import com.empathy.ai.presentation.ui.component.state.ErrorView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.viewmodel.ContactDetailViewModel
@@ -192,6 +193,19 @@ private fun ContactDetailScreenContent(
             onCancel = { onEvent(ContactDetailUiEvent.HideUnsavedChangesDialog) }
         )
     }
+
+    // 添加标签对话框
+    if (uiState.showAddTagDialog) {
+        AddTagDialog(
+            tagContent = uiState.newTagContent,
+            selectedType = uiState.newTagType,
+            contentError = uiState.newTagContentError,
+            onContentChange = { onEvent(ContactDetailUiEvent.UpdateNewTagContent(it)) },
+            onTypeChange = { onEvent(ContactDetailUiEvent.UpdateNewTagType(it)) },
+            onDismiss = { onEvent(ContactDetailUiEvent.HideAddTagDialog) },
+            onConfirm = { onEvent(ContactDetailUiEvent.ConfirmAddTag) }
+        )
+    }
 }
 
 /**
@@ -281,29 +295,18 @@ private fun ContactDetailContent(
                 )
             }
 
-            item {
-                Text(
-                    text = "上下文深度: ${uiState.contextDepth}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Slider(
-                    value = uiState.contextDepth.toFloat(),
-                    onValueChange = { onEvent(ContactDetailUiEvent.UpdateContextDepth(it.toInt())) },
-                    valueRange = 5f..30f,
-                    steps = 24,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // 上下文深度已移除，使用默认值10
+            // 事实和标签在联系人创建后通过事实流添加
         }
 
-        // 脑标签部分
+        // 标签部分
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "脑标签",
+                    text = "标签",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

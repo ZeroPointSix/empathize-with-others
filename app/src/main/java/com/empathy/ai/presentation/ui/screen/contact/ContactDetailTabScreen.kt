@@ -310,8 +310,41 @@ private fun FactStreamTabContent(
         },
         onFilterToggle = { filter ->
             onEvent(ContactDetailUiEvent.ToggleFilter(filter))
+        },
+        onConversationEdit = { logId ->
+            onEvent(ContactDetailUiEvent.SelectConversation(logId))
+        },
+        onAddFactClick = {
+            onEvent(ContactDetailUiEvent.ShowAddFactToStreamDialog)
         }
     )
+    
+    // 编辑对话对话框
+    if (uiState.showEditConversationDialog && uiState.selectedConversationId != null) {
+        com.empathy.ai.presentation.ui.component.dialog.EditConversationDialog(
+            initialContent = uiState.editingConversationContent,
+            onDismiss = { onEvent(ContactDetailUiEvent.HideEditConversationDialog) },
+            onConfirm = { newContent ->
+                onEvent(ContactDetailUiEvent.EditConversation(
+                    uiState.selectedConversationId,
+                    newContent
+                ))
+            },
+            onDelete = {
+                onEvent(ContactDetailUiEvent.DeleteConversation(uiState.selectedConversationId))
+            }
+        )
+    }
+    
+    // 添加事实对话框
+    if (uiState.showAddFactToStreamDialog) {
+        com.empathy.ai.presentation.ui.component.dialog.AddFactToStreamDialog(
+            onDismiss = { onEvent(ContactDetailUiEvent.HideAddFactToStreamDialog) },
+            onConfirm = { key, value ->
+                onEvent(ContactDetailUiEvent.AddFactToStream(key, value))
+            }
+        )
+    }
 }
 
 /**

@@ -110,6 +110,37 @@ class ContextBuilder @Inject constructor() {
         val redTags = brainTags.filter { it.type == TagType.RISK_RED }
         val greenTags = brainTags.filter { it.type == TagType.STRATEGY_GREEN }
 
+        // BUG-00002: 添加详细日志用于调试AI上下文传递
+        android.util.Log.d("ContextBuilder", "=== 构建AI分析上下文 ===")
+        android.util.Log.d("ContextBuilder", "联系人: ${profile.name}")
+        android.util.Log.d("ContextBuilder", "原始Facts数量: ${profile.facts.size}")
+        android.util.Log.d("ContextBuilder", "筛选后Facts数量: ${relevantFacts.size}")
+        android.util.Log.d("ContextBuilder", "雷区标签数量: ${redTags.size}")
+        android.util.Log.d("ContextBuilder", "策略标签数量: ${greenTags.size}")
+        android.util.Log.d("ContextBuilder", "对话历史数量: ${conversationHistory.size}")
+        
+        // 详细记录Facts内容
+        if (relevantFacts.isNotEmpty()) {
+            android.util.Log.d("ContextBuilder", "--- Facts详情 ---")
+            relevantFacts.forEachIndexed { index, fact ->
+                android.util.Log.d("ContextBuilder", "  [$index] ${fact.key}: ${fact.value} (来源: ${fact.source})")
+            }
+        }
+        
+        // 详细记录标签内容
+        if (redTags.isNotEmpty()) {
+            android.util.Log.d("ContextBuilder", "--- 雷区标签详情 ---")
+            redTags.forEach { tag ->
+                android.util.Log.d("ContextBuilder", "  - ${tag.content}")
+            }
+        }
+        if (greenTags.isNotEmpty()) {
+            android.util.Log.d("ContextBuilder", "--- 策略标签详情 ---")
+            greenTags.forEach { tag ->
+                android.util.Log.d("ContextBuilder", "  - ${tag.content}")
+            }
+        }
+
         return buildString {
             // 基本信息
             appendLine("【联系人信息】")
@@ -161,6 +192,11 @@ class ContextBuilder @Inject constructor() {
             conversationHistory.forEach { message ->
                 appendLine(message)
             }
+        }.also { context ->
+            // BUG-00002: 记录最终构建的上下文长度
+            android.util.Log.d("ContextBuilder", "=== 上下文构建完成 ===")
+            android.util.Log.d("ContextBuilder", "上下文总长度: ${context.length} 字符")
+            android.util.Log.d("ContextBuilder", "上下文预览(前500字符): ${context.take(500)}")
         }
     }
 

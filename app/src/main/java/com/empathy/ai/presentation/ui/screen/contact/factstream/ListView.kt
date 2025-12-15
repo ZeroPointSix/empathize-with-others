@@ -44,7 +44,8 @@ fun ListView(
     selectedFilters: Set<FilterType>,
     onFilterToggle: (FilterType) -> Unit,
     modifier: Modifier = Modifier,
-    onItemClick: ((TimelineItem) -> Unit)? = null
+    onItemClick: ((TimelineItem) -> Unit)? = null,
+    onConversationEdit: ((Long) -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         // 快速筛选
@@ -69,7 +70,10 @@ fun ListView(
                 ) { item ->
                     ListViewRow(
                         item = item,
-                        onClick = { onItemClick?.invoke(item) }
+                        onClick = { onItemClick?.invoke(item) },
+                        onConversationEdit = if (item is TimelineItem.Conversation) {
+                            { onConversationEdit?.invoke(item.log.id) }
+                        } else null
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = Dimensions.SpacingMedium),

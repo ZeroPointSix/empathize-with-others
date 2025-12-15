@@ -55,7 +55,9 @@ fun FactStreamTab(
     onFilterToggle: (FilterType) -> Unit,
     modifier: Modifier = Modifier,
     onItemClick: ((TimelineItem) -> Unit)? = null,
-    onFilterButtonClick: (() -> Unit)? = null
+    onFilterButtonClick: (() -> Unit)? = null,
+    onConversationEdit: ((Long) -> Unit)? = null,
+    onAddFactClick: (() -> Unit)? = null
 ) {
     // 应用筛选
     val filteredItems = remember(items, selectedFilters) {
@@ -73,7 +75,8 @@ fun FactStreamTab(
         FactStreamTopBar(
             viewMode = viewMode,
             onViewModeChange = onViewModeChange,
-            onFilterClick = { onFilterButtonClick?.invoke() }
+            onFilterClick = { onFilterButtonClick?.invoke() },
+            onAddFactClick = onAddFactClick
         )
         
         // 视图内容（带动画切换）
@@ -98,13 +101,15 @@ fun FactStreamTab(
             when (mode) {
                 ViewMode.Timeline -> TimelineView(
                     items = filteredItems,
-                    onItemClick = onItemClick
+                    onItemClick = onItemClick,
+                    onConversationEdit = onConversationEdit
                 )
                 ViewMode.List -> ListView(
                     items = filteredItems,
                     selectedFilters = selectedFilters,
                     onFilterToggle = onFilterToggle,
-                    onItemClick = onItemClick
+                    onItemClick = onItemClick,
+                    onConversationEdit = onConversationEdit
                 )
             }
         }

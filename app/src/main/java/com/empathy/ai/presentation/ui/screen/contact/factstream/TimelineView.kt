@@ -81,6 +81,7 @@ fun TimelineView(
     items: List<TimelineItem>,
     modifier: Modifier = Modifier,
     onItemClick: ((TimelineItem) -> Unit)? = null,
+    onConversationEdit: ((Long) -> Unit)? = null,
     onPerformanceDegraded: (() -> Unit)? = null
 ) {
     if (items.isEmpty()) {
@@ -163,12 +164,14 @@ fun TimelineView(
                     is TimelineItem.AiSummary -> "summary"
                     is TimelineItem.Milestone -> "milestone"
                     is TimelineItem.Conversation -> "conversation"
+                    is TimelineItem.UserFact -> "user_fact"
                 }
             }
         ) { item ->
             TimelineRow(
                 item = item,
                 onClick = { onItemClick?.invoke(item) },
+                onConversationEdit = onConversationEdit,
                 isSimplified = isDegraded // 降级时使用简化渲染
             )
         }
@@ -200,12 +203,14 @@ fun TimelineView(
  *
  * @param item 时间线项目
  * @param onClick 点击回调
+ * @param onConversationEdit 对话编辑回调
  * @param isSimplified 是否使用简化渲染（性能降级模式）
  */
 @Composable
 private fun TimelineRow(
     item: TimelineItem,
     onClick: () -> Unit,
+    onConversationEdit: ((Long) -> Unit)? = null,
     isSimplified: Boolean = false
 ) {
     Row(
@@ -244,11 +249,83 @@ private fun TimelineRow(
                 )
                 is TimelineItem.Conversation -> ConversationCard(
                     item = item,
+                    onClick = onClick,
+                    onLongClick = { onConversationEdit?.invoke(item.log.id) }
+                )
+                is TimelineItem.UserFact -> UserFactCard(
+                    item = item,
                     onClick = onClick
                 )
             }
         }
     }
+}
+
+/**
+ * 用户事实卡片
+ *
+ * 显示用户手动添加的事实记录
+ */
+@Composable
+private fun UserFactCard(
+    item: TimelineItem.UserFact,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimensions.SpacingMedium),
+            verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+        ) {
+            // 标题行
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "📝 ${item.fact.key}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = formatTimestamp(item.timestamp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            
+            // 事实内容
+            Text(
+                text = item.fact.value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            
+            // 来源标签
+            if (item.fact.source == com.empathy.ai.domain.model.FactSource.MANUAL) {
+                Text(
+                    text = "手动添加",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 格式化时间戳
+ */
+private fun formatTimestamp(timestamp: Long): String {
+    val sdf = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
+    return sdf.format(java.util.Date(timestamp))
 }
 
 /**

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.EmotionType
+import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.KeyEvent
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TimelineItem
@@ -54,12 +57,15 @@ import java.util.Locale
 fun ListViewRow(
     item: TimelineItem,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onConversationEdit: (() -> Unit)? = null
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = onClick != null) { onClick?.invoke() },
+            .clickable(enabled = onClick != null || onConversationEdit != null) { 
+                onConversationEdit?.invoke() ?: onClick?.invoke()
+            },
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
@@ -130,6 +136,7 @@ private fun getItemIcon(item: TimelineItem): ImageVector {
         is TimelineItem.Milestone -> Icons.Default.Star
         is TimelineItem.Conversation -> Icons.Default.Chat
         is TimelineItem.PhotoMoment -> Icons.Default.Star
+        is TimelineItem.UserFact -> Icons.Default.Edit
     }
 }
 
@@ -142,6 +149,7 @@ private fun getItemTitle(item: TimelineItem): String {
         is TimelineItem.Milestone -> item.title
         is TimelineItem.Conversation -> item.log.userInput.take(30) + "..."
         is TimelineItem.PhotoMoment -> item.description.take(30) + "..."
+        is TimelineItem.UserFact -> "${item.fact.key}: ${item.fact.value}".take(30) + "..."
     }
 }
 
@@ -160,6 +168,7 @@ private fun getItemTag(item: TimelineItem): Pair<String, androidx.compose.ui.gra
             }
         }
         is TimelineItem.PhotoMoment -> null
+        is TimelineItem.UserFact -> "手动添加" to SolidTagColors.Personality
     }
 }
 
