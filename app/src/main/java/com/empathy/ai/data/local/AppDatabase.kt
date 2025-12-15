@@ -27,10 +27,17 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  * 3. 声明版本号
  * 4. 提供DAO访问接口
  *
- * 版本控制:
- * - 当前版本: 5 (记忆系统)
- * - 升级策略:MVP阶段如果修改表结构,直接卸载重装APP即可,
- *   无需编写Migration脚本。正式发布后才需要Migration。
+ * 版本控制（TD-001完善）:
+ * - 当前版本: 7 (修复性迁移)
+ * - 升级策略: 使用完整的Migration脚本链，确保用户数据安全
+ * - Schema导出: 已启用，用于版本管理和迁移测试
+ * - 迁移历史:
+ *   - v1→v2: 添加ai_providers表
+ *   - v2→v3: 添加timeout_ms字段
+ *   - v3→v4: 添加记忆系统表（conversation_logs, daily_summaries）
+ *   - v4→v5: 添加failed_summary_tasks表
+ *   - v5→v6: 添加UI扩展字段（avatar_url, is_confirmed）
+ *   - v6→v7: 修复性迁移（修复conversation_logs表结构和索引名称）
  *
  * @property entities 数据库包含的实体类列表
  * @property version 数据库版本号
@@ -46,8 +53,8 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         DailySummaryEntity::class,
         FailedSummaryTaskEntity::class
     ],
-    version = 5,
-    exportSchema = false // MVP阶段不导出schema,减少构建复杂度
+    version = 7,
+    exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)
 abstract class AppDatabase : RoomDatabase() {

@@ -50,5 +50,8 @@ data class ContactProfileEntity(
     val relationshipScore: Int = 50,
 
     @ColumnInfo(name = "last_interaction_date")
-    val lastInteractionDate: String? = null
+    val lastInteractionDate: String? = null,
+
+    @ColumnInfo(name = "avatar_url")
+    val avatarUrl: String? = null
 )

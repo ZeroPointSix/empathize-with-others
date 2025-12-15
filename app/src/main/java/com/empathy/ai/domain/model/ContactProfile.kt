@@ -22,7 +22,8 @@ data class ContactProfile(
     val contextDepth: Int = 10,
     val facts: List<Fact> = emptyList(),
     val relationshipScore: Int = MemoryConstants.DEFAULT_RELATIONSHIP_SCORE,
-    val lastInteractionDate: String? = null
+    val lastInteractionDate: String? = null,
+    val avatarUrl: String? = null
 ) {
     init {
         require(id.isNotBlank()) { "id不能为空" }

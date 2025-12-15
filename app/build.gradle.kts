@@ -57,6 +57,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // Room Schema导出配置（TD-001）
+    // 用于数据库版本管理和迁移测试
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 }
 
 dependencies {
@@ -104,6 +110,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
+    // Room Testing (迁移测试)
+    androidTestImplementation(libs.androidx.room.testing)
 
     // Paging (分页加载)
     implementation(libs.androidx.paging.runtime)
@@ -132,6 +140,9 @@ dependencies {
 
     // Material Design
     implementation(libs.material)
+
+    // Coil (图片加载)
+    implementation(libs.coil.compose)
 
     // Testing
     testImplementation(libs.junit)

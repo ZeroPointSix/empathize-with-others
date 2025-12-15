@@ -1,0 +1,464 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "1f73a4e8896ab1ef902133bb55cb2aa9",
+    "entities": [
+      {
+        "tableName": "profiles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `target_goal` TEXT NOT NULL, `context_depth` INTEGER NOT NULL, `facts_json` TEXT NOT NULL, `relationship_score` INTEGER NOT NULL, `last_interaction_date` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetGoal",
+            "columnName": "target_goal",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextDepth",
+            "columnName": "context_depth",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "factsJson",
+            "columnName": "facts_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relationshipScore",
+            "columnName": "relationship_score",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastInteractionDate",
+            "columnName": "last_interaction_date",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "brain_tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contact_id` TEXT NOT NULL, `content` TEXT NOT NULL, `tag_type` TEXT NOT NULL, `source` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactId",
+            "columnName": "contact_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "tag_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_brain_tags_contact_id",
+            "unique": false,
+            "columnNames": [
+              "contact_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brain_tags_contact_id` ON `${TABLE_NAME}` (`contact_id`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "ai_providers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `base_url` TEXT NOT NULL, `api_key_ref` TEXT NOT NULL, `models_json` TEXT NOT NULL, `default_model_id` TEXT NOT NULL, `is_default` INTEGER NOT NULL, `timeout_ms` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseUrl",
+            "columnName": "base_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "apiKeyRef",
+            "columnName": "api_key_ref",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelsJson",
+            "columnName": "models_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultModelId",
+            "columnName": "default_model_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDefault",
+            "columnName": "is_default",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeoutMs",
+            "columnName": "timeout_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_ai_providers_is_default",
+            "unique": false,
+            "columnNames": [
+              "is_default"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ai_providers_is_default` ON `${TABLE_NAME}` (`is_default`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "conversation_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contact_id` TEXT NOT NULL, `user_input` TEXT NOT NULL, `ai_response` TEXT, `timestamp` INTEGER NOT NULL, `is_summarized` INTEGER NOT NULL, FOREIGN KEY(`contact_id`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactId",
+            "columnName": "contact_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userInput",
+            "columnName": "user_input",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "aiResponse",
+            "columnName": "ai_response",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSummarized",
+            "columnName": "is_summarized",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_conversation_logs_contact_id",
+            "unique": false,
+            "columnNames": [
+              "contact_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_conversation_logs_contact_id` ON `${TABLE_NAME}` (`contact_id`)"
+          },
+          {
+            "name": "index_conversation_logs_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_conversation_logs_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_conversation_logs_is_summarized",
+            "unique": false,
+            "columnNames": [
+              "is_summarized"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_conversation_logs_is_summarized` ON `${TABLE_NAME}` (`is_summarized`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "contact_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "daily_summaries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contact_id` TEXT NOT NULL, `summary_date` TEXT NOT NULL, `content` TEXT NOT NULL, `key_events_json` TEXT NOT NULL, `relationship_score` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, FOREIGN KEY(`contact_id`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactId",
+            "columnName": "contact_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summaryDate",
+            "columnName": "summary_date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "keyEventsJson",
+            "columnName": "key_events_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relationshipScore",
+            "columnName": "relationship_score",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_summaries_contact_id",
+            "unique": false,
+            "columnNames": [
+              "contact_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_summaries_contact_id` ON `${TABLE_NAME}` (`contact_id`)"
+          },
+          {
+            "name": "index_daily_summaries_summary_date",
+            "unique": false,
+            "columnNames": [
+              "summary_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_summaries_summary_date` ON `${TABLE_NAME}` (`summary_date`)"
+          },
+          {
+            "name": "index_daily_summaries_contact_id_summary_date",
+            "unique": true,
+            "columnNames": [
+              "contact_id",
+              "summary_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_summaries_contact_id_summary_date` ON `${TABLE_NAME}` (`contact_id`, `summary_date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "contact_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "failed_summary_tasks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contact_id` TEXT NOT NULL, `summary_date` TEXT NOT NULL, `failure_reason` TEXT NOT NULL, `retry_count` INTEGER NOT NULL, `failed_at` INTEGER NOT NULL, `last_retry_at` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactId",
+            "columnName": "contact_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summaryDate",
+            "columnName": "summary_date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "failureReason",
+            "columnName": "failure_reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "retryCount",
+            "columnName": "retry_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "failedAt",
+            "columnName": "failed_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRetryAt",
+            "columnName": "last_retry_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_failed_summary_tasks_contact_id",
+            "unique": false,
+            "columnNames": [
+              "contact_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_failed_summary_tasks_contact_id` ON `${TABLE_NAME}` (`contact_id`)"
+          },
+          {
+            "name": "index_failed_summary_tasks_failed_at",
+            "unique": false,
+            "columnNames": [
+              "failed_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_failed_summary_tasks_failed_at` ON `${TABLE_NAME}` (`failed_at`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1f73a4e8896ab1ef902133bb55cb2aa9')"
+    ]
+  }
+}

@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.empathy.ai.presentation.ui.screen.aiconfig.AiConfigScreen
 import com.empathy.ai.presentation.ui.screen.chat.ChatScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailScreen
+import com.empathy.ai.presentation.ui.screen.contact.ContactDetailTabScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
 import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.presentation.ui.screen.tag.BrainTagScreen
@@ -36,7 +37,13 @@ fun NavGraph(
         composable(route = NavRoutes.CONTACT_LIST) {
             ContactListScreen(
                 onNavigateToDetail = { contactId ->
-                    navController.navigate(NavRoutes.createContactDetailRoute(contactId))
+                    // 使用新的联系人详情标签页UI
+                    if (contactId.isNotEmpty()) {
+                        navController.navigate(NavRoutes.createContactDetailTabRoute(contactId))
+                    } else {
+                        // 新建联系人仍使用旧页面
+                        navController.navigate(NavRoutes.createContactDetailRoute(contactId))
+                    }
                 },
                 onNavigateToSettings = {
                     navController.navigate(NavRoutes.SETTINGS)
@@ -96,6 +103,22 @@ fun NavGraph(
         // AI服务商配置页面
         composable(route = NavRoutes.AI_CONFIG) {
             AiConfigScreen(
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // 联系人详情标签页（新UI）
+        composable(
+            route = NavRoutes.CONTACT_DETAIL_TAB,
+            arguments = listOf(
+                navArgument(NavRoutes.CONTACT_DETAIL_TAB_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString(NavRoutes.CONTACT_DETAIL_TAB_ARG_ID) ?: ""
+            ContactDetailTabScreen(
+                contactId = contactId,
                 onNavigateBack = { navController.navigateUp() }
             )
         }

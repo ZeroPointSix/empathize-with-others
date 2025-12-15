@@ -26,6 +26,13 @@
 @rem Set local scope for the variables with windows NT shell
 if "%OS%"=="Windows_NT" setlocal
 
+@rem Set JAVA_HOME if not defined (项目级别配置)
+if not defined JAVA_HOME (
+    if exist "C:\Program Files\Java\jdk-17" (
+        set "JAVA_HOME=C:\Program Files\Java\jdk-17"
+    )
+)
+
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
 @rem This is normally unused

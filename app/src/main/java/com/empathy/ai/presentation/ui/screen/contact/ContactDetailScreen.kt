@@ -31,6 +31,8 @@ import com.empathy.ai.presentation.ui.component.relationship.RelationshipScoreSe
 import com.empathy.ai.presentation.ui.component.state.ErrorView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.viewmodel.ContactDetailViewModel
+import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
+import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 
 /**
  * 联系人详情页面

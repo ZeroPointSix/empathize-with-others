@@ -50,6 +50,9 @@ coroutinesTest = "1.9.0"
 # Material Design
 material = "1.12.0"
 
+# Coil (Image Loading)
+coil = "2.5.0"
+
 [libraries]
 # AndroidX Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -88,6 +91,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 
 # Paging
 androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
@@ -114,6 +118,9 @@ ffmpeg-kit-full = { group = "com.arthenica", name = "ffmpeg-kit-full", version.r
 
 # Material Design
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Coil (Image Loading)
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

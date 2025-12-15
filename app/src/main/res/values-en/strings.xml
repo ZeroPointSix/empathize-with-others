@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Empathy AI Assistant</string>
+    
+    <!-- Common -->
+    <string name="btn_confirm">Confirm</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_back">Back</string>
+    <string name="btn_retry">Retry</string>
+    <string name="loading">Loading...</string>
+    <string name="error_generic">An error occurred, please try again</string>
+    <string name="empty_data">No data</string>
+    
+    <!-- Floating Window -->
+    <string name="floating_button_desc">Floating button</string>
+    <string name="floating_window_permission">Floating window permission</string>
+    <string name="floating_window_enabled">Floating window enabled</string>
+    <string name="floating_window_disabled">Floating window disabled</string>
+    
+    <!-- Contact Detail - Tabs -->
+    <string name="tab_overview">Overview</string>
+    <string name="tab_fact_stream">Fact Stream</string>
+    <string name="tab_persona">Persona</string>
+    <string name="tab_data_vault">Data Vault</string>
+    
+    <!-- Contact Detail - Overview -->
+    <string name="relationship_score">Relationship Score</string>
+    <string name="top_tags">Top Tags</string>
+    <string name="latest_fact">Latest Fact</string>
+    <string name="no_tags">No tags yet</string>
+    <string name="no_facts">No facts yet</string>
+    
+    <!-- Contact Detail - Fact Stream -->
+    <string name="view_timeline">Timeline</string>
+    <string name="view_list">List</string>
+    <string name="filter_all">All</string>
+    <string name="filter_ai_summary">AI Summary</string>
+    <string name="filter_conflict">Conflict</string>
+    <string name="filter_date">Date</string>
+    <string name="filter_gift">Gift</string>
+    <string name="empty_timeline">No timeline records</string>
+    
+    <!-- Contact Detail - Persona -->
+    <string name="tag_risk">Risk Tags</string>
+    <string name="tag_strategy">Strategy Tags</string>
+    <string name="tag_confirmed">Confirmed</string>
+    <string name="tag_guessed">AI Guessed</string>
+    <string name="tag_confirm_title">Confirm Tag</string>
+    <string name="tag_confirm_message">Is this tag accurate?</string>
+    <string name="tag_reject">Reject</string>
+    <string name="empty_tags">No tags yet, AI will infer from conversations</string>
+    
+    <!-- Contact Detail - Data Vault -->
+    <string name="data_source_wechat">WeChat</string>
+    <string name="data_source_sms">SMS</string>
+    <string name="data_source_call">Call</string>
+    <string name="data_source_photo">Photo</string>
+    <string name="data_status_completed">Completed</string>
+    <string name="data_status_processing">Processing</string>
+    <string name="data_status_failed">Failed</string>
+    <string name="data_status_not_available">Not Available</string>
+    
+    <!-- Emotion Types -->
+    <string name="emotion_sweet">Sweet</string>
+    <string name="emotion_conflict">Conflict</string>
+    <string name="emotion_gift">Gift</string>
+    <string name="emotion_date">Date</string>
+    <string name="emotion_deep_talk">Deep Talk</string>
+    <string name="emotion_neutral">Neutral</string>
+    
+    <!-- Accessibility Descriptions -->
+    <string name="cd_back_button">Go back</string>
+    <string name="cd_relationship_score">Relationship score: %1$d points</string>
+    <string name="cd_tag_confirmed">Confirmed tag: %1$s</string>
+    <string name="cd_tag_guessed">AI guessed tag: %1$s, tap to confirm or reject</string>
+    <string name="cd_emotion_node">Emotion node: %1$s</string>
+    <string name="cd_timeline_item">Timeline item: %1$s</string>
+    <string name="cd_data_source">Data source: %1$s, status: %2$s</string>
+    <string name="cd_view_mode_switch">Switch view mode</string>
+    <string name="cd_filter_chip">Filter: %1$s</string>
+    <string name="cd_loading">Loading</string>
+    <string name="cd_error">Error: %1$s</string>
+    <string name="cd_empty">No data</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_ai_provider">AI Provider</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_data_masking">Data Masking</string>
+    <string name="settings_local_first">Local First Mode</string>
+    <string name="settings_floating_window">Floating Window</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+</resources>

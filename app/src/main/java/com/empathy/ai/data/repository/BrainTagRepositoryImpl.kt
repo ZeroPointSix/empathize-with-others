@@ -116,7 +116,8 @@ private fun BrainTagEntity.toDomain(): BrainTag {
             // 保守策略: 将可疑数据视为雷区,避免错过重要警告
             TagType.RISK_RED
         },
-        source = this.source
+        source = this.source,
+        isConfirmed = this.isConfirmed
     )
 }
 
@@ -134,6 +135,7 @@ private fun BrainTag.toEntity(): BrainTagEntity {
         contactId = this.contactId,
         content = this.content,
         type = this.type.name, // 枚举转字符串
-        source = this.source
+        source = this.source,
+        isConfirmed = this.isConfirmed
     )
 }

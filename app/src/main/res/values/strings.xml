@@ -2,6 +2,95 @@
 <resources>
     <string name="app_name">共情AI助手</string>
     
+    <!-- 通用 -->
+    <string name="btn_confirm">确认</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_back">返回</string>
+    <string name="btn_retry">重试</string>
+    <string name="loading">加载中...</string>
+    <string name="error_generic">发生错误，请重试</string>
+    <string name="empty_data">暂无数据</string>
+    
     <!-- 悬浮窗相关 -->
     <string name="floating_button_desc">悬浮按钮</string>
+    <string name="floating_window_permission">悬浮窗权限</string>
+    <string name="floating_window_enabled">悬浮窗已启用</string>
+    <string name="floating_window_disabled">悬浮窗已禁用</string>
+    
+    <!-- 联系人详情页 - 标签页 -->
+    <string name="tab_overview">概览</string>
+    <string name="tab_fact_stream">事实流</string>
+    <string name="tab_persona">标签画像</string>
+    <string name="tab_data_vault">资料库</string>
+    
+    <!-- 联系人详情页 - 概览 -->
+    <string name="relationship_score">关系分数</string>
+    <string name="top_tags">核心标签</string>
+    <string name="latest_fact">最新动态</string>
+    <string name="no_tags">暂无标签</string>
+    <string name="no_facts">暂无动态</string>
+    
+    <!-- 联系人详情页 - 事实流 -->
+    <string name="view_timeline">时光轴</string>
+    <string name="view_list">清单</string>
+    <string name="filter_all">全部</string>
+    <string name="filter_ai_summary">AI总结</string>
+    <string name="filter_conflict">冲突</string>
+    <string name="filter_date">约会</string>
+    <string name="filter_gift">礼物</string>
+    <string name="empty_timeline">暂无时间线记录</string>
+    
+    <!-- 联系人详情页 - 标签画像 -->
+    <string name="tag_risk">雷区标签</string>
+    <string name="tag_strategy">策略标签</string>
+    <string name="tag_confirmed">已确认</string>
+    <string name="tag_guessed">AI推测</string>
+    <string name="tag_confirm_title">确认标签</string>
+    <string name="tag_confirm_message">确认这个标签是准确的吗？</string>
+    <string name="tag_reject">驳回</string>
+    <string name="empty_tags">暂无标签，AI会根据对话自动推测</string>
+    
+    <!-- 联系人详情页 - 资料库 -->
+    <string name="data_source_wechat">微信</string>
+    <string name="data_source_sms">短信</string>
+    <string name="data_source_call">通话</string>
+    <string name="data_source_photo">照片</string>
+    <string name="data_status_completed">已完成</string>
+    <string name="data_status_processing">处理中</string>
+    <string name="data_status_failed">失败</string>
+    <string name="data_status_not_available">不可用</string>
+    
+    <!-- 情绪类型 -->
+    <string name="emotion_sweet">甜蜜</string>
+    <string name="emotion_conflict">冲突</string>
+    <string name="emotion_gift">礼物</string>
+    <string name="emotion_date">约会</string>
+    <string name="emotion_deep_talk">深谈</string>
+    <string name="emotion_neutral">平淡</string>
+    
+    <!-- 无障碍描述 -->
+    <string name="cd_back_button">返回上一页</string>
+    <string name="cd_relationship_score">关系分数：%1$d分</string>
+    <string name="cd_tag_confirmed">已确认标签：%1$s</string>
+    <string name="cd_tag_guessed">AI推测标签：%1$s，点击确认或驳回</string>
+    <string name="cd_emotion_node">情绪节点：%1$s</string>
+    <string name="cd_timeline_item">时间线项目：%1$s</string>
+    <string name="cd_data_source">数据源：%1$s，状态：%2$s</string>
+    <string name="cd_view_mode_switch">切换视图模式</string>
+    <string name="cd_filter_chip">筛选：%1$s</string>
+    <string name="cd_loading">正在加载</string>
+    <string name="cd_error">错误：%1$s</string>
+    <string name="cd_empty">无数据</string>
+    
+    <!-- 设置页面 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_ai_provider">AI服务商</string>
+    <string name="settings_privacy">隐私保护</string>
+    <string name="settings_data_masking">数据掩码</string>
+    <string name="settings_local_first">本地优先模式</string>
+    <string name="settings_floating_window">悬浮窗</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_version">版本</string>
 </resources>
