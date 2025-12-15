@@ -50,5 +50,8 @@ data class BrainTagEntity(
     val type: String,
 
     @ColumnInfo(name = "source")
-    val source: String = "MANUAL"
+    val source: String = "MANUAL",
+
+    @ColumnInfo(name = "is_confirmed", defaultValue = "1")
+    val isConfirmed: Boolean = true
 )

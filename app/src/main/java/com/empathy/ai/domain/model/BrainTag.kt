@@ -29,7 +29,8 @@ data class BrainTag(
     val contactId: String,
     val content: String,
     val type: TagType,
-    val source: String = "MANUAL"
+    val source: String = "MANUAL",
+    val isConfirmed: Boolean = source == "MANUAL"
 ) {
     /**
      * 是否为AI推断的标签

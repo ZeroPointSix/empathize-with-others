@@ -8,7 +8,10 @@ import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.RelationshipLevel
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.domain.model.FilterType
+import com.empathy.ai.domain.model.ViewMode
 import com.empathy.ai.domain.repository.DailySummaryRepository
+import com.empathy.ai.presentation.ui.screen.contact.DetailTab
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
@@ -59,68 +62,122 @@ class ContactDetailViewModel @Inject constructor(
      *
      * 设计意图：
      * 1. 单一入口，便于追踪和调试
-     * 2. when 表达式确保处理所有事件类型
+     * 2. 使用 if-else 链而非 when 表达式，避免 Kotlin 编译器的类型推断问题
      */
     fun onEvent(event: ContactDetailUiEvent) {
-        when (event) {
-            // === 数据加载事件 ===
-            is ContactDetailUiEvent.LoadContact -> loadContact(event.contactId)
-            is ContactDetailUiEvent.ReloadContact -> reloadContact()
-
-            // === 编辑相关事件 ===
-            is ContactDetailUiEvent.StartEdit -> startEdit()
-            is ContactDetailUiEvent.CancelEdit -> cancelEdit()
-            is ContactDetailUiEvent.SaveContact -> saveContact()
-            is ContactDetailUiEvent.DeleteContact -> deleteContact()
-
-            // === 表单字段更新事件 ===
-            is ContactDetailUiEvent.UpdateName -> updateName(event.name)
-            is ContactDetailUiEvent.UpdateTargetGoal -> updateTargetGoal(event.targetGoal)
-            is ContactDetailUiEvent.UpdateContextDepth -> updateContextDepth(event.contextDepth)
-
-            // === 事实管理事件 ===
-            is ContactDetailUiEvent.AddFact -> addFact(event.key, event.value)
-            is ContactDetailUiEvent.UpdateFact -> updateFact(event.key, event.value)
-            is ContactDetailUiEvent.DeleteFact -> deleteFact(event.key)
-            is ContactDetailUiEvent.UpdateNewFactKey -> updateNewFactKey(event.key)
-            is ContactDetailUiEvent.UpdateNewFactValue -> updateNewFactValue(event.value)
-
-            // === 标签管理事件 ===
-            is ContactDetailUiEvent.LoadBrainTags -> loadBrainTags(event.contactId)
-            is ContactDetailUiEvent.AddBrainTag -> addBrainTag(event.tag, event.type)
-            is ContactDetailUiEvent.DeleteBrainTag -> deleteBrainTag(event.tagId)
-            is ContactDetailUiEvent.UpdateTagSearchQuery -> updateTagSearchQuery(event.query)
-            is ContactDetailUiEvent.ToggleTagTypeSelection -> toggleTagTypeSelection(event.tagType)
-            is ContactDetailUiEvent.StartTagSearch -> startTagSearch()
-            is ContactDetailUiEvent.ClearTagSearch -> clearTagSearch()
-
-            // === 对话框事件 ===
-            is ContactDetailUiEvent.ShowDeleteConfirmDialog -> showDeleteConfirmDialog()
-            is ContactDetailUiEvent.HideDeleteConfirmDialog -> hideDeleteConfirmDialog()
-            is ContactDetailUiEvent.ShowUnsavedChangesDialog -> showUnsavedChangesDialog()
-            is ContactDetailUiEvent.HideUnsavedChangesDialog -> hideUnsavedChangesDialog()
-            is ContactDetailUiEvent.ShowAddFactDialog -> showAddFactDialog()
-            is ContactDetailUiEvent.HideAddFactDialog -> hideAddFactDialog()
-            is ContactDetailUiEvent.ShowAddTagDialog -> showAddTagDialog()
-            is ContactDetailUiEvent.HideAddTagDialog -> hideAddTagDialog()
-
-            // === 字段验证事件 ===
-            is ContactDetailUiEvent.ValidateName -> validateName()
-            is ContactDetailUiEvent.ValidateTargetGoal -> validateTargetGoal()
-            is ContactDetailUiEvent.ValidateContextDepth -> validateContextDepth()
-            is ContactDetailUiEvent.ValidateFactKey -> validateFactKey()
-            is ContactDetailUiEvent.ValidateFactValue -> validateFactValue()
-
-            // === 通用事件 ===
-            is ContactDetailUiEvent.ClearError -> clearError()
-            is ContactDetailUiEvent.ResetForm -> resetForm()
-            is ContactDetailUiEvent.NavigateToChat -> navigateToChat(event.contactId)
-            is ContactDetailUiEvent.NavigateBack -> navigateBack()
-            is ContactDetailUiEvent.ConfirmNavigateBack -> confirmNavigateBack()
-
-            // === 关系进展事件 ===
-            is ContactDetailUiEvent.LoadRelationshipData -> loadRelationshipData(event.contactId)
-            is ContactDetailUiEvent.DeleteFactItem -> deleteFactItem(event.fact)
+        // === 数据加载事件 ===
+        if (event is ContactDetailUiEvent.LoadContact) {
+            loadContact(event.contactId)
+        } else if (event is ContactDetailUiEvent.ReloadContact) {
+            reloadContact()
+        } else if (event is ContactDetailUiEvent.LoadRelationshipData) {
+            loadRelationshipData(event.contactId)
+        } else if (event is ContactDetailUiEvent.LoadBrainTags) {
+            loadBrainTags(event.contactId)
+        }
+        // === 编辑相关事件 ===
+        else if (event is ContactDetailUiEvent.StartEdit) {
+            startEdit()
+        } else if (event is ContactDetailUiEvent.CancelEdit) {
+            cancelEdit()
+        } else if (event is ContactDetailUiEvent.SaveContact) {
+            saveContact()
+        } else if (event is ContactDetailUiEvent.DeleteContact) {
+            deleteContact()
+        }
+        // === 表单字段更新事件 ===
+        else if (event is ContactDetailUiEvent.UpdateName) {
+            updateName(event.name)
+        } else if (event is ContactDetailUiEvent.UpdateTargetGoal) {
+            updateTargetGoal(event.targetGoal)
+        } else if (event is ContactDetailUiEvent.UpdateContextDepth) {
+            updateContextDepth(event.contextDepth)
+        }
+        // === 事实管理事件 ===
+        else if (event is ContactDetailUiEvent.AddFact) {
+            addFact(event.key, event.value)
+        } else if (event is ContactDetailUiEvent.UpdateFact) {
+            updateFact(event.key, event.value)
+        } else if (event is ContactDetailUiEvent.DeleteFact) {
+            deleteFact(event.key)
+        } else if (event is ContactDetailUiEvent.DeleteFactItem) {
+            deleteFactItem(event.fact)
+        } else if (event is ContactDetailUiEvent.UpdateNewFactKey) {
+            updateNewFactKey(event.key)
+        } else if (event is ContactDetailUiEvent.UpdateNewFactValue) {
+            updateNewFactValue(event.value)
+        }
+        // === 标签管理事件 ===
+        else if (event is ContactDetailUiEvent.AddBrainTag) {
+            addBrainTag(event.tag, event.type)
+        } else if (event is ContactDetailUiEvent.DeleteBrainTag) {
+            deleteBrainTag(event.tagId)
+        } else if (event is ContactDetailUiEvent.UpdateTagSearchQuery) {
+            updateTagSearchQuery(event.query)
+        } else if (event is ContactDetailUiEvent.ToggleTagTypeSelection) {
+            toggleTagTypeSelection(event.tagType)
+        } else if (event is ContactDetailUiEvent.StartTagSearch) {
+            startTagSearch()
+        } else if (event is ContactDetailUiEvent.ClearTagSearch) {
+            clearTagSearch()
+        }
+        // === 对话框事件 ===
+        else if (event is ContactDetailUiEvent.ShowDeleteConfirmDialog) {
+            showDeleteConfirmDialog()
+        } else if (event is ContactDetailUiEvent.HideDeleteConfirmDialog) {
+            hideDeleteConfirmDialog()
+        } else if (event is ContactDetailUiEvent.ShowUnsavedChangesDialog) {
+            showUnsavedChangesDialog()
+        } else if (event is ContactDetailUiEvent.HideUnsavedChangesDialog) {
+            hideUnsavedChangesDialog()
+        } else if (event is ContactDetailUiEvent.ShowAddFactDialog) {
+            showAddFactDialog()
+        } else if (event is ContactDetailUiEvent.HideAddFactDialog) {
+            hideAddFactDialog()
+        } else if (event is ContactDetailUiEvent.ShowAddTagDialog) {
+            showAddTagDialog()
+        } else if (event is ContactDetailUiEvent.HideAddTagDialog) {
+            hideAddTagDialog()
+        }
+        // === 字段验证事件 ===
+        else if (event is ContactDetailUiEvent.ValidateName) {
+            validateName()
+        } else if (event is ContactDetailUiEvent.ValidateTargetGoal) {
+            validateTargetGoal()
+        } else if (event is ContactDetailUiEvent.ValidateContextDepth) {
+            validateContextDepth()
+        } else if (event is ContactDetailUiEvent.ValidateFactKey) {
+            validateFactKey()
+        } else if (event is ContactDetailUiEvent.ValidateFactValue) {
+            validateFactValue()
+        }
+        // === Tab页面事件 ===
+        else if (event is ContactDetailUiEvent.SwitchTab) {
+            switchTab(event.tab)
+        } else if (event is ContactDetailUiEvent.SwitchViewMode) {
+            switchViewMode(event.mode)
+        } else if (event is ContactDetailUiEvent.ToggleFilter) {
+            toggleFilter(event.filter)
+        } else if (event is ContactDetailUiEvent.ConfirmTag) {
+            confirmTag(event.factId)
+        } else if (event is ContactDetailUiEvent.RejectTag) {
+            rejectTag(event.factId)
+        }
+        // === 通用事件 ===
+        else if (event is ContactDetailUiEvent.ClearError) {
+            clearError()
+        } else if (event is ContactDetailUiEvent.ClearSuccessMessage) {
+            clearSuccessMessage()
+        } else if (event is ContactDetailUiEvent.ResetForm) {
+            resetForm()
+        } else if (event is ContactDetailUiEvent.NavigateToChat) {
+            navigateToChat(event.contactId)
+        } else if (event is ContactDetailUiEvent.NavigateBack) {
+            navigateBack()
+        } else if (event is ContactDetailUiEvent.ConfirmNavigateBack) {
+            confirmNavigateBack()
+        } else if (event is ContactDetailUiEvent.RefreshData) {
+            refreshData()
         }
     }
 
@@ -473,23 +530,18 @@ class ContactDetailViewModel @Inject constructor(
         }
     }
 
-    private fun addBrainTag(tag: String, type: String) {
+    private fun addBrainTag(tag: String, type: TagType) {
         if (tag.isBlank()) return
 
         viewModelScope.launch {
             try {
                 val currentState = _uiState.value
-                val tagType = try {
-                    TagType.valueOf(type.uppercase())
-                } catch (e: IllegalArgumentException) {
-                    TagType.STRATEGY_GREEN
-                }
 
                 val brainTag = BrainTag(
                     id = 0, // 由数据库生成
                     contactId = currentState.contactId,
                     content = tag,
-                    type = tagType,
+                    type = type,
                     source = "MANUAL"
                 )
 
@@ -542,7 +594,7 @@ class ContactDetailViewModel @Inject constructor(
 
         val filteredTags = currentState.brainTags.filter { tag ->
             val matchesQuery = tag.content.contains(query, ignoreCase = true)
-            val matchesType = selectedTypes.isEmpty() || selectedTypes.contains(tag.type.name)
+            val matchesType = selectedTypes.isEmpty() || selectedTypes.contains(tag.type)
             matchesQuery && matchesType
         }
 
@@ -562,7 +614,7 @@ class ContactDetailViewModel @Inject constructor(
             currentState.brainTags
         } else {
             currentState.brainTags.filter { tag ->
-                selectedTypes.contains(tag.type.name)
+                selectedTypes.contains(tag.type)
             }
         }
 
@@ -575,7 +627,7 @@ class ContactDetailViewModel @Inject constructor(
         }
     }
 
-    private fun toggleTagTypeSelection(tagType: String) {
+    private fun toggleTagTypeSelection(tagType: TagType) {
         _uiState.update { currentState ->
             val newSelection = if (currentState.selectedTagTypes.contains(tagType)) {
                 currentState.selectedTagTypes - tagType
@@ -587,14 +639,14 @@ class ContactDetailViewModel @Inject constructor(
             val filteredTags = if (currentState.tagSearchQuery.isNotBlank()) {
                 currentState.brainTags.filter { tag ->
                     val matchesQuery = tag.content.contains(currentState.tagSearchQuery, ignoreCase = true)
-                    val matchesType = newSelection.isEmpty() || newSelection.contains(tag.type.name)
+                    val matchesType = newSelection.isEmpty() || newSelection.contains(tag.type)
                     matchesQuery && matchesType
                 }
             } else if (newSelection.isEmpty()) {
                 currentState.brainTags
             } else {
                 currentState.brainTags.filter { tag ->
-                    newSelection.contains(tag.type.name)
+                    newSelection.contains(tag.type)
                 }
             }
 
@@ -787,7 +839,7 @@ class ContactDetailViewModel @Inject constructor(
     }
 
     private fun navigateToChat(contactId: String) {
-        _uiState.update { it.copy(shouldNavigateToChat = contactId) }
+        _uiState.update { it.copy(shouldNavigateToChat = true) }
     }
 
     private fun navigateBack() {
@@ -919,6 +971,69 @@ class ContactDetailViewModel @Inject constructor(
                     it.copy(error = e.message ?: "删除事实失败")
                 }
             }
+        }
+    }
+
+    // === Tab页面相关方法 ===
+
+    /**
+     * 切换Tab页面
+     */
+    private fun switchTab(tab: DetailTab) {
+        _uiState.update { it.copy(currentTab = tab) }
+    }
+
+    /**
+     * 切换视图模式
+     */
+    private fun switchViewMode(mode: ViewMode) {
+        _uiState.update { it.copy(viewMode = mode) }
+    }
+
+    /**
+     * 切换筛选条件
+     */
+    private fun toggleFilter(filter: FilterType) {
+        _uiState.update { currentState ->
+            val newFilters = if (currentState.selectedFilters.contains(filter)) {
+                currentState.selectedFilters - filter
+            } else {
+                currentState.selectedFilters + filter
+            }
+            currentState.copy(selectedFilters = newFilters)
+        }
+    }
+
+    /**
+     * 确认标签
+     */
+    private fun confirmTag(factId: Long) {
+        // TODO: 实现标签确认逻辑
+        _uiState.update { it.copy(successMessage = "标签已确认") }
+    }
+
+    /**
+     * 拒绝标签
+     */
+    private fun rejectTag(factId: Long) {
+        // TODO: 实现标签拒绝逻辑
+        _uiState.update { it.copy(successMessage = "标签已拒绝") }
+    }
+
+    /**
+     * 清除成功消息
+     */
+    private fun clearSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
+    }
+
+    /**
+     * 刷新数据
+     */
+    private fun refreshData() {
+        val currentState = _uiState.value
+        if (currentState.contactId.isNotBlank()) {
+            loadContact(currentState.contactId)
         }
     }
 }

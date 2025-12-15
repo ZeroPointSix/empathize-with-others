@@ -41,10 +41,24 @@ object NavRoutes {
     const val AI_CONFIG = "ai_config"
 
     /**
+     * 联系人详情标签页（新UI）
+     * 参数: contactId (String) - 联系人ID
+     */
+    const val CONTACT_DETAIL_TAB = "contact_detail_tab/{contactId}"
+    const val CONTACT_DETAIL_TAB_ARG_ID = "contactId"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {
         return "contact_detail/$contactId"
+    }
+
+    /**
+     * 创建联系人详情标签页路由（新UI）
+     */
+    fun createContactDetailTabRoute(contactId: String): String {
+        return "contact_detail_tab/$contactId"
     }
 
     /**

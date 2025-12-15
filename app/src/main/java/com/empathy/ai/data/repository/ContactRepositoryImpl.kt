@@ -192,7 +192,8 @@ class ContactRepositoryImpl @Inject constructor(
             contextDepth = entity.contextDepth,
             facts = facts,
             relationshipScore = entity.relationshipScore,
-            lastInteractionDate = entity.lastInteractionDate
+            lastInteractionDate = entity.lastInteractionDate,
+            avatarUrl = entity.avatarUrl
         )
     }
 
@@ -206,7 +207,8 @@ class ContactRepositoryImpl @Inject constructor(
             contextDepth = profile.contextDepth,
             factsJson = factsJson,
             relationshipScore = profile.relationshipScore,
-            lastInteractionDate = profile.lastInteractionDate
+            lastInteractionDate = profile.lastInteractionDate,
+            avatarUrl = profile.avatarUrl
         )
     }
 
