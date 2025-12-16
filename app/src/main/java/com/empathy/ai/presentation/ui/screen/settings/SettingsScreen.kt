@@ -20,7 +20,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.presentation.navigation.PromptEditorRoutes
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.dialog.PermissionRequestDialog
 import com.empathy.ai.presentation.viewmodel.SettingsViewModel
@@ -41,6 +43,7 @@ import com.empathy.ai.presentation.viewmodel.SettingsViewModel
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAiConfig: () -> Unit = {},
+    onNavigateToPromptEditor: (String) -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -69,6 +72,7 @@ fun SettingsScreen(
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToAiConfig = onNavigateToAiConfig,
+        onNavigateToPromptEditor = onNavigateToPromptEditor,
         onRequestPermission = {
             (context as? Activity)?.let { activity ->
                 FloatingWindowManager.requestPermission(activity)
@@ -88,6 +92,7 @@ private fun SettingsScreenContent(
     onEvent: (SettingsUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToAiConfig: () -> Unit,
+    onNavigateToPromptEditor: (String) -> Unit,
     onRequestPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -155,6 +160,13 @@ private fun SettingsScreenContent(
             PrivacySection(
                 uiState = uiState,
                 onEvent = onEvent
+            )
+
+            Divider()
+
+            // 提示词设置
+            PromptSettingsSection(
+                onNavigateToPromptEditor = onNavigateToPromptEditor
             )
 
             Divider()
@@ -622,6 +634,100 @@ private fun AboutSection(
 
 
 /**
+ * 提示词设置区域
+ */
+@Composable
+private fun PromptSettingsSection(
+    onNavigateToPromptEditor: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "提示词设置",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        // 聊天分析指令
+        PromptSettingItem(
+            title = "聊天分析指令",
+            description = "自定义AI分析聊天内容时的行为",
+            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.ANALYZE)) }
+        )
+
+        // 安全检查指令
+        PromptSettingItem(
+            title = "安全检查指令",
+            description = "自定义AI检查消息安全性时的行为",
+            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.CHECK)) }
+        )
+
+        // 信息提取指令
+        PromptSettingItem(
+            title = "信息提取指令",
+            description = "自定义AI提取关键信息时的行为",
+            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.EXTRACT)) }
+        )
+
+        // 每日总结指令
+        PromptSettingItem(
+            title = "每日总结指令",
+            description = "自定义AI生成每日总结时的行为",
+            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.SUMMARY)) }
+        )
+
+        Text(
+            text = "提示：自定义指令可以让AI更好地理解您的需求，提供更精准的分析和建议",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * 提示词设置项
+ */
+@Composable
+private fun PromptSettingItem(
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "编辑"
+            )
+        }
+    }
+}
+
+/**
  * 服务商选择对话框
  */
 @Composable
@@ -676,6 +782,7 @@ private fun SettingsScreenPreview() {
             onEvent = {},
             onNavigateBack = {},
             onNavigateToAiConfig = {},
+            onNavigateToPromptEditor = {},
             onRequestPermission = {}
         )
     }
@@ -695,6 +802,7 @@ private fun SettingsScreenConfiguredPreview() {
             onEvent = {},
             onNavigateBack = {},
             onNavigateToAiConfig = {},
+            onNavigateToPromptEditor = {},
             onRequestPermission = {}
         )
     }

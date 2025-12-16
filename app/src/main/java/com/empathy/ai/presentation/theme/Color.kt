@@ -106,3 +106,16 @@ val WarningDark = Color(0xFFFFB74D)
 // Info - 信息色 (蓝色系)
 val InfoLight = Color(0xFF2196F3)
 val InfoDark = Color(0xFF64B5F6)
+
+// ============================================================
+// 品牌色 (Brand Colors)
+// ============================================================
+
+// 暖金色 - 用于主要操作按钮、光标等
+val BrandWarmGold = Color(0xFFF5A623)
+
+// 暖橙色 - 用于警告状态（如字数接近限制）
+val BrandWarmOrange = Color(0xFFFF9500)
+
+// 琥珀色 - 用于强调和高亮
+val BrandWarmAmber = Color(0xFFFFCC00)

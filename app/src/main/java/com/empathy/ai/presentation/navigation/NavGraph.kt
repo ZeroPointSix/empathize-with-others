@@ -96,6 +96,9 @@ fun NavGraph(
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToAiConfig = {
                     navController.navigate(NavRoutes.AI_CONFIG)
+                },
+                onNavigateToPromptEditor = { route ->
+                    navController.navigate(route)
                 }
             )
         }
@@ -119,8 +122,14 @@ fun NavGraph(
             val contactId = backStackEntry.arguments?.getString(NavRoutes.CONTACT_DETAIL_TAB_ARG_ID) ?: ""
             ContactDetailTabScreen(
                 contactId = contactId,
-                onNavigateBack = { navController.navigateUp() }
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToPromptEditor = { route ->
+                    navController.navigate(route)
+                }
             )
         }
+
+        // 提示词编辑器
+        promptEditorNavigation(navController)
     }
 }

@@ -33,6 +33,21 @@ class PromptFileStorage @Inject constructor(
     companion object {
         private const val PROMPTS_DIR = "prompts"
         private const val GLOBAL_PROMPTS_FILE = "global_prompts.json"
+
+        /**
+         * 当前配置版本号
+         *
+         * 版本历史：
+         * - v1: 初始版本，用户提示词包含变量占位符
+         * - v2: 三层分离架构，用户提示词不再包含变量占位符
+         */
+        private const val CURRENT_CONFIG_VERSION = 2
+
+        /**
+         * 旧版本提示词中的变量占位符模式
+         * 用于检测需要迁移的旧数据
+         */
+        private val LEGACY_VARIABLE_PATTERN = Regex("""\{+\w+\}+""")
     }
 
     @Volatile
@@ -79,6 +94,13 @@ class PromptFileStorage @Inject constructor(
                 val json = globalPromptsFile.readText(Charsets.UTF_8)
                 val config = parseConfig(json)
                     ?: return@withContext tryRestoreFromBackup()
+
+                // 检查是否发生了迁移（版本号变化）
+                val originalVersion = extractVersionFromJson(json)
+                if (originalVersion < CURRENT_CONFIG_VERSION) {
+                    // 迁移后自动保存，确保下次读取时不需要再次迁移
+                    writeGlobalConfigInternal(config)
+                }
 
                 cachedConfig = config
                 Result.success(config)
@@ -166,6 +188,9 @@ class PromptFileStorage @Inject constructor(
             @Suppress("UNCHECKED_CAST")
             val promptsMap = rootMap["prompts"] as? Map<String, Map<String, Any>> ?: emptyMap()
 
+            // 检测是否需要迁移（旧版本数据）
+            val needsMigration = version < CURRENT_CONFIG_VERSION
+
             val prompts = promptsMap.mapNotNull { (key, value) ->
                 val scene = try {
                     PromptScene.valueOf(key)
@@ -173,8 +198,13 @@ class PromptFileStorage @Inject constructor(
                     return@mapNotNull null
                 }
 
-                val userPrompt = value["userPrompt"] as? String ?: ""
+                var userPrompt = value["userPrompt"] as? String ?: ""
                 val enabled = value["enabled"] as? Boolean ?: true
+
+                // 迁移逻辑：如果是旧版本且包含变量占位符，清空用户提示词
+                if (needsMigration && containsLegacyVariables(userPrompt)) {
+                    userPrompt = ""
+                }
 
                 @Suppress("UNCHECKED_CAST")
                 val historyList = value["history"] as? List<Map<String, String>> ?: emptyList()
@@ -187,9 +217,39 @@ class PromptFileStorage @Inject constructor(
                 scene to ScenePromptConfig(userPrompt, enabled, history)
             }.toMap()
 
-            GlobalPromptConfig(version, lastModified, prompts)
+            // 返回迁移后的配置（使用新版本号）
+            GlobalPromptConfig(
+                version = if (needsMigration) CURRENT_CONFIG_VERSION else version,
+                lastModified = lastModified,
+                prompts = prompts
+            )
         } catch (e: Exception) {
             null
+        }
+    }
+
+    /**
+     * 检测提示词是否包含旧版本的变量占位符
+     *
+     * 旧版本提示词包含如 {contact_name}、{{relationship_status}} 等变量
+     * 新版本三层分离架构中，用户提示词不应包含这些变量
+     */
+    private fun containsLegacyVariables(prompt: String): Boolean {
+        return LEGACY_VARIABLE_PATTERN.containsMatchIn(prompt)
+    }
+
+    /**
+     * 从JSON中提取版本号（不完整解析）
+     */
+    private fun extractVersionFromJson(json: String): Int {
+        return try {
+            val mapAdapter = moshi.adapter<Map<String, Any>>(
+                Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
+            )
+            val rootMap = mapAdapter.fromJson(json)
+            (rootMap?.get("version") as? Number)?.toInt() ?: 1
+        } catch (e: Exception) {
+            1
         }
     }
 

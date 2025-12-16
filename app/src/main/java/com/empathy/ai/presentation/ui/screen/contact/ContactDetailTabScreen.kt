@@ -70,6 +70,7 @@ import com.empathy.ai.presentation.viewmodel.ContactDetailTabViewModel
 fun ContactDetailTabScreen(
     contactId: String,
     onNavigateBack: () -> Unit,
+    onNavigateToPromptEditor: ((String) -> Unit)? = null,
     viewModel: ContactDetailTabViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -101,6 +102,7 @@ fun ContactDetailTabScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onNavigateToPromptEditor = onNavigateToPromptEditor,
         snackbarHostState = snackbarHostState,
         modifier = modifier
     )
@@ -141,6 +143,7 @@ private fun ContactDetailTabScreenContent(
     uiState: ContactDetailUiState,
     onEvent: (ContactDetailUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToPromptEditor: ((String) -> Unit)? = null,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
@@ -182,6 +185,7 @@ private fun ContactDetailTabScreenContent(
                             uiState = uiState,
                             onEvent = onEvent,
                             onNavigateBack = onNavigateBack,
+                            onNavigateToPromptEditor = onNavigateToPromptEditor,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -238,6 +242,7 @@ private fun TabContent(
     uiState: ContactDetailUiState,
     onEvent: (ContactDetailUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToPromptEditor: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     AnimatedContent(
@@ -255,7 +260,8 @@ private fun TabContent(
                 onNavigateBack = onNavigateBack,
                 onViewFactStream = {
                     onEvent(ContactDetailUiEvent.SwitchTab(DetailTab.FactStream))
-                }
+                },
+                onNavigateToPromptEditor = onNavigateToPromptEditor
             )
             DetailTab.FactStream -> FactStreamTabContent(
                 uiState = uiState,
@@ -279,7 +285,8 @@ private fun TabContent(
 private fun OverviewTabContent(
     uiState: ContactDetailUiState,
     onNavigateBack: () -> Unit,
-    onViewFactStream: () -> Unit
+    onViewFactStream: () -> Unit,
+    onNavigateToPromptEditor: ((String) -> Unit)? = null
 ) {
     val contact = uiState.contact ?: return
     
@@ -289,7 +296,17 @@ private fun OverviewTabContent(
         latestFact = uiState.latestFact,
         daysSinceFirstMet = uiState.daysSinceFirstMet,
         onBackClick = onNavigateBack,
-        onViewFactStream = onViewFactStream
+        onViewFactStream = onViewFactStream,
+        onEditCustomPrompt = onNavigateToPromptEditor?.let { navigate ->
+            {
+                navigate(
+                    com.empathy.ai.presentation.navigation.PromptEditorRoutes.contactCustom(
+                        contactId = contact.id,
+                        contactName = contact.name
+                    )
+                )
+            }
+        }
     )
 }
 

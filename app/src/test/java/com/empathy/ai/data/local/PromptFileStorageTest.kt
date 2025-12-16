@@ -286,4 +286,187 @@ class PromptFileStorageTest {
             )
         }
     }
+
+    // ========== 版本迁移测试 ==========
+
+    @Test
+    fun `readGlobalConfig should migrate v1 config with legacy variables`() = runTest(testDispatcher) {
+        // Given - 创建包含旧版本变量占位符的配置文件
+        val promptsDir = File(context.filesDir, "prompts")
+        promptsDir.mkdirs()
+        val promptsFile = File(promptsDir, "global_prompts.json")
+
+        // 模拟旧版本配置（v1，包含变量占位符）
+        val legacyJson = """
+            {
+                "version": 1,
+                "lastModified": "2025-12-15T10:00:00Z",
+                "prompts": {
+                    "ANALYZE": {
+                        "userPrompt": "请分析与「{contact_name}」的聊天内容，提供沟通建议。当前关系状态：{{relationship_status}}已知雷区：{risk_tags}有效策略：{{strategy_tags}}",
+                        "enabled": true,
+                        "history": []
+                    },
+                    "CHECK": {
+                        "userPrompt": "检查以下内容是否安全",
+                        "enabled": true,
+                        "history": []
+                    }
+                }
+            }
+        """.trimIndent()
+        promptsFile.writeText(legacyJson)
+
+        // When
+        val result = storage.readGlobalConfig()
+        advanceUntilIdle()
+
+        // Then
+        assertTrue(result.isSuccess)
+        val config = result.getOrNull()
+        assertNotNull(config)
+
+        // 版本应该升级到2
+        assertEquals(2, config?.version)
+
+        // ANALYZE场景的提示词应该被清空（因为包含变量占位符）
+        assertEquals("", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
+
+        // CHECK场景的提示词应该保留（因为不包含变量占位符）
+        assertEquals("检查以下内容是否安全", config?.prompts?.get(PromptScene.CHECK)?.userPrompt)
+    }
+
+    @Test
+    fun `readGlobalConfig should not migrate v2 config`() = runTest(testDispatcher) {
+        // Given - 创建v2配置文件
+        val promptsDir = File(context.filesDir, "prompts")
+        promptsDir.mkdirs()
+        val promptsFile = File(promptsDir, "global_prompts.json")
+
+        val v2Json = """
+            {
+                "version": 2,
+                "lastModified": "2025-12-16T10:00:00Z",
+                "prompts": {
+                    "ANALYZE": {
+                        "userPrompt": "请分析聊天内容并给出建议",
+                        "enabled": true,
+                        "history": []
+                    }
+                }
+            }
+        """.trimIndent()
+        promptsFile.writeText(v2Json)
+
+        // When
+        val result = storage.readGlobalConfig()
+        advanceUntilIdle()
+
+        // Then
+        assertTrue(result.isSuccess)
+        val config = result.getOrNull()
+        assertNotNull(config)
+
+        // 版本应该保持为2
+        assertEquals(2, config?.version)
+
+        // 提示词应该保持不变
+        assertEquals("请分析聊天内容并给出建议", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
+    }
+
+    @Test
+    fun `readGlobalConfig should detect various legacy variable patterns`() = runTest(testDispatcher) {
+        // Given - 测试各种变量占位符模式
+        val promptsDir = File(context.filesDir, "prompts")
+        promptsDir.mkdirs()
+        val promptsFile = File(promptsDir, "global_prompts.json")
+
+        val legacyJson = """
+            {
+                "version": 1,
+                "lastModified": "2025-12-15T10:00:00Z",
+                "prompts": {
+                    "ANALYZE": {
+                        "userPrompt": "单括号变量：{contact_name}",
+                        "enabled": true,
+                        "history": []
+                    },
+                    "CHECK": {
+                        "userPrompt": "双括号变量：{{risk_tags}}",
+                        "enabled": true,
+                        "history": []
+                    },
+                    "EXTRACT": {
+                        "userPrompt": "混合变量：{name}和{{tags}}",
+                        "enabled": true,
+                        "history": []
+                    },
+                    "SUMMARY": {
+                        "userPrompt": "无变量的正常提示词",
+                        "enabled": true,
+                        "history": []
+                    }
+                }
+            }
+        """.trimIndent()
+        promptsFile.writeText(legacyJson)
+
+        // When
+        val result = storage.readGlobalConfig()
+        advanceUntilIdle()
+
+        // Then
+        assertTrue(result.isSuccess)
+        val config = result.getOrNull()
+        assertNotNull(config)
+
+        // 包含变量的场景应该被清空
+        assertEquals("", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
+        assertEquals("", config?.prompts?.get(PromptScene.CHECK)?.userPrompt)
+        assertEquals("", config?.prompts?.get(PromptScene.EXTRACT)?.userPrompt)
+
+        // 不包含变量的场景应该保留
+        assertEquals("无变量的正常提示词", config?.prompts?.get(PromptScene.SUMMARY)?.userPrompt)
+    }
+
+    @Test
+    fun `readGlobalConfig should persist migrated config`() = runTest(testDispatcher) {
+        // Given - 创建旧版本配置
+        val promptsDir = File(context.filesDir, "prompts")
+        promptsDir.mkdirs()
+        val promptsFile = File(promptsDir, "global_prompts.json")
+
+        val legacyJson = """
+            {
+                "version": 1,
+                "lastModified": "2025-12-15T10:00:00Z",
+                "prompts": {
+                    "ANALYZE": {
+                        "userPrompt": "旧提示词：{contact_name}",
+                        "enabled": true,
+                        "history": []
+                    }
+                }
+            }
+        """.trimIndent()
+        promptsFile.writeText(legacyJson)
+
+        // When - 首次读取触发迁移
+        storage.readGlobalConfig()
+        advanceUntilIdle()
+
+        // 清除缓存，强制从文件读取
+        storage.invalidateCache()
+        advanceUntilIdle()
+
+        // 再次读取
+        val result = storage.readGlobalConfig()
+        advanceUntilIdle()
+
+        // Then - 文件应该已经被更新为v2
+        assertTrue(result.isSuccess)
+        val config = result.getOrNull()
+        assertEquals(2, config?.version)
+        assertEquals("", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
+    }
 }
