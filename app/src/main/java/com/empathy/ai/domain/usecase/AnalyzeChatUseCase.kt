@@ -101,12 +101,12 @@ class AnalyzeChatUseCase @Inject constructor(
             val userInputText = cleanedContext.joinToString("\n")
             conversationLogId = saveUserInput(contactId, userInputText)
 
-            // 6. Prompt 组装（使用PromptBuilder）
+            // 6. Prompt 组装（使用PromptBuilder三层分离架构）
             val redTags = brainTags.filter { it.type == TagType.RISK_RED }
             val greenTags = brainTags.filter { it.type == TagType.STRATEGY_GREEN }
             
-            // 构建上下文数据
-            val contextData = buildContextData(
+            // 构建运行时数据（系统自动注入，用户不可见）
+            val runtimeData = buildContextData(
                 targetGoal = profile.targetGoal,
                 facts = profile.facts,
                 redTags = redTags,
@@ -114,24 +114,21 @@ class AnalyzeChatUseCase @Inject constructor(
                 conversationHistory = maskedContext
             )
             
-            // 使用PromptBuilder构建系统指令
+            // 使用PromptBuilder构建完整系统指令
+            // 三层分离：系统约束 + 用户指令 + 运行时数据
             val promptContext = PromptContext.fromContact(profile)
-            val systemInstructionTemplate = promptBuilder.buildSystemInstruction(
+            val systemInstruction = promptBuilder.buildSystemInstruction(
                 scene = PromptScene.ANALYZE,
                 contactId = contactId,
-                context = promptContext
-            )
-            
-            // 注入上下文数据
-            val systemInstruction = promptBuilder.injectContextData(
-                instruction = systemInstructionTemplate,
-                contextData = contextData
+                context = promptContext,
+                runtimeData = runtimeData  // 运行时数据直接传入，不再使用占位符
             )
 
             // 7. AI 推理（传递provider配置）
+            // 注意：promptContext传递运行时数据，systemInstruction传递完整指令
             val analysisResult = aiRepository.analyzeChat(
                 provider = defaultProvider,
-                promptContext = contextData,
+                promptContext = runtimeData,
                 systemInstruction = systemInstruction
             ).getOrThrow()
 

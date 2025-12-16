@@ -93,4 +93,27 @@
     <string name="settings_floating_window">悬浮窗</string>
     <string name="settings_about">关于</string>
     <string name="settings_version">版本</string>
+    <string name="settings_prompt">提示词设置</string>
+    <string name="settings_prompt_analyze">聊天分析指令</string>
+    <string name="settings_prompt_check">安全检查指令</string>
+    <string name="settings_prompt_extract">信息提取指令</string>
+    <string name="settings_prompt_summary">每日总结指令</string>
+    
+    <!-- 提示词编辑器 -->
+    <string name="prompt_editor_title_global">编辑指令</string>
+    <string name="prompt_editor_title_contact">编辑 %s 的专属指令</string>
+    <string name="prompt_editor_cancel">取消</string>
+    <string name="prompt_editor_save">完成</string>
+    <string name="prompt_editor_placeholder_analyze">例如：请帮我分析她这句话的潜台词...</string>
+    <string name="prompt_editor_placeholder_check">例如：检查时要特别注意工作相关话题...</string>
+    <string name="prompt_editor_placeholder_extract">例如：重点关注对方提到的兴趣爱好...</string>
+    <string name="prompt_editor_placeholder_summary">例如：总结今天的对话亮点和需要注意的地方...</string>
+    <string name="prompt_editor_placeholder_contact">例如：和她聊天时要注意避开前任话题...</string>
+    <string name="prompt_editor_discard_title">放弃修改？</string>
+    <string name="prompt_editor_discard_message">你有未保存的修改，确定要放弃吗？</string>
+    <string name="prompt_editor_discard_confirm">放弃</string>
+    <string name="prompt_editor_discard_cancel">继续编辑</string>
+    <string name="prompt_editor_error_load">加载失败</string>
+    <string name="prompt_editor_error_save">保存失败</string>
+    <string name="prompt_editor_custom_prompt">专属指令</string>
 </resources>

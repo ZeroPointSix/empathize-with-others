@@ -362,8 +362,24 @@ $COMMON_JSON_RULES""".trim()
             val request = when (strategy) {
                 ProviderCompatibility.StructuredOutputStrategy.FUNCTION_CALLING -> {
                     // 使用 Function Calling（最可靠）
+                    // Function Calling 模式下，systemInstruction 已包含完整的三层结构：
+                    // - 系统Header（角色定义）
+                    // - 用户指令（全局+联系人专属）
+                    // - 运行时数据（联系人信息、聊天记录）
+                    // - 系统Footer（输出格式约束）
+                    // 
+                    // 但 Function Calling 需要额外的工具调用说明，所以追加 SYSTEM_ANALYZE_FC
+                    val effectiveSystemInstruction = if (systemInstruction.isNotBlank()) {
+                        // 将 Function Calling 的工具调用说明放在最前面
+                        "$SYSTEM_ANALYZE_FC\n\n$systemInstruction"
+                    } else {
+                        SYSTEM_ANALYZE_FC
+                    }
+                    android.util.Log.d("AiRepositoryImpl", "SystemInstruction长度: ${effectiveSystemInstruction.length} 字符")
+                    android.util.Log.d("AiRepositoryImpl", "SystemInstruction预览(前500字符): ${effectiveSystemInstruction.take(500)}")
+                    
                     val messages = listOf(
-                        MessageDto(role = "system", content = SYSTEM_ANALYZE_FC),
+                        MessageDto(role = "system", content = effectiveSystemInstruction),
                         MessageDto(role = "user", content = promptContext)
                     )
                     ChatRequestDto(

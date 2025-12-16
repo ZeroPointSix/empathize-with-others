@@ -1,16 +1,24 @@
 package com.empathy.ai.presentation.ui.screen.contact.overview
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,7 +56,8 @@ fun OverviewTab(
     daysSinceFirstMet: Int,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onViewFactStream: (() -> Unit)? = null
+    onViewFactStream: (() -> Unit)? = null,
+    onEditCustomPrompt: (() -> Unit)? = null
 ) {
     val scrollState = rememberLazyListState()
     
@@ -90,6 +99,17 @@ fun OverviewTab(
                         latestFact = latestFact,
                         onViewMore = onViewFactStream
                     )
+                }
+                
+                // 专属指令卡片
+                if (onEditCustomPrompt != null) {
+                    item {
+                        CustomPromptCard(
+                            contactName = contact.name,
+                            onEditClick = onEditCustomPrompt,
+                            modifier = Modifier.padding(Dimensions.SpacingMedium)
+                        )
+                    }
                 }
                 
                 // 底部间距
@@ -151,6 +171,56 @@ private fun getScoreDescription(score: Int): String {
         score >= 61 -> "关系良好，有进一步发展的空间"
         score >= 31 -> "关系一般，需要更多互动"
         else -> "关系较冷淡，建议主动联系"
+    }
+}
+
+/**
+ * 专属指令卡片
+ *
+ * 允许用户为特定联系人设置专属的AI指令
+ */
+@Composable
+private fun CustomPromptCard(
+    contactName: String,
+    onEditClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard(
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimensions.SpacingMedium),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "专属指令",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = "为 $contactName 设置专属的AI分析指令",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            
+            TextButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "编辑",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(4.dp))
+                Text("编辑")
+            }
+        }
     }
 }
 

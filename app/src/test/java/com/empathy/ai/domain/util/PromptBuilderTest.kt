@@ -105,7 +105,26 @@ class PromptBuilderTest {
     }
 
     @Test
-    fun `buildSystemInstruction should include context placeholder`() = runTest {
+    fun `buildSystemInstruction should include runtime data when provided`() = runTest {
+        // Given
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("提示词")
+        val context = PromptTestDataFactory.createPromptContext()
+        val runtimeData = "这是运行时数据"
+
+        // When
+        val result = promptBuilder.buildSystemInstruction(
+            scene = PromptScene.ANALYZE,
+            context = context,
+            runtimeData = runtimeData
+        )
+
+        // Then
+        assertTrue(result.contains(runtimeData))
+        assertTrue(result.contains("【上下文数据】"))
+    }
+
+    @Test
+    fun `buildSystemInstruction should not include context section when runtime data is empty`() = runTest {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("提示词")
         val context = PromptTestDataFactory.createPromptContext()
@@ -113,12 +132,12 @@ class PromptBuilderTest {
         // When
         val result = promptBuilder.buildSystemInstruction(
             scene = PromptScene.ANALYZE,
-            context = context
+            context = context,
+            runtimeData = ""
         )
 
         // Then
-        assertTrue(result.contains(PromptBuilder.CONTEXT_PLACEHOLDER))
-        assertTrue(result.contains("【上下文数据】"))
+        assertFalse(result.contains("【上下文数据】"))
     }
 
     @Test
@@ -133,7 +152,8 @@ class PromptBuilderTest {
         val result = promptBuilder.buildSystemInstruction(
             scene = PromptScene.ANALYZE,
             contactId = "contact123",
-            context = context
+            context = context,
+            runtimeData = ""
         )
 
         // Then
@@ -152,7 +172,8 @@ class PromptBuilderTest {
         val result = promptBuilder.buildSystemInstruction(
             scene = PromptScene.ANALYZE,
             contactId = "contact123",
-            context = context
+            context = context,
+            runtimeData = ""
         )
 
         // Then
@@ -212,12 +233,76 @@ class PromptBuilderTest {
         assertTrue(result.contains("JSON"))
     }
 
-    // ========== injectContextData() 测试 ==========
+    // ========== getUserInstructionOnly() 测试 ==========
 
     @Test
-    fun `injectContextData should replace placeholder with actual data`() {
+    fun `getUserInstructionOnly should return only user instructions`() = runTest {
         // Given
-        val instruction = "Header\n${PromptBuilder.CONTEXT_PLACEHOLDER}\nFooter"
+        val globalPrompt = "全局用户指令"
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success(globalPrompt)
+        val context = PromptTestDataFactory.createPromptContext()
+
+        // When
+        val result = promptBuilder.getUserInstructionOnly(
+            scene = PromptScene.ANALYZE,
+            context = context
+        )
+
+        // Then
+        assertTrue(result.contains(globalPrompt))
+        assertTrue(result.contains("【用户自定义指令】"))
+        // 不应包含系统Header/Footer
+        assertFalse(result.contains("共情AI助手"))
+        assertFalse(result.contains("JSON"))
+    }
+
+    @Test
+    fun `getUserInstructionOnly should include contact instruction when provided`() = runTest {
+        // Given
+        val globalPrompt = "全局指令"
+        val contactPrompt = "联系人专属指令"
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success(globalPrompt)
+        coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success(contactPrompt)
+        val context = PromptTestDataFactory.createPromptContext()
+
+        // When
+        val result = promptBuilder.getUserInstructionOnly(
+            scene = PromptScene.ANALYZE,
+            contactId = "contact123",
+            context = context
+        )
+
+        // Then
+        assertTrue(result.contains(globalPrompt))
+        assertTrue(result.contains(contactPrompt))
+        assertTrue(result.contains("【用户自定义指令】"))
+        assertTrue(result.contains("【针对此联系人的特殊指令】"))
+    }
+
+    @Test
+    fun `getUserInstructionOnly should return empty when no user prompts`() = runTest {
+        // Given
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("")
+        val context = PromptTestDataFactory.createPromptContext()
+
+        // When
+        val result = promptBuilder.getUserInstructionOnly(
+            scene = PromptScene.ANALYZE,
+            context = context
+        )
+
+        // Then
+        assertTrue(result.isEmpty())
+    }
+
+    // ========== injectContextData() 兼容性测试（已废弃方法）==========
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `injectContextData should replace placeholder with actual data for backward compatibility`() {
+        // Given
+        val placeholder = "{{CONTEXT_DATA_PLACEHOLDER}}"
+        val instruction = "Header\n$placeholder\nFooter"
         val contextData = "这是实际的上下文数据"
 
         // When
@@ -225,28 +310,14 @@ class PromptBuilderTest {
 
         // Then
         assertTrue(result.contains(contextData))
-        assertFalse(result.contains(PromptBuilder.CONTEXT_PLACEHOLDER))
+        assertFalse(result.contains(placeholder))
         assertTrue(result.contains("Header"))
         assertTrue(result.contains("Footer"))
     }
 
     @Test
-    fun `injectContextData should handle empty context data`() {
-        // Given
-        val instruction = "Header\n${PromptBuilder.CONTEXT_PLACEHOLDER}\nFooter"
-        val contextData = ""
-
-        // When
-        val result = promptBuilder.injectContextData(instruction, contextData)
-
-        // Then
-        assertFalse(result.contains(PromptBuilder.CONTEXT_PLACEHOLDER))
-        assertTrue(result.contains("Header"))
-        assertTrue(result.contains("Footer"))
-    }
-
-    @Test
-    fun `injectContextData should handle instruction without placeholder`() {
+    @Suppress("DEPRECATION")
+    fun `injectContextData should append data when no placeholder exists`() {
         // Given
         val instruction = "Header\nFooter"
         val contextData = "上下文数据"
@@ -255,9 +326,11 @@ class PromptBuilderTest {
         val result = promptBuilder.injectContextData(instruction, contextData)
 
         // Then
-        // 没有占位符，原样返回
-        assertFalse(result.contains(contextData))
-        assertEquals("Header\nFooter", result)
+        // 没有占位符时，应该追加数据
+        assertTrue(result.contains(contextData))
+        assertTrue(result.contains("Header"))
+        assertTrue(result.contains("Footer"))
+        assertTrue(result.contains("【上下文数据】"))
     }
 
     // ========== 合并顺序测试 ==========
@@ -268,25 +341,27 @@ class PromptBuilderTest {
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("用户指令")
         coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success("联系人指令")
         val context = PromptTestDataFactory.createPromptContext()
+        val runtimeData = "运行时数据"
 
         // When
         val result = promptBuilder.buildSystemInstruction(
             scene = PromptScene.ANALYZE,
             contactId = "contact123",
-            context = context
+            context = context,
+            runtimeData = runtimeData
         )
 
-        // Then - 验证顺序：Header -> 用户指令 -> 联系人指令 -> 上下文 -> Footer
+        // Then - 验证顺序：Header -> 用户指令 -> 联系人指令 -> 运行时数据 -> Footer
         val headerIndex = result.indexOf("共情AI助手")
         val userIndex = result.indexOf("用户指令")
         val contactIndex = result.indexOf("联系人指令")
-        val contextIndex = result.indexOf(PromptBuilder.CONTEXT_PLACEHOLDER)
+        val runtimeIndex = result.indexOf(runtimeData)
         val footerIndex = result.indexOf("JSON")
 
         assertTrue(headerIndex < userIndex)
         assertTrue(userIndex < contactIndex)
-        assertTrue(contactIndex < contextIndex)
-        assertTrue(contextIndex < footerIndex)
+        assertTrue(contactIndex < runtimeIndex)
+        assertTrue(runtimeIndex < footerIndex)
     }
 
     // ========== 不同场景测试 ==========
