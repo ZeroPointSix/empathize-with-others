@@ -9,6 +9,8 @@ import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.KeyEvent
+import com.empathy.ai.domain.model.PromptContext
+import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.TagUpdate
@@ -29,6 +31,10 @@ import javax.inject.Singleton
  * - 解析AI响应
  * - 更新联系人数据
  * - 保存总结记录
+ *
+ * 提示词系统集成:
+ * - 使用PromptBuilder构建SUMMARY场景的系统指令
+ * - 支持用户自定义提示词
  */
 @Singleton
 class AiSummaryProcessor @Inject constructor(
@@ -38,6 +44,7 @@ class AiSummaryProcessor @Inject constructor(
     private val brainTagRepository: BrainTagRepository,
     private val dailySummaryRepository: DailySummaryRepository,
     private val contextBuilder: ContextBuilder,
+    private val promptBuilder: PromptBuilder,
     private val moshi: Moshi
 ) {
     companion object {
@@ -72,11 +79,19 @@ class AiSummaryProcessor @Inject constructor(
             }
             val prompt = contextBuilder.buildSummaryPrompt(profile, conversationTexts)
 
+            // 使用PromptBuilder构建系统指令
+            val promptContext = PromptContext.fromContact(profile)
+            val systemInstruction = promptBuilder.buildSimpleInstruction(
+                scene = PromptScene.SUMMARY,
+                contactId = profile.id,
+                context = promptContext
+            )
+
             // 调用AI
             val aiResponse = aiRepository.generateText(
                 provider = provider,
                 prompt = prompt,
-                systemInstruction = PromptTemplates.SUMMARY_SYSTEM_INSTRUCTION
+                systemInstruction = systemInstruction
             ).getOrThrow()
 
             // 解析AI响应

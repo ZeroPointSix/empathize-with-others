@@ -35,12 +35,14 @@ interface AiRepository {
      * @param provider AI服务商配置（包含baseUrl、apiKey、model等）
      * @param draft 用户正在输入的草稿
      * @param riskRules 相关的雷区标签列表(文本形式)
+     * @param systemInstruction 可选的自定义系统指令，为null时使用默认指令
      * @return 详细的安全检查结果
      */
     suspend fun checkDraftSafety(
         provider: com.empathy.ai.domain.model.AiProvider,
         draft: String,
-        riskRules: List<String>
+        riskRules: List<String>,
+        systemInstruction: String? = null
     ): Result<SafetyCheckResult>
 
     /**

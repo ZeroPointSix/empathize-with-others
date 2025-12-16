@@ -395,6 +395,211 @@ class DatabaseMigrationTest {
     }
 
     /**
+     * 迁移脚本: 版本 5 -> 6
+     * 添加UI扩展字段
+     */
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles ADD COLUMN avatar_url TEXT")
+            db.execSQL("ALTER TABLE brain_tags ADD COLUMN is_confirmed INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
+    /**
+     * 迁移脚本: 版本 6 -> 7
+     * 修复性迁移
+     */
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 修复索引名称
+            db.execSQL("DROP INDEX IF EXISTS idx_conv_contact")
+            db.execSQL("DROP INDEX IF EXISTS idx_conv_timestamp")
+            db.execSQL("DROP INDEX IF EXISTS idx_conv_summarized")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_contact_id ON conversation_logs(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_timestamp ON conversation_logs(timestamp)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_is_summarized ON conversation_logs(is_summarized)")
+            db.execSQL("DROP INDEX IF EXISTS idx_failed_contact")
+            db.execSQL("DROP INDEX IF EXISTS idx_failed_at")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_failed_summary_tasks_contact_id ON failed_summary_tasks(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_failed_summary_tasks_failed_at ON failed_summary_tasks(failed_at)")
+        }
+    }
+
+    /**
+     * 迁移脚本: 版本 7 -> 8
+     * 添加提示词管理系统字段
+     */
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE profiles ADD COLUMN custom_prompt TEXT DEFAULT NULL")
+        }
+    }
+
+    /**
+     * 测试迁移 5 -> 6
+     * 验证UI扩展字段添加
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrate5To6_addsUiExtensionFields() {
+        // 创建版本5数据库
+        helper.createDatabase(testDbName, 5).apply {
+            execSQL(
+                """
+                INSERT INTO profiles (id, name, nickname, relationship, notes, relationship_score)
+                VALUES ('contact_1', 'Test', 'T', 'Friend', 'Notes', 50)
+                """.trimIndent()
+            )
+            execSQL(
+                """
+                INSERT INTO brain_tags (id, contact_id, content, type, source)
+                VALUES (1, 'contact_1', 'Test Tag', 'RISK_RED', 'manual')
+                """.trimIndent()
+            )
+            close()
+        }
+
+        // 执行迁移
+        val db = helper.runMigrationsAndValidate(testDbName, 6, true, MIGRATION_5_6)
+
+        // 验证avatar_url字段存在
+        val profileCursor = db.query("SELECT avatar_url FROM profiles WHERE id = 'contact_1'")
+        assertTrue("应该能查询avatar_url字段", profileCursor.moveToFirst())
+        profileCursor.close()
+
+        // 验证is_confirmed字段存在且有默认值
+        val tagCursor = db.query("SELECT is_confirmed FROM brain_tags WHERE id = 1")
+        assertTrue("应该能查询is_confirmed字段", tagCursor.moveToFirst())
+        assertEquals("默认is_confirmed应该是1", 1, tagCursor.getInt(0))
+        tagCursor.close()
+
+        db.close()
+    }
+
+    /**
+     * 测试迁移 6 -> 7
+     * 验证索引修复
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrate6To7_fixesIndexNames() {
+        // 创建版本6数据库
+        helper.createDatabase(testDbName, 6).apply {
+            close()
+        }
+
+        // 执行迁移
+        val db = helper.runMigrationsAndValidate(testDbName, 7, true, MIGRATION_6_7)
+
+        // 验证新索引存在
+        val indexCursor = db.query(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'index_conversation_logs%'"
+        )
+        val indexes = mutableListOf<String>()
+        while (indexCursor.moveToNext()) {
+            indexes.add(indexCursor.getString(0))
+        }
+        indexCursor.close()
+
+        assertTrue("应该有conversation_logs索引", indexes.isNotEmpty())
+        db.close()
+    }
+
+    /**
+     * 测试迁移 7 -> 8
+     * 验证custom_prompt字段添加
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrate7To8_addsCustomPromptField() {
+        // 创建版本7数据库
+        helper.createDatabase(testDbName, 7).apply {
+            execSQL(
+                """
+                INSERT INTO profiles (id, name, nickname, relationship, notes, relationship_score)
+                VALUES ('contact_1', 'Test', 'T', 'Friend', 'Notes', 50)
+                """.trimIndent()
+            )
+            close()
+        }
+
+        // 执行迁移
+        val db = helper.runMigrationsAndValidate(testDbName, 8, true, MIGRATION_7_8)
+
+        // 验证custom_prompt字段存在
+        val cursor = db.query("SELECT custom_prompt FROM profiles WHERE id = 'contact_1'")
+        assertTrue("应该能查询custom_prompt字段", cursor.moveToFirst())
+        assertTrue("默认custom_prompt应该是NULL", cursor.isNull(0))
+        cursor.close()
+
+        // 验证可以更新custom_prompt
+        db.execSQL("UPDATE profiles SET custom_prompt = '自定义提示词' WHERE id = 'contact_1'")
+        val updateCursor = db.query("SELECT custom_prompt FROM profiles WHERE id = 'contact_1'")
+        assertTrue(updateCursor.moveToFirst())
+        assertEquals("自定义提示词", updateCursor.getString(0))
+        updateCursor.close()
+
+        db.close()
+    }
+
+    /**
+     * 测试完整迁移链 1 -> 8
+     * 验证所有迁移脚本可以连续执行
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrateAll_1To8_succeeds() {
+        // 创建版本1数据库
+        helper.createDatabase(testDbName, 1).apply {
+            execSQL(
+                """
+                INSERT INTO profiles (id, name, nickname, relationship, notes)
+                VALUES ('contact_1', 'Test Contact', 'TC', 'Friend', 'Notes')
+                """.trimIndent()
+            )
+            execSQL(
+                """
+                INSERT INTO brain_tags (id, contact_id, content, type, source)
+                VALUES (1, 'contact_1', 'Test Tag', 'RISK_RED', 'manual')
+                """.trimIndent()
+            )
+            close()
+        }
+
+        // 执行所有迁移
+        val db = helper.runMigrationsAndValidate(
+            testDbName, 8, true,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+            MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8
+        )
+
+        // 验证原有数据完整
+        val profileCursor = db.query("SELECT * FROM profiles WHERE id = 'contact_1'")
+        assertTrue("联系人数据应该保留", profileCursor.moveToFirst())
+        assertEquals("Test Contact", profileCursor.getString(profileCursor.getColumnIndex("name")))
+        profileCursor.close()
+
+        // 验证所有新字段存在
+        val fieldCursor = db.query(
+            "SELECT avatar_url, custom_prompt, relationship_score FROM profiles WHERE id = 'contact_1'"
+        )
+        assertTrue(fieldCursor.moveToFirst())
+        fieldCursor.close()
+
+        // 验证所有新表存在
+        val tables = listOf(
+            "ai_providers", "conversation_logs", "daily_summaries", "failed_summary_tasks"
+        )
+        for (table in tables) {
+            val cursor = db.query("SELECT * FROM $table")
+            assertTrue("$table 表应该存在", cursor.columnCount > 0)
+            cursor.close()
+        }
+
+        db.close()
+    }
+
+    /**
      * 测试数据完整性
      * 验证迁移后数据关系完整
      */

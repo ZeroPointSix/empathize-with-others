@@ -4,6 +4,8 @@ import android.util.Log
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.PromptContext
+import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
@@ -13,6 +15,7 @@ import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.repository.SettingsRepository
 import com.empathy.ai.domain.service.PrivacyEngine
 import com.empathy.ai.domain.util.DateUtils
+import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -27,6 +30,10 @@ import javax.inject.Inject
  * - 自动保存用户输入到对话记录
  * - 自动保存AI回复到对话记录
  * - 更新联系人最后互动日期
+ *
+ * 提示词系统集成:
+ * - 使用PromptBuilder构建系统指令
+ * - 支持用户自定义提示词和联系人专属提示词
  */
 class AnalyzeChatUseCase @Inject constructor(
     private val contactRepository: ContactRepository,
@@ -35,7 +42,8 @@ class AnalyzeChatUseCase @Inject constructor(
     private val aiRepository: AiRepository,
     private val settingsRepository: SettingsRepository,
     private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository,
-    private val conversationRepository: ConversationRepository
+    private val conversationRepository: ConversationRepository,
+    private val promptBuilder: PromptBuilder
 ) {
     companion object {
         private const val TAG = "AnalyzeChatUseCase"
@@ -93,21 +101,37 @@ class AnalyzeChatUseCase @Inject constructor(
             val userInputText = cleanedContext.joinToString("\n")
             conversationLogId = saveUserInput(contactId, userInputText)
 
-            // 6. Prompt 组装
-            val prompt = buildPrompt(
+            // 6. Prompt 组装（使用PromptBuilder）
+            val redTags = brainTags.filter { it.type == TagType.RISK_RED }
+            val greenTags = brainTags.filter { it.type == TagType.STRATEGY_GREEN }
+            
+            // 构建上下文数据
+            val contextData = buildContextData(
                 targetGoal = profile.targetGoal,
                 facts = profile.facts,
-                redTags = brainTags.filter { it.type == TagType.RISK_RED },
-                greenTags = brainTags.filter { it.type == TagType.STRATEGY_GREEN },
+                redTags = redTags,
+                greenTags = greenTags,
                 conversationHistory = maskedContext
             )
-
-            val systemInstruction = buildSystemInstruction()
+            
+            // 使用PromptBuilder构建系统指令
+            val promptContext = PromptContext.fromContact(profile)
+            val systemInstructionTemplate = promptBuilder.buildSystemInstruction(
+                scene = PromptScene.ANALYZE,
+                contactId = contactId,
+                context = promptContext
+            )
+            
+            // 注入上下文数据
+            val systemInstruction = promptBuilder.injectContextData(
+                instruction = systemInstructionTemplate,
+                contextData = contextData
+            )
 
             // 7. AI 推理（传递provider配置）
             val analysisResult = aiRepository.analyzeChat(
                 provider = defaultProvider,
-                promptContext = prompt,
+                promptContext = contextData,
                 systemInstruction = systemInstruction
             ).getOrThrow()
 
@@ -191,9 +215,11 @@ class AnalyzeChatUseCase @Inject constructor(
     }
 
     /**
-     * 构建 Prompt
+     * 构建上下文数据
+     *
+     * 将联系人信息、标签和聊天记录组装为上下文数据字符串
      */
-    private fun buildPrompt(
+    private fun buildContextData(
         targetGoal: String,
         facts: List<Fact>,
         redTags: List<BrainTag>,
@@ -234,25 +260,5 @@ class AnalyzeChatUseCase @Inject constructor(
                 appendLine(message)
             }
         }
-    }
-
-    /**
-     * 构建系统指令
-     */
-    private fun buildSystemInstruction(): String {
-        return """
-            你是一个专业的社交沟通顾问。
-
-            请基于提供的信息，分析当前聊天情况，并给出:
-            1. 对方当前的情绪和潜在意图
-            2. 可能存在的风险点
-            3. 具体的回复建议（可直接发送的文本）
-
-            注意事项:
-            - 严格遵守雷区警告，不要触碰敏感话题
-            - 优先使用策略建议中的方法
-            - 回复要真诚、自然，不要太过刻意
-            - 如果发现高风险情况，请明确标注
-        """.trimIndent()
     }
 }

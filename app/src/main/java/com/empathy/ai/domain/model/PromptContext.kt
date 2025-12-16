@@ -39,6 +39,22 @@ data class PromptContext(
     }
 
     companion object {
+        // 标签关键字常量
+        private const val RISK_ZONE_KEY = "雷区"
+        private const val STRATEGY_KEY = "策略"
+
+        /**
+         * 判断是否为雷区标签
+         */
+        private fun isRiskZone(key: String): Boolean =
+            key == RISK_ZONE_KEY || key.contains(RISK_ZONE_KEY)
+
+        /**
+         * 判断是否为策略标签
+         */
+        private fun isStrategy(key: String): Boolean =
+            key == STRATEGY_KEY || key.contains(STRATEGY_KEY)
+
         /**
          * 从联系人画像构建上下文
          *
@@ -47,11 +63,11 @@ data class PromptContext(
          */
         fun fromContact(contact: ContactProfile): PromptContext {
             val riskTags = contact.facts
-                .filter { it.key == "雷区" || it.key.contains("雷区") }
+                .filter { isRiskZone(it.key) }
                 .map { it.value }
 
             val strategyTags = contact.facts
-                .filter { it.key == "策略" || it.key.contains("策略") }
+                .filter { isStrategy(it.key) }
                 .map { it.value }
 
             return PromptContext(

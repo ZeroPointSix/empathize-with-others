@@ -159,7 +159,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - Hilt 2.52依赖注入完整配置
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
-  - 数据库版本v7，完整Migration链（1→7）
+  - 数据库版本v8，完整Migration链（1→8）
   - Flow响应式数据流
 - **网络通信**: Retrofit + OkHttp + Moshi 完整实现
   - Retrofit 2.11.0动态URL支持
@@ -168,12 +168,15 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **异步编程**: Kotlin Coroutines + Flow 完整实现
   - Coroutines 1.9.0
   - 完整的suspend函数和Flow支持
+  - DispatcherModule统一协程调度器管理
 - **安全存储**: EncryptedSharedPreferences 完整实现
   - androidx.security.crypto 1.1.0-alpha06
   - 硬件级加密支持
 - **依赖注入**: Hilt 模块完整配置
   - DatabaseModule、NetworkModule、RepositoryModule
   - 新增MemoryModule支持记忆系统
+  - 新增PromptModule支持提示词系统
+  - 新增DispatcherModule支持协程调度器
 - **图片加载**: Coil 图片加载和缓存完整实现
   - Coil 2.5.0 + Compose集成
 - **测试框架**: Room Testing、单元测试、UI测试完整实现
@@ -181,6 +184,11 @@ implementation("androidx.core:core-ktx:1.15.0")
   - MockK 1.13.13模拟框架
   - Compose UI Test + Espresso 3.6.1
   - Room Testing 2.6.1数据库迁移测试
+  - 提示词系统完整测试套件
+- **代码统计**: 363个Kotlin文件，76,933行代码
+  - 主代码：239个文件，42,432行
+  - 单元测试：111个文件，30,984行
+  - Android测试：13个文件，3,517行
 
 ### ⚠️ 部分实现/待完善功能
 

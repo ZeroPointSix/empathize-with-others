@@ -2,6 +2,7 @@ package com.empathy.ai.testutil
 
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.DataStatus
 import com.empathy.ai.domain.model.EmotionType
@@ -141,14 +142,35 @@ object TestDataFactory {
         id: String = "photo_test_1",
         timestamp: Long = System.currentTimeMillis(),
         emotionType: EmotionType = EmotionType.SWEET,
-        imageUrl: String = "https://example.com/photo.jpg",
-        caption: String = "测试照片描述"
+        photoUrl: String = "https://example.com/photo.jpg",
+        description: String = "测试照片描述",
+        tags: List<String> = emptyList()
     ) = TimelineItem.PhotoMoment(
         id = id,
         timestamp = timestamp,
         emotionType = emotionType,
-        imageUrl = imageUrl,
-        caption = caption
+        photoUrl = photoUrl,
+        description = description,
+        tags = tags
+    )
+
+    /**
+     * 创建测试用对话记录日志
+     */
+    fun createConversationLog(
+        id: Long = 1L,
+        contactId: String = "contact_test_1",
+        userInput: String = "你好，最近怎么样？",
+        aiResponse: String? = "对方情绪积极，建议继续保持轻松的聊天氛围",
+        timestamp: Long = System.currentTimeMillis(),
+        isSummarized: Boolean = false
+    ) = ConversationLog(
+        id = id,
+        contactId = contactId,
+        userInput = userInput,
+        aiResponse = aiResponse,
+        timestamp = timestamp,
+        isSummarized = isSummarized
     )
 
     /**
@@ -206,14 +228,12 @@ object TestDataFactory {
         id: String = "conv_test_1",
         timestamp: Long = System.currentTimeMillis(),
         emotionType: EmotionType = EmotionType.NEUTRAL,
-        preview: String = "你好，最近怎么样？",
-        messageCount: Int = 10
+        log: ConversationLog = createConversationLog()
     ) = TimelineItem.Conversation(
         id = id,
         timestamp = timestamp,
         emotionType = emotionType,
-        preview = preview,
-        messageCount = messageCount
+        log = log
     )
 
     // ==================== BrainTag ====================
@@ -269,8 +289,7 @@ object TestDataFactory {
         createFact(
             key = "测试键$index",
             value = "测试值$index",
-            source = if (index % 2 == 0) FactSource.MANUAL else FactSource.AI_INFERRED,
-            confidence = 0.8f + (index % 3) * 0.05f
+            source = if (index % 2 == 0) FactSource.MANUAL else FactSource.AI_INFERRED
         )
     }
 

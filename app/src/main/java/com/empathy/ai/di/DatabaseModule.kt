@@ -256,6 +256,18 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移: 版本 7 -> 8
+     * 添加提示词管理系统字段：
+     * - profiles表添加custom_prompt字段（联系人专属提示词）
+     */
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 为profiles表添加custom_prompt字段
+            db.execSQL("ALTER TABLE profiles ADD COLUMN custom_prompt TEXT DEFAULT NULL")
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -283,7 +295,8 @@ object DatabaseModule {
                 MIGRATION_3_4,
                 MIGRATION_4_5,
                 MIGRATION_5_6,
-                MIGRATION_6_7
+                MIGRATION_6_7,
+                MIGRATION_7_8
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据

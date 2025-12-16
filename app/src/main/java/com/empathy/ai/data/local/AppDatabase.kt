@@ -28,7 +28,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  * 4. 提供DAO访问接口
  *
  * 版本控制（TD-001完善）:
- * - 当前版本: 7 (修复性迁移)
+ * - 当前版本: 8 (提示词管理系统)
  * - 升级策略: 使用完整的Migration脚本链，确保用户数据安全
  * - Schema导出: 已启用，用于版本管理和迁移测试
  * - 迁移历史:
@@ -38,6 +38,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  *   - v4→v5: 添加failed_summary_tasks表
  *   - v5→v6: 添加UI扩展字段（avatar_url, is_confirmed）
  *   - v6→v7: 修复性迁移（修复conversation_logs表结构和索引名称）
+ *   - v7→v8: 添加提示词管理系统字段（custom_prompt）
  *
  * @property entities 数据库包含的实体类列表
  * @property version 数据库版本号
@@ -53,7 +54,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         DailySummaryEntity::class,
         FailedSummaryTaskEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)

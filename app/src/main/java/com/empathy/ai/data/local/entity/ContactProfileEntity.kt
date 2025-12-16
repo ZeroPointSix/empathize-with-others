@@ -53,5 +53,8 @@ data class ContactProfileEntity(
     val lastInteractionDate: String? = null,
 
     @ColumnInfo(name = "avatar_url")
-    val avatarUrl: String? = null
+    val avatarUrl: String? = null,
+
+    @ColumnInfo(name = "custom_prompt")
+    val customPrompt: String? = null
 )
