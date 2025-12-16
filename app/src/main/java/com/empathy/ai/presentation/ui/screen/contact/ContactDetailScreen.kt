@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.button.PrimaryButton
@@ -29,6 +30,7 @@ import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.relationship.FactList
 import com.empathy.ai.presentation.ui.component.relationship.RelationshipScoreSection
 import com.empathy.ai.presentation.ui.component.dialog.AddTagDialog
+import com.empathy.ai.presentation.ui.component.dialog.AddFactToStreamDialog
 import com.empathy.ai.presentation.ui.component.state.ErrorView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.viewmodel.ContactDetailViewModel
@@ -194,16 +196,14 @@ private fun ContactDetailScreenContent(
         )
     }
 
-    // 添加标签对话框
-    if (uiState.showAddTagDialog) {
-        AddTagDialog(
-            tagContent = uiState.newTagContent,
-            selectedType = uiState.newTagType,
-            contentError = uiState.newTagContentError,
-            onContentChange = { onEvent(ContactDetailUiEvent.UpdateNewTagContent(it)) },
-            onTypeChange = { onEvent(ContactDetailUiEvent.UpdateNewTagType(it)) },
-            onDismiss = { onEvent(ContactDetailUiEvent.HideAddTagDialog) },
-            onConfirm = { onEvent(ContactDetailUiEvent.ConfirmAddTag) }
+    // 添加事实对话框（替换原来的标签对话框，统一使用Fact类型）
+    if (uiState.showAddFactDialog) {
+        AddFactToStreamDialog(
+            onDismiss = { onEvent(ContactDetailUiEvent.HideAddFactDialog) },
+            onConfirm = { key, value ->
+                onEvent(ContactDetailUiEvent.AddFact(key, value))
+                onEvent(ContactDetailUiEvent.HideAddFactDialog)
+            }
         )
     }
 }
@@ -299,48 +299,39 @@ private fun ContactDetailContent(
             // 事实和标签在联系人创建后通过事实流添加
         }
 
-        // 标签部分
+        // 事实部分（统一使用Fact类型，与联系人画像系统保持一致）
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "标签",
+                    text = "画像事实",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 if (uiState.isEditMode) {
-                    TextButton(onClick = { onEvent(ContactDetailUiEvent.ShowAddTagDialog) }) {
-                        Text("添加标签")
+                    TextButton(onClick = { onEvent(ContactDetailUiEvent.ShowAddFactDialog) }) {
+                        Text("添加事实")
                     }
                 }
             }
         }
 
-        if (uiState.brainTags.isNotEmpty()) {
+        if (uiState.facts.isNotEmpty()) {
             item {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(
-                        items = uiState.displayTags,
-                        key = { it.id }
-                    ) { tag ->
-                        TagChip(
-                            text = tag.content,
-                            tagType = tag.type,
-                            onDelete = if (uiState.isEditMode) {
-                                { onEvent(ContactDetailUiEvent.DeleteBrainTag(tag.id)) }
-                            } else null
-                        )
+                FactList(
+                    facts = uiState.facts,
+                    isEditMode = uiState.isEditMode,
+                    onDeleteFact = { fact ->
+                        onEvent(ContactDetailUiEvent.DeleteFactItem(fact))
                     }
-                }
+                )
             }
         } else {
             item {
                 Text(
-                    text = "还没有标签",
+                    text = "还没有画像事实",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
