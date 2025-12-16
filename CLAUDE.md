@@ -20,7 +20,8 @@
 **完成度**: 95% (与WORKSPACE.md和.kiro/steering/product.md一致)
 **技术栈**: Kotlin + Jetpack Compose + Room + Retrofit + Hilt + Coil + Room Testing
 **最后更新**: 2025-12-15 (与WORKSPACE.md和.kiro/steering文件一致)
-**代码统计**: 48,476行 (24,006行源代码 + 24,470行测试代码)
+**代码统计**: 72,749行 (40,534行源代码 + 28,903行测试代码 + 3,312行Android测试)
+  - Kotlin文件总数: 332个 (主代码220个 + 单元测试99个 + Android测试13个)
 **测试覆盖率**: 99.1% (113/114测试通过)
 
 ---
