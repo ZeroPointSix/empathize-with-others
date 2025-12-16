@@ -1,11 +1,15 @@
 package com.empathy.ai.domain.usecase
 
+import com.empathy.ai.domain.model.PromptContext
+import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.SafetyCheckResult
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
+import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.PrivacyEngine
+import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -15,13 +19,19 @@ import javax.inject.Inject
  * 触发场景: 用户打完字心里没底，点击悬浮窗的 [🛡️ 帮我检查] 按钮
  *
  * 功能: 检查用户正在输入的草稿是否触发雷区
+ *
+ * 提示词系统集成:
+ * - 使用PromptBuilder构建CHECK场景的系统指令
+ * - 支持用户自定义提示词
  */
 class CheckDraftUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository,
     private val privacyRepository: PrivacyRepository,
     private val aiRepository: AiRepository,
     private val settingsRepository: com.empathy.ai.domain.repository.SettingsRepository,
-    private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
+    private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository,
+    private val contactRepository: ContactRepository,
+    private val promptBuilder: PromptBuilder
 ) {
     /**
      * 执行草稿安全检查
@@ -95,12 +105,28 @@ class CheckDraftUseCase @Inject constructor(
                 val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
                 val maskedDraft = PrivacyEngine.mask(draftSnapshot, privacyMapping)
 
-                // 调用 AI 进行语义风险检查（传递provider配置）
+                // 构建提示词上下文
+                val profile = contactRepository.getProfile(contactId).getOrNull()
+                val promptContext = if (profile != null) {
+                    PromptContext.fromContact(profile)
+                } else {
+                    PromptContext(riskTags = redTags.map { it.content })
+                }
+                
+                // 使用PromptBuilder构建系统指令
+                val systemInstruction = promptBuilder.buildSimpleInstruction(
+                    scene = PromptScene.CHECK,
+                    contactId = contactId,
+                    context = promptContext
+                )
+
+                // 调用 AI 进行语义风险检查（传递provider配置和自定义系统指令）
                 val riskRules = redTags.map { it.content }
                 val deepCheckResult = aiRepository.checkDraftSafety(
                     provider = defaultProvider,
                     draft = maskedDraft,
-                    riskRules = riskRules
+                    riskRules = riskRules,
+                    systemInstruction = systemInstruction
                 ).getOrThrow()
 
                 return Result.success(deepCheckResult)

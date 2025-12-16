@@ -4,7 +4,18 @@ package com.empathy.ai.domain.util
  * Prompt模板常量
  *
  * 集中管理AI相关的Prompt模板，便于维护和修改
+ *
+ * @deprecated 请使用 [PromptBuilder] 替代，该类提供更灵活的提示词管理功能
+ * @see PromptBuilder
+ * @see com.empathy.ai.domain.repository.PromptRepository
  */
+@Deprecated(
+    message = "请使用 PromptBuilder 替代",
+    replaceWith = ReplaceWith(
+        "PromptBuilder",
+        "com.empathy.ai.domain.util.PromptBuilder"
+    )
+)
 object PromptTemplates {
 
     /**

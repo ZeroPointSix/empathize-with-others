@@ -478,7 +478,8 @@ $COMMON_JSON_RULES""".trim()
     override suspend fun checkDraftSafety(
         provider: com.empathy.ai.domain.model.AiProvider,
         draft: String,
-        riskRules: List<String>
+        riskRules: List<String>,
+        systemInstruction: String?
     ): Result<SafetyCheckResult> {
         return try {
             // 1. 从provider获取配置并构建完整URL
@@ -508,8 +509,11 @@ $COMMON_JSON_RULES""".trim()
                 请检查草稿是否触发了任何风险规则。
             """.trimIndent()
 
+            // 使用自定义系统指令或默认指令
+            val effectiveSystemInstruction = systemInstruction ?: SYSTEM_CHECK
+            
             val messages = listOf(
-                MessageDto(role = "system", content = SYSTEM_CHECK),
+                MessageDto(role = "system", content = effectiveSystemInstruction),
                 MessageDto(role = "user", content = checkPrompt)
             )
 

@@ -97,4 +97,26 @@ interface ContactDao {
      */
     @Query("UPDATE profiles SET last_interaction_date = :date WHERE id = :id")
     suspend fun updateLastInteractionDate(id: String, date: String)
+
+    // ============================================================================
+    // 提示词管理系统扩展方法
+    // ============================================================================
+
+    /**
+     * 获取联系人自定义提示词
+     *
+     * @param contactId 联系人ID
+     * @return 自定义提示词，如果未设置则返回null
+     */
+    @Query("SELECT custom_prompt FROM profiles WHERE id = :contactId")
+    suspend fun getCustomPrompt(contactId: String): String?
+
+    /**
+     * 更新联系人自定义提示词
+     *
+     * @param contactId 联系人ID
+     * @param prompt 自定义提示词，传null表示清除
+     */
+    @Query("UPDATE profiles SET custom_prompt = :prompt WHERE id = :contactId")
+    suspend fun updateCustomPrompt(contactId: String, prompt: String?)
 }

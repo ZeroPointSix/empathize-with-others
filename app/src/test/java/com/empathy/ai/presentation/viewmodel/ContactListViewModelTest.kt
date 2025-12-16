@@ -15,9 +15,9 @@ import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 /**
  * ContactListViewModel 单元测试
@@ -154,14 +154,14 @@ class ContactListViewModelTest {
                 name = "张三",
                 targetGoal = "合作",
                 contextDepth = 10,
-                facts = emptyMap()
+                facts = emptyList()
             ),
             ContactProfile(
                 id = "2",
                 name = "李四",
                 targetGoal = "朋友",
                 contextDepth = 15,
-                facts = emptyMap()
+                facts = emptyList()
             )
         )
         coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
@@ -190,29 +190,27 @@ class ContactListViewModelTest {
     fun `search should filter contacts by name`() = runTest {
         // Given: 准备测试数据
         val testContacts = listOf(
-            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyMap()),
-            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyMap()),
-            ContactProfile(id = "3", name = "张伟", targetGoal = "", contextDepth = 10, facts = emptyMap())
+            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyList()),
+            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyList()),
+            ContactProfile(id = "3", name = "张伟", targetGoal = "", contextDepth = 10, facts = emptyList())
         )
         coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
 
         viewModel = ContactListViewModel(
             getAllContactsUseCase,
-            deleteContactUseCase,
-            saveProfileUseCase
+            deleteContactUseCase
         )
         advanceUntilIdle()
 
         // 验证初始状态
         assertEquals(3, viewModel.uiState.value.contacts.size, "应该加载3个联系人")
 
-        // When: 激活搜索并输入查询
-        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true, query = "张"))
+        // When: 输入搜索查询
+        viewModel.onEvent(ContactListUiEvent.UpdateSearchQuery("张"))
         advanceUntilIdle()
 
-        // Then: 验证搜索已激活
-        assertTrue(viewModel.uiState.value.searchState.isActive, "搜索应该激活")
-        assertEquals("张", viewModel.uiState.value.searchState.query, "查询应该被设置")
+        // Then: 验证搜索查询已设置
+        assertEquals("张", viewModel.uiState.value.searchQuery, "查询应该被设置")
     }
 
     /**
@@ -226,14 +224,13 @@ class ContactListViewModelTest {
             name = "测试",
             targetGoal = "",
             contextDepth = 10,
-            facts = emptyMap()
+            facts = emptyList()
         )
         coEvery { deleteContactUseCase(any()) } returns Result.success(Unit)
 
         viewModel = ContactListViewModel(
             getAllContactsUseCase,
-            deleteContactUseCase,
-            saveProfileUseCase
+            deleteContactUseCase
         )
         advanceUntilIdle()
 
@@ -253,8 +250,7 @@ class ContactListViewModelTest {
         // Given
         viewModel = ContactListViewModel(
             getAllContactsUseCase,
-            deleteContactUseCase,
-            saveProfileUseCase
+            deleteContactUseCase
         )
         advanceUntilIdle()
 
@@ -282,29 +278,26 @@ class ContactListViewModelTest {
         // Given
         viewModel = ContactListViewModel(
             getAllContactsUseCase,
-            deleteContactUseCase,
-            saveProfileUseCase
+            deleteContactUseCase
         )
         advanceUntilIdle()
 
-        // 初始状态：搜索未激活
-        assertFalse(viewModel.uiState.value.searchState.isActive)
+        // 初始状态：搜索查询为空
+        assertEquals("", viewModel.uiState.value.searchQuery)
 
-        // When: 激活搜索
-        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true))
+        // When: 输入搜索查询
+        viewModel.onEvent(ContactListUiEvent.UpdateSearchQuery("测试"))
         advanceUntilIdle()
 
-        // Then: 搜索应该激活
-        assertTrue(viewModel.uiState.value.searchState.isActive)
+        // Then: 搜索查询应该被设置
+        assertEquals("测试", viewModel.uiState.value.searchQuery)
 
-        // When: 关闭搜索
-        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = false))
+        // When: 清空搜索
+        viewModel.onEvent(ContactListUiEvent.ClearSearch)
         advanceUntilIdle()
 
-        // Then: 搜索应该关闭，状态重置
-        assertFalse(viewModel.uiState.value.searchState.isActive)
-        assertEquals("", viewModel.uiState.value.searchState.query)
-        assertEquals(0, viewModel.uiState.value.searchState.results.size)
+        // Then: 搜索应该被清空
+        assertEquals("", viewModel.uiState.value.searchQuery)
     }
 
     /**
@@ -317,26 +310,24 @@ class ContactListViewModelTest {
     fun `search should show empty state when no results found`() = runTest {
         // Given: 准备测试数据
         val testContacts = listOf(
-            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyMap()),
-            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyMap())
+            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyList()),
+            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyList())
         )
         coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
 
         viewModel = ContactListViewModel(
             getAllContactsUseCase,
-            deleteContactUseCase,
-            saveProfileUseCase
+            deleteContactUseCase
         )
         advanceUntilIdle()
 
         // When: 搜索不存在的联系人
-        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true, query = "不存在的联系人"))
+        viewModel.onEvent(ContactListUiEvent.UpdateSearchQuery("不存在的联系人"))
         advanceUntilIdle()
 
-        // Then: 验证搜索已激活
-        val searchState = viewModel.uiState.value.searchState
-        assertTrue(searchState.isActive, "搜索应该处于激活状态")
-        assertEquals("不存在的联系人", searchState.query, "查询应该被设置")
+        // Then: 验证搜索结果为空
+        val displayContacts = viewModel.uiState.value.displayContacts
+        assertTrue(displayContacts.isEmpty(), "搜索不存在的联系人应该返回空列表")
     }
 
     /**
@@ -349,33 +340,28 @@ class ContactListViewModelTest {
     fun `clearing search should restore all contacts`() = runTest {
         // Given: 准备测试数据
         val testContacts = listOf(
-            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyMap()),
-            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyMap()),
-            ContactProfile(id = "3", name = "王五", targetGoal = "", contextDepth = 10, facts = emptyMap())
+            ContactProfile(id = "1", name = "张三", targetGoal = "", contextDepth = 10, facts = emptyList()),
+            ContactProfile(id = "2", name = "李四", targetGoal = "", contextDepth = 10, facts = emptyList()),
+            ContactProfile(id = "3", name = "王五", targetGoal = "", contextDepth = 10, facts = emptyList())
         )
         coEvery { getAllContactsUseCase() } returns flowOf(testContacts)
 
         viewModel = ContactListViewModel(
             getAllContactsUseCase,
-            deleteContactUseCase,
-            saveProfileUseCase
+            deleteContactUseCase
         )
         advanceUntilIdle()
 
         // When: 先搜索
-        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = true, query = "张"))
+        viewModel.onEvent(ContactListUiEvent.UpdateSearchQuery("张"))
         advanceUntilIdle()
 
-        // 验证搜索已激活
-        assertTrue(viewModel.uiState.value.searchState.isActive, "搜索应该激活")
-
-        // When: 清空搜索（关闭搜索模式）
-        viewModel.onEvent(ContactListUiEvent.ManageSearch(active = false))
+        // When: 清空搜索
+        viewModel.onEvent(ContactListUiEvent.UpdateSearchQuery(""))
         advanceUntilIdle()
 
-        // Then: 搜索应该关闭，显示所有联系人
-        assertFalse(viewModel.uiState.value.searchState.isActive, "搜索应该关闭")
+        // Then: 应该显示所有联系人
         val displayContacts = viewModel.uiState.value.displayContacts
-        assertEquals(3, displayContacts.size, "关闭搜索后应该显示所有3个联系人")
+        assertEquals(3, displayContacts.size, "清空搜索后应该显示所有3个联系人")
     }
 }

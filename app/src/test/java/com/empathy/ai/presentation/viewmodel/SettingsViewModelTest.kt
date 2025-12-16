@@ -13,11 +13,9 @@ import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 /**
  * SettingsViewModel 单元测试
@@ -30,7 +28,6 @@ import kotlin.test.assertTrue
  * 注意：API Key 配置已移至服务商配置中统一管理（AiConfigScreen）
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class SettingsViewModelTest {
 
     // Mock 依赖

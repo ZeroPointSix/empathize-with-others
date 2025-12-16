@@ -313,9 +313,12 @@ test/
   - 新增TimelineItem密封类，统一管理时间线内容
   - 新增EmotionType枚举，支持情感化展示
   - 新增RelationshipLevel、RelationshipTrend等关系追踪模型
+  - 提示词管理系统：新增PromptContext、PromptError、PromptScene、GlobalPromptConfig等模型
+  - 新增PromptBuilder、PromptSanitizer、PromptValidator、PromptVariableResolver、SystemPrompts等工具类
 - **数据层**: 100%完成，Room数据库、网络层、仓库实现完整
-  - 数据库版本升级至v7，新增conversation_logs、daily_summaries、failed_summary_tasks表
-  - 完整的Migration脚本和测试（1→2→3→4→5→6→7）
+  - 数据库版本升级至v8，新增prompt_templates、prompt_backups表
+  - 完整的Migration脚本和测试（1→2→3→4→5→6→7→8）
+  - 新增PromptFileStorage、PromptFileBackup、PromptRepositoryImpl等文件管理组件
 - **表现层**: 100%完成，UI组件、屏幕、ViewModel完整实现
   - 联系人画像记忆系统UI：100%完成，四标签页架构完整实现
   - ✅ 概览标签页：DynamicEmotionalHeader、LatestFactHookCard、TopTagsSection
@@ -325,10 +328,13 @@ test/
   - 新增AddFactToStreamDialog、EditConversationDialog、TagConfirmationDialog
 - **依赖注入**: 100%完成，Hilt模块完整配置
   - 新增MemoryModule，管理记忆系统相关依赖
+  - 新增PromptModule，管理提示词系统相关依赖
+  - 新增DispatcherModule，统一管理协程调度器
 - **测试覆盖**: 99.1% (113/114测试通过)
-  - 单元测试：99个文件，28,903行
-  - Android测试：13个文件，3,312行
-  - 新增ContactDetailTabViewModel、TimelineItem等测试
+  - 单元测试：111个文件，30,984行
+  - Android测试：13个文件，3,517行
+  - 新增提示词系统相关完整测试套件
+  - 代码统计：363个Kotlin文件 (239个主代码 + 111个单元测试 + 13个Android测试)
 
 ### ⚠️ 部分实现/待验证模块
 - **AI响应解析**: AiResponseParser接口已定义，但实现可能不完整
