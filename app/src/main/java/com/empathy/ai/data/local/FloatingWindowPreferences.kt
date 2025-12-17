@@ -84,8 +84,10 @@ class FloatingWindowPreferences @Inject constructor(
      * 
      * @param x X 坐标
      * @param y Y 坐标
+     * @throws IllegalArgumentException 如果坐标为负数
      */
     fun saveButtonPosition(x: Int, y: Int) {
+        require(x >= 0 && y >= 0) { "Position coordinates must be non-negative: x=$x, y=$y" }
         prefs.edit {
             putInt(KEY_BUTTON_X, x)
             putInt(KEY_BUTTON_Y, y)
@@ -119,23 +121,30 @@ class FloatingWindowPreferences @Inject constructor(
         }
     }
     
+    // 缓存JSON适配器，避免重复创建（CR-00014 CR-010优化）
+    private val requestInfoAdapter by lazy {
+        moshi.adapter(MinimizedRequestInfo::class.java)
+    }
+
     /**
      * 保存最小化请求信息
      * 
      * 使用 Moshi 将请求信息序列化为 JSON 并保存到 SharedPreferences
      * 
      * @param requestInfo 请求信息
+     * @return true 如果保存成功，false 如果序列化失败
      */
-    fun saveRequestInfo(requestInfo: MinimizedRequestInfo) {
-        try {
-            val adapter = moshi.adapter(MinimizedRequestInfo::class.java)
-            val json = adapter.toJson(requestInfo)
+    fun saveRequestInfo(requestInfo: MinimizedRequestInfo): Boolean {
+        return try {
+            val json = requestInfoAdapter.toJson(requestInfo)
             prefs.edit {
                 putString(KEY_MINIMIZED_REQUEST, json)
             }
+            true
         } catch (e: Exception) {
             // 序列化失败，记录日志但不抛出异常
-            android.util.Log.e(TAG, "Failed to save request info", e)
+            android.util.Log.e(TAG, "Failed to save request info: ${e.message}", e)
+            false
         }
     }
     
@@ -147,13 +156,15 @@ class FloatingWindowPreferences @Inject constructor(
      * @return 请求信息，如果不存在或解析失败则返回 null
      */
     fun getRequestInfo(): MinimizedRequestInfo? {
+        val json = prefs.getString(KEY_MINIMIZED_REQUEST, null)
+        if (json.isNullOrBlank()) {
+            return null
+        }
         return try {
-            val json = prefs.getString(KEY_MINIMIZED_REQUEST, null) ?: return null
-            val adapter = moshi.adapter(MinimizedRequestInfo::class.java)
-            adapter.fromJson(json)
+            requestInfoAdapter.fromJson(json)
         } catch (e: Exception) {
             // 反序列化失败，记录日志并返回 null
-            android.util.Log.e(TAG, "Failed to parse request info", e)
+            android.util.Log.e(TAG, "Failed to parse request info: ${e.message}", e)
             // 清除损坏的数据
             clearRequestInfo()
             null
@@ -174,8 +185,10 @@ class FloatingWindowPreferences @Inject constructor(
      * 
      * @param x X 坐标
      * @param y Y 坐标
+     * @throws IllegalArgumentException 如果坐标为负数
      */
     fun saveIndicatorPosition(x: Int, y: Int) {
+        require(x >= 0 && y >= 0) { "Position coordinates must be non-negative: x=$x, y=$y" }
         prefs.edit {
             putInt(KEY_INDICATOR_X, x)
             putInt(KEY_INDICATOR_Y, y)
@@ -190,12 +203,12 @@ class FloatingWindowPreferences @Inject constructor(
      * @return 指示器位置 (x, y)
      */
     fun getIndicatorPosition(): Pair<Int, Int> {
-        val x = prefs.getInt(KEY_INDICATOR_X, -1)
-        val y = prefs.getInt(KEY_INDICATOR_Y, -1)
+        val x = prefs.getInt(KEY_INDICATOR_X, INVALID_POSITION)
+        val y = prefs.getInt(KEY_INDICATOR_Y, INVALID_POSITION)
         
         // 如果没有保存过指示器位置，使用悬浮按钮位置
-        return if (x == -1 || y == -1) {
-            Pair(getButtonX(), getButtonY())
+        return if (x == INVALID_POSITION || y == INVALID_POSITION) {
+            getButtonPosition()
         } else {
             Pair(x, y)
         }
@@ -210,45 +223,217 @@ class FloatingWindowPreferences @Inject constructor(
         return Pair(getButtonX(), getButtonY())
     }
     
+    // ==================== TD-00009 阶段2: 状态管理扩展 ====================
+
+    /**
+     * 保存选中的Tab
+     *
+     * @param tabName Tab名称（ActionType.name）
+     */
+    fun saveSelectedTab(tabName: String) {
+        prefs.edit {
+            putString(KEY_SELECTED_TAB, tabName)
+        }
+    }
+
+    /**
+     * 保存选中的Tab（使用ActionType）
+     *
+     * @param tab ActionType枚举值
+     */
+    fun saveSelectedTab(tab: com.empathy.ai.domain.model.ActionType) {
+        saveSelectedTab(tab.name)
+    }
+
+    /**
+     * 获取上次选中的Tab
+     *
+     * @return Tab名称，默认返回DEFAULT_TAB_NAME
+     */
+    fun getSelectedTab(): String {
+        return prefs.getString(KEY_SELECTED_TAB, DEFAULT_TAB_NAME) ?: DEFAULT_TAB_NAME
+    }
+
+    /**
+     * 获取上次选中的Tab（返回ActionType）
+     *
+     * @return ActionType枚举值，默认返回ANALYZE
+     */
+    fun getSelectedTabAsActionType(): com.empathy.ai.domain.model.ActionType {
+        val tabName = getSelectedTab()
+        return try {
+            com.empathy.ai.domain.model.ActionType.valueOf(tabName)
+        } catch (e: IllegalArgumentException) {
+            com.empathy.ai.domain.model.ActionType.ANALYZE
+        }
+    }
+
+    /**
+     * 保存上次对话的联系人ID
+     *
+     * @param contactId 联系人ID
+     */
+    fun saveLastContactId(contactId: String) {
+        prefs.edit {
+            putString(KEY_LAST_CONTACT_ID, contactId)
+        }
+    }
+
+    /**
+     * 获取上次对话的联系人ID
+     *
+     * @return 联系人ID，如果没有则返回null
+     */
+    fun getLastContactId(): String? {
+        return prefs.getString(KEY_LAST_CONTACT_ID, null)
+    }
+
+    /**
+     * 保存输入框内容（用于最小化时保持状态）
+     *
+     * @param text 输入框内容
+     */
+    fun saveInputText(text: String) {
+        prefs.edit {
+            putString(KEY_SAVED_INPUT_TEXT, text)
+        }
+    }
+
+    /**
+     * 获取保存的输入框内容
+     *
+     * @return 输入框内容，如果没有则返回空字符串
+     */
+    fun getInputText(): String {
+        return prefs.getString(KEY_SAVED_INPUT_TEXT, DEFAULT_INPUT_TEXT) ?: DEFAULT_INPUT_TEXT
+    }
+
+    /**
+     * 保存完整的UI状态（用于最小化时保持状态）
+     *
+     * @param tabName 当前Tab名称
+     * @param contactId 当前联系人ID
+     * @param inputText 输入框内容
+     */
+    fun saveUiState(tabName: String, contactId: String?, inputText: String) {
+        prefs.edit {
+            putString(KEY_SELECTED_TAB, tabName)
+            if (contactId != null) {
+                putString(KEY_LAST_CONTACT_ID, contactId)
+            }
+            putString(KEY_SAVED_INPUT_TEXT, inputText)
+            putBoolean(KEY_HAS_SAVED_STATE, true)
+        }
+    }
+
+    /**
+     * 保存完整的UI状态（使用FloatingWindowUiState对象）
+     *
+     * @param state UI状态对象
+     */
+    fun saveUiState(state: com.empathy.ai.domain.model.FloatingWindowUiState) {
+        saveUiState(
+            tabName = state.selectedTab.name,
+            contactId = state.selectedContactId,
+            inputText = state.inputText
+        )
+    }
+
+    /**
+     * 恢复UI状态
+     *
+     * @return Triple(tabName, contactId, inputText)，如果没有保存的状态则返回默认值
+     */
+    fun restoreUiState(): Triple<String, String?, String> {
+        return Triple(
+            getSelectedTab(),
+            getLastContactId(),
+            getInputText()
+        )
+    }
+
+    /**
+     * 恢复UI状态为FloatingWindowUiState对象
+     *
+     * @return FloatingWindowUiState对象，如果没有保存的状态则返回null
+     */
+    fun restoreUiStateAsObject(): com.empathy.ai.domain.model.FloatingWindowUiState? {
+        if (!hasSavedUiState()) {
+            return null
+        }
+        val (tabName, contactId, inputText) = restoreUiState()
+        return com.empathy.ai.domain.model.FloatingWindowUiState.fromPersisted(
+            tabName = tabName,
+            contactId = contactId,
+            inputText = inputText
+        )
+    }
+
+    /**
+     * 清除保存的UI状态（关闭悬浮窗时调用）
+     *
+     * 注意：只清除输入内容，保留Tab和联系人记忆
+     */
+    fun clearSavedUiState() {
+        prefs.edit {
+            remove(KEY_SAVED_INPUT_TEXT)
+            putBoolean(KEY_HAS_SAVED_STATE, false)
+        }
+    }
+
+    /**
+     * 检查是否有保存的UI状态
+     *
+     * @return true 如果有保存的状态（最小化时保存的）
+     */
+    fun hasSavedUiState(): Boolean {
+        return prefs.getBoolean(KEY_HAS_SAVED_STATE, false)
+    }
+
     companion object {
         /**
          * 日志标签
          */
         private const val TAG = "FloatingWindowPrefs"
-        
+
         /**
          * SharedPreferences 文件名
          */
         private const val PREFS_NAME = "floating_window_prefs"
-        
-        /**
-         * 启用状态键
-         */
+
+        // ==================== 键名常量 ====================
+
         private const val KEY_IS_ENABLED = "is_enabled"
-        
-        /**
-         * 按钮 X 坐标键
-         */
         private const val KEY_BUTTON_X = "button_x"
-        
-        /**
-         * 按钮 Y 坐标键
-         */
         private const val KEY_BUTTON_Y = "button_y"
-        
-        /**
-         * 最小化请求信息键
-         */
         private const val KEY_MINIMIZED_REQUEST = "minimized_request"
-        
-        /**
-         * 指示器 X 坐标键
-         */
         private const val KEY_INDICATOR_X = "indicator_x"
-        
-        /**
-         * 指示器 Y 坐标键
-         */
         private const val KEY_INDICATOR_Y = "indicator_y"
+        private const val KEY_SELECTED_TAB = "selected_tab"
+        private const val KEY_LAST_CONTACT_ID = "last_contact_id"
+        private const val KEY_SAVED_INPUT_TEXT = "saved_input_text"
+        private const val KEY_HAS_SAVED_STATE = "has_saved_state"
+
+        // ==================== 默认值常量 ====================
+
+        /**
+         * 默认Tab名称
+         */
+        const val DEFAULT_TAB_NAME = "ANALYZE"
+
+        /**
+         * 默认输入文本
+         */
+        const val DEFAULT_INPUT_TEXT = ""
+
+        /**
+         * 默认坐标值
+         */
+        const val DEFAULT_POSITION = 0
+
+        /**
+         * 无效坐标标记
+         */
+        const val INVALID_POSITION = -1
     }
 }

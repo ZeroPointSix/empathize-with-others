@@ -517,9 +517,12 @@ class FloatingView(context: Context) : FrameLayout(context) {
             android.util.Log.d("FloatingView", "确认按钮初始化: ${btnConfirm != null}")
             
             // 设置标题
+            @Suppress("DEPRECATION")
             dialogTitle?.text = when (actionType) {
                 ActionType.ANALYZE -> "💡 帮我分析"
                 ActionType.CHECK -> "🛡️ 帮我检查"
+                ActionType.POLISH -> "✨ 帮我润色"
+                ActionType.REPLY -> "💬 帮我回复"
             }
             
             // 最小化按钮
@@ -600,9 +603,12 @@ class FloatingView(context: Context) : FrameLayout(context) {
             android.util.Log.d("FloatingView", "更新现有对话框，重新设置所有监听器")
             
             val dialogTitle = inputDialogView?.findViewById<TextView>(R.id.dialog_title)
+            @Suppress("DEPRECATION")
             dialogTitle?.text = when (actionType) {
                 ActionType.ANALYZE -> "💡 帮我分析"
                 ActionType.CHECK -> "🛡️ 帮我检查"
+                ActionType.POLISH -> "✨ 帮我润色"
+                ActionType.REPLY -> "💬 帮我回复"
             }
             
             // 更新联系人列表
@@ -1518,6 +1524,134 @@ class FloatingView(context: Context) : FrameLayout(context) {
             } catch (hideException: Exception) {
                 android.util.Log.e("FloatingView", "强制关闭对话框也失败", hideException)
             }
+        }
+    }
+    
+    /**
+     * 显示润色结果
+     *
+     * TD-00009 T035: 新增润色结果展示
+     *
+     * @param result 润色结果数据
+     */
+    fun showPolishResult(result: com.empathy.ai.domain.model.PolishResult) {
+        try {
+            android.util.Log.d("FloatingView", "开始显示润色结果")
+            
+            // 隐藏整个输入区域容器（包括标签、输入框等）
+            inputSectionContainer?.visibility = View.GONE
+            loadingContainer?.visibility = View.GONE
+            
+            // 显示结果区域
+            resultContainer?.visibility = View.VISIBLE
+            resultTitle?.text = "✍️ 润色结果"
+            resultEmotion?.text = result.polishedText
+            
+            // 显示风险提示（如果有）
+            if (result.hasRisk && !result.riskWarning.isNullOrBlank()) {
+                resultInsights?.text = "⚠️ 风险提示：${result.riskWarning}"
+                resultInsights?.visibility = View.VISIBLE
+            } else {
+                resultInsights?.visibility = View.GONE
+            }
+            resultSuggestions?.visibility = View.GONE
+            btnCopyResult?.visibility = View.VISIBLE
+            
+            // 复制按钮
+            btnCopyResult?.setOnClickListener {
+                try {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    val clip = android.content.ClipData.newPlainText("润色结果", result.polishedText)
+                    clipboard.setPrimaryClip(clip)
+                    showSuccess("已复制到剪贴板")
+                } catch (e: Exception) {
+                    android.util.Log.e("FloatingView", "复制到剪贴板失败", e)
+                    showError("复制失败")
+                }
+            }
+            
+            // 隐藏取消按钮，只显示关闭按钮
+            val btnCancel = inputDialogView?.findViewById<MaterialButton>(R.id.btn_cancel)
+            btnCancel?.visibility = View.GONE
+            
+            // 修改按钮文本和行为
+            btnConfirm?.text = "关闭"
+            btnConfirm?.isEnabled = true
+            btnConfirm?.setOnClickListener {
+                android.util.Log.d("FloatingView", "润色结果页面的关闭按钮被点击")
+                closeResultDialog()
+            }
+            
+            android.util.Log.d("FloatingView", "润色结果显示完成")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingView", "显示润色结果失败", e)
+            showError("显示结果失败")
+            hideInputDialog()
+        }
+    }
+    
+    /**
+     * 显示回复结果
+     *
+     * TD-00009 T035: 新增回复结果展示
+     *
+     * @param result 回复结果数据
+     */
+    fun showReplyResult(result: com.empathy.ai.domain.model.ReplyResult) {
+        try {
+            android.util.Log.d("FloatingView", "开始显示回复结果")
+            
+            // 隐藏整个输入区域容器（包括标签、输入框等）
+            inputSectionContainer?.visibility = View.GONE
+            loadingContainer?.visibility = View.GONE
+            
+            // 显示结果区域
+            resultContainer?.visibility = View.VISIBLE
+            resultTitle?.text = "💬 回复建议"
+            resultEmotion?.text = result.suggestedReply
+            
+            // 显示策略说明（如果有）
+            if (!result.strategyNote.isNullOrBlank()) {
+                resultInsights?.text = "💡 策略说明：${result.strategyNote}"
+                resultInsights?.visibility = View.VISIBLE
+            } else {
+                resultInsights?.visibility = View.GONE
+            }
+            resultSuggestions?.visibility = View.GONE
+            btnCopyResult?.visibility = View.VISIBLE
+            
+            // 复制按钮
+            btnCopyResult?.setOnClickListener {
+                try {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    val clip = android.content.ClipData.newPlainText("回复建议", result.suggestedReply)
+                    clipboard.setPrimaryClip(clip)
+                    showSuccess("已复制到剪贴板")
+                } catch (e: Exception) {
+                    android.util.Log.e("FloatingView", "复制到剪贴板失败", e)
+                    showError("复制失败")
+                }
+            }
+            
+            // 隐藏取消按钮，只显示关闭按钮
+            val btnCancel = inputDialogView?.findViewById<MaterialButton>(R.id.btn_cancel)
+            btnCancel?.visibility = View.GONE
+            
+            // 修改按钮文本和行为
+            btnConfirm?.text = "关闭"
+            btnConfirm?.isEnabled = true
+            btnConfirm?.setOnClickListener {
+                android.util.Log.d("FloatingView", "回复结果页面的关闭按钮被点击")
+                closeResultDialog()
+            }
+            
+            android.util.Log.d("FloatingView", "回复结果显示完成")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingView", "显示回复结果失败", e)
+            showError("显示结果失败")
+            hideInputDialog()
         }
     }
     

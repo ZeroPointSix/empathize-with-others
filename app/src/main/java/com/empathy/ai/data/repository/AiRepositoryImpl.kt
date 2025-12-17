@@ -351,13 +351,16 @@ $COMMON_JSON_RULES""".trim()
             val strategy = ProviderCompatibility.getStructuredOutputStrategy(provider)
             
             // BUG-00002: 添加详细日志用于调试AI上下文传递
-            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (analyzeChat) ===")
-            android.util.Log.d("AiRepositoryImpl", "URL: $url")
-            android.util.Log.d("AiRepositoryImpl", "Model: $model")
-            android.util.Log.d("AiRepositoryImpl", "Provider: ${provider.name}")
-            android.util.Log.d("AiRepositoryImpl", "Strategy: $strategy")
-            android.util.Log.d("AiRepositoryImpl", "PromptContext长度: ${promptContext.length} 字符")
-            android.util.Log.d("AiRepositoryImpl", "PromptContext预览(前800字符): ${promptContext.take(800)}")
+            // SR-00001: 使用 DebugLogger 支持完整提示词输出
+            com.empathy.ai.domain.util.DebugLogger.logApiRequest(
+                tag = "AiRepositoryImpl",
+                method = "analyzeChat",
+                url = url,
+                model = model,
+                providerName = provider.name,
+                promptContext = promptContext,
+                additionalInfo = mapOf("Strategy" to strategy)
+            )
 
             val request = when (strategy) {
                 ProviderCompatibility.StructuredOutputStrategy.FUNCTION_CALLING -> {
@@ -375,8 +378,12 @@ $COMMON_JSON_RULES""".trim()
                     } else {
                         SYSTEM_ANALYZE_FC
                     }
-                    android.util.Log.d("AiRepositoryImpl", "SystemInstruction长度: ${effectiveSystemInstruction.length} 字符")
-                    android.util.Log.d("AiRepositoryImpl", "SystemInstruction预览(前500字符): ${effectiveSystemInstruction.take(500)}")
+                    // SR-00001: 使用 DebugLogger 输出完整 SystemInstruction
+                    com.empathy.ai.domain.util.DebugLogger.logFullPrompt(
+                        tag = "AiRepositoryImpl",
+                        label = "SystemInstruction (Function Calling)",
+                        content = effectiveSystemInstruction
+                    )
                     
                     val messages = listOf(
                         MessageDto(role = "system", content = effectiveSystemInstruction),
@@ -1285,5 +1292,271 @@ $COMMON_JSON_RULES""".trim()
             android.util.Log.e("AiRepositoryImpl", "文本生成失败 (generateText)", e)
             Result.failure(e)
         }
+    }
+
+    // ==================== 新增方法（TD-00009） ====================
+
+    /**
+     * 帮我润色
+     *
+     * 优化用户草稿，使表达更得体。
+     *
+     * @param provider AI服务商配置
+     * @param draft 用户草稿
+     * @param systemInstruction 系统指令
+     * @return 润色结果
+     */
+    override suspend fun polishDraft(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        draft: String,
+        systemInstruction: String
+    ): Result<com.empathy.ai.domain.model.PolishResult> {
+        return try {
+            val url = buildChatCompletionsUrl(provider.baseUrl)
+            val headers = mapOf(
+                "Authorization" to "Bearer ${provider.apiKey}",
+                "Content-Type" to "application/json"
+            )
+
+            val model = selectModel(provider)
+            val messages = listOf(
+                MessageDto(role = "system", content = systemInstruction),
+                MessageDto(role = "user", content = draft)
+            )
+
+            val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
+            val request = ChatRequestDto(
+                model = model,
+                messages = messages,
+                temperature = 0.7,
+                stream = false,
+                responseFormat = if (useResponseFormat) {
+                    com.empathy.ai.data.remote.model.ResponseFormat(type = "json_object")
+                } else null
+            )
+
+            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (polishDraft) ===")
+            android.util.Log.d("AiRepositoryImpl", "URL: $url, Model: $model")
+
+            val response = withRetry { api.chatCompletion(url, headers, request) }
+            val content = response.choices.firstOrNull()?.message?.content
+                ?: return Result.failure(Exception("Empty response from AI"))
+
+            parsePolishResult(content)
+        } catch (e: Exception) {
+            android.util.Log.e("AiRepositoryImpl", "润色失败 (polishDraft)", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 帮我回复
+     *
+     * 根据对方消息生成合适的回复。
+     *
+     * @param provider AI服务商配置
+     * @param message 对方的消息
+     * @param systemInstruction 系统指令
+     * @return 回复结果
+     */
+    override suspend fun generateReply(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        message: String,
+        systemInstruction: String
+    ): Result<com.empathy.ai.domain.model.ReplyResult> {
+        return try {
+            val url = buildChatCompletionsUrl(provider.baseUrl)
+            val headers = mapOf(
+                "Authorization" to "Bearer ${provider.apiKey}",
+                "Content-Type" to "application/json"
+            )
+
+            val model = selectModel(provider)
+            val messages = listOf(
+                MessageDto(role = "system", content = systemInstruction),
+                MessageDto(role = "user", content = message)
+            )
+
+            val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
+            val request = ChatRequestDto(
+                model = model,
+                messages = messages,
+                temperature = 0.7,
+                stream = false,
+                responseFormat = if (useResponseFormat) {
+                    com.empathy.ai.data.remote.model.ResponseFormat(type = "json_object")
+                } else null
+            )
+
+            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (generateReply) ===")
+            android.util.Log.d("AiRepositoryImpl", "URL: $url, Model: $model")
+
+            val response = withRetry { api.chatCompletion(url, headers, request) }
+            val content = response.choices.firstOrNull()?.message?.content
+                ?: return Result.failure(Exception("Empty response from AI"))
+
+            parseReplyResult(content)
+        } catch (e: Exception) {
+            android.util.Log.e("AiRepositoryImpl", "生成回复失败 (generateReply)", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 微调分析结果
+     */
+    override suspend fun refineAnalysis(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        refinementPrompt: String
+    ): Result<AnalysisResult> {
+        val systemInstruction = com.empathy.ai.domain.util.SystemPrompts.getHeader(
+            com.empathy.ai.domain.model.PromptScene.ANALYZE
+        ) + "\n\n" + com.empathy.ai.domain.util.SystemPrompts.getFooter(
+            com.empathy.ai.domain.model.PromptScene.ANALYZE
+        )
+        return analyzeChat(provider, refinementPrompt, systemInstruction)
+    }
+
+    /**
+     * 微调润色结果
+     */
+    override suspend fun refinePolish(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        refinementPrompt: String
+    ): Result<com.empathy.ai.domain.model.PolishResult> {
+        val systemInstruction = com.empathy.ai.domain.util.SystemPrompts.getHeader(
+            com.empathy.ai.domain.model.PromptScene.POLISH
+        ) + "\n\n" + com.empathy.ai.domain.util.SystemPrompts.getFooter(
+            com.empathy.ai.domain.model.PromptScene.POLISH
+        )
+        return polishDraft(provider, refinementPrompt, systemInstruction)
+    }
+
+    /**
+     * 微调回复结果
+     */
+    override suspend fun refineReply(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        refinementPrompt: String
+    ): Result<com.empathy.ai.domain.model.ReplyResult> {
+        val systemInstruction = com.empathy.ai.domain.util.SystemPrompts.getHeader(
+            com.empathy.ai.domain.model.PromptScene.REPLY
+        ) + "\n\n" + com.empathy.ai.domain.util.SystemPrompts.getFooter(
+            com.empathy.ai.domain.model.PromptScene.REPLY
+        )
+        return generateReply(provider, refinementPrompt, systemInstruction)
+    }
+
+    // ==================== 辅助方法 ====================
+
+    /**
+     * 选择模型
+     */
+    private fun selectModel(provider: com.empathy.ai.domain.model.AiProvider): String {
+        return if (provider.defaultModelId.isNotBlank()) {
+            provider.defaultModelId
+        } else {
+            when {
+                provider.name.contains("DeepSeek", ignoreCase = true) -> MODEL_DEEPSEEK
+                provider.name.contains("OpenAI", ignoreCase = true) -> MODEL_OPENAI
+                else -> MODEL_OPENAI
+            }
+        }
+    }
+
+    /**
+     * 解析润色结果
+     */
+    private fun parsePolishResult(json: String): Result<com.empathy.ai.domain.model.PolishResult> {
+        return try {
+            val jsonCleaner = com.empathy.ai.data.parser.EnhancedJsonCleaner()
+            val cleaningContext = com.empathy.ai.data.parser.CleaningContext(
+                enableUnicodeFix = true,
+                enableFormatFix = true,
+                enableFuzzyFix = true,
+                enableDetailedLogging = true
+            )
+            val cleanedJson = jsonCleaner.clean(json, cleaningContext)
+
+            val adapter = moshi.adapter(com.empathy.ai.domain.model.PolishResult::class.java).lenient()
+            val result = adapter.fromJson(cleanedJson)
+
+            if (result != null && result.polishedText.isNotBlank()) {
+                Result.success(result)
+            } else {
+                // Fallback: 将原始内容作为润色结果
+                Result.success(
+                    com.empathy.ai.domain.model.PolishResult(
+                        polishedText = extractTextFromResponse(json),
+                        hasRisk = false,
+                        riskWarning = null
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AiRepositoryImpl", "解析润色结果失败", e)
+            // Fallback
+            Result.success(
+                com.empathy.ai.domain.model.PolishResult(
+                    polishedText = extractTextFromResponse(json),
+                    hasRisk = false,
+                    riskWarning = null
+                )
+            )
+        }
+    }
+
+    /**
+     * 解析回复结果
+     */
+    private fun parseReplyResult(json: String): Result<com.empathy.ai.domain.model.ReplyResult> {
+        return try {
+            val jsonCleaner = com.empathy.ai.data.parser.EnhancedJsonCleaner()
+            val cleaningContext = com.empathy.ai.data.parser.CleaningContext(
+                enableUnicodeFix = true,
+                enableFormatFix = true,
+                enableFuzzyFix = true,
+                enableDetailedLogging = true
+            )
+            val cleanedJson = jsonCleaner.clean(json, cleaningContext)
+
+            val adapter = moshi.adapter(com.empathy.ai.domain.model.ReplyResult::class.java).lenient()
+            val result = adapter.fromJson(cleanedJson)
+
+            if (result != null && result.suggestedReply.isNotBlank()) {
+                Result.success(result)
+            } else {
+                // Fallback: 将原始内容作为回复建议
+                Result.success(
+                    com.empathy.ai.domain.model.ReplyResult(
+                        suggestedReply = extractTextFromResponse(json),
+                        strategyNote = null
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AiRepositoryImpl", "解析回复结果失败", e)
+            // Fallback
+            Result.success(
+                com.empathy.ai.domain.model.ReplyResult(
+                    suggestedReply = extractTextFromResponse(json),
+                    strategyNote = null
+                )
+            )
+        }
+    }
+
+    /**
+     * 从响应中提取文本（用于Fallback）
+     */
+    private fun extractTextFromResponse(response: String): String {
+        // 移除Markdown格式
+        return response
+            .replace(Regex("```json\\s*"), "")
+            .replace(Regex("```\\s*"), "")
+            .replace(Regex("#+\\s*"), "")
+            .replace(Regex("\\*\\*"), "")
+            .trim()
+            .take(500) // 限制长度
     }
 }

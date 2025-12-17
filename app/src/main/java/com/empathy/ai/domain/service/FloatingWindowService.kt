@@ -9,17 +9,25 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
+import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.empathy.ai.R
 import com.empathy.ai.domain.model.ActionType
+import com.empathy.ai.domain.model.AiResult
 import com.empathy.ai.domain.model.FloatingWindowError
+import com.empathy.ai.domain.model.FloatingWindowUiState
+import com.empathy.ai.domain.model.RefinementRequest
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.usecase.AnalyzeChatUseCase
 import com.empathy.ai.domain.usecase.CheckDraftUseCase
+import com.empathy.ai.domain.usecase.GenerateReplyUseCase
+import com.empathy.ai.domain.usecase.PolishDraftUseCase
+import com.empathy.ai.domain.usecase.RefinementUseCase
 import com.empathy.ai.domain.util.ErrorHandler
 import com.empathy.ai.domain.util.FloatingView
 import com.empathy.ai.domain.util.FloatingViewDebugLogger
+import com.empathy.ai.presentation.ui.floating.FloatingViewV2
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +62,16 @@ class FloatingWindowService : Service() {
     @Inject
     lateinit var checkDraftUseCase: CheckDraftUseCase
     
+    // TD-00009: 新增UseCase注入
+    @Inject
+    lateinit var polishDraftUseCase: PolishDraftUseCase
+    
+    @Inject
+    lateinit var generateReplyUseCase: GenerateReplyUseCase
+    
+    @Inject
+    lateinit var refinementUseCase: RefinementUseCase
+    
     @Inject
     lateinit var contactRepository: ContactRepository
     
@@ -64,8 +82,15 @@ class FloatingWindowService : Service() {
     lateinit var aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
     
     private lateinit var windowManager: WindowManager
-    private var floatingView: FloatingView? = null
+    private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
+    private var floatingViewV2: FloatingViewV2? = null  // TD-00009: 新版View
+    private var useNewUI: Boolean = true  // TD-00009: 是否使用新UI
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    
+    // TD-00009: UI状态管理
+    private var currentUiState = FloatingWindowUiState()
+    private var lastInputText: String = ""
+    private var lastContactId: String = ""
     
     // 性能监控
     private var performanceMonitor: com.empathy.ai.domain.util.PerformanceMonitor? = null
@@ -205,7 +230,33 @@ class FloatingWindowService : Service() {
         }
         
         try {
-            // 移除悬浮视图
+            // TD-00009: 移除新版最小化指示器
+            minimizedIndicatorV2?.let {
+                if (it.parent != null) {
+                    windowManager.removeView(it)
+                    android.util.Log.d("FloatingWindowService", "minimizedIndicatorV2移除成功")
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "移除minimizedIndicatorV2失败", e)
+        }
+        minimizedIndicatorV2 = null
+
+        try {
+            // TD-00009: 移除新版悬浮视图
+            floatingViewV2?.let {
+                if (it.parent != null) {
+                    windowManager.removeView(it)
+                    android.util.Log.d("FloatingWindowService", "FloatingViewV2移除成功")
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "移除FloatingViewV2失败", e)
+        }
+        floatingViewV2 = null
+        
+        try {
+            // 移除旧版悬浮视图
             floatingView?.let {
                 if (it.parent != null) {
                     windowManager.removeView(it)
@@ -239,9 +290,18 @@ class FloatingWindowService : Service() {
      * 性能优化：
      * - 视图复用：只创建一次 FloatingView，避免重复创建
      * - 硬件加速：启用硬件加速提升渲染性能
+     *
+     * TD-00009: 支持新版三Tab UI（FloatingViewV2）
      */
     private fun showFloatingView() {
         try {
+            if (useNewUI) {
+                // TD-00009: 使用新版三Tab UI
+                showFloatingViewV2()
+                return
+            }
+            
+            // 旧版UI（保留兼容）
             if (floatingView == null) {
                 android.util.Log.d("FloatingWindowService", "创建悬浮视图")
                 
@@ -1736,6 +1796,344 @@ class FloatingWindowService : Service() {
         } catch (e: Exception) {
             android.util.Log.e("FloatingWindowService", "获取 Provider 超时配置失败，使用默认值", e)
             DEFAULT_AI_TIMEOUT_MS
+        }
+    }
+    
+    // ==================== TD-00009: 新版UI方法 ====================
+    
+    /**
+     * 显示新版悬浮视图（TD-00009）
+     * 三Tab界面：分析/润色/回复
+     */
+    private fun showFloatingViewV2() {
+        if (floatingViewV2 != null) {
+            android.util.Log.d("FloatingWindowService", "FloatingViewV2已存在，跳过创建")
+            return
+        }
+
+        android.util.Log.d("FloatingWindowService", "创建FloatingViewV2（新版三Tab UI）")
+
+        val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+        floatingViewV2 = FloatingViewV2(themedContext, windowManager)
+
+        // 设置回调
+        floatingViewV2?.apply {
+            setOnTabChangedListener { tab ->
+                currentUiState = currentUiState.copy(selectedTab = tab)
+                floatingWindowPreferences.saveSelectedTab(tab)
+            }
+
+            setOnContactSelectedListener { contactId ->
+                currentUiState = currentUiState.copy(selectedContactId = contactId)
+                floatingWindowPreferences.saveLastContactId(contactId)
+            }
+
+            setOnSubmitListener { tab, contactId, text ->
+                lastInputText = text
+                lastContactId = contactId
+                when (tab) {
+                    ActionType.ANALYZE -> handleAnalyzeV2(contactId, text)
+                    ActionType.POLISH -> handlePolishV2(contactId, text)
+                    ActionType.REPLY -> handleReplyV2(contactId, text)
+                    else -> handleAnalyzeV2(contactId, text)
+                }
+            }
+
+            setOnCopyListener { text ->
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("AI结果", text)
+                clipboard.setPrimaryClip(clip)
+                android.widget.Toast.makeText(this@FloatingWindowService, "已复制到剪贴板", android.widget.Toast.LENGTH_SHORT).show()
+            }
+
+            setOnRegenerateListener { tab, instruction ->
+                handleRegenerateV2(tab, instruction)
+            }
+
+            setOnMinimizeListener {
+                android.util.Log.d("FloatingWindowService", "收到最小化回调，准备调用minimizeFloatingViewV2()")
+                minimizeFloatingViewV2()
+            }
+
+            setOnCloseListener {
+                android.util.Log.d("FloatingWindowService", "收到关闭回调，准备调用hideFloatingViewV2()")
+                hideFloatingViewV2()
+            }
+        }
+
+        // 加载联系人列表
+        serviceScope.launch {
+            try {
+                val contacts = contactRepository.getAllProfiles().first()
+                floatingViewV2?.setContacts(contacts)
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "加载联系人失败", e)
+            }
+        }
+
+        // 恢复状态
+        val savedState = floatingWindowPreferences.restoreUiStateAsObject()
+        if (savedState != null) {
+            currentUiState = savedState
+            floatingViewV2?.restoreState(savedState)
+        }
+
+        // 配置布局参数
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            type,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+
+        windowManager.addView(floatingViewV2, params)
+        android.util.Log.d("FloatingWindowService", "FloatingViewV2添加成功")
+    }
+
+    /**
+     * 隐藏新版悬浮视图
+     */
+    private fun hideFloatingViewV2() {
+        try {
+            floatingViewV2?.let { view ->
+                if (view.parent != null) {
+                    windowManager.removeView(view)
+                }
+            }
+            floatingViewV2 = null
+            stopSelf()
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "隐藏FloatingViewV2失败", e)
+        }
+    }
+
+    // TD-00009: 最小化悬浮指示器
+    private var minimizedIndicatorV2: View? = null
+
+    /**
+     * 最小化新版悬浮视图
+     * 
+     * 将主界面隐藏，显示一个小的悬浮指示器，点击可恢复
+     */
+    private fun minimizeFloatingViewV2() {
+        try {
+            // 保存当前状态
+            floatingViewV2?.let { view ->
+                floatingWindowPreferences.saveUiState(view.getCurrentState())
+            }
+            
+            // 隐藏主界面
+            floatingViewV2?.visibility = View.GONE
+            
+            // 显示最小化指示器
+            showMinimizedIndicatorV2()
+            
+            android.util.Log.d("FloatingWindowService", "FloatingViewV2已最小化")
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "最小化FloatingViewV2失败", e)
+        }
+    }
+
+    /**
+     * 显示最小化指示器（小悬浮球）
+     */
+    private fun showMinimizedIndicatorV2() {
+        if (minimizedIndicatorV2 != null) return
+
+        val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+        
+        // 创建一个简单的悬浮球
+        minimizedIndicatorV2 = com.google.android.material.floatingactionbutton.FloatingActionButton(themedContext).apply {
+            setImageResource(R.drawable.ic_floating_button)
+            size = com.google.android.material.floatingactionbutton.FloatingActionButton.SIZE_MINI
+            setOnClickListener {
+                restoreFloatingViewV2()
+            }
+        }
+
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            type,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            x = 16
+        }
+
+        windowManager.addView(minimizedIndicatorV2, params)
+        android.util.Log.d("FloatingWindowService", "最小化指示器已显示")
+    }
+
+    /**
+     * 恢复新版悬浮视图
+     */
+    private fun restoreFloatingViewV2() {
+        try {
+            // 移除最小化指示器
+            minimizedIndicatorV2?.let { indicator ->
+                if (indicator.parent != null) {
+                    windowManager.removeView(indicator)
+                }
+            }
+            minimizedIndicatorV2 = null
+
+            // 显示主界面
+            floatingViewV2?.visibility = View.VISIBLE
+            
+            android.util.Log.d("FloatingWindowService", "FloatingViewV2已恢复")
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "恢复FloatingViewV2失败", e)
+        }
+    }
+
+    /**
+     * 处理新版分析请求
+     */
+    private fun handleAnalyzeV2(contactId: String, text: String) {
+        floatingViewV2?.showLoading("AI正在分析...")
+        
+        serviceScope.launch {
+            try {
+                val timeoutMs = getAiTimeout()
+                val result = withTimeout(timeoutMs) {
+                    analyzeChatUseCase(contactId, listOf(text))
+                }
+                
+                result.fold(
+                    onSuccess = { analysisResult ->
+                        val aiResult = AiResult.Analysis(analysisResult)
+                        currentUiState = currentUiState.copy(lastResult = aiResult)
+                        floatingViewV2?.showResult(aiResult)
+                    },
+                    onFailure = { error ->
+                        floatingViewV2?.showError("分析失败：${error.message}")
+                    }
+                )
+            } catch (e: TimeoutCancellationException) {
+                floatingViewV2?.showError("请求超时，请重试")
+            } catch (e: Exception) {
+                floatingViewV2?.showError("分析失败：${e.message}")
+            }
+        }
+    }
+
+    /**
+     * 处理润色请求（TD-00009）
+     */
+    private fun handlePolishV2(contactId: String, text: String) {
+        floatingViewV2?.showLoading("AI正在润色...")
+        
+        serviceScope.launch {
+            try {
+                val timeoutMs = getAiTimeout()
+                val result = withTimeout(timeoutMs) {
+                    polishDraftUseCase(contactId, text)
+                }
+                
+                result.fold(
+                    onSuccess = { polishResult ->
+                        val aiResult = AiResult.Polish(polishResult)
+                        currentUiState = currentUiState.copy(lastResult = aiResult)
+                        floatingViewV2?.showResult(aiResult)
+                    },
+                    onFailure = { error ->
+                        floatingViewV2?.showError("润色失败：${error.message}")
+                    }
+                )
+            } catch (e: TimeoutCancellationException) {
+                floatingViewV2?.showError("请求超时，请重试")
+            } catch (e: Exception) {
+                floatingViewV2?.showError("润色失败：${e.message}")
+            }
+        }
+    }
+
+    /**
+     * 处理回复生成请求（TD-00009）
+     */
+    private fun handleReplyV2(contactId: String, text: String) {
+        floatingViewV2?.showLoading("AI正在生成回复...")
+        
+        serviceScope.launch {
+            try {
+                val timeoutMs = getAiTimeout()
+                val result = withTimeout(timeoutMs) {
+                    generateReplyUseCase(contactId, text)
+                }
+                
+                result.fold(
+                    onSuccess = { replyResult ->
+                        val aiResult = AiResult.Reply(replyResult)
+                        currentUiState = currentUiState.copy(lastResult = aiResult)
+                        floatingViewV2?.showResult(aiResult)
+                    },
+                    onFailure = { error ->
+                        floatingViewV2?.showError("生成回复失败：${error.message}")
+                    }
+                )
+            } catch (e: TimeoutCancellationException) {
+                floatingViewV2?.showError("请求超时，请重试")
+            } catch (e: Exception) {
+                floatingViewV2?.showError("生成回复失败：${e.message}")
+            }
+        }
+    }
+
+    /**
+     * 处理重新生成请求（TD-00009）
+     */
+    private fun handleRegenerateV2(tab: ActionType, instruction: String?) {
+        floatingViewV2?.showLoading("AI正在重新生成...")
+        
+        serviceScope.launch {
+            try {
+                val request = RefinementRequest(
+                    originalInput = lastInputText,
+                    originalTask = tab,
+                    lastAiResponse = currentUiState.lastResult?.getDisplayContent() ?: "",
+                    refinementInstruction = instruction,
+                    contactId = lastContactId
+                )
+                
+                val timeoutMs = getAiTimeout()
+                val result = withTimeout(timeoutMs) {
+                    refinementUseCase(request)
+                }
+                
+                result.fold(
+                    onSuccess = { aiResult ->
+                        currentUiState = currentUiState.copy(lastResult = aiResult)
+                        floatingViewV2?.showResult(aiResult)
+                    },
+                    onFailure = { error ->
+                        floatingViewV2?.showError("重新生成失败：${error.message}")
+                    }
+                )
+            } catch (e: TimeoutCancellationException) {
+                floatingViewV2?.showError("请求超时，请重试")
+            } catch (e: Exception) {
+                floatingViewV2?.showError("重新生成失败：${e.message}")
+            }
         }
     }
     

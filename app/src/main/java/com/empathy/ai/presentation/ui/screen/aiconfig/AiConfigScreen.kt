@@ -170,6 +170,10 @@ private fun AiConfigScreenContent(
                 isSaving = uiState.isSaving,
                 isTestingConnection = uiState.isTestingConnection,
                 testConnectionResult = uiState.testConnectionResult,
+                // SR-00001: 模型列表自动获取
+                isFetchingModels = uiState.isFetchingModels,
+                fetchModelsError = uiState.fetchModelsError,
+                onFetchModels = { onEvent(AiConfigUiEvent.FetchModels) },
                 onNameChange = { onEvent(AiConfigUiEvent.UpdateFormName(it)) },
                 onBaseUrlChange = { onEvent(AiConfigUiEvent.UpdateFormBaseUrl(it)) },
                 onApiKeyChange = { onEvent(AiConfigUiEvent.UpdateFormApiKey(it)) },

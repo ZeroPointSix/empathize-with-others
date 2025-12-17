@@ -328,6 +328,194 @@ class AiProviderRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * 获取服务商可用的模型列表
+     *
+     * 调用 OpenAI 兼容的 /models 端点获取可用模型
+     * 自动过滤非聊天模型（如 embedding、whisper、dall-e 等）
+     *
+     * @param provider 要查询的服务商（需要 baseUrl 和 apiKey）
+     * @return Result 包含可用模型列表，失败时返回错误信息
+     *
+     * @see SR-00001 模型列表自动获取与调试日志优化
+     */
+    override suspend fun fetchAvailableModels(provider: AiProvider): Result<List<AiModel>> {
+        return try {
+            // 基本验证
+            if (provider.baseUrl.isBlank() || provider.apiKey.isBlank()) {
+                return Result.failure(IllegalArgumentException("服务商配置不完整：需要 baseUrl 和 apiKey"))
+            }
+
+            // 构建 Models API URL
+            val modelsUrl = buildModelsUrl(provider.baseUrl)
+            android.util.Log.d("AiProviderRepositoryImpl", "获取模型列表 URL: $modelsUrl")
+
+            // 创建 OkHttp 客户端
+            val client = okhttp3.OkHttpClient.Builder()
+                .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
+            // 构建请求
+            val request = okhttp3.Request.Builder()
+                .url(modelsUrl)
+                .addHeader("Authorization", "Bearer ${provider.apiKey}")
+                .addHeader("Content-Type", "application/json")
+                .get()
+                .build()
+
+            // 执行请求
+            val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
+
+            // 处理响应
+            when (response.code) {
+                200 -> {
+                    val responseBody = response.body?.string()
+                    response.close()
+
+                    if (responseBody.isNullOrBlank()) {
+                        return Result.failure(Exception("服务商返回空响应"))
+                    }
+
+                    // 解析响应
+                    val modelsResponse = parseModelsResponse(responseBody)
+                    if (modelsResponse == null) {
+                        return Result.failure(Exception("无法解析模型列表响应"))
+                    }
+
+                    // 过滤并转换模型
+                    val chatModels = modelsResponse.data
+                        .filter { isChatModel(it.id) }
+                        .map { dto ->
+                            AiModel(
+                                id = dto.id,
+                                displayName = generateDisplayName(dto.id)
+                            )
+                        }
+                        .sortedBy { it.id }
+
+                    android.util.Log.d("AiProviderRepositoryImpl", "获取到 ${chatModels.size} 个聊天模型")
+                    Result.success(chatModels)
+                }
+                401 -> {
+                    response.close()
+                    Result.failure(Exception("API Key 无效（401）"))
+                }
+                403 -> {
+                    response.close()
+                    Result.failure(Exception("API Key 权限不足（403）"))
+                }
+                404 -> {
+                    response.close()
+                    Result.failure(Exception("该服务商不支持获取模型列表（404）"))
+                }
+                429 -> {
+                    response.close()
+                    Result.failure(Exception("API 配额已用尽（429）"))
+                }
+                else -> {
+                    val errorBody = response.body?.string() ?: "未知错误"
+                    response.close()
+                    Result.failure(Exception("HTTP ${response.code}: $errorBody"))
+                }
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(Exception("请求超时，请检查网络连接"))
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(Exception("无法解析主机名，请检查 API 端点"))
+        } catch (e: java.net.ConnectException) {
+            Result.failure(Exception("网络连接失败"))
+        } catch (e: Exception) {
+            android.util.Log.e("AiProviderRepositoryImpl", "获取模型列表失败", e)
+            Result.failure(Exception("获取模型列表失败：${e.message}"))
+        }
+    }
+
+    /**
+     * 解析模型列表响应
+     */
+    private fun parseModelsResponse(json: String): com.empathy.ai.data.remote.model.ModelsResponseDto? {
+        return try {
+            val adapter = moshi.adapter(com.empathy.ai.data.remote.model.ModelsResponseDto::class.java)
+            adapter.fromJson(json)
+        } catch (e: Exception) {
+            android.util.Log.e("AiProviderRepositoryImpl", "解析模型列表响应失败", e)
+            null
+        }
+    }
+
+    /**
+     * 判断是否为聊天模型
+     *
+     * 过滤掉非聊天模型（embedding、whisper、dall-e、tts 等）
+     */
+    private fun isChatModel(modelId: String): Boolean {
+        val lowerCaseId = modelId.lowercase()
+
+        // 排除的模型类型
+        val excludePatterns = listOf(
+            "embedding",
+            "whisper",
+            "dall-e",
+            "tts",
+            "text-embedding",
+            "ada",
+            "babbage",
+            "curie",
+            "davinci",
+            "moderation"
+        )
+
+        // 如果包含排除关键词，则不是聊天模型
+        if (excludePatterns.any { lowerCaseId.contains(it) }) {
+            return false
+        }
+
+        // 包含的模型类型（聊天模型关键词）
+        val includePatterns = listOf(
+            "gpt",
+            "chat",
+            "turbo",
+            "claude",
+            "deepseek",
+            "qwen",
+            "llama",
+            "mistral",
+            "gemini",
+            "palm"
+        )
+
+        // 如果包含聊天模型关键词，则是聊天模型
+        return includePatterns.any { lowerCaseId.contains(it) }
+    }
+
+    /**
+     * 根据模型 ID 生成显示名称
+     *
+     * 将模型 ID 转换为更友好的显示名称
+     * 例如：gpt-4-turbo-preview → GPT-4 Turbo Preview
+     */
+    private fun generateDisplayName(modelId: String): String {
+        return modelId
+            .replace("-", " ")
+            .replace("_", " ")
+            .split(" ")
+            .joinToString(" ") { word ->
+                when (word.lowercase()) {
+                    "gpt" -> "GPT"
+                    "turbo" -> "Turbo"
+                    "preview" -> "Preview"
+                    "mini" -> "Mini"
+                    "deepseek" -> "DeepSeek"
+                    "chat" -> "Chat"
+                    "coder" -> "Coder"
+                    else -> word.replaceFirstChar { it.uppercase() }
+                }
+            }
+    }
+
     // ============================================================================
     // 私有映射函数
     // ============================================================================

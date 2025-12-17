@@ -262,6 +262,8 @@ class PromptEditorViewModel @Inject constructor(
                     PromptScene.CHECK -> "可选：自定义检查重点\n\n例如：\n• 检查时要特别注意工作相关话题\n• 避免使用太直接的表达\n• 注意语气是否过于强硬"
                     PromptScene.EXTRACT -> "可选：自定义提取重点\n\n例如：\n• 重点关注对方提到的兴趣爱好\n• 注意记录重要的日期和事件\n• 留意对方的情绪触发点"
                     PromptScene.SUMMARY -> "可选：自定义总结风格\n\n例如：\n• 总结今天的对话亮点\n• 指出需要注意的地方\n• 给出明天跟进的建议"
+                    PromptScene.POLISH -> "可选：自定义润色风格\n\n例如：\n• 润色时保持原意不变\n• 让表达更加得体礼貌\n• 避免使用过于生硬的词汇"
+                    PromptScene.REPLY -> "可选：自定义回复风格\n\n例如：\n• 回复要简洁有力\n• 语气要友好亲切\n• 适当使用表情符号"
                 }
             }
         }

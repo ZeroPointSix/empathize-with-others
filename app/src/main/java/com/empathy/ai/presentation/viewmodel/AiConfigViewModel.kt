@@ -35,7 +35,8 @@ class AiConfigViewModel @Inject constructor(
     private val getProvidersUseCase: GetProvidersUseCase,
     private val saveProviderUseCase: SaveProviderUseCase,
     private val deleteProviderUseCase: DeleteProviderUseCase,
-    private val testConnectionUseCase: TestConnectionUseCase
+    private val testConnectionUseCase: TestConnectionUseCase,
+    private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
 ) : BaseViewModel() {
 
     // 私有可变状态（只能内部修改）
@@ -81,6 +82,10 @@ class AiConfigViewModel @Inject constructor(
             // === 连接测试事件 ===
             is AiConfigUiEvent.TestConnection -> testConnection()
             is AiConfigUiEvent.ClearTestResult -> clearTestResult()
+
+            // === 模型列表获取事件 ===
+            is AiConfigUiEvent.FetchModels -> fetchModels()
+            is AiConfigUiEvent.ClearFetchModelsError -> clearFetchModelsError()
 
             // === 通用事件 ===
             is AiConfigUiEvent.ClearError -> clearError()
@@ -467,6 +472,100 @@ class AiConfigViewModel @Inject constructor(
      */
     private fun clearTestResult() {
         _uiState.update { it.copy(testConnectionResult = null) }
+    }
+
+    /**
+     * 获取可用模型列表
+     *
+     * 从服务商 API 自动获取可用的模型列表
+     * 需要先填写 API 端点和 API Key
+     *
+     * @see SR-00001 模型列表自动获取与调试日志优化
+     */
+    private fun fetchModels() {
+        val currentState = _uiState.value
+
+        // 验证必要字段
+        if (currentState.formBaseUrl.isBlank()) {
+            _uiState.update { it.copy(fetchModelsError = "请先填写 API 端点") }
+            return
+        }
+        if (currentState.formApiKey.isBlank()) {
+            _uiState.update { it.copy(fetchModelsError = "请先填写 API Key") }
+            return
+        }
+
+        // 构建临时 Provider 用于获取模型
+        val tempProvider = AiProvider(
+            id = UUID.randomUUID().toString(),
+            name = currentState.formName.ifBlank { "临时服务商" },
+            baseUrl = currentState.formBaseUrl.trim(),
+            apiKey = currentState.formApiKey.trim(),
+            models = emptyList(),
+            defaultModelId = ""
+        )
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isFetchingModels = true, fetchModelsError = null) }
+
+            val result = aiProviderRepository.fetchAvailableModels(tempProvider)
+
+            result.onSuccess { models ->
+                if (models.isEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            isFetchingModels = false,
+                            fetchModelsError = "未找到可用的聊天模型"
+                        )
+                    }
+                    return@launch
+                }
+
+                // 将获取到的模型添加到表单
+                val newFormModels = models.map { model: AiModel ->
+                    FormModel(
+                        id = model.id,
+                        displayName = model.displayName ?: ""
+                    )
+                }
+
+                // 合并现有模型（保留用户手动添加的）
+                val existingIds = currentState.formModels.map { it.id }.toSet()
+                val mergedModels = currentState.formModels + newFormModels.filter { it.id !in existingIds }
+
+                // 如果没有默认模型，设置第一个为默认
+                val defaultModelId = if (currentState.formDefaultModelId.isBlank() || 
+                    mergedModels.none { it.id == currentState.formDefaultModelId }) {
+                    mergedModels.firstOrNull()?.id ?: ""
+                } else {
+                    currentState.formDefaultModelId
+                }
+
+                _uiState.update {
+                    it.copy(
+                        isFetchingModels = false,
+                        fetchModelsError = null,
+                        formModels = mergedModels,
+                        formDefaultModelId = defaultModelId,
+                        formModelsError = null
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isFetchingModels = false,
+                        fetchModelsError = error.message ?: "获取模型列表失败"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 清除获取模型错误
+     */
+    private fun clearFetchModelsError() {
+        _uiState.update { it.copy(fetchModelsError = null) }
     }
 
     /**
