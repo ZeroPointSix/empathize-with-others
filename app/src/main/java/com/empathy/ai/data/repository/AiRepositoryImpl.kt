@@ -768,7 +768,9 @@ $COMMON_JSON_RULES""".trim()
             
             if (result != null && result.replySuggestion.isNotBlank()) {
                 android.util.Log.d("AiRepositoryImpl", "Function Calling 直接解析成功")
-                return Result.success(result)
+                // 清洗 replySuggestion，提取引号内的核心建议
+                val cleanedResult = cleanAnalysisResultSuggestion(result)
+                return Result.success(cleanedResult)
             }
             
             // 标准格式解析失败，尝试字段映射
@@ -776,7 +778,9 @@ $COMMON_JSON_RULES""".trim()
             val mappedResult = mapNonStandardFieldsToAnalysisResultDirect(json)
             if (mappedResult != null) {
                 android.util.Log.d("AiRepositoryImpl", "Function Calling 字段映射成功")
-                return Result.success(mappedResult)
+                // 清洗 replySuggestion
+                val cleanedResult = cleanAnalysisResultSuggestion(mappedResult)
+                return Result.success(cleanedResult)
             }
             
             // 都失败了，使用 Fallback
@@ -788,13 +792,29 @@ $COMMON_JSON_RULES""".trim()
             try {
                 val mappedResult = mapNonStandardFieldsToAnalysisResultDirect(json)
                 if (mappedResult != null) {
-                    return Result.success(mappedResult)
+                    val cleanedResult = cleanAnalysisResultSuggestion(mappedResult)
+                    return Result.success(cleanedResult)
                 }
             } catch (ex: Exception) {
                 android.util.Log.e("AiRepositoryImpl", "Function Calling 字段映射也失败", ex)
             }
             Result.success(createFallbackAnalysisResult(json))
         }
+    }
+    
+    /**
+     * 清洗 AnalysisResult 中的 replySuggestion 字段
+     *
+     * 使用 AiResponseCleaner 提取引号内的核心建议，
+     * 过滤掉AI的废话解释。
+     *
+     * @param result 原始解析结果
+     * @return 清洗后的结果
+     */
+    private fun cleanAnalysisResultSuggestion(result: AnalysisResult): AnalysisResult {
+        val cleanedSuggestion = com.empathy.ai.domain.util.AiResponseCleaner.smartClean(result.replySuggestion)
+        android.util.Log.d("AiRepositoryImpl", "清洗建议: 原始=${result.replySuggestion.take(50)}... -> 清洗后=${cleanedSuggestion.take(50)}...")
+        return result.copy(replySuggestion = cleanedSuggestion)
     }
     
     /**
@@ -860,7 +880,9 @@ $COMMON_JSON_RULES""".trim()
             val result = adapter.fromJson(cleanedJson)
             if (result != null && result.replySuggestion.isNotBlank()) {
                 android.util.Log.d("AiRepositoryImpl", "标准格式解析成功")
-                return Result.success(result)
+                // 清洗 replySuggestion，提取引号内的核心建议
+                val cleanedResult = cleanAnalysisResultSuggestion(result)
+                return Result.success(cleanedResult)
             }
         } catch (e: Exception) {
             android.util.Log.d("AiRepositoryImpl", "标准格式解析失败: ${e.message}，尝试字段映射")
@@ -871,7 +893,9 @@ $COMMON_JSON_RULES""".trim()
         val mappedResult = mapNonStandardFieldsToAnalysisResult(cleanedJson)
         if (mappedResult != null) {
             android.util.Log.d("AiRepositoryImpl", "字段映射成功: replySuggestion=${mappedResult.replySuggestion.take(50)}...")
-            return Result.success(mappedResult)
+            // 清洗 replySuggestion
+            val cleanedResult = cleanAnalysisResultSuggestion(mappedResult)
+            return Result.success(cleanedResult)
         }
         
         // 5. 字段映射也失败，使用Fallback
