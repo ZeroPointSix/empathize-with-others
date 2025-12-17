@@ -10,6 +10,7 @@ import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.DailySummaryRepository
 import com.empathy.ai.domain.repository.FailedTaskRepository
 import com.empathy.ai.domain.util.ContextBuilder
+import com.empathy.ai.domain.util.ConversationContextBuilder
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -60,4 +61,13 @@ object MemoryModule {
     @Provides
     @Singleton
     fun provideContextBuilder(): ContextBuilder = ContextBuilder()
+
+    /**
+     * 提供ConversationContextBuilder
+     *
+     * 用于构建带时间流逝标记的对话历史上下文
+     */
+    @Provides
+    @Singleton
+    fun provideConversationContextBuilder(): ConversationContextBuilder = ConversationContextBuilder()
 }

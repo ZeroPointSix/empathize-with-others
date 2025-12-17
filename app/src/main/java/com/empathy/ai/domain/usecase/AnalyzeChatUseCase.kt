@@ -3,10 +3,13 @@ package com.empathy.ai.domain.usecase
 import android.util.Log
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.BrainTag
+import com.empathy.ai.domain.model.ConversationContextConfig
 import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.MessageSender
 import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.domain.model.TimestampedMessage
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
@@ -14,6 +17,7 @@ import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.repository.SettingsRepository
 import com.empathy.ai.domain.service.PrivacyEngine
+import com.empathy.ai.domain.util.ConversationContextBuilder
 import com.empathy.ai.domain.util.DateUtils
 import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
@@ -43,7 +47,8 @@ class AnalyzeChatUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository,
     private val conversationRepository: ConversationRepository,
-    private val promptBuilder: PromptBuilder
+    private val promptBuilder: PromptBuilder,
+    private val conversationContextBuilder: ConversationContextBuilder
 ) {
     companion object {
         private const val TAG = "AnalyzeChatUseCase"
@@ -97,11 +102,27 @@ class AnalyzeChatUseCase @Inject constructor(
                 cleanedContext
             }
 
-            // 5. 【记忆系统】保存用户输入到对话记录
+            // 5. 【对话上下文连续性】先查询历史（必须在保存当前输入之前）
+            // 【重要】顺序不能颠倒！否则会把当前输入也当作"历史"查出来
+            val historyCount = settingsRepository.getHistoryConversationCount()
+                .getOrDefault(ConversationContextConfig.DEFAULT_HISTORY_COUNT)
+            
+            Log.d(TAG, "历史配置: historyCount=$historyCount, contactId=$contactId")
+            
+            val historyContext = if (historyCount > 0) {
+                buildHistoryContext(contactId, historyCount)
+            } else {
+                ""
+            }
+            
+            Log.d(TAG, "历史上下文长度: ${historyContext.length}, 内容预览: ${historyContext.take(200)}")
+
+            // 6. 【记忆系统】保存用户输入到对话记录（在查询历史之后）
             val userInputText = cleanedContext.joinToString("\n")
             conversationLogId = saveUserInput(contactId, userInputText)
+            Log.d(TAG, "保存用户输入: contactId=$contactId, logId=$conversationLogId")
 
-            // 6. Prompt 组装（使用PromptBuilder三层分离架构）
+            // 7. Prompt 组装（使用PromptBuilder三层分离架构）
             val redTags = brainTags.filter { it.type == TagType.RISK_RED }
             val greenTags = brainTags.filter { it.type == TagType.STRATEGY_GREEN }
             
@@ -111,7 +132,8 @@ class AnalyzeChatUseCase @Inject constructor(
                 facts = profile.facts,
                 redTags = redTags,
                 greenTags = greenTags,
-                conversationHistory = maskedContext
+                conversationHistory = maskedContext,
+                historyContext = historyContext
             )
             
             // 使用PromptBuilder构建完整系统指令
@@ -124,7 +146,7 @@ class AnalyzeChatUseCase @Inject constructor(
                 runtimeData = runtimeData  // 运行时数据直接传入，不再使用占位符
             )
 
-            // 7. AI 推理（传递provider配置）
+            // 8. AI 推理（传递provider配置）
             // 注意：promptContext传递运行时数据，systemInstruction传递完整指令
             val analysisResult = aiRepository.analyzeChat(
                 provider = defaultProvider,
@@ -132,12 +154,12 @@ class AnalyzeChatUseCase @Inject constructor(
                 systemInstruction = systemInstruction
             ).getOrThrow()
 
-            // 8. 【记忆系统】保存AI回复到对话记录
+            // 9. 【记忆系统】保存AI回复到对话记录
             conversationLogId?.let { logId ->
                 saveAiResponse(logId, analysisResult)
             }
 
-            // 9. 【记忆系统】更新最后互动日期
+            // 10. 【记忆系统】更新最后互动日期
             updateLastInteractionDate(contactId)
 
             Result.success(analysisResult)
@@ -212,18 +234,67 @@ class AnalyzeChatUseCase @Inject constructor(
     }
 
     /**
+     * 【新增】构建历史上下文
+     *
+     * 【重要说明】当前版本仅回放用户侧历史
+     * 原因：数据库 conversation_logs 表只存储了 user_input
+     *
+     * @param contactId 联系人ID
+     * @param limit 历史条数
+     * @return 带时间流逝标记的历史上下文字符串
+     */
+    private suspend fun buildHistoryContext(contactId: String, limit: Int): String {
+        return try {
+            val recentLogs = conversationRepository
+                .getRecentConversations(contactId, limit)
+                .getOrDefault(emptyList())
+
+            if (recentLogs.isEmpty()) return ""
+
+            // 将ConversationLog转换为TimestampedMessage
+            // 【注意】当前版本 sender 固定为 USER
+            val messages = recentLogs.mapNotNull { log ->
+                try {
+                    TimestampedMessage(
+                        content = log.userInput,
+                        timestamp = log.timestamp,
+                        sender = MessageSender.ME
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "跳过无效的对话记录: ${log.id}", e)
+                    null
+                }
+            }
+
+            conversationContextBuilder.buildHistoryContext(messages)
+        } catch (e: Exception) {
+            Log.e(TAG, "构建历史上下文失败，降级为空历史", e)
+            ""  // 降级：返回空历史，不影响主流程
+        }
+    }
+
+    /**
      * 构建上下文数据
      *
      * 将联系人信息、标签和聊天记录组装为上下文数据字符串
+     *
+     * @param historyContext 历史对话上下文（带时间流逝标记）
      */
     private fun buildContextData(
         targetGoal: String,
         facts: List<Fact>,
         redTags: List<BrainTag>,
         greenTags: List<BrainTag>,
-        conversationHistory: List<String>
+        conversationHistory: List<String>,
+        historyContext: String = ""
     ): String {
         return buildString {
+            // 【新增】历史对话区块（放在最前面，让AI先了解背景）
+            if (historyContext.isNotBlank()) {
+                appendLine(historyContext)
+                appendLine()
+            }
+
             appendLine("【攻略目标】")
             appendLine(targetGoal)
             appendLine()

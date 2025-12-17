@@ -106,4 +106,18 @@ interface ConversationRepository {
      * @return 操作结果
      */
     suspend fun deleteConversation(logId: Long): Result<Unit>
+
+    /**
+     * 获取指定联系人的最近N条对话记录
+     *
+     * 用于构建对话上下文连续性，支持AI分析时回顾历史对话
+     *
+     * @param contactId 联系人ID
+     * @param limit 最大条数
+     * @return 按时间正序排列的对话记录（最早的在前）
+     */
+    suspend fun getRecentConversations(
+        contactId: String,
+        limit: Int
+    ): Result<List<ConversationLog>>
 }

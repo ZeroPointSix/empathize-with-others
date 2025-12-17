@@ -147,6 +147,23 @@ class ConversationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getRecentConversations(
+        contactId: String,
+        limit: Int
+    ): Result<List<ConversationLog>> = withContext(Dispatchers.IO) {
+        try {
+            val entities = dao.getRecentConversations(contactId, limit)
+            android.util.Log.d(
+                "ConversationRepo",
+                "查询历史: contactId=$contactId, limit=$limit, 结果数=${entities.size}"
+            )
+            Result.success(entities.map { it.toDomain() })
+        } catch (e: Exception) {
+            android.util.Log.e("ConversationRepo", "查询历史失败: contactId=$contactId", e)
+            Result.failure(e)
+        }
+    }
+
     // ============================================================================
     // 私有映射函数
     // ============================================================================

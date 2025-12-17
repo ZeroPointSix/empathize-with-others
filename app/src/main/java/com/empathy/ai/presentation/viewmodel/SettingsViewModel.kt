@@ -70,6 +70,9 @@ class SettingsViewModel @Inject constructor(
             is SettingsUiEvent.ToggleDataMasking -> toggleDataMasking()
             is SettingsUiEvent.ToggleLocalFirstMode -> toggleLocalFirstMode()
 
+            // === AI 分析设置事件 ===
+            is SettingsUiEvent.ChangeHistoryConversationCount -> changeHistoryConversationCount(event.count)
+
             // === 数据管理事件 ===
             is SettingsUiEvent.ShowClearDataDialog -> showClearDataDialog()
             is SettingsUiEvent.HideClearDataDialog -> hideClearDataDialog()
@@ -105,11 +108,16 @@ class SettingsViewModel @Inject constructor(
                 val localFirst = settingsRepository.getLocalFirstModeEnabled()
                     .getOrDefault(true)
                 
+                // 加载历史对话条数配置
+                val historyCount = settingsRepository.getHistoryConversationCount()
+                    .getOrDefault(5)
+                
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         dataMaskingEnabled = dataMasking,
-                        localFirstMode = localFirst
+                        localFirstMode = localFirst,
+                        historyConversationCount = historyCount
                     )
                 }
             } catch (e: Exception) {
@@ -282,6 +290,43 @@ class SettingsViewModel @Inject constructor(
                 android.util.Log.e("SettingsViewModel", "切换本地优先模式失败", e)
                 _uiState.update {
                     it.copy(error = "切换本地优先模式失败: ${e.message}")
+                }
+            }
+        }
+    }
+
+    // === AI 分析设置方法 ===
+
+    /**
+     * 更改历史对话条数
+     *
+     * @param count 条数，必须是 0/5/10 之一
+     */
+    private fun changeHistoryConversationCount(count: Int) {
+        viewModelScope.launch {
+            try {
+                settingsRepository.setHistoryConversationCount(count).onSuccess {
+                    val label = when (count) {
+                        0 -> "不发送历史"
+                        5 -> "最近5条"
+                        10 -> "最近10条"
+                        else -> "${count}条"
+                    }
+                    _uiState.update {
+                        it.copy(
+                            historyConversationCount = count,
+                            successMessage = "历史对话条数已设置为$label"
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = "保存设置失败: ${error.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "更改历史对话条数失败", e)
+                _uiState.update {
+                    it.copy(error = "更改历史对话条数失败: ${e.message}")
                 }
             }
         }
