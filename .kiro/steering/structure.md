@@ -325,6 +325,10 @@ test/
   - ✅ 事实流标签页：TimelineView、ListView、FactStreamTopBar
   - ✅ 标签画像标签页：PersonaTab、CategorySection、GuessedTag/ConfirmedTag
   - ✅ 资料库标签页：DataVaultTab、DataSourceCard
+  - 提示词编辑器UI：100%完成，完整的提示词工程界面
+  - ✅ PromptEditorScreen：支持创建、编辑、验证提示词
+  - ✅ PromptEditorViewModel：状态管理和业务逻辑
+  - ✅ 提示词组件：CharacterCounter、DiscardConfirmDialog、InlineErrorBanner等
   - 新增AddFactToStreamDialog、EditConversationDialog、TagConfirmationDialog
 - **依赖注入**: 100%完成，Hilt模块完整配置
   - 新增MemoryModule，管理记忆系统相关依赖

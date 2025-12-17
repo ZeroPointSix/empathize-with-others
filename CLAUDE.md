@@ -16,10 +16,10 @@
 这是一款基于 Android 平台的共情 AI 助手应用,旨在通过 AI 技术帮助用户在社交场景中提供智能化的沟通辅助。项目采用 Clean Architecture + MVVM 架构模式,严格遵循隐私优先和零后端原则。
 
 **版本**: v1.0.3-dev (MVP)
-**状态**: ✅ Phase 1-4 基础设施完成，UI层开发完成，联系人画像记忆系统UI已完成，提示词管理系统已完成，整体架构完整
-**完成度**: 95% (与WORKSPACE.md和.kiro/steering/product.md一致)
+**状态**: ✅ Phase 1-4 基础设施完成，UI层开发完成，联系人画像记忆系统UI已完成，提示词管理系统已完成，提示词编辑器UI已完成，整体架构完整
+**完成度**: 96% (与WORKSPACE.md和.kiro/steering/product.md一致)
 **技术栈**: Kotlin + Jetpack Compose + Room + Retrofit + Hilt + Coil + Room Testing
-**最后更新**: 2025-12-16 (与WORKSPACE.md和.kiro/steering文件一致)
+**最后更新**: 2025-12-17 (与WORKSPACE.md和.kiro/steering文件一致)
 **代码统计**: 76,933行 (42,432行源代码 + 30,984行测试代码 + 3,517行Android测试)
   - Kotlin文件总数: 363个 (主代码239个 + 单元测试111个 + Android测试13个)
 **测试覆盖率**: 99.1% (113/114测试通过)
@@ -231,14 +231,26 @@ com.empathy.ai/
 │   │       │   └── vault/                           # ✅ 新增：资料库标签页
 │   │       │       ├── DataVaultTab.kt
 │   │       │       └── DataSourceCard.kt
-│   │       ├── settings/
-│   │       │   ├── SettingsScreen.kt
-│   │       │   ├── SettingsUiState.kt
-│   │       │   └── SettingsUiEvent.kt
-│   │       └── tag/
-│   │           ├── BrainTagScreen.kt
-│   │           ├── BrainTagUiState.kt
-│   │           └── BrainTagUiEvent.kt
+│       │       ├── settings/
+│       │       │   ├── SettingsScreen.kt
+│       │       │   ├── SettingsUiState.kt
+│       │       │   └── SettingsUiEvent.kt
+│       │       ├── tag/
+│       │       │   ├── BrainTagScreen.kt
+│       │       │   ├── BrainTagUiState.kt
+│       │       │   └── BrainTagUiEvent.kt
+│       │       └── prompt/
+│       │           ├── PromptEditorScreen.kt
+│       │           ├── PromptEditorUiState.kt
+│       │           ├── PromptEditorUiEvent.kt
+│       │           ├── PromptEditMode.kt
+│       │           ├── PromptEditorResult.kt
+│       │           └── component/
+│       │               ├── CharacterCounter.kt
+│       │               ├── DiscardConfirmDialog.kt
+│       │               ├── InlineErrorBanner.kt
+│       │               ├── PromptEditorTopBar.kt
+│       │               └── PromptInputField.kt
 │   └── viewmodel/                    # ✅ ViewModel
 │       ├── BaseViewModel.kt
 │       ├── AiConfigViewModel.kt
@@ -247,6 +259,7 @@ com.empathy.ai/
 │       ├── ContactDetailViewModel.kt
 │       ├── ContactDetailTabViewModel.kt     # ✅ 新增：四标签页ViewModel
 │       ├── ContactListViewModel.kt
+│       ├── PromptEditorViewModel.kt          # ✅ 新增：提示词编辑器ViewModel
 │       └── SettingsViewModel.kt
 │
 └── di/                              # ✅ 依赖注入
@@ -487,6 +500,13 @@ data class BrainTag(
    - 完整的依赖注入配置：PromptModule、DispatcherModule
    - 完整的测试套件：111个单元测试文件覆盖所有核心功能
 
+10. **提示词编辑器** - 完整的提示词创建和编辑界面
+    - 完整实现：PromptEditorScreen、PromptEditorViewModel
+    - 支持提示词的创建、编辑、验证和变量解析
+    - 集成UI：实时字符计数、语法高亮、错误提示、变量自动补全
+    - 支持场景化提示词管理和模板系统
+    - 完整的文件存储和备份机制
+
 ### ⚠️ 部分实现/待完善功能
 
 1. **数据提取（智能提取）** - 从文本、音频和视频文件中提取联系人信息
@@ -529,7 +549,7 @@ data class BrainTag(
 
 ### 📊 整体评估
 
-- **整体完成度**: 95% (与WORKSPACE.md和.kiro/steering/product.md一致)
+- **整体完成度**: 96% (与WORKSPACE.md和.kiro/steering/product.md一致)
 - **架构合规性**: 100% (Clean Architecture + MVVM)
 - **代码质量**: A级 (完整注释、错误处理、单元测试覆盖)
 - **测试覆盖**: 99.1% (113/114测试通过)
@@ -589,13 +609,13 @@ data class BrainTag(
 
 ---
 
-**最后更新**: 2025-12-16 (与WORKSPACE.md和.kiro/steering文件一致)
+**最后更新**: 2025-12-17 (与WORKSPACE.md和.kiro/steering文件一致)
 **维护者**: hushaokang
-**文档版本**: v2.2.0
+**文档版本**: v2.2.1
 **Git提交**: d157e65 - 完善提示词管理系统设计文档与联系人画像记忆系统UI实现
 **架构状态**: ✅ Clean Architecture完全合规，0处违规调用
-**今日完成**: 提示词管理系统全面实现，更新文档反映项目最新状态
-**完成度**: 95% (与WORKSPACE.md和.kiro/steering/product.md一致)
+**今日完成**: 文档刷新，更新项目架构和功能状态，添加提示词编辑器UI信息
+**完成度**: 96% (与WORKSPACE.md和.kiro/steering/product.md一致)
 **代码统计**: 76,933行 (42,432行源代码 + 30,984行测试代码 + 3,517行Android测试)
 **测试覆盖率**: 99.1% (113/114测试通过)
-**最新功能**: 提示词管理系统（完整的Prompt工程架构：PromptBuilder、PromptSanitizer、PromptValidator等）
+**最新功能**: 提示词编辑器UI（完整的提示词创建、编辑、验证界面：PromptEditorScreen、PromptEditorViewModel等）
