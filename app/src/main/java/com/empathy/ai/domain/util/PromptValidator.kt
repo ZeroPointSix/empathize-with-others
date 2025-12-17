@@ -30,7 +30,7 @@ class PromptValidator @Inject constructor(
      * 验证提示词
      *
      * 验证顺序：
-     * 1. 检查空值 -> Error
+     * 1. 检查空值 -> 根据allowEmpty参数决定是否报错
      * 2. 检查长度超限 -> Error
      * 3. 检查无效变量 -> Error
      * 4. 检查接近长度限制 -> Warning
@@ -38,15 +38,25 @@ class PromptValidator @Inject constructor(
      *
      * @param prompt 要验证的提示词
      * @param scene 场景类型（用于确定可用变量）
+     * @param allowEmpty 是否允许空值（默认true，空值表示使用系统默认）
      * @return 验证结果
      */
-    fun validate(prompt: String, scene: PromptScene): PromptValidationResult {
-        // 1. 检查空值
+    fun validate(
+        prompt: String,
+        scene: PromptScene,
+        allowEmpty: Boolean = true
+    ): PromptValidationResult {
+        // 1. 检查空值（仅在不允许空值时报错）
         if (prompt.isBlank()) {
-            return PromptValidationResult.Error(
-                message = "提示词不能为空",
-                errorType = PromptValidationResult.ErrorType.EMPTY_PROMPT
-            )
+            return if (allowEmpty) {
+                // 空值合法，表示使用系统默认或清除自定义指令
+                PromptValidationResult.Success
+            } else {
+                PromptValidationResult.Error(
+                    message = "提示词不能为空",
+                    errorType = PromptValidationResult.ErrorType.EMPTY_PROMPT
+                )
+            }
         }
 
         // 2. 检查长度限制
@@ -84,13 +94,15 @@ class PromptValidator @Inject constructor(
      * 批量验证多个场景的提示词
      *
      * @param prompts 场景到提示词的映射
+     * @param allowEmpty 是否允许空值
      * @return 场景到验证结果的映射
      */
     fun validateAll(
-        prompts: Map<PromptScene, String>
+        prompts: Map<PromptScene, String>,
+        allowEmpty: Boolean = true
     ): Map<PromptScene, PromptValidationResult> {
         return prompts.mapValues { (scene, prompt) ->
-            validate(prompt, scene)
+            validate(prompt, scene, allowEmpty)
         }
     }
 }

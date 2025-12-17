@@ -32,12 +32,24 @@ class PromptValidatorTest {
     // ========== 空提示词测试 ==========
 
     @Test
-    fun `validate should return Error for empty prompt`() {
+    fun `validate should return Success for empty prompt when allowEmpty is true`() {
+        // Given
+        val prompt = PromptTestDataFactory.createEmptyPrompt()
+
+        // When - 默认allowEmpty=true
+        val result = validator.validate(prompt, PromptScene.ANALYZE)
+
+        // Then - 空值合法，表示使用系统默认
+        assertTrue(result is PromptValidationResult.Success)
+    }
+
+    @Test
+    fun `validate should return Error for empty prompt when allowEmpty is false`() {
         // Given
         val prompt = PromptTestDataFactory.createEmptyPrompt()
 
         // When
-        val result = validator.validate(prompt, PromptScene.ANALYZE)
+        val result = validator.validate(prompt, PromptScene.ANALYZE, allowEmpty = false)
 
         // Then
         assertTrue(result is PromptValidationResult.Error)
@@ -48,12 +60,24 @@ class PromptValidatorTest {
     }
 
     @Test
-    fun `validate should return Error for blank prompt`() {
+    fun `validate should return Success for blank prompt when allowEmpty is true`() {
+        // Given
+        val prompt = PromptTestDataFactory.createBlankPrompt()
+
+        // When - 默认allowEmpty=true
+        val result = validator.validate(prompt, PromptScene.ANALYZE)
+
+        // Then - 空值合法，表示使用系统默认
+        assertTrue(result is PromptValidationResult.Success)
+    }
+
+    @Test
+    fun `validate should return Error for blank prompt when allowEmpty is false`() {
         // Given
         val prompt = PromptTestDataFactory.createBlankPrompt()
 
         // When
-        val result = validator.validate(prompt, PromptScene.ANALYZE)
+        val result = validator.validate(prompt, PromptScene.ANALYZE, allowEmpty = false)
 
         // Then
         assertTrue(result is PromptValidationResult.Error)
@@ -195,7 +219,28 @@ class PromptValidatorTest {
     // ========== 批量验证测试 ==========
 
     @Test
-    fun `validateAll should validate all scenes`() {
+    fun `validateAll should validate all scenes with allowEmpty true by default`() {
+        // Given
+        val prompts = mapOf(
+            PromptScene.ANALYZE to "分析提示词",
+            PromptScene.CHECK to "",  // 空提示词，默认允许
+            PromptScene.EXTRACT to "提取提示词",
+            PromptScene.SUMMARY to PromptTestDataFactory.createOverLengthPrompt()
+        )
+
+        // When - 默认allowEmpty=true
+        val results = validator.validateAll(prompts)
+
+        // Then
+        assertEquals(4, results.size)
+        assertTrue(results[PromptScene.ANALYZE] is PromptValidationResult.Success)
+        assertTrue(results[PromptScene.CHECK] is PromptValidationResult.Success) // 空值现在合法
+        assertTrue(results[PromptScene.EXTRACT] is PromptValidationResult.Success)
+        assertTrue(results[PromptScene.SUMMARY] is PromptValidationResult.Error)
+    }
+
+    @Test
+    fun `validateAll should reject empty prompts when allowEmpty is false`() {
         // Given
         val prompts = mapOf(
             PromptScene.ANALYZE to "分析提示词",
@@ -205,12 +250,12 @@ class PromptValidatorTest {
         )
 
         // When
-        val results = validator.validateAll(prompts)
+        val results = validator.validateAll(prompts, allowEmpty = false)
 
         // Then
         assertEquals(4, results.size)
         assertTrue(results[PromptScene.ANALYZE] is PromptValidationResult.Success)
-        assertTrue(results[PromptScene.CHECK] is PromptValidationResult.Error)
+        assertTrue(results[PromptScene.CHECK] is PromptValidationResult.Error) // 空值不允许
         assertTrue(results[PromptScene.EXTRACT] is PromptValidationResult.Success)
         assertTrue(results[PromptScene.SUMMARY] is PromptValidationResult.Error)
     }

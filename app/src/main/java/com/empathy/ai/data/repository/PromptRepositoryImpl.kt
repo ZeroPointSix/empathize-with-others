@@ -82,8 +82,8 @@ class PromptRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveGlobalPrompt(scene: PromptScene, prompt: String): Result<Unit> {
-        // 1. 验证长度和变量
-        val validationResult = validator.validate(prompt, scene)
+        // 1. 验证长度和变量（允许空值，空值表示使用系统默认）
+        val validationResult = validator.validate(prompt, scene, allowEmpty = true)
         if (validationResult is PromptValidationResult.Error) {
             return Result.failure(
                 PromptError.ValidationError(
@@ -93,10 +93,12 @@ class PromptRepositoryImpl @Inject constructor(
             )
         }
 
-        // 2. 安全性检查（警告但不阻止）
-        val sanitizeResult = PromptSanitizer.detectDangerousContent(prompt)
-        if (!sanitizeResult.isSafe) {
-            Log.w(TAG, "检测到潜在风险: ${sanitizeResult.warnings}")
+        // 2. 安全性检查（仅非空时检查，警告但不阻止）
+        if (prompt.isNotBlank()) {
+            val sanitizeResult = PromptSanitizer.detectDangerousContent(prompt)
+            if (!sanitizeResult.isSafe) {
+                Log.w(TAG, "检测到潜在风险: ${sanitizeResult.warnings}")
+            }
         }
 
         // 3. 使用统一方法更新配置
