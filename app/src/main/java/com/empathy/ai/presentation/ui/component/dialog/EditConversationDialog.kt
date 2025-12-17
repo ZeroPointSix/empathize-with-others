@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -17,9 +18,14 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
  * - 编辑用户输入的对话内容
  * - 删除对话记录
  *
- * @param initialContent 初始内容
+ * 【PRD-00008】身份前缀处理：
+ * - 加载时：解析前缀，只显示纯文本，同时记住原始身份
+ * - 保存时：根据记住的身份，重新拼接前缀
+ * - 用户无感知前缀存在
+ *
+ * @param initialContent 初始内容（可能带身份前缀）
  * @param onDismiss 关闭对话框回调
- * @param onConfirm 确认编辑回调
+ * @param onConfirm 确认编辑回调（返回带前缀的完整内容）
  * @param onDelete 删除回调
  */
 @Composable
@@ -30,7 +36,13 @@ fun EditConversationDialog(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var content by remember { mutableStateOf(initialContent) }
+    // 【PRD-00008】解析身份前缀，记住原始身份
+    val parseResult = remember(initialContent) {
+        IdentityPrefixHelper.parse(initialContent)
+    }
+    
+    // 编辑框只显示纯文本内容（不含前缀）
+    var content by remember { mutableStateOf(parseResult.content) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     if (showDeleteConfirm) {
@@ -57,7 +69,10 @@ fun EditConversationDialog(
     } else {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("编辑对话") },
+            // 【PRD-00008】标题显示身份标签，让用户知道这是谁说的
+            title = { 
+                Text("编辑对话 (${parseResult.role.displayName})") 
+            },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -82,7 +97,14 @@ fun EditConversationDialog(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { onConfirm(content.trim()) },
+                    onClick = { 
+                        // 【PRD-00008】保存时重新拼接前缀，保留原始身份
+                        val finalContent = IdentityPrefixHelper.rebuildWithPrefix(
+                            role = parseResult.role,
+                            newContent = content.trim()
+                        )
+                        onConfirm(finalContent) 
+                    },
                     enabled = content.isNotBlank()
                 ) {
                     Text("保存")
@@ -109,9 +131,35 @@ fun EditConversationDialog(
 
 // ==================== Previews ====================
 
-@Preview(name = "编辑对话对话框", showBackground = true)
+@Preview(name = "编辑对话对话框 - 对方说", showBackground = true)
 @Composable
-private fun EditConversationDialogPreview() {
+private fun EditConversationDialogContactPreview() {
+    EmpathyTheme {
+        EditConversationDialog(
+            initialContent = "${IdentityPrefixHelper.PREFIX_CONTACT}你怎么才回消息？",
+            onDismiss = {},
+            onConfirm = {},
+            onDelete = {}
+        )
+    }
+}
+
+@Preview(name = "编辑对话对话框 - 我正在回复", showBackground = true)
+@Composable
+private fun EditConversationDialogUserPreview() {
+    EmpathyTheme {
+        EditConversationDialog(
+            initialContent = "${IdentityPrefixHelper.PREFIX_USER}刚才在开会",
+            onDismiss = {},
+            onConfirm = {},
+            onDelete = {}
+        )
+    }
+}
+
+@Preview(name = "编辑对话对话框 - 旧数据", showBackground = true)
+@Composable
+private fun EditConversationDialogLegacyPreview() {
     EmpathyTheme {
         EditConversationDialog(
             initialContent = "今天想约她出去吃饭，但不知道怎么开口比较好",

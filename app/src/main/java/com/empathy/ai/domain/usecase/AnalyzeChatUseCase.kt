@@ -1,6 +1,7 @@
 package com.empathy.ai.domain.usecase
 
 import android.util.Log
+import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ConversationContextConfig
@@ -19,6 +20,7 @@ import com.empathy.ai.domain.repository.SettingsRepository
 import com.empathy.ai.domain.service.PrivacyEngine
 import com.empathy.ai.domain.util.ConversationContextBuilder
 import com.empathy.ai.domain.util.DateUtils
+import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -118,13 +120,23 @@ class AnalyzeChatUseCase @Inject constructor(
             Log.d(TAG, "历史上下文长度: ${historyContext.length}, 内容预览: ${historyContext.take(200)}")
 
             // 6. 【记忆系统】保存用户输入到对话记录（在查询历史之后）
+            // 【PRD-00008】添加身份前缀，标识这是"对方说的"内容
             val userInputText = cleanedContext.joinToString("\n")
-            conversationLogId = saveUserInput(contactId, userInputText)
-            Log.d(TAG, "保存用户输入: contactId=$contactId, logId=$conversationLogId")
+            val prefixedInput = IdentityPrefixHelper.addPrefix(
+                content = userInputText,
+                actionType = ActionType.ANALYZE
+            )
+            conversationLogId = saveUserInput(contactId, prefixedInput)
+            Log.d(TAG, "保存用户输入(带身份前缀): contactId=$contactId, logId=$conversationLogId")
 
             // 7. Prompt 组装（使用PromptBuilder三层分离架构）
             val redTags = brainTags.filter { it.type == TagType.RISK_RED }
             val greenTags = brainTags.filter { it.type == TagType.STRATEGY_GREEN }
+            
+            // 【PRD-00008】为发送给AI的聊天记录添加身份前缀
+            val prefixedContext = maskedContext.map { message ->
+                IdentityPrefixHelper.addPrefix(message, ActionType.ANALYZE)
+            }
             
             // 构建运行时数据（系统自动注入，用户不可见）
             val runtimeData = buildContextData(
@@ -132,7 +144,7 @@ class AnalyzeChatUseCase @Inject constructor(
                 facts = profile.facts,
                 redTags = redTags,
                 greenTags = greenTags,
-                conversationHistory = maskedContext,
+                conversationHistory = prefixedContext,  // 使用带前缀的上下文
                 historyContext = historyContext
             )
             
