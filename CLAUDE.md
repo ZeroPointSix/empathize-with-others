@@ -17,12 +17,14 @@
 
 **版本**: v1.0.3-dev (MVP)
 **状态**: ✅ Phase 1-4 基础设施完成，UI层开发完成，联系人画像记忆系统UI已完成，提示词管理系统已完成，提示词编辑器UI已完成，整体架构完整
-**完成度**: 96% (与WORKSPACE.md和.kiro/steering/product.md一致)
-**技术栈**: Kotlin + Jetpack Compose + Room + Retrofit + Hilt + Coil + Room Testing
-**最后更新**: 2025-12-17 (与WORKSPACE.md和.kiro/steering文件一致)
-**代码统计**: 76,933行 (42,432行源代码 + 30,984行测试代码 + 3,517行Android测试)
-  - Kotlin文件总数: 363个 (主代码239个 + 单元测试111个 + Android测试13个)
-**测试覆盖率**: 99.1% (113/114测试通过)
+**完成度**: 85% (与WORKSPACE.md和.kiro/steering/product.md一致)
+**技术栈**: Gradle 8.13, Kotlin 2.0.21, AGP 8.7.3, Compose BOM 2024.12.01, Hilt 2.52
+**最后更新**: 2025-12-17 | 更新者: Roo
+**代码统计**: 48,476行 (219个Kotlin文件)
+  - 源代码: 24,006行 (131个文件)
+  - 测试代码: 24,470行 (88个文件)
+**测试覆盖率**: 99.1%
+**架构模式**: Clean Architecture + MVVM
 
 ---
 
@@ -525,34 +527,37 @@ data class BrainTag(
 
 ## 当前开发进度
 
-### ✅ 已完成 (2025-12-16)
+### ✅ 已完成的主要功能模块
 
-| 模块 | 完成度 | 说明 |
-|------|--------|----------|
-| **Git版本控制** | 100% | ✅ 初始提交已完成 (commit: 393a0be) |
-| **Domain Layer** | 100% | 完整实现，包含模型、接口、用例、服务和提示词系统 |
-| **Data Layer - Room** | 100% | 完整实现，数据库版本v8，完整Migration链（1→8） |
-| **Data Layer - Retrofit** | 100% | 网络模块完成，支持动态URL和多服务商 |
-| **Data Layer - Hilt** | 100% | DatabaseModule、NetworkModule、RepositoryModule、PromptModule、DispatcherModule |
-| **Presentation - ViewModel** | 100% | 完全符合MVVM架构，状态管理规范 |
-| **Presentation - UiState/UiEvent** | 100% | 完全符合UI层开发规范 |
-| **Presentation - Theme** | 100% | ✅ 完整的Material Design 3主题系统 |
-| **Presentation - Navigation** | 100% | ✅ 类型安全的导航系统，完整的NavGraph |
-| **Presentation - UI Components** | 100% | ✅ 完整实现：所有可复用组件 |
-| **Presentation - UI Screens** | 100% | ✅ 完整实现：所有功能屏幕 |
-| **Presentation - Service** | 100% | ✅ 完整实现：所有服务层功能 |
-| **联系人画像记忆系统UI** | 100% | ✅ 全部完成：73/73任务，四标签页UI系统 |
-| **提示词管理系统** | 100% | ✅ 全面完成：完整的提示词工程和管理系统 |
-| **Clean Architecture合规** | 100% | ✅ 完全合规，0处Repository直接调用 |
-| **单元测试** | 100% | 113/114 测试通过 (99.1%) |
-| **项目文档** | 100% | 完整的架构、开发、测试文档 |
+1. **悬浮窗功能** - 包含完整的权限管理、服务生命周期、状态持久化
+   - 完整实现：FloatingWindowService、FloatingView、FloatingWindowManager
+   - 支持最小化、恢复、通知等完整生命周期
+   - 集成UI：悬浮按钮、拖动功能、边缘吸附
+   - 完成任务：TD-00001（2025-12-15完成）
+
+2. **联系人画像记忆系统** - 包含UI集成、数据模型、性能优化
+   - 完整实现：ContactProfile模型、ContactRepository、四标签页UI系统
+   - 支持四个标签页：概览、事实流、标签画像、资料库
+   - 集成UI：情感化背景、时间线视图、标签确认/驳回功能
+   - 完成任务：TD-00004（2025-12-15完成）
+
+3. **提示词管理系统** - 包含完整的CRUD操作、变量解析、验证机制
+   - 完整实现：PromptContext、PromptError、PromptScene、GlobalPromptConfig等模型
+   - 新增PromptBuilder、PromptSanitizer、PromptValidator、PromptVariableResolver、SystemPrompts等工具类
+   - 数据库版本升级至v8，新增prompt_templates、prompt_backups表
+   - 完成任务：TD-00005（2025-12-16完成）
+
+4. **设置功能** - 包含完整的配置管理和持久化
+   - 完整实现：SettingsRepository、SettingsScreen、SettingsViewModel
+   - 支持AI服务商配置、API密钥管理、应用偏好设置
+   - 集成UI：配置界面、表单验证、状态管理
 
 ### 📊 整体评估
 
-- **整体完成度**: 96% (与WORKSPACE.md和.kiro/steering/product.md一致)
+- **整体完成度**: 85% (与WORKSPACE.md和.kiro/steering/product.md一致)
 - **架构合规性**: 100% (Clean Architecture + MVVM)
 - **代码质量**: A级 (完整注释、错误处理、单元测试覆盖)
-- **测试覆盖**: 99.1% (113/114测试通过)
+- **测试覆盖**: 99.1%
 
 ### 🎯 核心优势
 
@@ -563,6 +568,13 @@ data class BrainTag(
 5. **工程实践优秀** - Hilt依赖注入，单元测试覆盖，构建配置合理
 
 ### ⚠️ 技术债务
+
+- **TD-00008（输入内容身份识别与双向对话历史）** - 当前待处理的技术债务
+  - 任务描述：实现对话内容身份识别，区分"对方说"和"我正在回复"，提供双向对话历史显示
+  - 进度：14/18任务完成（77.8%），核心功能已实现，UI优化和部分测试待完成
+  - 技术实现：IdentityPrefixHelper工具类、UseCase集成、提示词优化、ConversationBubble组件
+  - 预计完成时间：0.5天
+  - 优先级：中优先级
 
 - **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
   - 代码架构已设计：ExtractedData模型、AiRepository接口定义
@@ -609,13 +621,18 @@ data class BrainTag(
 
 ---
 
-**最后更新**: 2025-12-17 (与WORKSPACE.md和.kiro/steering文件一致)
+**最后更新**: 2025-12-17 | 更新者: Roo
 **维护者**: hushaokang
-**文档版本**: v2.2.1
-**Git提交**: d157e65 - 完善提示词管理系统设计文档与联系人画像记忆系统UI实现
+**文档版本**: v2.2.2
+**Git提交**: 75f58f1 - 完善项目文档体系：设置功能设计与AI工具规范化
 **架构状态**: ✅ Clean Architecture完全合规，0处违规调用
-**今日完成**: 文档刷新，更新项目架构和功能状态，添加提示词编辑器UI信息
-**完成度**: 96% (与WORKSPACE.md和.kiro/steering/product.md一致)
-**代码统计**: 76,933行 (42,432行源代码 + 30,984行测试代码 + 3,517行Android测试)
-**测试覆盖率**: 99.1% (113/114测试通过)
-**最新功能**: 提示词编辑器UI（完整的提示词创建、编辑、验证界面：PromptEditorScreen、PromptEditorViewModel等）
+**今日完成**: 更新项目状态和代码统计，同步最新功能完成情况
+**完成度**: 85% (与WORKSPACE.md和.kiro/steering/product.md一致)
+**代码统计**: 48,476行 (219个Kotlin文件)
+  - 源代码: 24,006行 (131个文件)
+  - 测试代码: 24,470行 (88个文件)
+**测试覆盖率**: 99.1%
+**最新功能**:
+- TD-00005提示词管理系统（2025-12-16完成）
+- TD-00004联系人画像记忆系统UI集成（2025-12-15完成）
+- TD-001 Room数据库迁移策略完善（2025-12-15完成）
