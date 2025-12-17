@@ -65,6 +65,14 @@ android {
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
+
+    // 单元测试配置
+    // 允许Android框架方法返回默认值，避免"Method not mocked"错误
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {

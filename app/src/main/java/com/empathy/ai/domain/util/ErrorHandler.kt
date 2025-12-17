@@ -53,6 +53,35 @@ object ErrorHandler {
                     showToast(context, userMessage, Toast.LENGTH_SHORT)
                     logError("UseCase错误", error, provideUseCaseRecoveryAdvice(error))
                 }
+                // TD-00009 新增错误类型
+                is FloatingWindowError.NoProviderConfigured -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_LONG)
+                    logError("未配置AI服务商", error)
+                }
+                is FloatingWindowError.ContactNotFound -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_SHORT)
+                    logError("联系人未找到", error)
+                }
+                is FloatingWindowError.AiCallFailed -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_SHORT)
+                    logError("AI调用失败", error)
+                }
+                is FloatingWindowError.ParseFailed -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_SHORT)
+                    logError("解析失败", error)
+                }
+                is FloatingWindowError.NetworkTimeout -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_LONG)
+                    logError("网络超时", error)
+                }
+                is FloatingWindowError.EmptyInput -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_SHORT)
+                    logError("输入为空", error)
+                }
+                is FloatingWindowError.NoContactSelected -> {
+                    showToast(context, error.userMessage, Toast.LENGTH_SHORT)
+                    logError("未选择联系人", error)
+                }
             }
         } catch (e: Exception) {
             // 错误处理本身出错，使用最基本的方式记录

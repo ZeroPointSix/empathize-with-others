@@ -3,6 +3,7 @@ package com.empathy.ai.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.service.PrivacyEngine
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -115,6 +116,30 @@ class PrivacyRepositoryImpl @Inject constructor(
                 "\"$key\":\"$value\""
             }.joinToString(",")
             "{$entries}"
+        }
+    }
+
+    override suspend fun maskText(text: String): String {
+        return withContext(Dispatchers.IO) {
+            val mapping = getPrivacyMapping().getOrNull().orEmpty()
+            // 使用混合脱敏：映射规则 + 自动检测
+            PrivacyEngine.maskHybrid(
+                rawText = text,
+                privacyMapping = mapping,
+                enabledPatterns = listOf("手机号", "身份证号", "邮箱")
+            )
+        }
+    }
+
+    override suspend fun unmaskText(maskedText: String): String {
+        return withContext(Dispatchers.IO) {
+            val mapping = getPrivacyMapping().getOrNull().orEmpty()
+            // 反向映射：将占位符还原为原始内容
+            var result = maskedText
+            mapping.forEach { (original, mask) ->
+                result = result.replace(mask, original)
+            }
+            result
         }
     }
 }

@@ -80,4 +80,28 @@
     <!-- 功能颜色 -->
     <color name="analyze_color">#4CAF50</color>
     <color name="check_color">#FF9800</color>
+    <color name="polish_color">#9C27B0</color>
+    <color name="reply_color">#2196F3</color>
+
+    <!-- 悬浮窗Tab颜色 -->
+    <color name="floating_tab_background">#EEEEEE</color>
+    <color name="tab_selected_background">#2196F3</color>
+    <color name="tab_unselected_background">#00000000</color>
+    <color name="tab_selected_text">#FFFFFF</color>
+    <color name="tab_unselected_text">#757575</color>
+
+    <!-- 结果卡片颜色 -->
+    <color name="result_card_background">#FFFFFF</color>
+    <color name="dialog_background">#FFFFFF</color>
+
+    <!-- 风险等级颜色 -->
+    <color name="risk_safe">#4CAF50</color>
+    <color name="risk_warning">#FF9800</color>
+    <color name="risk_danger">#F44336</color>
+
+    <!-- 警告和错误颜色 -->
+    <color name="warning_background">#FFF3E0</color>
+    <color name="warning_text">#E65100</color>
+    <color name="error_background">#FFEBEE</color>
+    <color name="error_text">#C62828</color>
 </resources>

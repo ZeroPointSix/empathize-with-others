@@ -47,6 +47,11 @@ data class AiConfigUiState(
     val isTestingConnection: Boolean = false,
     val testConnectionResult: TestConnectionResult? = null,
 
+    // 模型列表获取状态
+    // @see SR-00001 模型列表自动获取与调试日志优化
+    val isFetchingModels: Boolean = false,
+    val fetchModelsError: String? = null,
+
     // 导航状态
     val shouldNavigateBack: Boolean = false
 ) {

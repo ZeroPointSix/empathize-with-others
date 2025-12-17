@@ -2,7 +2,9 @@ package com.empathy.ai.data.remote.api
 
 import com.empathy.ai.data.remote.model.ChatRequestDto
 import com.empathy.ai.data.remote.model.ChatResponseDto
+import com.empathy.ai.data.remote.model.ModelsResponseDto
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.HeaderMap
 import retrofit2.http.POST
 import retrofit2.http.Url
@@ -53,4 +55,22 @@ interface OpenAiApi {
         @HeaderMap headers: Map<String, String>,
         @Body request: ChatRequestDto
     ): ChatResponseDto
+
+    /**
+     * 获取可用模型列表 API
+     *
+     * 获取服务商提供的所有可用模型。
+     *
+     * @param fullUrl 完整的 API URL (例如: "https://api.openai.com/v1/models")
+     *                使用 @Url 注解覆盖 Retrofit 的 baseUrl
+     * @param headers 请求头映射,包含鉴权信息 (例如: {"Authorization": "Bearer xxx"})
+     * @return 模型列表响应
+     *
+     * @see SR-00001 模型列表自动获取与调试日志优化
+     */
+    @GET
+    suspend fun listModels(
+        @Url fullUrl: String,
+        @HeaderMap headers: Map<String, String>
+    ): ModelsResponseDto
 }

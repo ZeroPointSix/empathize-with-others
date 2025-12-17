@@ -25,6 +25,8 @@ object DefaultPrompts {
         PromptScene.CHECK -> CHECK_DEFAULT
         PromptScene.EXTRACT -> EXTRACT_DEFAULT
         PromptScene.SUMMARY -> SUMMARY_DEFAULT
+        PromptScene.POLISH -> POLISH_DEFAULT
+        PromptScene.REPLY -> REPLY_DEFAULT
     }
 
     /**
@@ -57,4 +59,20 @@ object DefaultPrompts {
      * 日期、联系人信息等数据会由系统自动注入
      */
     private const val SUMMARY_DEFAULT = ""
+
+    /**
+     * 润色场景默认提示词
+     *
+     * 用户可以自定义润色的风格和重点
+     * 联系人信息、雷区等数据会由系统自动注入
+     */
+    private const val POLISH_DEFAULT = ""
+
+    /**
+     * 回复场景默认提示词
+     *
+     * 用户可以自定义回复建议的风格和重点
+     * 联系人信息、策略等数据会由系统自动注入
+     */
+    private const val REPLY_DEFAULT = ""
 }

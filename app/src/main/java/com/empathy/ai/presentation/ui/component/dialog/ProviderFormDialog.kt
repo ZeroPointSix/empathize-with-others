@@ -75,6 +75,10 @@ fun ProviderFormDialog(
     isSaving: Boolean,
     isTestingConnection: Boolean,
     testConnectionResult: TestConnectionResult?,
+    // SR-00001: 模型列表自动获取相关参数
+    isFetchingModels: Boolean = false,
+    fetchModelsError: String? = null,
+    onFetchModels: () -> Unit = {},
     onNameChange: (String) -> Unit,
     onBaseUrlChange: (String) -> Unit,
     onApiKeyChange: (String) -> Unit,
@@ -279,16 +283,48 @@ fun ProviderFormDialog(
                                 text = "模型列表 *",
                                 style = MaterialTheme.typography.titleMedium
                             )
-                            TextButton(
-                                onClick = { showAddModelDialog = true }
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton(
+                                    onClick = onFetchModels,
+                                    enabled = !isFetchingModels && !isSaving
+                                ) {
+                                    if (isFetchingModels) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                    Text(if (isFetchingModels) "获取中..." else "自动获取")
+                                }
+                                TextButton(
+                                    onClick = { showAddModelDialog = true }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "添加模型",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("手动添加")
+                                }
+                            }
+                        }
+                        
+                        // 获取模型错误提示
+                        if (fetchModelsError != null) {
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                ),
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "添加模型",
-                                    modifier = Modifier.size(18.dp)
+                                Text(
+                                    text = "✗ $fetchModelsError",
+                                    modifier = Modifier.padding(12.dp),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodySmall
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("添加模型")
                             }
                         }
                         

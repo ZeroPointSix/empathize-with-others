@@ -1,5 +1,6 @@
 package com.empathy.ai.domain.repository
 
+import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import kotlinx.coroutines.flow.Flow
 
@@ -68,4 +69,16 @@ interface AiProviderRepository {
      * @return Result 包含详细的测试结果
      */
     suspend fun testConnection(provider: AiProvider): Result<com.empathy.ai.domain.model.ConnectionTestResult>
+
+    /**
+     * 获取服务商可用的模型列表
+     *
+     * 调用 OpenAI 兼容的 /models 端点获取可用模型
+     *
+     * @param provider 要查询的服务商（需要 baseUrl 和 apiKey）
+     * @return Result 包含可用模型列表，失败时返回错误信息
+     *
+     * @see SR-00001 模型列表自动获取与调试日志优化
+     */
+    suspend fun fetchAvailableModels(provider: AiProvider): Result<List<AiModel>>
 }

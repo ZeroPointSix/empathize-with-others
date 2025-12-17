@@ -120,6 +120,22 @@ sealed interface AiConfigUiEvent {
      */
     data object ClearTestResult : AiConfigUiEvent
 
+    // === 模型列表获取事件 ===
+
+    /**
+     * 获取可用模型列表
+     *
+     * 从服务商 API 自动获取可用的模型列表
+     *
+     * @see SR-00001 模型列表自动获取与调试日志优化
+     */
+    data object FetchModels : AiConfigUiEvent
+
+    /**
+     * 清除获取模型错误
+     */
+    data object ClearFetchModelsError : AiConfigUiEvent
+
     // === 通用事件 ===
 
     /**

@@ -34,4 +34,24 @@ interface PrivacyRepository {
      * @return 操作结果
      */
     suspend fun removeRule(original: String): Result<Unit>
+
+    /**
+     * 对文本进行脱敏处理
+     *
+     * 结合映射规则和自动检测进行混合脱敏
+     *
+     * @param text 原始文本
+     * @return 脱敏后的文本
+     */
+    suspend fun maskText(text: String): String
+
+    /**
+     * 对文本进行还原处理
+     *
+     * 将脱敏后的占位符还原为原始内容
+     *
+     * @param maskedText 脱敏后的文本
+     * @return 还原后的文本
+     */
+    suspend fun unmaskText(maskedText: String): String
 }

@@ -1,14 +1,20 @@
 package com.empathy.ai.domain.repository
 
 import com.empathy.ai.domain.model.AnalysisResult
+import com.empathy.ai.domain.model.PolishResult
+import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.SafetyCheckResult
 import com.empathy.ai.domain.usecase.ExtractedData
 
 /**
  * AI 服务仓库接口 - "大脑连接器"
  *
- * 服务对象: AnalyzeChatUseCase, CheckDraftUseCase, ImportMediaUseCase
+ * 服务对象: AnalyzeChatUseCase, CheckDraftUseCase, ImportMediaUseCase,
+ *          PolishDraftUseCase, GenerateReplyUseCase, RefinementUseCase
  * 对接网络请求或耗时的本地 AI 运算
+ *
+ * @see PRD-00009 悬浮窗功能重构需求
+ * @see TDD-00009 悬浮窗功能重构技术设计
  */
 interface AiRepository {
     /**
@@ -84,4 +90,80 @@ interface AiRepository {
         prompt: String,
         systemInstruction: String
     ): Result<String>
+
+    // ==================== 新增方法（TD-00009） ====================
+
+    /**
+     * 帮我润色
+     *
+     * [功能 F] 优化用户草稿，使表达更得体
+     *
+     * @param provider AI服务商配置
+     * @param draft 用户草稿
+     * @param systemInstruction 系统指令
+     * @return 润色结果（包含优化后的文本和可选的风险提示）
+     */
+    suspend fun polishDraft(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        draft: String,
+        systemInstruction: String
+    ): Result<PolishResult>
+
+    /**
+     * 帮我回复
+     *
+     * [功能 G] 根据对方消息生成合适的回复
+     *
+     * @param provider AI服务商配置
+     * @param message 对方的消息
+     * @param systemInstruction 系统指令
+     * @return 回复结果（包含建议的回复和策略说明）
+     */
+    suspend fun generateReply(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        message: String,
+        systemInstruction: String
+    ): Result<ReplyResult>
+
+    /**
+     * 微调分析结果
+     *
+     * [功能 H] 根据用户反馈重新生成分析结果
+     *
+     * @param provider AI服务商配置
+     * @param refinementPrompt 微调提示词（包含原始输入、上次结果、用户意见）
+     * @return 新的分析结果
+     */
+    suspend fun refineAnalysis(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        refinementPrompt: String
+    ): Result<AnalysisResult>
+
+    /**
+     * 微调润色结果
+     *
+     * [功能 I] 根据用户反馈重新生成润色结果
+     *
+     * @param provider AI服务商配置
+     * @param refinementPrompt 微调提示词（包含原始输入、上次结果、用户意见）
+     * @return 新的润色结果
+     */
+    suspend fun refinePolish(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        refinementPrompt: String
+    ): Result<PolishResult>
+
+    /**
+     * 微调回复结果
+     *
+     * [功能 J] 根据用户反馈重新生成回复结果
+     *
+     * @param provider AI服务商配置
+     * @param refinementPrompt 微调提示词（包含原始输入、上次结果、用户意见）
+     * @return 新的回复结果
+     */
+    suspend fun refineReply(
+        provider: com.empathy.ai.domain.model.AiProvider,
+        refinementPrompt: String
+    ): Result<ReplyResult>
 }
