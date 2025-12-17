@@ -141,10 +141,11 @@ class PromptBuilderTest {
     }
 
     @Test
-    fun `buildSystemInstruction should include contact prompt when provided`() = runTest {
+    fun `buildSystemInstruction should use contact prompt and skip global when contact prompt exists`() = runTest {
         // Given
         val contactPrompt = "这是联系人专属提示词"
-        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("全局提示词")
+        val globalPrompt = "全局提示词"
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success(globalPrompt)
         coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success(contactPrompt)
         val context = PromptTestDataFactory.createPromptContext()
 
@@ -156,15 +157,18 @@ class PromptBuilderTest {
             runtimeData = ""
         )
 
-        // Then
+        // Then - 联系人提示词存在时，只使用联系人提示词，跳过全局
         assertTrue(result.contains(contactPrompt))
         assertTrue(result.contains("【针对此联系人的特殊指令】"))
+        assertFalse(result.contains(globalPrompt))
+        assertFalse(result.contains("【用户自定义指令】"))
     }
 
     @Test
-    fun `buildSystemInstruction should handle null contact prompt`() = runTest {
+    fun `buildSystemInstruction should use global prompt when contact prompt is null`() = runTest {
         // Given
-        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("全局提示词")
+        val globalPrompt = "全局提示词"
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success(globalPrompt)
         coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success(null)
         val context = PromptTestDataFactory.createPromptContext()
 
@@ -176,7 +180,31 @@ class PromptBuilderTest {
             runtimeData = ""
         )
 
-        // Then
+        // Then - 联系人提示词不存在时，使用全局提示词
+        assertTrue(result.contains(globalPrompt))
+        assertTrue(result.contains("【用户自定义指令】"))
+        assertFalse(result.contains("【针对此联系人的特殊指令】"))
+    }
+
+    @Test
+    fun `buildSystemInstruction should use global prompt when contact prompt is blank`() = runTest {
+        // Given
+        val globalPrompt = "全局提示词"
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success(globalPrompt)
+        coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success("   ")
+        val context = PromptTestDataFactory.createPromptContext()
+
+        // When
+        val result = promptBuilder.buildSystemInstruction(
+            scene = PromptScene.ANALYZE,
+            contactId = "contact123",
+            context = context,
+            runtimeData = ""
+        )
+
+        // Then - 联系人提示词为空白时，使用全局提示词
+        assertTrue(result.contains(globalPrompt))
+        assertTrue(result.contains("【用户自定义指令】"))
         assertFalse(result.contains("【针对此联系人的特殊指令】"))
     }
 
@@ -257,7 +285,7 @@ class PromptBuilderTest {
     }
 
     @Test
-    fun `getUserInstructionOnly should include contact instruction when provided`() = runTest {
+    fun `getUserInstructionOnly should use contact instruction and skip global when contact exists`() = runTest {
         // Given
         val globalPrompt = "全局指令"
         val contactPrompt = "联系人专属指令"
@@ -272,11 +300,32 @@ class PromptBuilderTest {
             context = context
         )
 
-        // Then
-        assertTrue(result.contains(globalPrompt))
+        // Then - 联系人指令存在时，只使用联系人指令
         assertTrue(result.contains(contactPrompt))
-        assertTrue(result.contains("【用户自定义指令】"))
         assertTrue(result.contains("【针对此联系人的特殊指令】"))
+        assertFalse(result.contains(globalPrompt))
+        assertFalse(result.contains("【用户自定义指令】"))
+    }
+
+    @Test
+    fun `getUserInstructionOnly should use global instruction when contact is null`() = runTest {
+        // Given
+        val globalPrompt = "全局指令"
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success(globalPrompt)
+        coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success(null)
+        val context = PromptTestDataFactory.createPromptContext()
+
+        // When
+        val result = promptBuilder.getUserInstructionOnly(
+            scene = PromptScene.ANALYZE,
+            contactId = "contact123",
+            context = context
+        )
+
+        // Then - 联系人指令不存在时，使用全局指令
+        assertTrue(result.contains(globalPrompt))
+        assertTrue(result.contains("【用户自定义指令】"))
+        assertFalse(result.contains("【针对此联系人的特殊指令】"))
     }
 
     @Test
@@ -336,8 +385,8 @@ class PromptBuilderTest {
     // ========== 合并顺序测试 ==========
 
     @Test
-    fun `buildSystemInstruction should follow correct merge order`() = runTest {
-        // Given
+    fun `buildSystemInstruction should follow correct order with contact prompt`() = runTest {
+        // Given - 联系人指令存在时，只使用联系人指令
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("用户指令")
         coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success("联系人指令")
         val context = PromptTestDataFactory.createPromptContext()
@@ -351,17 +400,46 @@ class PromptBuilderTest {
             runtimeData = runtimeData
         )
 
-        // Then - 验证顺序：Header -> 用户指令 -> 联系人指令 -> 运行时数据 -> Footer
+        // Then - 验证顺序：Header -> 联系人指令 -> 运行时数据 -> Footer（无全局指令）
         val headerIndex = result.indexOf("共情AI助手")
-        val userIndex = result.indexOf("用户指令")
         val contactIndex = result.indexOf("联系人指令")
         val runtimeIndex = result.indexOf(runtimeData)
         val footerIndex = result.indexOf("JSON")
 
-        assertTrue(headerIndex < userIndex)
-        assertTrue(userIndex < contactIndex)
-        assertTrue(contactIndex < runtimeIndex)
-        assertTrue(runtimeIndex < footerIndex)
+        assertTrue(headerIndex >= 0)
+        assertTrue(contactIndex > headerIndex)
+        assertTrue(runtimeIndex > contactIndex)
+        assertTrue(footerIndex > runtimeIndex)
+        // 全局指令不应出现
+        assertFalse(result.contains("用户指令"))
+    }
+
+    @Test
+    fun `buildSystemInstruction should follow correct order with global prompt only`() = runTest {
+        // Given - 联系人指令不存在时，使用全局指令
+        coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("用户指令")
+        coEvery { promptRepository.getContactPrompt("contact123") } returns Result.success(null)
+        val context = PromptTestDataFactory.createPromptContext()
+        val runtimeData = "运行时数据"
+
+        // When
+        val result = promptBuilder.buildSystemInstruction(
+            scene = PromptScene.ANALYZE,
+            contactId = "contact123",
+            context = context,
+            runtimeData = runtimeData
+        )
+
+        // Then - 验证顺序：Header -> 全局指令 -> 运行时数据 -> Footer
+        val headerIndex = result.indexOf("共情AI助手")
+        val userIndex = result.indexOf("用户指令")
+        val runtimeIndex = result.indexOf(runtimeData)
+        val footerIndex = result.indexOf("JSON")
+
+        assertTrue(headerIndex >= 0)
+        assertTrue(userIndex > headerIndex)
+        assertTrue(runtimeIndex > userIndex)
+        assertTrue(footerIndex > runtimeIndex)
     }
 
     // ========== 不同场景测试 ==========

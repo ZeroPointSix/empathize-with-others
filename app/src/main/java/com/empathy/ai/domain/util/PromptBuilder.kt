@@ -44,6 +44,12 @@ class PromptBuilder @Inject constructor(
         private const val USER_PROMPT_TITLE = "【用户自定义指令】"
         private const val CONTACT_PROMPT_TITLE = "【针对此联系人的特殊指令】"
         private const val CONTEXT_DATA_TITLE = "【上下文数据】"
+        
+        /**
+         * 上下文数据占位符（已废弃，保留用于向后兼容）
+         */
+        @Deprecated("使用 buildSystemInstruction 的 runtimeData 参数替代")
+        const val CONTEXT_PLACEHOLDER = "{{CONTEXT_DATA_PLACEHOLDER}}"
     }
 
     /**
@@ -53,10 +59,13 @@ class PromptBuilder @Inject constructor(
      * 
      * 组装顺序：
      * 1. 系统Header（角色定义）
-     * 2. 用户全局指令（如有）
-     * 3. 用户联系人指令（如有）
-     * 4. 运行时数据（联系人信息、聊天记录等）
-     * 5. 系统Footer（输出格式约束）
+     * 2. 用户指令层（联系人专属指令优先，存在则跳过全局指令）
+     * 3. 运行时数据（联系人信息、聊天记录等）
+     * 4. 系统Footer（输出格式约束）
+     *
+     * 优先级规则：
+     * - 联系人专属指令存在时，只使用联系人指令（覆盖语义）
+     * - 联系人专属指令不存在时，使用全局指令
      *
      * @param scene 场景类型
      * @param contactId 联系人ID（可选，用于获取联系人专属提示词）
@@ -76,34 +85,37 @@ class PromptBuilder @Inject constructor(
             appendLine()
             appendLine()
 
-            // 2. 用户全局指令（用户可编辑）
-            val globalPrompt = getGlobalPromptSafely(scene)
-            if (globalPrompt.isNotBlank()) {
-                appendLine(USER_PROMPT_TITLE)
-                val resolvedPrompt = variableResolver.resolve(globalPrompt, context)
+            // 2. 用户指令层（联系人专属指令优先）
+            // 先获取联系人专属指令
+            val contactPrompt = if (contactId != null) {
+                getContactPromptSafely(contactId)
+            } else null
+
+            if (!contactPrompt.isNullOrBlank()) {
+                // 联系人专属指令存在，只使用联系人指令（覆盖全局）
+                appendLine(CONTACT_PROMPT_TITLE)
+                val resolvedPrompt = variableResolver.resolve(contactPrompt, context)
                 appendLine(resolvedPrompt)
                 appendLine()
-            }
-
-            // 3. 联系人专属指令（用户可编辑）
-            if (contactId != null) {
-                val contactPrompt = getContactPromptSafely(contactId)
-                if (!contactPrompt.isNullOrBlank()) {
-                    appendLine(CONTACT_PROMPT_TITLE)
-                    val resolvedPrompt = variableResolver.resolve(contactPrompt, context)
+            } else {
+                // 联系人指令不存在，使用全局指令
+                val globalPrompt = getGlobalPromptSafely(scene)
+                if (globalPrompt.isNotBlank()) {
+                    appendLine(USER_PROMPT_TITLE)
+                    val resolvedPrompt = variableResolver.resolve(globalPrompt, context)
                     appendLine(resolvedPrompt)
                     appendLine()
                 }
             }
 
-            // 4. 运行时数据（系统自动注入，用户不可见）
+            // 3. 运行时数据（系统自动注入，用户不可见）
             if (runtimeData.isNotBlank()) {
                 appendLine(CONTEXT_DATA_TITLE)
                 appendLine(runtimeData)
                 appendLine()
             }
 
-            // 5. 输出格式约束（用户不可见）
+            // 4. 输出格式约束（用户不可见）
             append(SystemPrompts.getFooter(scene))
         }
     }
@@ -130,10 +142,14 @@ class PromptBuilder @Inject constructor(
      * 用于需要单独获取用户指令的场景（如Function Calling模式下追加到基础指令后）
      * 不包含系统Header/Footer，只返回用户编辑的内容
      *
+     * 优先级规则：
+     * - 联系人专属指令存在时，只返回联系人指令（覆盖语义）
+     * - 联系人专属指令不存在时，返回全局指令
+     *
      * @param scene 场景类型
      * @param contactId 联系人ID（可选）
      * @param context 变量上下文
-     * @return 用户自定义指令（全局+联系人专属）
+     * @return 用户自定义指令（联系人专属优先，否则全局）
      */
     suspend fun getUserInstructionOnly(
         scene: PromptScene,
@@ -141,21 +157,22 @@ class PromptBuilder @Inject constructor(
         context: PromptContext
     ): String {
         return buildString {
-            // 用户全局指令
-            val globalPrompt = getGlobalPromptSafely(scene)
-            if (globalPrompt.isNotBlank()) {
-                appendLine(USER_PROMPT_TITLE)
-                val resolvedPrompt = variableResolver.resolve(globalPrompt, context)
-                appendLine(resolvedPrompt)
-            }
+            // 先获取联系人专属指令
+            val contactPrompt = if (contactId != null) {
+                getContactPromptSafely(contactId)
+            } else null
 
-            // 联系人专属指令
-            if (contactId != null) {
-                val contactPrompt = getContactPromptSafely(contactId)
-                if (!contactPrompt.isNullOrBlank()) {
-                    if (isNotEmpty()) appendLine()
-                    appendLine(CONTACT_PROMPT_TITLE)
-                    val resolvedPrompt = variableResolver.resolve(contactPrompt, context)
+            if (!contactPrompt.isNullOrBlank()) {
+                // 联系人专属指令存在，只使用联系人指令
+                appendLine(CONTACT_PROMPT_TITLE)
+                val resolvedPrompt = variableResolver.resolve(contactPrompt, context)
+                appendLine(resolvedPrompt)
+            } else {
+                // 联系人指令不存在，使用全局指令
+                val globalPrompt = getGlobalPromptSafely(scene)
+                if (globalPrompt.isNotBlank()) {
+                    appendLine(USER_PROMPT_TITLE)
+                    val resolvedPrompt = variableResolver.resolve(globalPrompt, context)
                     appendLine(resolvedPrompt)
                 }
             }
