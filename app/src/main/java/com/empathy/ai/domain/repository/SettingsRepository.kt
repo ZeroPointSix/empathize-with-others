@@ -84,4 +84,21 @@ interface SettingsRepository {
      * @return 操作结果
      */
     suspend fun setLocalFirstModeEnabled(enabled: Boolean): Result<Unit>
+
+    /**
+     * 获取历史对话条数配置
+     *
+     * 用于AI分析时回顾历史对话的条数
+     *
+     * @return 0/5/10，默认5
+     */
+    suspend fun getHistoryConversationCount(): Result<Int>
+
+    /**
+     * 设置历史对话条数
+     *
+     * @param count 条数，必须是 0/5/10 之一
+     * @return 操作结果
+     */
+    suspend fun setHistoryConversationCount(count: Int): Result<Unit>
 }

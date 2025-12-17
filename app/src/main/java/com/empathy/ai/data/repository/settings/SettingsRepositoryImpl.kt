@@ -25,7 +25,8 @@ import javax.inject.Singleton
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val privacyPreferences: com.empathy.ai.data.local.PrivacyPreferences
+    private val privacyPreferences: com.empathy.ai.data.local.PrivacyPreferences,
+    private val conversationPreferences: com.empathy.ai.data.local.ConversationPreferences
 ) : SettingsRepository {
 
     companion object {
@@ -294,6 +295,34 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setLocalFirstModeEnabled(enabled: Boolean): Result<Unit> {
         return try {
             privacyPreferences.setLocalFirstModeEnabled(enabled)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 获取历史对话条数配置
+     *
+     * @return 0/5/10，默认5
+     */
+    override suspend fun getHistoryConversationCount(): Result<Int> {
+        return try {
+            Result.success(conversationPreferences.getHistoryConversationCount())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 设置历史对话条数
+     *
+     * @param count 条数，必须是 0/5/10 之一
+     * @return 操作结果
+     */
+    override suspend fun setHistoryConversationCount(count: Int): Result<Unit> {
+        return try {
+            conversationPreferences.setHistoryConversationCount(count)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

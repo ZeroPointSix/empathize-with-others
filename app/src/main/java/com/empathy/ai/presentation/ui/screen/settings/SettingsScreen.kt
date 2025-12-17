@@ -25,6 +25,7 @@ import com.empathy.ai.domain.util.FloatingWindowManager
 import com.empathy.ai.presentation.navigation.PromptEditorRoutes
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.dialog.PermissionRequestDialog
+import com.empathy.ai.presentation.ui.screen.settings.component.HistoryConversationCountSection
 import com.empathy.ai.presentation.viewmodel.SettingsViewModel
 
 /**
@@ -158,6 +159,14 @@ private fun SettingsScreenContent(
 
             // 隐私设置
             PrivacySection(
+                uiState = uiState,
+                onEvent = onEvent
+            )
+
+            Divider()
+
+            // AI 分析设置
+            AiAnalysisSection(
                 uiState = uiState,
                 onEvent = onEvent
             )
@@ -541,6 +550,37 @@ private fun PrivacySection(
                     onCheckedChange = { onEvent(SettingsUiEvent.ToggleLocalFirstMode) }
                 )
             }
+        }
+    }
+}
+
+/**
+ * AI 分析设置区域
+ */
+@Composable
+private fun AiAnalysisSection(
+    uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "AI 分析设置",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            HistoryConversationCountSection(
+                selectedCount = uiState.historyConversationCount,
+                options = uiState.historyCountOptions,
+                onCountChange = { count ->
+                    onEvent(SettingsUiEvent.ChangeHistoryConversationCount(count))
+                }
+            )
         }
     }
 }

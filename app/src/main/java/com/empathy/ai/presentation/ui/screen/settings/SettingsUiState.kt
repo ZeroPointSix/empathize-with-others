@@ -24,6 +24,14 @@ data class SettingsUiState(
     val dataMaskingEnabled: Boolean = true,
     val localFirstMode: Boolean = true,
 
+    // AI 分析设置
+    val historyConversationCount: Int = 5,
+    val historyCountOptions: List<HistoryCountOption> = listOf(
+        HistoryCountOption(0, "不发送历史", "每次分析独立，不包含历史对话"),
+        HistoryCountOption(5, "最近5条", "推荐，平衡上下文和Token消耗"),
+        HistoryCountOption(10, "最近10条", "更完整的上下文，Token消耗较高")
+    ),
+
     // 应用信息
     val appVersion: String = "1.0.0",
 
@@ -41,3 +49,16 @@ data class SettingsUiState(
      */
     val hasProvider: Boolean get() = providersList.isNotEmpty()
 }
+
+/**
+ * 历史条数选项
+ *
+ * @property count 条数值
+ * @property label 显示标签
+ * @property description 描述说明
+ */
+data class HistoryCountOption(
+    val count: Int,
+    val label: String,
+    val description: String
+)

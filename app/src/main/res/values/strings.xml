@@ -99,6 +99,16 @@
     <string name="settings_prompt_extract">信息提取指令</string>
     <string name="settings_prompt_summary">每日总结指令</string>
     
+    <!-- AI 分析设置 -->
+    <string name="settings_history_count_title">历史对话条数</string>
+    <string name="settings_history_count_none">不发送历史</string>
+    <string name="settings_history_count_none_desc">每次分析独立，不包含历史对话</string>
+    <string name="settings_history_count_5">最近5条</string>
+    <string name="settings_history_count_5_desc">推荐，平衡上下文和Token消耗</string>
+    <string name="settings_history_count_10">最近10条</string>
+    <string name="settings_history_count_10_desc">更完整的上下文，Token消耗较高</string>
+    <string name="settings_history_count_hint">发送给AI的历史对话数量，帮助AI理解对话上下文和时间间隔</string>
+    
     <!-- 提示词编辑器 -->
     <string name="prompt_editor_title_global">编辑指令</string>
     <string name="prompt_editor_title_contact">编辑 %s 的专属指令</string>

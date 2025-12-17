@@ -39,6 +39,8 @@ android {
     }
 
     compileOptions {
+        // 启用 coreLibraryDesugaring 以支持 java.time API (minSdk=24)
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -66,6 +68,9 @@ android {
 }
 
 dependencies {
+    // Desugaring (Java 8+ API support for minSdk=24)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

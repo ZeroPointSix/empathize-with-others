@@ -35,6 +35,15 @@ sealed interface SettingsUiEvent {
      */
     data object ToggleLocalFirstMode : SettingsUiEvent
 
+    // === AI 分析设置事件 ===
+
+    /**
+     * 更改历史对话条数
+     *
+     * @param count 条数，必须是 0/5/10 之一
+     */
+    data class ChangeHistoryConversationCount(val count: Int) : SettingsUiEvent
+
     // === 数据管理事件 ===
     
     /**

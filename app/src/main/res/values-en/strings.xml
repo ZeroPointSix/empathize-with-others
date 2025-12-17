@@ -99,6 +99,16 @@
     <string name="settings_prompt_extract">Info Extraction Prompt</string>
     <string name="settings_prompt_summary">Daily Summary Prompt</string>
     
+    <!-- AI Analysis Settings -->
+    <string name="settings_history_count_title">History Conversation Count</string>
+    <string name="settings_history_count_none">No History</string>
+    <string name="settings_history_count_none_desc">Each analysis is independent, no history included</string>
+    <string name="settings_history_count_5">Last 5</string>
+    <string name="settings_history_count_5_desc">Recommended, balances context and token usage</string>
+    <string name="settings_history_count_10">Last 10</string>
+    <string name="settings_history_count_10_desc">More complete context, higher token usage</string>
+    <string name="settings_history_count_hint">Number of history conversations sent to AI, helps AI understand context and time gaps</string>
+    
     <!-- Prompt Editor -->
     <string name="prompt_editor_title_global">Edit Prompt</string>
     <string name="prompt_editor_title_contact">Edit %s\'s Custom Prompt</string>

@@ -53,6 +53,9 @@ material = "1.12.0"
 # Coil (Image Loading)
 coil = "2.5.0"
 
+# Desugaring (Java 8+ API support for older Android versions)
+desugarJdkLibs = "2.0.4"
+
 [libraries]
 # AndroidX Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -121,6 +124,9 @@ material = { group = "com.google.android.material", name = "material", version.r
 
 # Coil (Image Loading)
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Desugaring (Java 8+ API support)
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
