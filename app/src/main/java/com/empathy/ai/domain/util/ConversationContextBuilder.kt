@@ -21,10 +21,15 @@ import javax.inject.Singleton
  * - > 3小时：Cold Session，插入强标记并提示情绪变化
  * - 跨天：插入日期标记
  *
+ * 【PRD-00008】身份前缀支持：
+ * - 历史记录中保留原始身份前缀（【对方说】：或【我正在回复】：）
+ * - 兼容无前缀的旧数据（显示为"历史"）
+ *
  * 【线程安全说明】
  * 本类是 @Singleton 单例，使用 java.time.format.DateTimeFormatter 进行日期格式化。
  * DateTimeFormatter 是线程安全的，可以安全地在多线程环境中共享使用。
  */
+
 @Singleton
 class ConversationContextBuilder @Inject constructor() {
 
@@ -41,6 +46,11 @@ class ConversationContextBuilder @Inject constructor() {
 
     /**
      * 构建带时间流逝标记的对话历史
+     *
+     * 【PRD-00008】身份前缀处理：
+     * - 历史记录中保留原始身份前缀（【对方说】：或【我正在回复】：）
+     * - 格式：[历史记录 - HH:mm]: 【对方说】：xxx
+     * - 兼容无前缀的旧数据
      *
      * @param messages 按时间正序排列的消息列表
      * @param config 上下文配置
@@ -73,9 +83,10 @@ class ConversationContextBuilder @Inject constructor() {
                     appendLine(markerStr)
                 }
 
-                // 添加消息（在时间间隔后显示时间）
-                val showTime = marker !is TimeFlowMarker.None
-                appendLine(message.toDisplayString(showTime))
+                // 【PRD-00008】直接使用原始内容（已包含身份前缀）
+                // 格式：[历史记录 - HH:mm]: 【对方说】：xxx 或 [历史记录 - HH:mm]: xxx（旧数据）
+                val timeStr = message.getFormattedTime()
+                appendLine("[历史记录 - $timeStr]: ${message.content}")
 
                 // 更新前一条消息的信息
                 previousTimestamp = message.timestamp

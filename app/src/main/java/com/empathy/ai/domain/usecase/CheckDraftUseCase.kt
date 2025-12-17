@@ -1,5 +1,6 @@
 package com.empathy.ai.domain.usecase
 
+import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.SafetyCheckResult
@@ -9,6 +10,7 @@ import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.PrivacyEngine
+import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -104,6 +106,13 @@ class CheckDraftUseCase @Inject constructor(
                 // 先脱敏
                 val privacyMapping = privacyRepository.getPrivacyMapping().getOrElse { emptyMap() }
                 val maskedDraft = PrivacyEngine.mask(draftSnapshot, privacyMapping)
+                
+                // 【PRD-00008】添加身份前缀，标识这是"我正在回复"的内容
+                // 注意：检查功能不保存历史记录，只用于AI分析
+                val prefixedDraft = IdentityPrefixHelper.addPrefix(
+                    content = maskedDraft,
+                    actionType = ActionType.CHECK
+                )
 
                 // 构建提示词上下文
                 val profile = contactRepository.getProfile(contactId).getOrNull()
@@ -121,10 +130,11 @@ class CheckDraftUseCase @Inject constructor(
                 )
 
                 // 调用 AI 进行语义风险检查（传递provider配置和自定义系统指令）
+                // 【PRD-00008】使用带身份前缀的内容发送给AI
                 val riskRules = redTags.map { it.content }
                 val deepCheckResult = aiRepository.checkDraftSafety(
                     provider = defaultProvider,
-                    draft = maskedDraft,
+                    draft = prefixedDraft,  // 使用带前缀的内容
                     riskRules = riskRules,
                     systemInstruction = systemInstruction
                 ).getOrThrow()
