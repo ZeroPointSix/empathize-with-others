@@ -17,9 +17,9 @@
 
 **版本**: v1.0.3-dev (MVP)
 **状态**: ✅ Phase 1-4 基础设施完成，UI层开发完成，联系人画像记忆系统UI已完成，提示词管理系统已完成，提示词编辑器UI已完成，整体架构完整
-**完成度**: 85% (与WORKSPACE.md和.kiro/steering/product.md一致)
+**完成度**: 88% (与WORKSPACE.md和.kiro/steering/product.md一致)
 **技术栈**: Gradle 8.13, Kotlin 2.0.21, AGP 8.7.3, Compose BOM 2024.12.01, Hilt 2.52
-**最后更新**: 2025-12-17 | 更新者: Roo
+**最后更新**: 2025-12-18 | 更新者: Kiro
 **代码统计**: 48,476行 (219个Kotlin文件)
   - 源代码: 24,006行 (131个文件)
   - 测试代码: 24,470行 (88个文件)
@@ -233,26 +233,26 @@ com.empathy.ai/
 │   │       │   └── vault/                           # ✅ 新增：资料库标签页
 │   │       │       ├── DataVaultTab.kt
 │   │       │       └── DataSourceCard.kt
-│       │       ├── settings/
-│       │       │   ├── SettingsScreen.kt
-│       │       │   ├── SettingsUiState.kt
-│       │       │   └── SettingsUiEvent.kt
-│       │       ├── tag/
-│       │       │   ├── BrainTagScreen.kt
-│       │       │   ├── BrainTagUiState.kt
-│       │       │   └── BrainTagUiEvent.kt
-│       │       └── prompt/
-│       │           ├── PromptEditorScreen.kt
-│       │           ├── PromptEditorUiState.kt
-│       │           ├── PromptEditorUiEvent.kt
-│       │           ├── PromptEditMode.kt
-│       │           ├── PromptEditorResult.kt
-│       │           └── component/
-│       │               ├── CharacterCounter.kt
-│       │               ├── DiscardConfirmDialog.kt
-│       │               ├── InlineErrorBanner.kt
-│       │               ├── PromptEditorTopBar.kt
-│       │               └── PromptInputField.kt
+│   │       ├── settings/
+│   │       │   ├── SettingsScreen.kt
+│   │       │   ├── SettingsUiState.kt
+│   │       │   └── SettingsUiEvent.kt
+│   │       ├── tag/
+│   │       │   ├── BrainTagScreen.kt
+│   │       │   ├── BrainTagUiState.kt
+│   │       │   └── BrainTagUiEvent.kt
+│   │       └── prompt/
+│   │           ├── PromptEditorScreen.kt
+│   │           ├── PromptEditorUiState.kt
+│   │           ├── PromptEditorUiEvent.kt
+│   │           ├── PromptEditMode.kt
+│   │           ├── PromptEditorResult.kt
+│   │           └── component/
+│   │               ├── CharacterCounter.kt
+│   │               ├── DiscardConfirmDialog.kt
+│   │               ├── InlineErrorBanner.kt
+│   │               ├── PromptEditorTopBar.kt
+│   │               └── PromptInputField.kt
 │   └── viewmodel/                    # ✅ ViewModel
 │       ├── BaseViewModel.kt
 │       ├── AiConfigViewModel.kt
@@ -265,10 +265,15 @@ com.empathy.ai/
 │       └── SettingsViewModel.kt
 │
 └── di/                              # ✅ 依赖注入
-    ├── DatabaseModule.kt
-    ├── NetworkModule.kt
-    ├── RepositoryModule.kt
-    └── ServiceModule.kt
+    ├── DatabaseModule.kt              # 数据库模块
+    ├── DispatcherModule.kt            # 协程调度器模块
+    ├── FloatingWindowModule.kt        # 悬浮窗模块
+    ├── MemoryModule.kt               # 记忆系统模块
+    ├── NetworkModule.kt               # 网络模块
+    ├── NotificationModule.kt          # 通知模块
+    ├── PromptModule.kt               # 提示词模块
+    ├── RepositoryModule.kt            # 仓库模块
+    └── ServiceModule.kt              # 服务模块
 ```
 
 ### 文档要求
@@ -420,6 +425,36 @@ data class BrainTag(
 )
 ```
 
+### 数据库迁移历史
+
+| 版本 | 迁移内容 | 日期 |
+|------|----------|------|
+| v1→v2 | 添加ai_providers表，支持多AI服务商配置 | 2025-12-10 |
+| v2→v3 | 添加timeout_ms字段到ai_providers表 | 2025-12-11 |
+| v3→v4 | 添加记忆系统表：conversation_logs, daily_summaries, failed_summary_tasks | 2025-12-12 |
+| v4→v5 | 添加failed_summary_tasks表，优化每日总结失败重试机制 | 2025-12-13 |
+| v5→v6 | 添加is_confirmed字段到brain_tags表，支持标签确认/驳回功能 | 2025-12-14 |
+| v6→v7 | 添加relationship_score和last_interaction_date字段到profiles表 | 2025-12-15 |
+| v7→v8 | 添加custom_prompt字段到profiles表，支持联系人自定义提示词 | 2025-12-16 |
+
+#### v7→v8迁移详情
+
+**迁移内容**：
+- 在profiles表中添加`custom_prompt`字段（TEXT类型，可为空）
+- 支持为每个联系人设置自定义提示词，提升AI分析的个性化程度
+- 默认值为null，使用系统默认提示词
+
+**迁移SQL**：
+```sql
+ALTER TABLE profiles ADD COLUMN custom_prompt TEXT
+```
+
+**影响范围**：
+- ContactProfile实体模型更新
+- ContactDao接口更新
+- 联系人详情UI添加自定义提示词编辑功能
+- AI分析流程支持联系人级提示词优先级
+
 ---
 
 ## 开发路线图
@@ -552,9 +587,43 @@ data class BrainTag(
    - 支持AI服务商配置、API密钥管理、应用偏好设置
    - 集成UI：配置界面、表单验证、状态管理
 
+5. **悬浮窗功能重构** - 包含完整的Tab系统、状态管理、性能优化
+   - 完整实现：FloatingWindowServiceV2、FloatingViewV2、TabSwitcher
+   - 支持分析/润色/回复三个功能Tab
+   - 集成UI：Tab切换器、状态指示器、输入框优化
+   - 完成任务：TD-00009（2025-12-17完成）
+
+### 🔄 正在进行的任务
+
+1. **TD-00010: 悬浮球状态指示与拖动** - 悬浮球状态指示与拖动功能
+   - 当前进度：23/26任务完成（88.5%）
+   - 已完成：数据模型与持久化、悬浮球视图实现、状态管理与集成、通知系统
+   - 待完成：测试与优化（5个任务）
+   - 功能亮点：
+     - 四种状态显示：IDLE、LOADING、SUCCESS、ERROR
+     - 流畅拖动体验：边界保护、位置记忆、边缘吸附
+     - 智能状态管理：根据AI请求状态自动切换
+     - 完整通知系统：AI完成后发送系统通知
+
+### 📋 最近完成的Bug修复
+
+1. **BUG-00014: 悬浮球状态指示与启动模式修复** - 修复悬浮球状态显示和启动模式问题
+   - 修复内容：
+     - 添加显示模式持久化，重启后保持悬浮球/对话框模式
+     - 在AI调用流程中集成状态回调，正确显示加载状态
+     - 修复最小化后AI请求状态不更新的问题
+   - 完成时间：2025-12-18
+
+2. **BUG-00015: 三种模式上下文不共通问题修复** - 修复分析/润色/回复模式上下文不共享问题
+   - 修复内容：
+     - 新增SessionContextService统一管理历史对话上下文
+     - 修改PolishDraftUseCase和GenerateReplyUseCase，添加历史上下文支持
+     - 实现跨Tab上下文共享，提升AI分析准确性
+   - 完成时间：2025-12-18
+
 ### 📊 整体评估
 
-- **整体完成度**: 85% (与WORKSPACE.md和.kiro/steering/product.md一致)
+- **整体完成度**: 88% (与WORKSPACE.md和.kiro/steering/product.md一致)
 - **架构合规性**: 100% (Clean Architecture + MVVM)
 - **代码质量**: A级 (完整注释、错误处理、单元测试覆盖)
 - **测试覆盖**: 99.1%
@@ -621,18 +690,20 @@ data class BrainTag(
 
 ---
 
-**最后更新**: 2025-12-17 | 更新者: Roo
+**最后更新**: 2025-12-18 | 更新者: Kiro
 **维护者**: hushaokang
-**文档版本**: v2.2.2
+**文档版本**: v2.2.3
 **Git提交**: 75f58f1 - 完善项目文档体系：设置功能设计与AI工具规范化
 **架构状态**: ✅ Clean Architecture完全合规，0处违规调用
 **今日完成**: 更新项目状态和代码统计，同步最新功能完成情况
-**完成度**: 85% (与WORKSPACE.md和.kiro/steering/product.md一致)
+**完成度**: 88% (与WORKSPACE.md和.kiro/steering/product.md一致)
 **代码统计**: 48,476行 (219个Kotlin文件)
   - 源代码: 24,006行 (131个文件)
   - 测试代码: 24,470行 (88个文件)
 **测试覆盖率**: 99.1%
 **最新功能**:
-- TD-00005提示词管理系统（2025-12-16完成）
-- TD-00004联系人画像记忆系统UI集成（2025-12-15完成）
-- TD-001 Room数据库迁移策略完善（2025-12-15完成）
+- TD-00010悬浮球状态指示与拖动（23/26任务完成，2025-12-18）
+- BUG-00014悬浮球状态指示与启动模式修复（2025-12-18）
+- BUG-00015三种模式上下文不共通问题修复（2025-12-18）
+- TD-00009悬浮窗功能重构（46/46任务完成，2025-12-17）
+- TD-00005提示词管理系统（41/41任务完成，2025-12-16）
