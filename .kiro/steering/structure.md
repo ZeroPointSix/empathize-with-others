@@ -186,7 +186,11 @@ com.empathy.ai/
     ├── DatabaseModule.kt
     ├── NetworkModule.kt
     ├── RepositoryModule.kt
-    └── ServiceModule.kt
+    ├── ServiceModule.kt
+    ├── MemoryModule.kt               # 🆕 记忆系统依赖注入
+    ├── PromptModule.kt               # 🆕 提示词系统依赖注入
+    ├── DispatcherModule.kt           # 🆕 协程调度器管理
+    └── FloatingWindowModule.kt       # 🆕 悬浮窗依赖注入
 ```
 
 ## 层级职责
@@ -341,10 +345,10 @@ test/
   - 代码统计：219个Kotlin文件 (131个主代码 + 88个单元测试)
 
 ### ⚠️ 部分实现/待验证模块
-- **输入内容身份识别与双向对话历史**: TD-00008任务规划中
-  - 任务状态：规划中
-  - 需要实现：身份识别算法、对话历史管理、双向关联机制
-  - 相关文档：TD-00008-输入内容身份识别与双向对话历史任务清单.md
+- **输入内容身份识别与双向对话历史**: TD-00008技术设计完成
+  - 任务状态：技术设计完成，待实现
+  - 需要实现：IdentityPrefixHelper、UseCase层集成、系统提示词增强、UI渲染优化
+  - 相关文档：TDD-00008-输入内容身份识别与双向对话历史技术设计.md
 - **AI响应解析**: AiResponseParser接口已定义，但实现可能不完整
 - **媒体处理**: FeedTextUseCase已实现，但AiRepositoryImpl中transcribeMedia方法未实现
   - 代码架构已设计：ExtractedData模型、AiRepository接口定义
@@ -352,4 +356,6 @@ test/
   - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
 - **规则引擎**: RuleEngine功能完整，但与实际业务流程的集成状态不明
 - **悬浮窗服务**: FloatingWindowService代码庞大，需要验证与UI层的实际集成
+  - ✅ BUG-00014悬浮球状态指示与启动模式修复已完成
+  - ✅ BUG-00015三种模式上下文不共通问题修复已完成
 - **无障碍服务**: WeChatDetector等工具类存在，但实际集成状态不明

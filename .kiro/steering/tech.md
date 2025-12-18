@@ -181,7 +181,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 新增PromptModule支持提示词系统
   - 新增DispatcherModule支持协程调度器
 - **图片加载**: Coil 图片加载和缓存完整实现
-  - Coil 2.5.0 + Compose集成
+  - Coil 2.7.0 + Compose集成
 - **测试框架**: Room Testing、单元测试、UI测试完整实现
   - JUnit 4.13.2 + AndroidX JUnit 1.2.1
   - MockK 1.13.13模拟框架
@@ -210,9 +210,9 @@ implementation("androidx.core:core-ktx:1.15.0")
 ## 技术债务
 
 - **输入内容身份识别与双向对话历史**: 需要实现TD-00008任务
-  - 任务状态：规划中
-  - 需要实现：身份识别算法、对话历史管理、双向关联机制
-  - 相关文档：TD-00008-输入内容身份识别与双向对话历史任务清单.md
+  - 任务状态：技术设计完成
+  - 需要实现：IdentityPrefixHelper、UseCase层集成、系统提示词增强、UI渲染优化
+  - 相关文档：TDD-00008-输入内容身份识别与双向对话历史技术设计.md
 
 - **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
   - 代码架构已设计：ExtractedData模型、AiRepository接口定义
@@ -239,3 +239,15 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ✅ 配置schema导出目录（$projectDir/schemas）
   - ✅ 添加Room Testing依赖
   - ✅ 完善DatabaseMigrationTest（8个测试用例）
+
+- **悬浮球状态指示与启动模式问题**: 已完成BUG-00014修复
+  - ✅ 添加显示模式持久化（FloatingWindowPreferences）
+  - ✅ 修复启动时直接显示对话框问题
+  - ✅ 在AI调用流程中集成状态回调
+  - ✅ 实现悬浮球加载状态和完成通知
+
+- **三种模式上下文不共通问题**: 已完成BUG-00015修复
+  - ✅ 新增SessionContextService统一管理历史上下文
+  - ✅ 修改PolishDraftUseCase和GenerateReplyUseCase添加历史上下文支持
+  - ✅ 更新FloatingWindowModule添加依赖注入
+  - ✅ 新增相关测试用例验证修复效果
