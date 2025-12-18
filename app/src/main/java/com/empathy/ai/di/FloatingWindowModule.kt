@@ -6,6 +6,7 @@ import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.usecase.GenerateReplyUseCase
 import com.empathy.ai.domain.usecase.PolishDraftUseCase
 import com.empathy.ai.domain.usecase.RefinementUseCase
@@ -23,6 +24,7 @@ import javax.inject.Singleton
  *
  * @see PRD-00009 悬浮窗功能重构需求
  * @see TDD-00009 悬浮窗功能重构技术设计
+ * @see BUG-00015 三种模式上下文不共通问题分析
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -33,6 +35,8 @@ object FloatingWindowModule {
      *
      * 注意：已移除对PrivacyEngine的直接依赖，改为通过PrivacyRepository接口
      * 符合Clean Architecture的依赖倒置原则
+     *
+     * BUG-00015修复：添加SessionContextService以支持历史上下文共享
      */
     @Provides
     @Singleton
@@ -42,7 +46,8 @@ object FloatingWindowModule {
         privacyRepository: PrivacyRepository,
         aiRepository: AiRepository,
         aiProviderRepository: AiProviderRepository,
-        promptBuilder: PromptBuilder
+        promptBuilder: PromptBuilder,
+        sessionContextService: SessionContextService
     ): PolishDraftUseCase {
         return PolishDraftUseCase(
             contactRepository = contactRepository,
@@ -50,7 +55,8 @@ object FloatingWindowModule {
             privacyRepository = privacyRepository,
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
-            promptBuilder = promptBuilder
+            promptBuilder = promptBuilder,
+            sessionContextService = sessionContextService
         )
     }
 
@@ -59,6 +65,8 @@ object FloatingWindowModule {
      *
      * 注意：已移除对PrivacyEngine的直接依赖，改为通过PrivacyRepository接口
      * 符合Clean Architecture的依赖倒置原则
+     *
+     * BUG-00015修复：添加SessionContextService以支持历史上下文共享
      */
     @Provides
     @Singleton
@@ -69,7 +77,8 @@ object FloatingWindowModule {
         aiRepository: AiRepository,
         aiProviderRepository: AiProviderRepository,
         promptBuilder: PromptBuilder,
-        conversationRepository: ConversationRepository
+        conversationRepository: ConversationRepository,
+        sessionContextService: SessionContextService
     ): GenerateReplyUseCase {
         return GenerateReplyUseCase(
             contactRepository = contactRepository,
@@ -78,7 +87,8 @@ object FloatingWindowModule {
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
-            conversationRepository = conversationRepository
+            conversationRepository = conversationRepository,
+            sessionContextService = sessionContextService
         )
     }
 

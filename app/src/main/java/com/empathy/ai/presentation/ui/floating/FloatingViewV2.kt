@@ -71,7 +71,6 @@ class FloatingViewV2(
     private var onSubmitListener: ((ActionType, String, String) -> Unit)? = null
     private var onCopyListener: ((String) -> Unit)? = null
     private var onRegenerateListener: ((ActionType, String?) -> Unit)? = null
-    private var onCloseListener: (() -> Unit)? = null
     private var onMinimizeListener: (() -> Unit)? = null
 
     init {
@@ -91,7 +90,8 @@ class FloatingViewV2(
             elevation = 8f
         }
 
-        // 添加顶部工具栏（最小化和关闭按钮）
+        // 添加顶部工具栏（只有最小化按钮）
+        // BUG-00013: 移除关闭按钮，只保留最小化按钮
         val toolbar = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -102,39 +102,23 @@ class FloatingViewV2(
             gravity = android.view.Gravity.END
         }
 
-        // 最小化按钮
-        val btnMinimize = MaterialButton(context, null, com.google.android.material.R.attr.materialIconButtonStyle).apply {
-            layoutParams = LinearLayout.LayoutParams(48, 48)
+        // 最小化按钮 - 使用 TextView 确保文本可见
+        // BUG-00013: 只保留最小化按钮，移除关闭按钮
+        val btnMinimize = TextView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(40, 40)
             text = "−"
-            textSize = 20f
-            setOnClickListener { 
-                android.util.Log.d("FloatingViewV2", "最小化按钮被点击, listener=${onMinimizeListener != null}")
-                if (onMinimizeListener != null) {
-                    onMinimizeListener?.invoke()
-                } else {
-                    android.util.Log.w("FloatingViewV2", "onMinimizeListener 未设置!")
-                }
+            textSize = 24f
+            gravity = android.view.Gravity.CENTER
+            setTextColor(android.graphics.Color.parseColor("#666666"))
+            setBackgroundResource(android.R.drawable.list_selector_background)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                android.util.Log.d(TAG, "最小化按钮被点击, listener=${onMinimizeListener != null}")
+                onMinimizeListener?.invoke()
             }
         }
         toolbar.addView(btnMinimize)
-
-        // 关闭按钮
-        val btnClose = MaterialButton(context, null, com.google.android.material.R.attr.materialIconButtonStyle).apply {
-            layoutParams = LinearLayout.LayoutParams(48, 48).apply {
-                marginStart = 8
-            }
-            text = "×"
-            textSize = 20f
-            setOnClickListener { 
-                android.util.Log.d("FloatingViewV2", "关闭按钮被点击, listener=${onCloseListener != null}")
-                if (onCloseListener != null) {
-                    onCloseListener?.invoke()
-                } else {
-                    android.util.Log.w("FloatingViewV2", "onCloseListener 未设置!")
-                }
-            }
-        }
-        toolbar.addView(btnClose)
 
         mainLayout.addView(toolbar)
 
@@ -422,10 +406,6 @@ class FloatingViewV2(
 
     fun setOnRegenerateListener(listener: (ActionType, String?) -> Unit) {
         onRegenerateListener = listener
-    }
-
-    fun setOnCloseListener(listener: () -> Unit) {
-        onCloseListener = listener
     }
 
     fun setOnMinimizeListener(listener: () -> Unit) {

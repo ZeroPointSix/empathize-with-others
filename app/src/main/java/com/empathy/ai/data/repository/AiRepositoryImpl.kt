@@ -405,8 +405,9 @@ $COMMON_JSON_RULES""".trim()
                 }
                 ProviderCompatibility.StructuredOutputStrategy.RESPONSE_FORMAT -> {
                     // 使用 response_format
+                    val effectiveSystemInstruction = systemInstruction.ifEmpty { SYSTEM_ANALYZE }
                     val baseMessages = listOf(
-                        MessageDto(role = "system", content = systemInstruction.ifEmpty { SYSTEM_ANALYZE }),
+                        MessageDto(role = "system", content = effectiveSystemInstruction),
                         MessageDto(role = "user", content = promptContext)
                     )
                     val adaptedMessages = if (ProviderCompatibility.requiresJsonKeywordInMessages(provider)) {
@@ -416,6 +417,13 @@ $COMMON_JSON_RULES""".trim()
                             } else msg
                         }
                     } else baseMessages
+                    
+                    // SR-00001: 输出完整 SystemInstruction（Response Format 模式）
+                    com.empathy.ai.domain.util.DebugLogger.logFullPrompt(
+                        tag = "AiRepositoryImpl",
+                        label = "SystemInstruction (Response Format)",
+                        content = effectiveSystemInstruction
+                    )
                     
                     ChatRequestDto(
                         model = model,
@@ -427,10 +435,19 @@ $COMMON_JSON_RULES""".trim()
                 }
                 ProviderCompatibility.StructuredOutputStrategy.PROMPT_ONLY -> {
                     // 仅使用提示词约束
+                    val effectiveSystemInstruction = systemInstruction.ifEmpty { SYSTEM_ANALYZE }
                     val messages = listOf(
-                        MessageDto(role = "system", content = systemInstruction.ifEmpty { SYSTEM_ANALYZE }),
+                        MessageDto(role = "system", content = effectiveSystemInstruction),
                         MessageDto(role = "user", content = promptContext)
                     )
+                    
+                    // SR-00001: 输出完整 SystemInstruction（Prompt Only 模式）
+                    com.empathy.ai.domain.util.DebugLogger.logFullPrompt(
+                        tag = "AiRepositoryImpl",
+                        label = "SystemInstruction (Prompt Only)",
+                        content = effectiveSystemInstruction
+                    )
+                    
                     ChatRequestDto(
                         model = model,
                         messages = messages,
@@ -1335,8 +1352,17 @@ $COMMON_JSON_RULES""".trim()
                 } else null
             )
 
-            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (polishDraft) ===")
-            android.util.Log.d("AiRepositoryImpl", "URL: $url, Model: $model")
+            // SR-00001: 使用 DebugLogger 输出完整提示词（开发模式下不截取）
+            com.empathy.ai.domain.util.DebugLogger.logApiRequest(
+                tag = "AiRepositoryImpl",
+                method = "polishDraft",
+                url = url,
+                model = model,
+                providerName = provider.name,
+                promptContext = draft,
+                systemInstruction = systemInstruction,
+                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat)
+            )
 
             val response = withRetry { api.chatCompletion(url, headers, request) }
             val content = response.choices.firstOrNull()?.message?.content
@@ -1388,8 +1414,17 @@ $COMMON_JSON_RULES""".trim()
                 } else null
             )
 
-            android.util.Log.d("AiRepositoryImpl", "=== API请求详情 (generateReply) ===")
-            android.util.Log.d("AiRepositoryImpl", "URL: $url, Model: $model")
+            // SR-00001: 使用 DebugLogger 输出完整提示词（开发模式下不截取）
+            com.empathy.ai.domain.util.DebugLogger.logApiRequest(
+                tag = "AiRepositoryImpl",
+                method = "generateReply",
+                url = url,
+                model = model,
+                providerName = provider.name,
+                promptContext = message,
+                systemInstruction = systemInstruction,
+                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat)
+            )
 
             val response = withRetry { api.chatCompletion(url, headers, request) }
             val content = response.choices.firstOrNull()?.message?.content

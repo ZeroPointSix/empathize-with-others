@@ -13,6 +13,7 @@ import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.PromptBuilder
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -39,6 +40,7 @@ class GenerateReplyUseCaseTest {
     private lateinit var aiProviderRepository: AiProviderRepository
     private lateinit var promptBuilder: PromptBuilder
     private lateinit var conversationRepository: ConversationRepository
+    private lateinit var sessionContextService: SessionContextService
 
     private val testContactId = "contact_123"
     private val testMessage = "你最近怎么样？"
@@ -92,6 +94,10 @@ class GenerateReplyUseCaseTest {
         aiProviderRepository = mockk()
         promptBuilder = mockk()
         conversationRepository = mockk()
+        sessionContextService = mockk()
+
+        // 默认返回空历史上下文
+        coEvery { sessionContextService.getHistoryContext(any<String>()) } returns ""
 
         useCase = GenerateReplyUseCase(
             contactRepository = contactRepository,
@@ -100,7 +106,8 @@ class GenerateReplyUseCaseTest {
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
-            conversationRepository = conversationRepository
+            conversationRepository = conversationRepository,
+            sessionContextService = sessionContextService
         )
     }
 
@@ -277,5 +284,78 @@ class GenerateReplyUseCaseTest {
                 }
             )
         }
+    }
+
+    // ==================== BUG-00015 历史上下文测试 ====================
+
+    @Test
+    fun `should include history context in runtime data when available`() = runTest {
+        // Given: 有历史对话上下文
+        val historyContext = """
+            【历史对话】(最近2条)
+            [历史记录 - 10:00]: 【对方说】：你好
+            [历史记录 - 10:05]: 【我正在回复】：你好啊
+        """.trimIndent()
+
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testMessage) } returns testMaskedMessage
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns historyContext
+        coEvery { conversationRepository.saveUserInput(any(), any(), any()) } returns Result.success(1L)
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.generateReply(any(), any(), any()) } returns Result.success(testReplyResult)
+
+        // When
+        useCase(testContactId, testMessage)
+
+        // Then: 验证历史上下文被包含在运行时数据中
+        coVerify {
+            promptBuilder.buildSystemInstruction(
+                any(),
+                eq(testContactId),
+                any(),
+                match { it.contains("【历史对话】") && it.contains("你好") }
+            )
+        }
+    }
+
+    @Test
+    fun `should call sessionContextService to get history before saving current input`() = runTest {
+        // Given
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testMessage) } returns testMaskedMessage
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
+        coEvery { conversationRepository.saveUserInput(any(), any(), any()) } returns Result.success(1L)
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.generateReply(any(), any(), any()) } returns Result.success(testReplyResult)
+
+        // When
+        useCase(testContactId, testMessage)
+
+        // Then: 验证调用了SessionContextService
+        coVerify { sessionContextService.getHistoryContext(testContactId) }
+    }
+
+    @Test
+    fun `should work correctly when history context is empty`() = runTest {
+        // Given: 没有历史对话
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testMessage) } returns testMaskedMessage
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
+        coEvery { conversationRepository.saveUserInput(any(), any(), any()) } returns Result.success(1L)
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.generateReply(any(), any(), any()) } returns Result.success(testReplyResult)
+
+        // When
+        val result = useCase(testContactId, testMessage)
+
+        // Then: 应该正常返回结果
+        assertTrue(result.isSuccess)
+        assertEquals(testReplyResult, result.getOrNull())
     }
 }

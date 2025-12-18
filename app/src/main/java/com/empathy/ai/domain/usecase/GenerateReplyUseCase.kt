@@ -14,6 +14,7 @@ import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
@@ -29,12 +30,14 @@ import javax.inject.Inject
  * 2. 加载联系人数据和标签
  * 3. 数据脱敏
  * 4. 添加身份前缀
- * 5. 保存对话记录
- * 6. 构建提示词
- * 7. 调用AI
+ * 5. 获取历史对话上下文（BUG-00015修复）
+ * 6. 保存对话记录
+ * 7. 构建提示词
+ * 8. 调用AI
  *
  * @see PRD-00009 悬浮窗功能重构需求
  * @see TDD-00009 悬浮窗功能重构技术设计
+ * @see BUG-00015 三种模式上下文不共通问题分析
  */
 class GenerateReplyUseCase @Inject constructor(
     private val contactRepository: ContactRepository,
@@ -43,7 +46,8 @@ class GenerateReplyUseCase @Inject constructor(
     private val aiRepository: AiRepository,
     private val aiProviderRepository: AiProviderRepository,
     private val promptBuilder: PromptBuilder,
-    private val conversationRepository: ConversationRepository
+    private val conversationRepository: ConversationRepository,
+    private val sessionContextService: SessionContextService
 ) {
     /**
      * 生成回复建议
@@ -78,7 +82,10 @@ class GenerateReplyUseCase @Inject constructor(
                 actionType = ActionType.REPLY
             )
 
-            // 5. 保存用户输入到对话记录
+            // 5. 【BUG-00015修复】获取历史对话上下文（必须在保存当前输入之前）
+            val historyContext = sessionContextService.getHistoryContext(contactId)
+
+            // 6. 保存用户输入到对话记录
             try {
                 conversationRepository.saveUserInput(
                     contactId = contactId,
@@ -89,9 +96,9 @@ class GenerateReplyUseCase @Inject constructor(
                 android.util.Log.w("GenerateReplyUseCase", "保存对话记录失败", e)
             }
 
-            // 6. 构建提示词
+            // 7. 构建提示词
             val promptContext = PromptContext.fromContact(profile)
-            val runtimeData = buildRuntimeData(prefixedMessage, redTags, greenTags, profile)
+            val runtimeData = buildRuntimeData(prefixedMessage, redTags, greenTags, profile, historyContext)
             val systemInstruction = promptBuilder.buildSystemInstruction(
                 scene = PromptScene.REPLY,
                 contactId = contactId,
@@ -99,7 +106,7 @@ class GenerateReplyUseCase @Inject constructor(
                 runtimeData = runtimeData
             )
 
-            // 7. 调用AI
+            // 8. 调用AI
             aiRepository.generateReply(
                 provider = defaultProvider,
                 message = prefixedMessage,
@@ -113,14 +120,26 @@ class GenerateReplyUseCase @Inject constructor(
 
     /**
      * 构建运行时数据
+     *
+     * @param message 对方消息（已添加身份前缀）
+     * @param redTags 雷区标签列表
+     * @param greenTags 策略标签列表
+     * @param profile 联系人画像
+     * @param historyContext 历史对话上下文（BUG-00015修复）
      */
     private fun buildRuntimeData(
         message: String,
         redTags: List<BrainTag>,
         greenTags: List<BrainTag>,
-        profile: ContactProfile
+        profile: ContactProfile,
+        historyContext: String
     ): String {
         return buildString {
+            // 【BUG-00015修复】历史对话放在最前面，让AI先了解背景
+            if (historyContext.isNotBlank()) {
+                appendLine(historyContext)
+                appendLine()
+            }
             appendLine("【攻略目标】")
             appendLine(profile.targetGoal ?: "维护良好关系")
             appendLine()

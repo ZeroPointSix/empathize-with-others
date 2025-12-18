@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import com.empathy.ai.R
 import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.AiResult
+import com.empathy.ai.domain.model.FloatingBubbleState
 import com.empathy.ai.domain.model.FloatingWindowError
 import com.empathy.ai.domain.model.FloatingWindowUiState
 import com.empathy.ai.domain.model.RefinementRequest
@@ -27,6 +28,9 @@ import com.empathy.ai.domain.usecase.RefinementUseCase
 import com.empathy.ai.domain.util.ErrorHandler
 import com.empathy.ai.domain.util.FloatingView
 import com.empathy.ai.domain.util.FloatingViewDebugLogger
+import com.empathy.ai.notification.AiResultNotificationManager
+import com.empathy.ai.data.local.FloatingWindowPreferences
+import com.empathy.ai.presentation.ui.floating.FloatingBubbleView
 import com.empathy.ai.presentation.ui.floating.FloatingViewV2
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -80,6 +84,9 @@ class FloatingWindowService : Service() {
     
     @Inject
     lateinit var aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository
+    
+    @Inject
+    lateinit var aiResultNotificationManager: AiResultNotificationManager
     
     private lateinit var windowManager: WindowManager
     private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
@@ -292,10 +299,26 @@ class FloatingWindowService : Service() {
      * - 硬件加速：启用硬件加速提升渲染性能
      *
      * TD-00009: 支持新版三Tab UI（FloatingViewV2）
+     * TD-00010: 支持悬浮球模式启动
      */
     private fun showFloatingView() {
         try {
             if (useNewUI) {
+                // TD-00010: 检查是否应该以悬浮球模式启动
+                if (floatingWindowPreferences.shouldStartAsBubble()) {
+                    android.util.Log.d("FloatingWindowService", "检测到上次退出时为悬浮球模式，以悬浮球模式启动")
+                    // 检查是否有有效的最小化状态（正在处理的AI请求）
+                    val bubbleState = if (floatingWindowPreferences.hasValidMinimizeState()) {
+                        android.util.Log.d("FloatingWindowService", "有有效的最小化状态，显示LOADING")
+                        FloatingBubbleState.LOADING
+                    } else {
+                        android.util.Log.d("FloatingWindowService", "无有效的最小化状态，显示IDLE")
+                        FloatingBubbleState.IDLE
+                    }
+                    showFloatingBubble(bubbleState)
+                    return
+                }
+                
                 // TD-00009: 使用新版三Tab UI
                 showFloatingViewV2()
                 return
@@ -1804,6 +1827,8 @@ class FloatingWindowService : Service() {
     /**
      * 显示新版悬浮视图（TD-00009）
      * 三Tab界面：分析/润色/回复
+     * 
+     * TD-00010修复：保存显示模式为对话框
      */
     private fun showFloatingViewV2() {
         if (floatingViewV2 != null) {
@@ -1812,6 +1837,9 @@ class FloatingWindowService : Service() {
         }
 
         android.util.Log.d("FloatingWindowService", "创建FloatingViewV2（新版三Tab UI）")
+        
+        // TD-00010: 保存显示模式为对话框
+        floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_DIALOG)
 
         val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
         floatingViewV2 = FloatingViewV2(themedContext, windowManager)
@@ -1853,11 +1881,6 @@ class FloatingWindowService : Service() {
             setOnMinimizeListener {
                 android.util.Log.d("FloatingWindowService", "收到最小化回调，准备调用minimizeFloatingViewV2()")
                 minimizeFloatingViewV2()
-            }
-
-            setOnCloseListener {
-                android.util.Log.d("FloatingWindowService", "收到关闭回调，准备调用hideFloatingViewV2()")
-                hideFloatingViewV2()
             }
         }
 
@@ -1902,86 +1925,158 @@ class FloatingWindowService : Service() {
     }
 
     /**
-     * 隐藏新版悬浮视图
+     * 隐藏新版悬浮视图（关闭按钮行为）
+     * 
+     * 修改：关闭按钮现在执行最小化操作（显示悬浮球），而不是完全退出服务
+     * 用户可以通过悬浮球恢复界面，或通过通知栏/设置完全关闭服务
      */
     private fun hideFloatingViewV2() {
+        android.util.Log.d("FloatingWindowService", "关闭按钮被点击，执行最小化操作")
+        // 关闭按钮现在执行最小化，显示悬浮球
+        minimizeFloatingViewV2()
+    }
+    
+    /**
+     * 完全关闭悬浮窗服务
+     * 
+     * 真正停止服务，移除所有视图
+     */
+    private fun closeFloatingWindowServiceCompletely() {
         try {
+            android.util.Log.d("FloatingWindowService", "完全关闭悬浮窗服务")
+            
+            // 移除最小化指示器
+            removeMinimizedIndicatorV2Safe()
+            
+            // 移除主界面
             floatingViewV2?.let { view ->
                 if (view.parent != null) {
                     windowManager.removeView(view)
                 }
             }
             floatingViewV2 = null
+            
+            // 停止服务
             stopSelf()
         } catch (e: Exception) {
-            android.util.Log.e("FloatingWindowService", "隐藏FloatingViewV2失败", e)
+            android.util.Log.e("FloatingWindowService", "完全关闭服务失败", e)
         }
     }
 
     // TD-00009: 最小化悬浮指示器
     private var minimizedIndicatorV2: View? = null
+    
+    // TD-00010: 悬浮球视图
+    private var floatingBubbleView: FloatingBubbleView? = null
+    
+    // TD-00010: 当前是否有活跃的AI请求
+    private var hasActiveAiRequest = false
+    
+    // TD-00010: 当前AI请求的任务类型
+    private var currentAiTaskType: ActionType? = null
 
     /**
      * 最小化新版悬浮视图
      * 
-     * 将主界面隐藏，显示一个小的悬浮指示器，点击可恢复
+     * TD-00010更新：使用新的FloatingBubbleView替代旧的FAB指示器
+     * 支持拖动、状态指示和通知功能
+     * 
+     * Bug修复：确保先创建指示器成功后再隐藏主界面，避免用户无法操作
      */
     private fun minimizeFloatingViewV2() {
         try {
-            // 保存当前状态
-            floatingViewV2?.let { view ->
-                floatingWindowPreferences.saveUiState(view.getCurrentState())
-            }
+            android.util.Log.d("FloatingWindowService", "开始最小化 FloatingViewV2 (TD-00010)")
             
-            // 隐藏主界面
-            floatingViewV2?.visibility = View.GONE
+            // 使用TD-00010的悬浮球实现
+            minimizeToFloatingBubble()
             
-            // 显示最小化指示器
-            showMinimizedIndicatorV2()
-            
-            android.util.Log.d("FloatingWindowService", "FloatingViewV2已最小化")
         } catch (e: Exception) {
             android.util.Log.e("FloatingWindowService", "最小化FloatingViewV2失败", e)
+            // 恢复主界面可见性
+            floatingViewV2?.visibility = View.VISIBLE
+            // 清理可能创建的悬浮球
+            hideFloatingBubble()
+        }
+    }
+    
+    /**
+     * 安全地显示最小化指示器
+     * 
+     * @return 是否成功创建指示器
+     */
+    private fun showMinimizedIndicatorV2Safe(): Boolean {
+        if (minimizedIndicatorV2 != null) {
+            android.util.Log.d("FloatingWindowService", "最小化指示器已存在")
+            return true
+        }
+        
+        return try {
+            val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+            
+            minimizedIndicatorV2 = com.google.android.material.floatingactionbutton.FloatingActionButton(themedContext).apply {
+                // 使用安全的方式加载图标
+                try {
+                    setImageResource(R.drawable.ic_floating_button)
+                } catch (e: Exception) {
+                    android.util.Log.w("FloatingWindowService", "加载自定义图标失败，使用默认图标", e)
+                    setImageResource(android.R.drawable.ic_dialog_info)
+                }
+                size = com.google.android.material.floatingactionbutton.FloatingActionButton.SIZE_MINI
+                setOnClickListener { restoreFloatingViewV2() }
+            }
+
+            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE
+            }
+
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                x = 16
+            }
+
+            windowManager.addView(minimizedIndicatorV2, params)
+            android.util.Log.d("FloatingWindowService", "最小化指示器创建成功")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "创建最小化指示器失败", e)
+            minimizedIndicatorV2 = null
+            false
+        }
+    }
+    
+    /**
+     * 安全地移除最小化指示器
+     */
+    private fun removeMinimizedIndicatorV2Safe() {
+        try {
+            minimizedIndicatorV2?.let { indicator ->
+                if (indicator.parent != null) {
+                    windowManager.removeView(indicator)
+                }
+            }
+            minimizedIndicatorV2 = null
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "移除最小化指示器失败", e)
         }
     }
 
     /**
      * 显示最小化指示器（小悬浮球）
+     * 
+     * @deprecated 使用 showMinimizedIndicatorV2Safe() 替代，提供更好的错误处理
      */
+    @Suppress("unused")
     private fun showMinimizedIndicatorV2() {
-        if (minimizedIndicatorV2 != null) return
-
-        val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
-        
-        // 创建一个简单的悬浮球
-        minimizedIndicatorV2 = com.google.android.material.floatingactionbutton.FloatingActionButton(themedContext).apply {
-            setImageResource(R.drawable.ic_floating_button)
-            size = com.google.android.material.floatingactionbutton.FloatingActionButton.SIZE_MINI
-            setOnClickListener {
-                restoreFloatingViewV2()
-            }
-        }
-
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            @Suppress("DEPRECATION")
-            WindowManager.LayoutParams.TYPE_PHONE
-        }
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            type,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.END or Gravity.CENTER_VERTICAL
-            x = 16
-        }
-
-        windowManager.addView(minimizedIndicatorV2, params)
-        android.util.Log.d("FloatingWindowService", "最小化指示器已显示")
+        showMinimizedIndicatorV2Safe()
     }
 
     /**
@@ -2008,9 +2103,14 @@ class FloatingWindowService : Service() {
 
     /**
      * 处理新版分析请求
+     * 
+     * TD-00010修复：添加AI请求状态回调，支持悬浮球状态指示和通知
      */
     private fun handleAnalyzeV2(contactId: String, text: String) {
         floatingViewV2?.showLoading("AI正在分析...")
+        
+        // TD-00010: 标记AI请求开始
+        onAiRequestStarted(ActionType.ANALYZE)
         
         serviceScope.launch {
             try {
@@ -2024,24 +2124,37 @@ class FloatingWindowService : Service() {
                         val aiResult = AiResult.Analysis(analysisResult)
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        // TD-00010: 标记AI请求成功
+                        onAiRequestCompleted(ActionType.ANALYZE)
                     },
                     onFailure = { error ->
                         floatingViewV2?.showError("分析失败：${error.message}")
+                        // TD-00010: 标记AI请求失败
+                        onAiRequestFailed(error)
                     }
                 )
             } catch (e: TimeoutCancellationException) {
                 floatingViewV2?.showError("请求超时，请重试")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             } catch (e: Exception) {
                 floatingViewV2?.showError("分析失败：${e.message}")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             }
         }
     }
 
     /**
      * 处理润色请求（TD-00009）
+     * 
+     * TD-00010修复：添加AI请求状态回调，支持悬浮球状态指示和通知
      */
     private fun handlePolishV2(contactId: String, text: String) {
         floatingViewV2?.showLoading("AI正在润色...")
+        
+        // TD-00010: 标记AI请求开始
+        onAiRequestStarted(ActionType.POLISH)
         
         serviceScope.launch {
             try {
@@ -2055,24 +2168,37 @@ class FloatingWindowService : Service() {
                         val aiResult = AiResult.Polish(polishResult)
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        // TD-00010: 标记AI请求成功
+                        onAiRequestCompleted(ActionType.POLISH)
                     },
                     onFailure = { error ->
                         floatingViewV2?.showError("润色失败：${error.message}")
+                        // TD-00010: 标记AI请求失败
+                        onAiRequestFailed(error)
                     }
                 )
             } catch (e: TimeoutCancellationException) {
                 floatingViewV2?.showError("请求超时，请重试")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             } catch (e: Exception) {
                 floatingViewV2?.showError("润色失败：${e.message}")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             }
         }
     }
 
     /**
      * 处理回复生成请求（TD-00009）
+     * 
+     * TD-00010修复：添加AI请求状态回调，支持悬浮球状态指示和通知
      */
     private fun handleReplyV2(contactId: String, text: String) {
         floatingViewV2?.showLoading("AI正在生成回复...")
+        
+        // TD-00010: 标记AI请求开始
+        onAiRequestStarted(ActionType.REPLY)
         
         serviceScope.launch {
             try {
@@ -2086,24 +2212,37 @@ class FloatingWindowService : Service() {
                         val aiResult = AiResult.Reply(replyResult)
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        // TD-00010: 标记AI请求成功
+                        onAiRequestCompleted(ActionType.REPLY)
                     },
                     onFailure = { error ->
                         floatingViewV2?.showError("生成回复失败：${error.message}")
+                        // TD-00010: 标记AI请求失败
+                        onAiRequestFailed(error)
                     }
                 )
             } catch (e: TimeoutCancellationException) {
                 floatingViewV2?.showError("请求超时，请重试")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             } catch (e: Exception) {
                 floatingViewV2?.showError("生成回复失败：${e.message}")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             }
         }
     }
 
     /**
      * 处理重新生成请求（TD-00009）
+     * 
+     * TD-00010修复：添加AI请求状态回调，支持悬浮球状态指示和通知
      */
     private fun handleRegenerateV2(tab: ActionType, instruction: String?) {
         floatingViewV2?.showLoading("AI正在重新生成...")
+        
+        // TD-00010: 标记AI请求开始
+        onAiRequestStarted(tab)
         
         serviceScope.launch {
             try {
@@ -2124,19 +2263,221 @@ class FloatingWindowService : Service() {
                     onSuccess = { aiResult ->
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        // TD-00010: 标记AI请求成功
+                        onAiRequestCompleted(tab)
                     },
                     onFailure = { error ->
                         floatingViewV2?.showError("重新生成失败：${error.message}")
+                        // TD-00010: 标记AI请求失败
+                        onAiRequestFailed(error)
                     }
                 )
             } catch (e: TimeoutCancellationException) {
                 floatingViewV2?.showError("请求超时，请重试")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             } catch (e: Exception) {
                 floatingViewV2?.showError("重新生成失败：${e.message}")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
             }
         }
     }
     
+    // ==================== TD-00010: 悬浮球管理方法 ====================
+
+    /**
+     * 显示悬浮球
+     *
+     * @param state 初始状态，默认为IDLE
+     */
+    private fun showFloatingBubble(state: FloatingBubbleState = FloatingBubbleState.IDLE) {
+        if (floatingBubbleView != null) {
+            floatingBubbleView?.setState(state)
+            android.util.Log.d("FloatingWindowService", "悬浮球已存在，更新状态为: $state")
+            return
+        }
+
+        try {
+            val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+            floatingBubbleView = FloatingBubbleView(themedContext, windowManager)
+
+            // 恢复保存的位置
+            val screenWidth = resources.displayMetrics.widthPixels
+            val screenHeight = resources.displayMetrics.heightPixels
+            val bubbleSizePx = (FloatingBubbleView.BUBBLE_SIZE_DP * resources.displayMetrics.density).toInt()
+            val defaultX = screenWidth - bubbleSizePx - (16 * resources.displayMetrics.density).toInt()
+            val defaultY = (screenHeight - bubbleSizePx) / 2
+
+            val (savedX, savedY) = floatingWindowPreferences.getBubblePosition(defaultX, defaultY)
+
+            // 设置点击监听
+            floatingBubbleView?.setOnBubbleClickListener {
+                expandFromBubble()
+            }
+
+            // 设置位置变化监听
+            floatingBubbleView?.setOnPositionChangedListener { x, y ->
+                floatingWindowPreferences.saveBubblePosition(x, y)
+            }
+
+            // 设置初始状态
+            floatingBubbleView?.setState(state)
+
+            // 创建布局参数并添加到WindowManager
+            val params = floatingBubbleView!!.createLayoutParams(savedX, savedY)
+            windowManager.addView(floatingBubbleView, params)
+
+            android.util.Log.d("FloatingWindowService", "悬浮球已显示，位置: ($savedX, $savedY)，状态: $state")
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "显示悬浮球失败", e)
+            floatingBubbleView = null
+        }
+    }
+
+    /**
+     * 隐藏悬浮球
+     */
+    private fun hideFloatingBubble() {
+        try {
+            floatingBubbleView?.let { bubble ->
+                if (bubble.parent != null) {
+                    windowManager.removeView(bubble)
+                }
+                bubble.cleanup()
+            }
+            floatingBubbleView = null
+            android.util.Log.d("FloatingWindowService", "悬浮球已隐藏")
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "隐藏悬浮球失败", e)
+        }
+    }
+
+    /**
+     * 从悬浮球展开悬浮窗
+     * 
+     * TD-00010修复：保存显示模式为对话框
+     */
+    private fun expandFromBubble() {
+        android.util.Log.d("FloatingWindowService", "从悬浮球展开悬浮窗")
+
+        // 隐藏悬浮球
+        hideFloatingBubble()
+
+        // 显示悬浮窗
+        floatingViewV2?.visibility = View.VISIBLE
+
+        // 取消通知
+        aiResultNotificationManager.cancelNotification()
+
+        // 重置悬浮球状态
+        floatingWindowPreferences.saveBubbleState(FloatingBubbleState.IDLE)
+        
+        // TD-00010: 保存显示模式为对话框
+        floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_DIALOG)
+    }
+
+    /**
+     * 最小化到悬浮球（TD-00010增强版）
+     *
+     * 根据是否有活跃AI请求决定悬浮球状态：
+     * - 无请求 → IDLE
+     * - 有请求 → LOADING
+     * 
+     * TD-00010修复：保存显示模式为悬浮球
+     */
+    private fun minimizeToFloatingBubble() {
+        android.util.Log.d("FloatingWindowService", "最小化到悬浮球，hasActiveAiRequest: $hasActiveAiRequest")
+
+        // 保存当前状态
+        floatingViewV2?.let { view ->
+            floatingWindowPreferences.saveUiState(view.getCurrentState())
+        }
+
+        // 隐藏悬浮窗
+        floatingViewV2?.visibility = View.GONE
+
+        // 根据是否有活跃请求决定状态
+        val bubbleState = if (hasActiveAiRequest) {
+            FloatingBubbleState.LOADING
+        } else {
+            FloatingBubbleState.IDLE
+        }
+
+        // 显示悬浮球
+        showFloatingBubble(bubbleState)
+        
+        // TD-00010: 保存显示模式为悬浮球
+        floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_BUBBLE)
+
+        // 保存最小化状态（如果有活跃请求）
+        if (hasActiveAiRequest) {
+            val requestInfo = """{"type":"${currentAiTaskType?.name}","timestamp":${System.currentTimeMillis()}}"""
+            floatingWindowPreferences.saveMinimizeState(requestInfo)
+        }
+    }
+
+    /**
+     * 标记AI请求开始
+     *
+     * 注意：只有在这里才能将悬浮球设置为LOADING状态
+     *
+     * @param taskType 任务类型
+     */
+    private fun onAiRequestStarted(taskType: ActionType) {
+        hasActiveAiRequest = true
+        currentAiTaskType = taskType
+        android.util.Log.d("FloatingWindowService", "AI请求开始: $taskType")
+
+        // 如果当前是最小化状态（悬浮球可见），更新为加载状态
+        floatingBubbleView?.setState(FloatingBubbleState.LOADING)
+    }
+
+    /**
+     * 标记AI请求完成
+     *
+     * @param taskType 任务类型
+     */
+    private fun onAiRequestCompleted(taskType: ActionType) {
+        hasActiveAiRequest = false
+        currentAiTaskType = null
+        android.util.Log.d("FloatingWindowService", "AI请求完成: $taskType")
+
+        // 更新悬浮球状态
+        floatingBubbleView?.setState(FloatingBubbleState.SUCCESS)
+
+        // 如果是最小化状态，发送通知
+        if (floatingBubbleView != null) {
+            aiResultNotificationManager.notifySuccess(taskType)
+        }
+
+        // 清除最小化状态
+        floatingWindowPreferences.clearMinimizeState()
+    }
+
+    /**
+     * 标记AI请求失败
+     *
+     * @param error 错误信息
+     */
+    private fun onAiRequestFailed(error: Throwable) {
+        hasActiveAiRequest = false
+        val taskType = currentAiTaskType
+        currentAiTaskType = null
+        android.util.Log.e("FloatingWindowService", "AI请求失败: ${error.message}")
+
+        // 更新悬浮球状态
+        floatingBubbleView?.setState(FloatingBubbleState.ERROR)
+
+        // 如果是最小化状态，发送通知
+        if (floatingBubbleView != null) {
+            aiResultNotificationManager.notifyError(error.message)
+        }
+
+        // 清除最小化状态
+        floatingWindowPreferences.clearMinimizeState()
+    }
+
     companion object {
         /**
          * 通知 ID

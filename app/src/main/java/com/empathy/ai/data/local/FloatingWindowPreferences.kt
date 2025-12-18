@@ -390,6 +390,155 @@ class FloatingWindowPreferences @Inject constructor(
         return prefs.getBoolean(KEY_HAS_SAVED_STATE, false)
     }
 
+    // ==================== TD-00010: 悬浮球状态指示与拖动 ====================
+
+    /**
+     * 保存悬浮球位置
+     *
+     * @param x X坐标
+     * @param y Y坐标
+     */
+    fun saveBubblePosition(x: Int, y: Int) {
+        prefs.edit {
+            putInt(KEY_BUBBLE_X, x)
+            putInt(KEY_BUBBLE_Y, y)
+        }
+    }
+
+    /**
+     * 获取悬浮球位置
+     *
+     * @param defaultX 默认X坐标
+     * @param defaultY 默认Y坐标
+     * @return 悬浮球位置 (x, y)
+     */
+    fun getBubblePosition(defaultX: Int, defaultY: Int): Pair<Int, Int> {
+        val x = prefs.getInt(KEY_BUBBLE_X, INVALID_POSITION)
+        val y = prefs.getInt(KEY_BUBBLE_Y, INVALID_POSITION)
+        
+        return if (x == INVALID_POSITION || y == INVALID_POSITION) {
+            Pair(defaultX, defaultY)
+        } else {
+            Pair(x, y)
+        }
+    }
+
+    /**
+     * 保存悬浮球状态
+     *
+     * @param state 悬浮球状态
+     */
+    fun saveBubbleState(state: com.empathy.ai.domain.model.FloatingBubbleState) {
+        prefs.edit {
+            putString(KEY_BUBBLE_STATE, state.name)
+        }
+    }
+
+    /**
+     * 获取悬浮球状态
+     *
+     * @return 悬浮球状态，默认返回IDLE
+     */
+    fun getBubbleState(): com.empathy.ai.domain.model.FloatingBubbleState {
+        val stateName = prefs.getString(KEY_BUBBLE_STATE, null)
+        return if (stateName.isNullOrBlank()) {
+            com.empathy.ai.domain.model.FloatingBubbleState.IDLE
+        } else {
+            try {
+                com.empathy.ai.domain.model.FloatingBubbleState.valueOf(stateName)
+            } catch (e: IllegalArgumentException) {
+                android.util.Log.e(TAG, "Invalid bubble state: $stateName", e)
+                com.empathy.ai.domain.model.FloatingBubbleState.IDLE
+            }
+        }
+    }
+
+    /**
+     * 保存最小化状态（用于应用重启恢复）
+     *
+     * @param requestInfo 请求信息的JSON字符串
+     */
+    fun saveMinimizeState(requestInfo: String) {
+        prefs.edit {
+            putLong(KEY_MINIMIZE_TIMESTAMP, System.currentTimeMillis())
+            putString(KEY_MINIMIZE_REQUEST_INFO, requestInfo)
+        }
+    }
+
+    /**
+     * 获取最小化状态（如果有效）
+     *
+     * 检查最小化状态是否在有效期内（10分钟）
+     *
+     * @return 请求信息字符串，如果已过期或不存在则返回null
+     */
+    fun getMinimizeStateIfValid(): String? {
+        val timestamp = prefs.getLong(KEY_MINIMIZE_TIMESTAMP, 0)
+        val currentTime = System.currentTimeMillis()
+        
+        if (currentTime - timestamp > MINIMIZE_VALIDITY_PERIOD) {
+            // 已过期，清除状态
+            clearMinimizeState()
+            return null
+        }
+        
+        return prefs.getString(KEY_MINIMIZE_REQUEST_INFO, null)
+    }
+
+    /**
+     * 清除最小化状态
+     */
+    fun clearMinimizeState() {
+        prefs.edit {
+            remove(KEY_MINIMIZE_TIMESTAMP)
+            remove(KEY_MINIMIZE_REQUEST_INFO)
+        }
+    }
+
+    /**
+     * 检查是否有有效的最小化状态
+     *
+     * @return true 如果有未过期的最小化状态
+     */
+    fun hasValidMinimizeState(): Boolean {
+        val timestamp = prefs.getLong(KEY_MINIMIZE_TIMESTAMP, 0)
+        val currentTime = System.currentTimeMillis()
+        return currentTime - timestamp <= MINIMIZE_VALIDITY_PERIOD &&
+               prefs.getString(KEY_MINIMIZE_REQUEST_INFO, null) != null
+    }
+
+    // ==================== TD-00010: 显示模式管理 ====================
+
+    /**
+     * 保存显示模式
+     *
+     * @param mode 显示模式（BUBBLE 或 DIALOG）
+     */
+    fun saveDisplayMode(mode: String) {
+        prefs.edit {
+            putString(KEY_DISPLAY_MODE, mode)
+        }
+        android.util.Log.d(TAG, "保存显示模式: $mode")
+    }
+
+    /**
+     * 获取显示模式
+     *
+     * @return 显示模式，默认返回 DIALOG
+     */
+    fun getDisplayMode(): String {
+        return prefs.getString(KEY_DISPLAY_MODE, DISPLAY_MODE_DIALOG) ?: DISPLAY_MODE_DIALOG
+    }
+
+    /**
+     * 检查是否应该以悬浮球模式启动
+     *
+     * @return true 如果上次退出时是悬浮球模式
+     */
+    fun shouldStartAsBubble(): Boolean {
+        return getDisplayMode() == DISPLAY_MODE_BUBBLE
+    }
+
     companion object {
         /**
          * 日志标签
@@ -413,6 +562,29 @@ class FloatingWindowPreferences @Inject constructor(
         private const val KEY_LAST_CONTACT_ID = "last_contact_id"
         private const val KEY_SAVED_INPUT_TEXT = "saved_input_text"
         private const val KEY_HAS_SAVED_STATE = "has_saved_state"
+        
+        // TD-00010: 悬浮球状态指示与拖动
+        private const val KEY_BUBBLE_X = "bubble_position_x"
+        private const val KEY_BUBBLE_Y = "bubble_position_y"
+        private const val KEY_BUBBLE_STATE = "bubble_state"
+        private const val KEY_MINIMIZE_TIMESTAMP = "minimize_timestamp"
+        private const val KEY_MINIMIZE_REQUEST_INFO = "minimize_request_info"
+        private const val KEY_DISPLAY_MODE = "display_mode"
+        
+        /**
+         * 最小化状态有效期：10分钟
+         */
+        private const val MINIMIZE_VALIDITY_PERIOD = 10 * 60 * 1000L
+        
+        /**
+         * 显示模式：悬浮球
+         */
+        const val DISPLAY_MODE_BUBBLE = "BUBBLE"
+        
+        /**
+         * 显示模式：对话框
+         */
+        const val DISPLAY_MODE_DIALOG = "DIALOG"
 
         // ==================== 默认值常量 ====================
 
