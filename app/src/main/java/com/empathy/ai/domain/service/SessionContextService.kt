@@ -1,0 +1,155 @@
+package com.empathy.ai.domain.service
+
+import android.util.Log
+import com.empathy.ai.domain.model.ConversationContextConfig
+import com.empathy.ai.domain.model.MessageSender
+import com.empathy.ai.domain.model.TimestampedMessage
+import com.empathy.ai.domain.repository.ConversationRepository
+import com.empathy.ai.domain.repository.SettingsRepository
+import com.empathy.ai.domain.util.ConversationContextBuilder
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * 会话上下文服务
+ *
+ * 统一管理历史对话上下文的构建，供所有UseCase共享使用。
+ * 解决三种模式（分析/润色/回复）上下文不共通的问题。
+ *
+ * 设计原则：
+ * - 单一职责：专注于历史上下文的查询和构建
+ * - 可复用：所有需要历史上下文的UseCase统一调用此服务
+ * - 可配置：通过SettingsRepository读取用户配置的历史条数
+ *
+ * @see BUG-00015 三种模式上下文不共通问题分析
+ * @see TDD-00007 对话上下文连续性增强技术设计
+ */
+@Singleton
+class SessionContextService @Inject constructor(
+    private val conversationRepository: ConversationRepository,
+    private val conversationContextBuilder: ConversationContextBuilder,
+    private val settingsRepository: SettingsRepository
+) {
+    companion object {
+        private const val TAG = "SessionContextService"
+    }
+
+    /**
+     * 获取联系人的历史对话上下文
+     *
+     * 查询数据库中该联系人的最近对话记录，并构建带时间流逝标记的上下文字符串。
+     * 所有UseCase（分析/润色/回复）统一调用此方法获取历史上下文。
+     *
+     * @param contactId 联系人ID
+     * @return 格式化后的历史对话上下文字符串，如果没有历史或配置为0则返回空字符串
+     */
+    suspend fun getHistoryContext(contactId: String): String {
+        return try {
+            // 1. 读取用户配置的历史条数
+            val historyCount = settingsRepository.getHistoryConversationCount()
+                .getOrDefault(ConversationContextConfig.DEFAULT_HISTORY_COUNT)
+
+            Log.d(TAG, "获取历史上下文: contactId=$contactId, historyCount=$historyCount")
+
+            // 2. 如果配置为0，直接返回空
+            if (historyCount <= 0) {
+                Log.d(TAG, "历史条数配置为0，跳过历史查询")
+                return ""
+            }
+
+            // 3. 查询最近的对话记录
+            val recentLogs = conversationRepository
+                .getRecentConversations(contactId, historyCount)
+                .getOrDefault(emptyList())
+
+            if (recentLogs.isEmpty()) {
+                Log.d(TAG, "没有找到历史对话记录")
+                return ""
+            }
+
+            Log.d(TAG, "找到 ${recentLogs.size} 条历史对话记录")
+
+            // 4. 转换为TimestampedMessage
+            val messages = recentLogs.mapNotNull { log ->
+                try {
+                    TimestampedMessage(
+                        content = log.userInput,
+                        timestamp = log.timestamp,
+                        sender = MessageSender.ME
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "跳过无效的对话记录: ${log.id}", e)
+                    null
+                }
+            }
+
+            // 5. 构建带时间流逝标记的历史上下文
+            val historyContext = conversationContextBuilder.buildHistoryContext(messages)
+            Log.d(TAG, "历史上下文构建完成，长度: ${historyContext.length}")
+
+            historyContext
+        } catch (e: Exception) {
+            Log.e(TAG, "获取历史上下文失败，降级为空历史", e)
+            ""  // 降级：返回空历史，不影响主流程
+        }
+    }
+
+    /**
+     * 获取历史上下文（带自定义条数）
+     *
+     * 用于需要自定义历史条数的场景，忽略用户配置。
+     *
+     * @param contactId 联系人ID
+     * @param limit 历史条数限制
+     * @return 格式化后的历史对话上下文字符串
+     */
+    suspend fun getHistoryContext(contactId: String, limit: Int): String {
+        return try {
+            if (limit <= 0) return ""
+
+            val recentLogs = conversationRepository
+                .getRecentConversations(contactId, limit)
+                .getOrDefault(emptyList())
+
+            if (recentLogs.isEmpty()) return ""
+
+            val messages = recentLogs.mapNotNull { log ->
+                try {
+                    TimestampedMessage(
+                        content = log.userInput,
+                        timestamp = log.timestamp,
+                        sender = MessageSender.ME
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "跳过无效的对话记录: ${log.id}", e)
+                    null
+                }
+            }
+
+            conversationContextBuilder.buildHistoryContext(messages)
+        } catch (e: Exception) {
+            Log.e(TAG, "获取历史上下文失败", e)
+            ""
+        }
+    }
+
+    /**
+     * 检查是否有历史对话
+     *
+     * 快速检查联系人是否有历史对话记录，用于UI显示或逻辑判断。
+     *
+     * @param contactId 联系人ID
+     * @return true 如果有历史对话
+     */
+    suspend fun hasHistoryContext(contactId: String): Boolean {
+        return try {
+            val recentLogs = conversationRepository
+                .getRecentConversations(contactId, 1)
+                .getOrDefault(emptyList())
+            recentLogs.isNotEmpty()
+        } catch (e: Exception) {
+            Log.e(TAG, "检查历史对话失败", e)
+            false
+        }
+    }
+}

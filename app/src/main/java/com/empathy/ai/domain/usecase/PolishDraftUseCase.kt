@@ -12,6 +12,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
 import kotlinx.coroutines.flow.first
@@ -27,11 +28,13 @@ import javax.inject.Inject
  * 2. 加载联系人数据和雷区标签
  * 3. 数据脱敏
  * 4. 添加身份前缀
- * 5. 构建提示词
- * 6. 调用AI
+ * 5. 获取历史对话上下文（BUG-00015修复）
+ * 6. 构建提示词
+ * 7. 调用AI
  *
  * @see PRD-00009 悬浮窗功能重构需求
  * @see TDD-00009 悬浮窗功能重构技术设计
+ * @see BUG-00015 三种模式上下文不共通问题分析
  */
 class PolishDraftUseCase @Inject constructor(
     private val contactRepository: ContactRepository,
@@ -39,7 +42,8 @@ class PolishDraftUseCase @Inject constructor(
     private val privacyRepository: PrivacyRepository,
     private val aiRepository: AiRepository,
     private val aiProviderRepository: AiProviderRepository,
-    private val promptBuilder: PromptBuilder
+    private val promptBuilder: PromptBuilder,
+    private val sessionContextService: SessionContextService
 ) {
     /**
      * 执行草稿润色
@@ -73,9 +77,12 @@ class PolishDraftUseCase @Inject constructor(
                 actionType = ActionType.POLISH
             )
 
-            // 5. 构建提示词
+            // 5. 【BUG-00015修复】获取历史对话上下文
+            val historyContext = sessionContextService.getHistoryContext(contactId)
+
+            // 6. 构建提示词
             val promptContext = PromptContext.fromContact(profile)
-            val runtimeData = buildRuntimeData(prefixedDraft, redTags)
+            val runtimeData = buildRuntimeData(prefixedDraft, redTags, historyContext)
             val systemInstruction = promptBuilder.buildSystemInstruction(
                 scene = PromptScene.POLISH,
                 contactId = contactId,
@@ -97,9 +104,22 @@ class PolishDraftUseCase @Inject constructor(
 
     /**
      * 构建运行时数据
+     *
+     * @param draft 用户草稿（已添加身份前缀）
+     * @param redTags 雷区标签列表
+     * @param historyContext 历史对话上下文（BUG-00015修复）
      */
-    private fun buildRuntimeData(draft: String, redTags: List<BrainTag>): String {
+    private fun buildRuntimeData(
+        draft: String,
+        redTags: List<BrainTag>,
+        historyContext: String
+    ): String {
         return buildString {
+            // 【BUG-00015修复】历史对话放在最前面，让AI先了解背景
+            if (historyContext.isNotBlank()) {
+                appendLine(historyContext)
+                appendLine()
+            }
             appendLine("【用户草稿】")
             appendLine(draft)
             if (redTags.isNotEmpty()) {
