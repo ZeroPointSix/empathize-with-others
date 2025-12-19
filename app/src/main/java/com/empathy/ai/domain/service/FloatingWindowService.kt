@@ -88,6 +88,10 @@ class FloatingWindowService : Service() {
     @Inject
     lateinit var aiResultNotificationManager: AiResultNotificationManager
     
+    // BUG-00023修复：添加ConversationRepository用于复制时保存对话记录
+    @Inject
+    lateinit var conversationRepository: com.empathy.ai.domain.repository.ConversationRepository
+    
     private lateinit var windowManager: WindowManager
     private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
     private var floatingViewV2: FloatingViewV2? = null  // TD-00009: 新版View
@@ -1900,10 +1904,18 @@ class FloatingWindowService : Service() {
             }
 
             setOnCopyListener { text ->
+                // 复制到剪贴板
                 val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 val clip = android.content.ClipData.newPlainText("AI结果", text)
                 clipboard.setPrimaryClip(clip)
                 android.widget.Toast.makeText(this@FloatingWindowService, "已复制到剪贴板", android.widget.Toast.LENGTH_SHORT).show()
+                
+                // BUG-00023修复：润色/回复模式下，用户点击复制时保存到事实流
+                val currentTab = currentUiState.selectedTab
+                val contactId = currentUiState.selectedContactId
+                if (contactId != null && (currentTab == ActionType.POLISH || currentTab == ActionType.REPLY)) {
+                    saveConversationOnCopy(contactId, lastInputText, text, currentTab)
+                }
             }
 
             setOnRegenerateListener { tab, instruction ->
@@ -2486,10 +2498,18 @@ class FloatingWindowService : Service() {
             }
 
             setOnCopyListener { text ->
+                // 复制到剪贴板
                 val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 val clip = android.content.ClipData.newPlainText("AI结果", text)
                 clipboard.setPrimaryClip(clip)
                 android.widget.Toast.makeText(this@FloatingWindowService, "已复制到剪贴板", android.widget.Toast.LENGTH_SHORT).show()
+                
+                // BUG-00023修复：润色/回复模式下，用户点击复制时保存到事实流
+                val currentTab = currentUiState.selectedTab
+                val contactId = currentUiState.selectedContactId
+                if (contactId != null && (currentTab == ActionType.POLISH || currentTab == ActionType.REPLY)) {
+                    saveConversationOnCopy(contactId, lastInputText, text, currentTab)
+                }
             }
 
             setOnRegenerateListener { tab, instruction ->
@@ -2499,6 +2519,50 @@ class FloatingWindowService : Service() {
             setOnMinimizeListener {
                 android.util.Log.d("FloatingWindowService", "收到最小化回调")
                 minimizeFloatingViewV2()
+            }
+        }
+    }
+    
+    /**
+     * BUG-00023修复：用户点击复制按钮时保存对话记录到事实流
+     * 
+     * 只有润色/回复模式下，用户主动点击复制按钮时才保存数据
+     * 分析模式在AnalyzeChatUseCase中自动保存，不在此处理
+     * 
+     * @param contactId 联系人ID
+     * @param userInput 用户原始输入
+     * @param aiResponse AI返回的结果（润色后的文本或回复建议）
+     * @param actionType 当前操作类型（POLISH或REPLY）
+     */
+    private fun saveConversationOnCopy(
+        contactId: String,
+        userInput: String,
+        aiResponse: String,
+        actionType: ActionType
+    ) {
+        serviceScope.launch {
+            try {
+                // 添加身份前缀
+                val prefixedInput = com.empathy.ai.domain.util.IdentityPrefixHelper.addPrefix(
+                    content = userInput,
+                    actionType = actionType
+                )
+                
+                // 保存用户输入
+                val logId = conversationRepository.saveUserInput(
+                    contactId = contactId,
+                    userInput = prefixedInput
+                ).getOrNull()
+                
+                // 保存AI回复
+                logId?.let { id ->
+                    conversationRepository.updateAiResponse(id, aiResponse)
+                    android.util.Log.d("FloatingWindowService", 
+                        "BUG-00023: 复制时保存对话成功，contactId=$contactId, logId=$id, actionType=$actionType")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "BUG-00023: 复制时保存对话失败", e)
+                // 保存失败不影响复制功能
             }
         }
     }

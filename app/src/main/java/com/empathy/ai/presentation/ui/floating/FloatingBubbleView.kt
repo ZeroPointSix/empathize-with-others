@@ -83,8 +83,8 @@ class FloatingBubbleView(
     private val iconView: ImageView
     private val progressView: ProgressBar
 
-    // 布局参数
-    private var layoutParams: WindowManager.LayoutParams? = null
+    // 布局参数 - BUG-00022修复：重命名避免与View.layoutParams冲突
+    private var windowLayoutParams: WindowManager.LayoutParams? = null
 
     init {
         density = context.resources.displayMetrics.density
@@ -128,10 +128,12 @@ class FloatingBubbleView(
      * 设置触摸监听器
      *
      * 实现拖动和点击的区分
+     * 
+     * BUG-00022修复：使用windowLayoutParams避免与View.layoutParams冲突
      */
     private fun setupTouchListener() {
         setOnTouchListener { _, event ->
-            val params = layoutParams ?: return@setOnTouchListener false
+            val params = windowLayoutParams ?: return@setOnTouchListener false
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -141,6 +143,7 @@ class FloatingBubbleView(
                     initialTouchY = event.rawY
                     touchStartTime = System.currentTimeMillis()
                     isDragging = false
+                    android.util.Log.d(TAG, "ACTION_DOWN: 初始位置 ($initialX, $initialY)")
                     true
                 }
 
@@ -160,7 +163,7 @@ class FloatingBubbleView(
                         try {
                             windowManager.updateViewLayout(this, params)
                         } catch (e: Exception) {
-                            android.util.Log.e(TAG, "更新视图位置失败", e)
+                            android.util.Log.e(TAG, "更新视图位置失败: ${e.message}", e)
                         }
                     }
                     true
@@ -316,6 +319,8 @@ class FloatingBubbleView(
     /**
      * 创建WindowManager布局参数
      *
+     * BUG-00022修复：使用windowLayoutParams避免与View.layoutParams冲突
+     *
      * @param x 初始X坐标
      * @param y 初始Y坐标
      * @return WindowManager.LayoutParams
@@ -342,27 +347,32 @@ class FloatingBubbleView(
             this.x = x
             this.y = y
         }.also {
-            layoutParams = it
+            windowLayoutParams = it
+            android.util.Log.d(TAG, "创建布局参数: ($x, $y)")
         }
     }
 
     /**
      * 更新布局参数引用
+     * 
+     * BUG-00022修复：使用windowLayoutParams避免与View.layoutParams冲突
      */
     fun updateLayoutParams(params: WindowManager.LayoutParams) {
-        layoutParams = params
+        windowLayoutParams = params
     }
 
     // ==================== 清理 ====================
 
     /**
      * 清理资源
+     * 
+     * BUG-00022修复：使用windowLayoutParams避免与View.layoutParams冲突
      */
     fun cleanup() {
         android.util.Log.d(TAG, "清理FloatingBubbleView资源")
         stopAllAnimations()
         onBubbleClickListener = null
         onPositionChangedListener = null
-        layoutParams = null
+        windowLayoutParams = null
     }
 }

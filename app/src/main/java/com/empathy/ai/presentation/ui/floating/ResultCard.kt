@@ -67,6 +67,31 @@ class ResultCard @JvmOverloads constructor(
         strategyNote = findViewById(R.id.strategy_note)
         btnCopy = findViewById(R.id.btn_copy)
         btnRegenerate = findViewById(R.id.btn_regenerate)
+        
+        // BUG-00021修复：添加初始化验证日志
+        android.util.Log.d(TAG, "initViews完成: " +
+            "btnCopy=${btnCopy != null}, " +
+            "btnRegenerate=${btnRegenerate != null}, " +
+            "resultCard=${resultCard != null}")
+        
+        // BUG-00021修复：如果按钮为null，尝试延迟查找
+        if (btnCopy == null || btnRegenerate == null) {
+            android.util.Log.w(TAG, "按钮初始化失败，尝试延迟查找")
+            post {
+                if (btnCopy == null) {
+                    btnCopy = findViewById(R.id.btn_copy)
+                }
+                if (btnRegenerate == null) {
+                    btnRegenerate = findViewById(R.id.btn_regenerate)
+                }
+                android.util.Log.d(TAG, "延迟查找结果: btnCopy=${btnCopy != null}, btnRegenerate=${btnRegenerate != null}")
+                
+                // 延迟查找后重新设置点击监听器
+                if (btnCopy != null || btnRegenerate != null) {
+                    setupClickListeners()
+                }
+            }
+        }
     }
 
     private fun setupClickListeners() {
@@ -189,7 +214,10 @@ class ResultCard @JvmOverloads constructor(
      * @param height 最大高度（像素）
      */
     fun setMaxHeight(height: Int) {
+        android.util.Log.d(TAG, "setMaxHeight: height=$height, resultScroll=${resultScroll != null}")
         resultScroll?.setMaxHeight(height)
+        // 强制重新布局
+        resultScroll?.requestLayout()
     }
 
     /**
@@ -235,18 +263,57 @@ class ResultCard @JvmOverloads constructor(
     }
 
     /**
-     * BUG-00017修复：确保复制和重新生成按钮始终可见
+     * BUG-00017/BUG-00021修复：确保复制和重新生成按钮始终可见
      * 
-     * 问题：分析和润色模式下按钮不可见
-     * 原因：按钮visibility可能在某些情况下被隐藏或未正确初始化
-     * 解决：在每次显示结果时显式设置按钮为VISIBLE
+     * 问题：分析和润色模式下按钮不可见或未渲染
+     * 原因：
+     * 1. 按钮visibility可能在某些情况下被隐藏或未正确初始化
+     * 2. findViewById可能在布局未完全inflate时返回null
+     * 解决：
+     * 1. 在每次显示结果时显式设置按钮为VISIBLE
+     * 2. 如果按钮引用为null，尝试重新查找
+     * 3. 使用post{}确保在布局完成后执行
      */
     private fun ensureButtonsVisible() {
+        // 首先尝试直接设置可见性
         btnCopy?.visibility = View.VISIBLE
         btnRegenerate?.visibility = View.VISIBLE
         
-        // 添加调试日志，帮助排查问题
         android.util.Log.d(TAG, "ensureButtonsVisible: btnCopy=${btnCopy != null}, btnRegenerate=${btnRegenerate != null}")
+        
+        // BUG-00021修复：如果按钮引用为null，尝试重新查找并设置可见性
+        if (btnCopy == null || btnRegenerate == null) {
+            android.util.Log.w(TAG, "按钮引用为null，尝试重新查找")
+            post {
+                // 重新查找按钮
+                if (btnCopy == null) {
+                    btnCopy = findViewById(R.id.btn_copy)
+                    btnCopy?.setOnClickListener {
+                        currentResult?.let { result ->
+                            onCopyClickListener?.invoke(result.getCopyableText())
+                        }
+                    }
+                }
+                if (btnRegenerate == null) {
+                    btnRegenerate = findViewById(R.id.btn_regenerate)
+                    btnRegenerate?.setOnClickListener {
+                        onRegenerateClickListener?.invoke()
+                    }
+                }
+                
+                // 设置可见性
+                btnCopy?.visibility = View.VISIBLE
+                btnRegenerate?.visibility = View.VISIBLE
+                
+                android.util.Log.d(TAG, "延迟查找后: btnCopy=${btnCopy != null}, btnRegenerate=${btnRegenerate != null}")
+            }
+        }
+        
+        // BUG-00021修复：额外的保护措施 - 确保按钮在布局完成后可见
+        post {
+            btnCopy?.visibility = View.VISIBLE
+            btnRegenerate?.visibility = View.VISIBLE
+        }
     }
 
     companion object {

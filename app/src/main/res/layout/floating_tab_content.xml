@@ -5,7 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingHorizontal="12dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
     <!-- 联系人选择器 -->
     <com.google.android.material.textfield.TextInputLayout
@@ -30,15 +32,16 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- 
-        输入框（BUG-00020修复：减少高度）
-        - minLines从3改为2，减少约40dp
-        - maxLines从6改为4，限制最大高度
+        输入框（BUG-00024修复：进一步减少高度）
+        - minLines从2改为1，减少约20dp
+        - maxLines从4改为3，限制最大高度
+        - 减少marginTop从8dp改为4dp
     -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:hint="输入内容"
         app:boxCornerRadiusTopStart="8dp"
         app:boxCornerRadiusTopEnd="8dp"
@@ -53,21 +56,23 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textMultiLine"
-            android:minLines="2"
-            android:maxLines="4"
+            android:minLines="1"
+            android:maxLines="3"
             android:textSize="14sp"
             android:gravity="top" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 发送按钮（BUG-00020修复：减少高度和margin） -->
+    <!-- 发送按钮（BUG-00024修复：进一步减少高度和margin） -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_submit"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="4dp"
         android:text="发送"
-        android:textSize="14sp"
+        android:textSize="13sp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         app:cornerRadius="8dp"
         app:icon="@drawable/ic_send"
         app:iconGravity="end"
