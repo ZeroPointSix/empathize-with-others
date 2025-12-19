@@ -17,8 +17,9 @@
     android:id="@+id/result_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="10dp"
     app:cardElevation="4dp"
     app:cardBackgroundColor="@color/result_card_background">
 
@@ -27,15 +28,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- 标题栏（固定高度） -->
+        <!-- 标题栏（BUG-00024修复：减少padding） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="12dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="8dp">
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp">
 
             <!-- 结果类型图标和标题 -->
             <TextView
@@ -63,26 +64,26 @@
         </LinearLayout>
 
         <!-- 
-            可滚动内容区域（BUG-00020最终修复）
+            可滚动内容区域（BUG-00024最终修复）
             
-            固定最大高度为200dp，确保按钮永远有空间显示
-            内容超出200dp时通过滚动查看
+            固定最大高度为120dp，确保按钮永远有空间显示
+            内容超出120dp时通过滚动查看
             
-            计算依据：
+            计算依据（BUG-00024修复后）：
             - 屏幕最小高度约600dp
-            - 固定元素：toolbar(48) + tabSwitcher(48) + contact_selector(56) + 标题栏(40) + 按钮栏(48) + margin(40) ≈ 280dp
-            - 剩余空间：600 - 280 = 320dp
-            - 安全值：200dp（留有余量）
+            - 固定元素：toolbar(48) + tabSwitcher(48) + contact_selector(56) + input(60) + submit(40) + 标题栏(36) + 按钮栏(48) + margin(40) ≈ 376dp
+            - 剩余空间：600 - 376 = 224dp
+            - 安全值：120dp（留有充足余量给按钮）
         -->
         <com.empathy.ai.presentation.ui.component.MaxHeightScrollView
             android:id="@+id/result_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:maxHeight="200dp"
+            app:maxHeight="120dp"
             android:fadeScrollbars="false"
             android:scrollbarStyle="outsideOverlay"
             android:scrollbarAlwaysDrawVerticalTrack="true"
-            android:paddingHorizontal="12dp">
+            android:paddingHorizontal="8dp">
             
             <LinearLayout
                 android:layout_width="match_parent"
@@ -148,50 +149,50 @@
             android:layout_marginTop="8dp"
             android:background="@color/divider" />
 
-        <!-- 操作按钮栏（固定在底部，始终可见） -->
+        <!-- 操作按钮栏（BUG-00024修复：减少高度和padding，确保按钮完整显示） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="end|center_vertical"
             android:paddingHorizontal="8dp"
-            android:paddingVertical="8dp"
+            android:paddingVertical="4dp"
             android:background="@color/result_card_background">
 
             <!-- 复制按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_copy"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
+                android:layout_height="36dp"
                 android:text="复制"
-                android:textSize="13sp"
-                android:minWidth="80dp"
-                android:paddingHorizontal="16dp"
+                android:textSize="12sp"
+                android:minWidth="72dp"
+                android:paddingHorizontal="12dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 app:icon="@drawable/ic_copy"
-                app:iconSize="18dp"
+                app:iconSize="16dp"
                 app:iconGravity="start"
-                app:iconPadding="4dp"
-                app:cornerRadius="8dp"
+                app:iconPadding="2dp"
+                app:cornerRadius="6dp"
                 style="@style/Widget.Material3.Button.TextButton" />
 
             <!-- 重新生成按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_regenerate"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
+                android:layout_height="36dp"
                 android:text="重新生成"
-                android:textSize="13sp"
-                android:minWidth="100dp"
-                android:paddingHorizontal="16dp"
+                android:textSize="12sp"
+                android:minWidth="88dp"
+                android:paddingHorizontal="12dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 app:icon="@drawable/ic_refresh"
-                app:iconSize="18dp"
+                app:iconSize="16dp"
                 app:iconGravity="start"
-                app:iconPadding="4dp"
-                app:cornerRadius="8dp"
+                app:iconPadding="2dp"
+                app:cornerRadius="6dp"
                 style="@style/Widget.Material3.Button.TonalButton" />
 
         </LinearLayout>

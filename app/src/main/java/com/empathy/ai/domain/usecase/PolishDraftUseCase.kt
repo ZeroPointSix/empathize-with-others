@@ -81,6 +81,7 @@ class PolishDraftUseCase @Inject constructor(
             val historyContext = sessionContextService.getHistoryContext(contactId)
 
             // 6. 构建提示词
+            // 【BUG-00023修复】移除自动保存逻辑，改为用户点击复制按钮时保存
             val promptContext = PromptContext.fromContact(profile)
             val runtimeData = buildRuntimeData(prefixedDraft, redTags, historyContext)
             val systemInstruction = promptBuilder.buildSystemInstruction(
@@ -90,7 +91,7 @@ class PolishDraftUseCase @Inject constructor(
                 runtimeData = runtimeData
             )
 
-            // 6. 调用AI
+            // 7. 调用AI
             aiRepository.polishDraft(
                 provider = defaultProvider,
                 draft = prefixedDraft,
@@ -129,4 +130,5 @@ class PolishDraftUseCase @Inject constructor(
             }
         }
     }
+
 }

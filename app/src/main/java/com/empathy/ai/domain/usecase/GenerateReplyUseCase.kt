@@ -12,7 +12,6 @@ import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
-import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
@@ -46,7 +45,6 @@ class GenerateReplyUseCase @Inject constructor(
     private val aiRepository: AiRepository,
     private val aiProviderRepository: AiProviderRepository,
     private val promptBuilder: PromptBuilder,
-    private val conversationRepository: ConversationRepository,
     private val sessionContextService: SessionContextService
 ) {
     /**
@@ -82,21 +80,11 @@ class GenerateReplyUseCase @Inject constructor(
                 actionType = ActionType.REPLY
             )
 
-            // 5. 【BUG-00015修复】获取历史对话上下文（必须在保存当前输入之前）
+            // 5. 【BUG-00015修复】获取历史对话上下文
             val historyContext = sessionContextService.getHistoryContext(contactId)
 
-            // 6. 保存用户输入到对话记录
-            try {
-                conversationRepository.saveUserInput(
-                    contactId = contactId,
-                    userInput = prefixedMessage
-                )
-            } catch (e: Exception) {
-                // 保存失败不影响主流程
-                android.util.Log.w("GenerateReplyUseCase", "保存对话记录失败", e)
-            }
-
-            // 7. 构建提示词
+            // 6. 构建提示词
+            // 【BUG-00023修复】移除自动保存逻辑，改为用户点击复制按钮时保存
             val promptContext = PromptContext.fromContact(profile)
             val runtimeData = buildRuntimeData(prefixedMessage, redTags, greenTags, profile, historyContext)
             val systemInstruction = promptBuilder.buildSystemInstruction(
@@ -106,7 +94,7 @@ class GenerateReplyUseCase @Inject constructor(
                 runtimeData = runtimeData
             )
 
-            // 8. 调用AI
+            // 7. 调用AI
             aiRepository.generateReply(
                 provider = defaultProvider,
                 message = prefixedMessage,

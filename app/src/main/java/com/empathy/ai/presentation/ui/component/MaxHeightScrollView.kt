@@ -53,6 +53,8 @@ class MaxHeightScrollView @JvmOverloads constructor(
             val mode = MeasureSpec.getMode(heightMeasureSpec)
             val size = MeasureSpec.getSize(heightMeasureSpec)
 
+            android.util.Log.d(TAG, "onMeasure: maxHeightPx=$maxHeightPx, mode=$mode, size=$size")
+
             when (mode) {
                 MeasureSpec.UNSPECIFIED -> {
                     // 无约束时，使用maxHeight作为AT_MOST约束
@@ -76,6 +78,8 @@ class MaxHeightScrollView @JvmOverloads constructor(
         }
 
         super.onMeasure(widthMeasureSpec, newHeightMeasureSpec)
+        
+        android.util.Log.d(TAG, "onMeasure完成: measuredHeight=$measuredHeight, maxHeightPx=$maxHeightPx")
     }
 
     /**

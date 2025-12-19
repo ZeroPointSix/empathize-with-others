@@ -348,29 +348,46 @@ class FloatingViewV2(
     /**
      * 显示结果
      * 
-     * BUG-00020最终修复：
-     * - 内容区域固定最大高度200dp（在XML中设置）
+     * BUG-00024最终修复：
+     * - 内容区域固定最大高度120dp（在XML中设置）
      * - 保留输入框，让用户可以继续输入对话
-     * - 内容超出200dp时通过滚动查看
-     * - 按钮固定在底部，始终可见
+     * - 内容超出120dp时通过滚动查看
+     * - 按钮固定在底部，始终可见且有充足空间
+     * 
+     * 修复顺序：
+     * 1. 先设置最大高度
+     * 2. 再显示结果内容
+     * 3. 最后设置可见性
      */
     fun showResult(result: AiResult) {
         currentState = currentState.copy(lastResult = result)
 
-        // BUG-00021修复：动态计算并设置最大高度
-        // 确保结果区域不会占满屏幕，给输入框和按钮留出空间
+        // BUG-00024修复：动态计算并设置最大高度
+        // 确保结果区域不会占满屏幕，给输入框和按钮留出充足空间
         val displayMetrics = context.resources.displayMetrics
         val screenHeight = displayMetrics.heightPixels
-        // 设置为屏幕高度的40%，这个比例在大多数设备上都能兼顾内容显示和操作便利性
-        val maxAllowedHeight = (screenHeight * 0.4).toInt()
+        val density = displayMetrics.density
+        
+        // 使用固定的120dp作为最大高度，与XML中的设置保持一致
+        // 这样可以确保在所有设备上按钮都能完整显示
+        val maxHeightDp = 120
+        val maxAllowedHeight = (maxHeightDp * density).toInt()
 
+        android.util.Log.d(TAG, "showResult: 准备显示结果，设置最大高度为${maxAllowedHeight}px (${maxHeightDp}dp), 屏幕高度${screenHeight}px")
+        
+        // 1. 先设置最大高度
         resultCard?.setMaxHeight(maxAllowedHeight)
+        
+        // 2. 再显示结果内容
         resultCard?.showResult(result)
+        
+        // 3. 最后设置可见性
         resultCard?.visibility = View.VISIBLE
+        
         hideLoading()
         hideError()
 
-        android.util.Log.d(TAG, "showResult: 结果已显示，动态设置最大高度为${maxAllowedHeight}px (屏幕高度${screenHeight}px)")
+        android.util.Log.d(TAG, "showResult: 结果已显示完成")
     }
 
     /**

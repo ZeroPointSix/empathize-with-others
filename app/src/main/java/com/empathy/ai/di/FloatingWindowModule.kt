@@ -4,7 +4,6 @@ import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
-import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.usecase.GenerateReplyUseCase
@@ -37,6 +36,7 @@ object FloatingWindowModule {
      * 符合Clean Architecture的依赖倒置原则
      *
      * BUG-00015修复：添加SessionContextService以支持历史上下文共享
+     * BUG-00023修复：移除ConversationRepository，改为用户点击复制按钮时保存
      */
     @Provides
     @Singleton
@@ -67,6 +67,7 @@ object FloatingWindowModule {
      * 符合Clean Architecture的依赖倒置原则
      *
      * BUG-00015修复：添加SessionContextService以支持历史上下文共享
+     * BUG-00023修复：移除ConversationRepository，改为用户点击复制按钮时保存
      */
     @Provides
     @Singleton
@@ -77,7 +78,6 @@ object FloatingWindowModule {
         aiRepository: AiRepository,
         aiProviderRepository: AiProviderRepository,
         promptBuilder: PromptBuilder,
-        conversationRepository: ConversationRepository,
         sessionContextService: SessionContextService
     ): GenerateReplyUseCase {
         return GenerateReplyUseCase(
@@ -87,7 +87,6 @@ object FloatingWindowModule {
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
-            conversationRepository = conversationRepository,
             sessionContextService = sessionContextService
         )
     }
