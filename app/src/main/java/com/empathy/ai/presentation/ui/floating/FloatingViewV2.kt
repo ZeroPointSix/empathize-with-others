@@ -356,12 +356,21 @@ class FloatingViewV2(
      */
     fun showResult(result: AiResult) {
         currentState = currentState.copy(lastResult = result)
+
+        // BUG-00021修复：动态计算并设置最大高度
+        // 确保结果区域不会占满屏幕，给输入框和按钮留出空间
+        val displayMetrics = context.resources.displayMetrics
+        val screenHeight = displayMetrics.heightPixels
+        // 设置为屏幕高度的40%，这个比例在大多数设备上都能兼顾内容显示和操作便利性
+        val maxAllowedHeight = (screenHeight * 0.4).toInt()
+
+        resultCard?.setMaxHeight(maxAllowedHeight)
         resultCard?.showResult(result)
         resultCard?.visibility = View.VISIBLE
         hideLoading()
         hideError()
-        
-        android.util.Log.d(TAG, "showResult: 结果已显示，内容区域最大高度固定为200dp，输入框保持可见")
+
+        android.util.Log.d(TAG, "showResult: 结果已显示，动态设置最大高度为${maxAllowedHeight}px (屏幕高度${screenHeight}px)")
     }
 
     /**
