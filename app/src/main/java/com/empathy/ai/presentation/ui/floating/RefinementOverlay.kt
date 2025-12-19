@@ -36,8 +36,8 @@ class RefinementOverlay(
     private var refinementInputLayout: TextInputLayout? = null
     private var refinementInput: TextInputEditText? = null
     private var btnCancel: MaterialButton? = null
-    private var btnRegenerateDirect: MaterialButton? = null
-    private var btnRegenerateWithInstruction: MaterialButton? = null
+    // BUG-00017修复：合并为单一生成按钮
+    private var btnRegenerate: MaterialButton? = null
 
     private var isShowing = false
 
@@ -132,11 +132,18 @@ class RefinementOverlay(
             refinementInputLayout = view.findViewById(R.id.refinement_input_layout)
             refinementInput = view.findViewById(R.id.refinement_input)
             btnCancel = view.findViewById(R.id.btn_cancel)
-            btnRegenerateDirect = view.findViewById(R.id.btn_regenerate_direct)
-            btnRegenerateWithInstruction = view.findViewById(R.id.btn_regenerate_with_instruction)
+            // BUG-00017修复：使用合并后的单一生成按钮
+            btnRegenerate = view.findViewById(R.id.btn_regenerate)
         }
     }
 
+    /**
+     * BUG-00017修复：简化按钮逻辑
+     * 
+     * 合并"直接重新生成"和"按方向生成"为单一"生成"按钮：
+     * - 有输入内容：按方向生成
+     * - 无输入内容：直接重新生成
+     */
     private fun setupClickListeners() {
         // 点击背景关闭
         overlayView?.setOnClickListener { dismiss() }
@@ -147,30 +154,33 @@ class RefinementOverlay(
         // 取消按钮
         btnCancel?.setOnClickListener { dismiss() }
 
-        // 直接重新生成按钮
-        btnRegenerateDirect?.setOnClickListener {
-            onDirectRegenerateListener?.invoke()
-            dismiss()
-        }
-
-        // 按方向生成按钮
-        btnRegenerateWithInstruction?.setOnClickListener {
+        // 生成按钮（合并逻辑：有输入则按方向生成，无输入则直接生成）
+        btnRegenerate?.setOnClickListener {
             val instruction = refinementInput?.text?.toString()?.trim() ?: ""
             if (instruction.isNotBlank()) {
+                // 有输入，按方向生成
                 onRegenerateWithInstructionListener?.invoke(instruction)
-                dismiss()
+            } else {
+                // 无输入，直接生成
+                onDirectRegenerateListener?.invoke()
             }
+            dismiss()
         }
     }
 
+    /**
+     * BUG-00017修复：简化后不再需要根据输入启用/禁用按钮
+     * 
+     * 保留TextWatcher用于未来可能的输入验证需求
+     */
     private fun setupTextWatcher() {
         refinementInput?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                // 根据输入内容启用/禁用"按方向生成"按钮
-                val hasInstruction = !s.isNullOrBlank()
-                btnRegenerateWithInstruction?.isEnabled = hasInstruction
+                // BUG-00017修复：合并按钮后，生成按钮始终可用
+                // 有输入则按方向生成，无输入则直接生成
+                // 此处保留TextWatcher用于未来可能的输入验证需求
             }
         })
     }

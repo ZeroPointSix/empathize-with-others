@@ -70,7 +70,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- 按钮栏 -->
+            <!-- 按钮栏（BUG-00017修复：简化为两个按钮） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -88,24 +88,13 @@
                     app:cornerRadius="8dp"
                     style="@style/Widget.Material3.Button.TextButton" />
 
-                <!-- 直接重新生成按钮 -->
+                <!-- 生成按钮（合并原来的两个按钮：有输入则按方向生成，无输入则直接生成） -->
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_regenerate_direct"
+                    android:id="@+id/btn_regenerate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="直接重新生成"
+                    android:text="生成"
                     android:textSize="14sp"
-                    app:cornerRadius="8dp"
-                    style="@style/Widget.Material3.Button.OutlinedButton" />
-
-                <!-- 按方向生成按钮 -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_regenerate_with_instruction"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="按方向生成"
-                    android:textSize="14sp"
-                    android:enabled="false"
                     app:cornerRadius="8dp"
                     style="@style/Widget.Material3.Button.TonalButton" />
 

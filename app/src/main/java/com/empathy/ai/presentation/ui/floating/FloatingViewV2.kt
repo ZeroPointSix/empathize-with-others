@@ -79,6 +79,9 @@ class FloatingViewV2(
     }
 
     private fun initViews() {
+        // BUG-00020修复：移除外层ScrollView，改用ResultCard内部的MaxHeightScrollView实现滑框式设计
+        // 这样可以避免嵌套滚动冲突，同时确保按钮固定在底部
+        
         // 创建主布局
         val mainLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -102,15 +105,25 @@ class FloatingViewV2(
             gravity = android.view.Gravity.END
         }
 
-        // 最小化按钮 - 使用 TextView 确保文本可见
+        // 最小化按钮 - 使用更醒目的样式
         // BUG-00013: 只保留最小化按钮，移除关闭按钮
+        // BUG-00017: 修复按钮不可见问题 - 增大尺寸、添加背景色、使用更醒目的图标
+        val density = context.resources.displayMetrics.density
+        val buttonSize = (48 * density).toInt() // 48dp转换为px
+        
+        // 创建圆形背景
+        val backgroundDrawable = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(android.graphics.Color.parseColor("#E0E0E0")) // 浅灰色背景
+        }
+        
         val btnMinimize = TextView(context).apply {
-            layoutParams = LinearLayout.LayoutParams(40, 40)
-            text = "−"
-            textSize = 24f
+            layoutParams = LinearLayout.LayoutParams(buttonSize, buttonSize)
+            text = "▼" // 使用向下箭头表示最小化，比减号更醒目
+            textSize = 20f
             gravity = android.view.Gravity.CENTER
-            setTextColor(android.graphics.Color.parseColor("#666666"))
-            setBackgroundResource(android.R.drawable.list_selector_background)
+            setTextColor(android.graphics.Color.parseColor("#424242")) // 深灰色，对比度更高
+            background = backgroundDrawable
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -169,7 +182,8 @@ class FloatingViewV2(
         }
         mainLayout.addView(resultCard)
 
-        // 添加主布局到视图
+        // BUG-00020修复：直接添加主布局，不使用外层ScrollView
+        // 滚动功能由ResultCard内部的MaxHeightScrollView实现
         addView(mainLayout)
 
         // 创建微调覆盖层（延迟初始化）
@@ -253,6 +267,8 @@ class FloatingViewV2(
 
     /**
      * 恢复状态
+     * 
+     * BUG-00020修复：恢复结果时也需要动态调整高度
      */
     fun restoreState(state: FloatingWindowUiState) {
         currentState = state
@@ -270,7 +286,7 @@ class FloatingViewV2(
             contact?.let { contactSelector?.setText(it.name, false) }
         }
 
-        // 恢复结果
+        // 恢复结果（showResult内部会调整高度）
         state.lastResult?.let { showResult(it) }
 
         // 恢复加载状态
@@ -331,6 +347,12 @@ class FloatingViewV2(
 
     /**
      * 显示结果
+     * 
+     * BUG-00020最终修复：
+     * - 内容区域固定最大高度200dp（在XML中设置）
+     * - 保留输入框，让用户可以继续输入对话
+     * - 内容超出200dp时通过滚动查看
+     * - 按钮固定在底部，始终可见
      */
     fun showResult(result: AiResult) {
         currentState = currentState.copy(lastResult = result)
@@ -338,6 +360,8 @@ class FloatingViewV2(
         resultCard?.visibility = View.VISIBLE
         hideLoading()
         hideError()
+        
+        android.util.Log.d(TAG, "showResult: 结果已显示，内容区域最大高度固定为200dp，输入框保持可见")
     }
 
     /**
@@ -346,6 +370,7 @@ class FloatingViewV2(
     fun clearResult() {
         currentState = currentState.copy(lastResult = null)
         resultCard?.clearResult()
+        resultCard?.visibility = View.GONE
     }
 
     /**
