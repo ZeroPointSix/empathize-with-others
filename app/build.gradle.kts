@@ -10,6 +10,15 @@ android {
     namespace = "com.empathy.ai"
     compileSdk = 35
 
+    signingConfigs {
+        create("release") {
+            keyAlias = (project.findProperty("RELEASE_KEY_ALIAS") as? String) ?: "empathy-key"
+            keyPassword = (project.findProperty("RELEASE_KEY_PASSWORD") as? String) ?: "empathy123"
+            storeFile = file((project.findProperty("RELEASE_STORE_FILE") as? String) ?: "../empathy-release-key.jks")
+            storePassword = (project.findProperty("RELEASE_STORE_PASSWORD") as? String) ?: "empathy123"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.empathy.ai"
         minSdk = 24
@@ -32,6 +41,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false

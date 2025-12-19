@@ -32,6 +32,7 @@
 - **Navigation Compose**：2.8.5
 - **Activity Compose**：1.9.3
 - **Material Icons Extended**：完整图标库
+- **Coil**：2.7.0（图片加载和缓存）
 
 ### ✅ 架构
 
@@ -46,6 +47,7 @@
 - **网络**：Retrofit 2.11.0 + OkHttp 4.12.0 + OkHttp Logging Interceptor
 - **JSON**：Moshi 1.15.1 与 Kotlin 代码生成
 - **安全**：EncryptedSharedPreferences（androidx.security.crypto 1.1.0-alpha06）
+- **分页**：Paging 3.3.5（分页加载支持）
 
 ### ✅ 异步处理
 
@@ -56,11 +58,7 @@
 
 - **FFmpeg Kit**：6.0.LTS（音视频处理）
 
-### ✅ 图片加载
-
-- **Coil**：2.7.0（图片加载和缓存）
-
-## ✅ 测试
+### ✅ 测试
 
 - **单元测试**：JUnit 4.13.2
 - **Android 测试**：AndroidX JUnit 1.2.1
@@ -142,6 +140,8 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **Room**：支持 Flow 的类型安全数据库
 - **Retrofit**：使用 Moshi 转换器的 REST API 客户端
 - **Security Crypto**：敏感数据的硬件支持加密
+- **Paging**：分页加载支持
+- **Coil**：图片加载和缓存
 
 ## 当前实现状态
 
@@ -150,24 +150,32 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **构建系统**: Gradle 8.13 + Kotlin DSL + KSP 完整配置
   - Gradle版本目录管理，统一依赖版本
   - KSP配置用于Room和Hilt编译时处理
+  - Desugaring配置支持Java 8+ API (minSdk=24)
 - **UI框架**: Jetpack Compose + Material Design 3 完整实现
   - Compose BOM 2024.12.01统一版本管理
   - Navigation Compose 2.8.5完整导航系统
   - Material Icons Extended完整图标库
   - 提示词编辑器UI：完整的Compose界面实现
+  - 悬浮窗功能重构UI：Tab系统和状态管理完整实现
+  - 悬浮球状态指示与拖动UI：流畅交互体验完整实现
 - **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
   - 严格的层级分离和依赖规则
   - Hilt 2.52依赖注入完整配置
   - PromptEditorViewModel：完整的状态管理
+  - ContactDetailTabViewModel：四标签页状态管理
+  - 新增DispatcherModule：统一协程调度器管理
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
   - 数据库版本v8，完整Migration链（1→8）
   - Flow响应式数据流
   - 提示词模板和备份表完整实现
+  - 记忆系统表：conversation_logs, daily_summaries, failed_summary_tasks
+  - Paging 3.3.5分页加载支持
 - **网络通信**: Retrofit + OkHttp + Moshi 完整实现
   - Retrofit 2.11.0动态URL支持
   - OkHttp 4.12.0 + Logging拦截器
   - Moshi 1.15.1 Kotlin代码生成
+  - 支持多种AI服务商：OpenAI、DeepSeek等
 - **异步编程**: Kotlin Coroutines + Flow 完整实现
   - Coroutines 1.9.0
   - 完整的suspend函数和Flow支持
@@ -175,11 +183,14 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **安全存储**: EncryptedSharedPreferences 完整实现
   - androidx.security.crypto 1.1.0-alpha06
   - 硬件级加密支持
+  - ApiKeyStorage：API密钥安全存储
 - **依赖注入**: Hilt 模块完整配置
   - DatabaseModule、NetworkModule、RepositoryModule
   - 新增MemoryModule支持记忆系统
   - 新增PromptModule支持提示词系统
   - 新增DispatcherModule支持协程调度器
+  - 新增FloatingWindowModule支持悬浮窗系统
+  - 新增NotificationModule支持通知系统
 - **图片加载**: Coil 图片加载和缓存完整实现
   - Coil 2.7.0 + Compose集成
 - **测试框架**: Room Testing、单元测试、UI测试完整实现
@@ -188,6 +199,11 @@ implementation("androidx.core:core-ktx:1.15.0")
   - Compose UI Test + Espresso 3.6.1
   - Room Testing 2.6.1数据库迁移测试
   - 提示词系统完整测试套件
+  - 悬浮窗功能重构完整测试套件
+  - 悬浮球状态指示与拖动相关测试
+- **通知系统**: Android通知管理完整实现
+  - AiResultNotificationManager：AI完成后系统通知
+  - 支持多种通知类型和优先级
 - **代码统计**: 219个Kotlin文件，48,476行代码
   - 主代码：131个文件，24,006行
   - 单元测试：88个文件，24,470行
@@ -198,6 +214,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 代码架构已设计：ExtractedData模型、AiRepository接口定义
   - ❌ 实际实现：AiRepositoryImpl.transcribeMedia直接返回未实现异常
   - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
+  - FFmpeg Kit 6.0.LTS已配置但未启用（app/build.gradle.kts中已注释）
 
 - **AI响应解析**: AiResponseParser接口已定义，但实现可能不完整
   - 代码架构存在：AiResponseParser接口、FallbackHandler等
@@ -251,3 +268,9 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ✅ 修改PolishDraftUseCase和GenerateReplyUseCase添加历史上下文支持
   - ✅ 更新FloatingWindowModule添加依赖注入
   - ✅ 新增相关测试用例验证修复效果
+
+- **悬浮窗结果页内容过长导致按钮不可见问题**: 已完成BUG-00021修复
+  - ✅ 采用动态高度计算策略，将结果区域最大高度限制为屏幕高度的40%
+  - ✅ 确保底部操作按钮（复制、重新生成）始终在屏幕可见范围内
+  - ✅ 在ResultCard中暴露setMaxHeight接口，支持动态调整
+  - ✅ 新增MaxHeightScrollView组件，支持内容超出时的滚动
