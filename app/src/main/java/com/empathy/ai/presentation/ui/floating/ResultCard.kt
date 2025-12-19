@@ -14,6 +14,7 @@ import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.RiskLevel
+import com.empathy.ai.presentation.ui.component.MaxHeightScrollView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 
@@ -35,6 +36,7 @@ class ResultCard @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     private var resultCard: MaterialCardView? = null
+    private var resultScroll: MaxHeightScrollView? = null
     private var resultTitle: TextView? = null
     private var riskBadge: TextView? = null
     private var resultContent: TextView? = null
@@ -56,6 +58,7 @@ class ResultCard @JvmOverloads constructor(
 
     private fun initViews() {
         resultCard = findViewById(R.id.result_card)
+        resultScroll = findViewById(R.id.result_scroll)
         resultTitle = findViewById(R.id.result_title)
         riskBadge = findViewById(R.id.risk_badge)
         resultContent = findViewById(R.id.result_content)
@@ -178,6 +181,15 @@ class ResultCard @JvmOverloads constructor(
             is AiResult.Polish -> showPolishResult(result.result)
             is AiResult.Reply -> showReplyResult(result.result)
         }
+    }
+
+    /**
+     * 动态设置内容区域最大高度
+     *
+     * @param height 最大高度（像素）
+     */
+    fun setMaxHeight(height: Int) {
+        resultScroll?.setMaxHeight(height)
     }
 
     /**
