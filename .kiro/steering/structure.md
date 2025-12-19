@@ -37,13 +37,55 @@ com.empathy.ai/
 │   │   ├── FloatingWindowError.kt
 │   │   ├── MinimizedRequestInfo.kt
 │   │   ├── MinimizeError.kt
-│   │   └── ExtractedData.kt
+│   │   ├── ExtractedData.kt
+│   │   ├── PromptContext.kt              # 🆕 提示词上下文模型
+│   │   ├── PromptError.kt                # 🆕 提示词错误模型
+│   │   ├── PromptScene.kt                 # 🆕 提示词场景模型
+│   │   ├── GlobalPromptConfig.kt           # 🆕 全局提示词配置
+│   │   ├── TimelineItem.kt                # 🆕 时间线项目密封类
+│   │   ├── EmotionType.kt                 # 🆕 情绪类型枚举
+│   │   ├── RelationshipLevel.kt             # 🆕 关系级别枚举
+│   │   ├── RelationshipTrend.kt            # 🆕 关系趋势枚举
+│   │   ├── Fact.kt                       # 🆕 事实模型
+│   │   ├── FactKeys.kt                    # 🆕 事实键常量
+│   │   ├── FactSource.kt                  # 🆕 事实来源枚举
+│   │   ├── FilterType.kt                  # 🆕 过滤类型枚举
+│   │   ├── FloatingBubblePosition.kt        # 🆕 悬浮球位置模型
+│   │   ├── FloatingBubbleState.kt          # 🆕 悬浮球状态模型
+│   │   ├── FloatingWindowState.kt          # 🆕 悬浮窗状态模型
+│   │   ├── FloatingWindowUiState.kt        # 🆕 悬浮窗UI状态模型
+│   │   ├── ConversationContextConfig.kt     # 🆕 对话上下文配置
+│   │   ├── ConversationLog.kt              # 🆕 对话日志模型
+│   │   ├── DailySummary.kt                # 🆕 每日总结模型
+│   │   ├── DataStatus.kt                  # 🆕 数据状态枚举
+│   │   ├── TimeFlowMarker.kt              # 🆕 时间流标记
+│   │   ├── TimestampedMessage.kt           # 🆕 时间戳消息模型
+│   │   ├── ViewMode.kt                   # 🆕 视图模式枚举
+│   │   ├── KeyEvent.kt                   # 🆕 键事件模型
+│   │   ├── AiResult.kt                   # 🆕 AI结果模型
+│   │   ├── AppError.kt                   # 🆕 应用错误模型
+│   │   ├── ConnectionTestResult.kt          # 🆕 连接测试结果模型
+│   │   ├── PolishResult.kt                # 🆕 润色结果模型
+│   │   ├── ReplyResult.kt                 # 🆕 回复结果模型
+│   │   ├── RefinementRequest.kt            # 🆕 优化请求模型
+│   │   ├── TagUpdate.kt                  # 🆕 标签更新模型
+│   │   ├── PromptValidationResult.kt        # 🆕 提示词验证结果模型
+│   │   ├── ScenePromptConfig.kt            # 🆕 场景提示词配置
+│   │   ├── ProviderPresets.kt              # 🆕 提供商预设模型
+│   │   ├── PromptHistoryItem.kt           # 🆕 提示词历史项模型
+│   │   ├── MessageSender.kt               # 🆕 消息发送者枚举
+│   │   └── CleanupConfig.kt              # 🆕 清理配置模型
 │   ├── repository/                        # ✅ 仓库接口
 │   │   ├── AiRepository.kt
 │   │   ├── BrainTagRepository.kt
 │   │   ├── ContactRepository.kt
 │   │   ├── PrivacyRepository.kt
-│   │   └── SettingsRepository.kt
+│   │   ├── SettingsRepository.kt
+│   │   ├── PromptRepository.kt             # 🆕 提示词仓库接口
+│   │   ├── ConversationRepository.kt        # 🆕 对话仓库接口
+│   │   ├── DailySummaryRepository.kt        # 🆕 每日总结仓库接口
+│   │   ├── FailedTaskRepository.kt          # 🆕 失败任务仓库接口
+│   │   └── AiProviderRepository.kt
 │   ├── usecase/                          # ✅ 业务逻辑用例
 │   │   ├── AnalyzeChatUseCase.kt
 │   │   ├── CheckDraftUseCase.kt
@@ -57,11 +99,17 @@ com.empathy.ai/
 │   │   ├── SaveProviderUseCase.kt
 │   │   ├── DeleteProviderUseCase.kt
 │   │   ├── GetProvidersUseCase.kt
-│   │   └── TestConnectionUseCase.kt
+│   │   ├── TestConnectionUseCase.kt
+│   │   ├── PolishDraftUseCase.kt           # 🆕 润色草稿用例
+│   │   ├── GenerateReplyUseCase.kt         # 🆕 生成回复用例
+│   │   ├── RefinementUseCase.kt            # 🆕 优化用例
+│   │   ├── GetBrainTagsUseCase.kt          # 🆕 获取标签用例
+│   │   └── SummarizeDailyConversationsUseCase.kt  # 🆕 每日对话总结用例
 │   ├── service/                          # ✅ 领域服务
 │   │   ├── PrivacyEngine.kt
 │   │   ├── RuleEngine.kt
-│   │   └── FloatingWindowService.kt
+│   │   ├── FloatingWindowService.kt
+│   │   └── SessionContextService.kt        # 🆕 会话上下文服务
 │   └── util/                            # ✅ 领域工具类
 │       ├── ErrorHandler.kt
 │       ├── ErrorMapper.kt
@@ -72,38 +120,83 @@ com.empathy.ai/
 │       ├── PerformanceMonitor.kt
 │       ├── PerformanceTracker.kt
 │       ├── RetryConfig.kt
-│       └── WeChatDetector.kt
+│       ├── WeChatDetector.kt
+│       ├── PromptBuilder.kt                # 🆕 提示词构建器
+│       ├── PromptSanitizer.kt              # 🆕 提示词清理器
+│       ├── PromptValidator.kt               # 🆕 提示词验证器
+│       ├── PromptVariableResolver.kt         # 🆕 提示词变量解析器
+│       ├── SystemPrompts.kt                # 🆕 系统提示词
+│       ├── PromptTemplates.kt               # 🆕 提示词模板
+│       ├── ConversationContextBuilder.kt      # 🆕 对话上下文构建器
+│       ├── IdentityPrefixHelper.kt           # 🆕 身份前缀助手
+│       ├── AiResponseCleaner.kt            # 🆕 AI响应清理器
+│       ├── AiSummaryProcessor.kt            # 🆕 AI总结处理器
+│       ├── LocalSummaryProcessor.kt          # 🆕 本地总结处理器
+│       ├── DataCleanupManager.kt            # 🆕 数据清理管理器
+│       ├── DataEncryption.kt                # 🆕 数据加密工具
+│       ├── DebugLogger.kt                   # 🆕 调试日志器
+│       ├── FloatingViewDebugLogger.kt        # 🆕 悬浮窗调试日志器
+│       ├── PerformanceMetrics.kt             # 🆕 性能指标
+│       ├── PermissionManager.kt             # 🆕 权限管理器
+│       ├── PrivacyConfig.kt                 # 🆕 隐私配置
+│       ├── PrivacyDataHandler.kt            # 🆕 隐私数据处理器
+│       ├── SecurityConfig.kt                # 🆕 安全配置
+│       ├── MemoryConstants.kt               # 🆕 内存常量
+│       ├── MemoryLogger.kt                 # 🆕 内存日志器
+│       ├── FailedTaskRecovery.kt           # 🆕 失败任务恢复
+│       ├── ContactDetailError.kt            # 🆕 联系人详情错误
+│       └── DateUtils.kt                   # 🆕 日期工具类
 │
 ├── data/                                   # ✅ 数据层（实现）
 │   ├── local/                          # ✅ 本地存储
 │   │   ├── AppDatabase.kt              # Room 数据库配置
 │   │   ├── ApiKeyStorage.kt
 │   │   ├── FloatingWindowPreferences.kt
+│   │   ├── PrivacyPreferences.kt         # 🆕 隐私偏好设置
+│   │   ├── MemoryPreferences.kt         # 🆕 记忆偏好设置
+│   │   ├── ConversationPreferences.kt    # 🆕 对话偏好设置
+│   │   ├── DefaultPrompts.kt           # 🆕 默认提示词
+│   │   ├── PromptFileStorage.kt         # 🆕 提示词文件存储
+│   │   ├── PromptFileBackup.kt         # 🆕 提示词文件备份
 │   │   ├── converter/                # ✅ Room 类型转换器
 │   │   │   └── RoomTypeConverters.kt
+│   │   │   └── FactListConverter.kt    # 🆕 事实列表转换器
 │   │   ├── dao/                    # ✅ 数据访问对象
 │   │   │   ├── AiProviderDao.kt
 │   │   │   ├── BrainTagDao.kt
-│   │   │   └── ContactDao.kt
+│   │   │   ├── ContactDao.kt
+│   │   │   ├── ConversationLogDao.kt    # 🆕 对话日志DAO
+│   │   │   ├── DailySummaryDao.kt       # 🆕 每日总结DAO
+│   │   │   └── FailedSummaryTaskDao.kt  # 🆕 失败总结任务DAO
 │   │   └── entity/                 # ✅ 数据库实体
 │   │       ├── AiProviderEntity.kt
 │   │       ├── BrainTagEntity.kt
-│   │       └── ContactProfileEntity.kt
+│   │       ├── ContactProfileEntity.kt
+│   │       ├── ConversationLogEntity.kt    # 🆕 对话日志实体
+│   │       ├── DailySummaryEntity.kt       # 🆕 每日总结实体
+│   │       └── FailedSummaryTaskEntity.kt  # 🆕 失败总结任务实体
 │   ├── remote/                         # ✅ 网络层
 │   │   ├── api/                    # ✅ Retrofit API 接口
 │   │   │   └── OpenAiApi.kt
 │   │   └── model/                  # ✅ DTO（数据传输对象）
 │   │       ├── ChatRequestDto.kt
 │   │       ├── ChatResponseDto.kt
-│   │       └── MessageDto.kt
+│   │       ├── MessageDto.kt
+│   │       ├── ModelsResponseDto.kt       # 🆕 模型响应DTO
+│   │       └── AiSummaryResponse.kt      # 🆕 AI总结响应DTO
 │   ├── repository/                     # ✅ 仓库实现
 │   │   ├── AiRepositoryImpl.kt
 │   │   ├── BrainTagRepositoryImpl.kt
 │   │   ├── ContactRepositoryImpl.kt
 │   │   ├── PrivacyRepositoryImpl.kt
 │   │   ├── AiProviderRepositoryImpl.kt
-│   │   └── settings/
-│   │       └── SettingsRepositoryImpl.kt
+│   │   ├── settings/
+│   │   │   └── SettingsRepositoryImpl.kt
+│   │   ├── PromptRepositoryImpl.kt       # 🆕 提示词仓库实现
+│   │   ├── ConversationRepositoryImpl.kt  # 🆕 对话仓库实现
+│   │   ├── DailySummaryRepositoryImpl.kt  # 🆕 每日总结仓库实现
+│   │   ├── FailedTaskRepositoryImpl.kt    # 🆕 失败任务仓库实现
+│   │   └── ProviderCompatibility.kt       # 🆕 提供商兼容性
 │   └── parser/                         # ✅ AI响应解析器
 │       ├── AiResponseParser.kt
 │       ├── EnhancedJsonCleaner.kt
@@ -114,11 +207,16 @@ com.empathy.ai/
 ├── presentation/                            # ✅ 表现层
 │   ├── navigation/                     # ✅ 导航系统
 │   │   ├── NavGraph.kt
-│   │   └── NavRoutes.kt
+│   │   ├── NavRoutes.kt
+│   │   └── PromptEditorNavigation.kt    # 🆕 提示词编辑器导航
 │   ├── theme/                          # ✅ Compose 主题
 │   │   ├── Color.kt
 │   │   ├── Theme.kt
-│   │   └── Type.kt
+│   │   ├── Type.kt
+│   │   ├── AnimationSpec.kt              # 🆕 动画规格
+│   │   ├── Dimensions.kt                # 🆕 尺寸定义
+│   │   ├── RelationshipColors.kt          # 🆕 关系颜色
+│   │   └── SemanticColors.kt             # 🆕 语义颜色
 │   ├── ui/                             # ✅ UI 组件
 │   │   ├── MainActivity.kt
 │   │   ├── component/               # ✅ 可复用组件
@@ -145,10 +243,27 @@ com.empathy.ai/
 │   │   │   │   └── ContactListItem.kt
 │   │   │   ├── message/
 │   │   │   │   └── MessageBubble.kt
-│   │   │   └── state/
-│   │   │       ├── EmptyView.kt
-│   │   │       ├── ErrorView.kt
-│   │   │       └── LoadingIndicator.kt
+│   │   │   ├── state/
+│   │   │   │   ├── EmptyView.kt
+│   │   │   │   ├── ErrorView.kt
+│   │   │   │   └── LoadingIndicator.kt
+│   │   │   ├── control/                 # 🆕 控制组件
+│   │   │   │   ├── QuickFilterChips.kt
+│   │   │   │   └── SegmentedControl.kt
+│   │   │   ├── emotion/                 # 🆕 情感化组件
+│   │   │   │   ├── EmotionalBackground.kt
+│   │   │   │   ├── EmotionalTimelineNode.kt
+│   │   │   │   └── GlassmorphicCard.kt
+│   │   │   ├── relationship/             # 🆕 关系进展组件
+│   │   │   │   ├── FactItem.kt
+│   │   │   │   ├── RelationshipScoreSection.kt
+│   │   │   │   └── TrendIcon.kt
+│   │   │   └── floating/               # 🆕 悬浮窗组件
+│   │   │       ├── FloatingViewV2.kt
+│   │   │       ├── FloatingBubbleView.kt
+│   │   │       ├── ResultCard.kt
+│   │   │       ├── TabSwitcher.kt
+│   │   │       └── RefinementOverlay.kt
 │   │   └── screen/               # ✅ 功能屏幕
 │   │       ├── aiconfig/
 │   │       │   ├── AiConfigScreen.kt
@@ -164,23 +279,63 @@ com.empathy.ai/
 │   │       │   ├── ContactListUiEvent.kt
 │   │       │   ├── ContactDetailScreen.kt
 │   │       │   ├── ContactDetailUiState.kt
-│   │       │   └── ContactDetailUiEvent.kt
+│   │       │   ├── ContactDetailUiEvent.kt
+│   │       │   ├── ContactDetailTabScreen.kt          # ✅ 四标签页UI
+│   │       │   ├── DetailTab.kt                      # ✅ 标签页枚举
+│   │       │   ├── overview/                         # ✅ 概览标签页
+│   │       │   │   ├── OverviewTab.kt
+│   │       │   │   ├── DynamicEmotionalHeader.kt
+│   │       │   │   ├── LatestFactHookCard.kt
+│   │       │   │   └── TopTagsSection.kt
+│   │       │   ├── factstream/                       # ✅ 事实流标签页
+│   │       │   │   ├── FactStreamTab.kt
+│   │       │   │   ├── ListView.kt
+│   │       │   │   ├── ListViewRow.kt
+│   │       │   │   ├── TimelineView.kt
+│   │       │   │   └── FactStreamTopBar.kt
+│   │       │   ├── persona/                          # ✅ 标签画像标签页
+│   │       │   │   ├── PersonaTab.kt
+│   │       │   │   ├── CategorySection.kt
+│   │       │   │   ├── GuessedTag.kt
+│   │       │   │   └── ConfirmedTag.kt
+│   │       │   └── vault/                           # ✅ 资料库标签页
+│   │       │       ├── DataVaultTab.kt
+│   │       │       └── DataSourceCard.kt
 │   │       ├── settings/
 │   │       │   ├── SettingsScreen.kt
 │   │       │   ├── SettingsUiState.kt
-│   │       │   └── SettingsUiEvent.kt
-│   │       └── tag/
-│   │           ├── BrainTagScreen.kt
-│   │           ├── BrainTagUiState.kt
-│   │           └── BrainTagUiEvent.kt
+│   │       │   ├── SettingsUiEvent.kt
+│   │       │   └── component/                        # 🆕 设置组件
+│   │       │       └── HistoryConversationCountSection.kt
+│   │       ├── tag/
+│   │       │   ├── BrainTagScreen.kt
+│   │       │   ├── BrainTagUiState.kt
+│   │       │   └── BrainTagUiEvent.kt
+│   │       └── prompt/                        # 🆕 提示词编辑器
+│   │           ├── PromptEditorScreen.kt
+│   │           ├── PromptEditorUiState.kt
+│   │           ├── PromptEditorUiEvent.kt
+│   │           ├── PromptEditMode.kt
+│   │           ├── PromptEditorResult.kt
+│   │           └── component/                     # 🆕 提示词编辑器组件
+│   │               ├── CharacterCounter.kt
+│   │               ├── DiscardConfirmDialog.kt
+│   │               ├── InlineErrorBanner.kt
+│   │               ├── PromptEditorTopBar.kt
+│   │               └── PromptInputField.kt
 │   └── viewmodel/                    # ✅ ViewModel
 │       ├── BaseViewModel.kt
 │       ├── AiConfigViewModel.kt
 │       ├── BrainTagViewModel.kt
 │       ├── ChatViewModel.kt
 │       ├── ContactDetailViewModel.kt
+│       ├── ContactDetailTabViewModel.kt     # ✅ 四标签页ViewModel
 │       ├── ContactListViewModel.kt
-│       └── SettingsViewModel.kt
+│       ├── SettingsViewModel.kt
+│       └── PromptEditorViewModel.kt          # 🆕 提示词编辑器ViewModel
+│
+├── notification/                            # 🆕 通知模块
+│   └── AiResultNotificationManager.kt       # AI结果通知管理器
 │
 └── di/                              # ✅ 依赖注入
     ├── DatabaseModule.kt
@@ -190,7 +345,8 @@ com.empathy.ai/
     ├── MemoryModule.kt               # 🆕 记忆系统依赖注入
     ├── PromptModule.kt               # 🆕 提示词系统依赖注入
     ├── DispatcherModule.kt           # 🆕 协程调度器管理
-    └── FloatingWindowModule.kt       # 🆕 悬浮窗依赖注入
+    ├── FloatingWindowModule.kt       # 🆕 悬浮窗依赖注入
+    └── NotificationModule.kt          # 🆕 通知模块依赖注入
 ```
 
 ## 层级职责
@@ -319,10 +475,12 @@ test/
   - 新增RelationshipLevel、RelationshipTrend等关系追踪模型
   - 提示词管理系统：新增PromptContext、PromptError、PromptScene、GlobalPromptConfig等模型
   - 新增PromptBuilder、PromptSanitizer、PromptValidator、PromptVariableResolver、SystemPrompts等工具类
+  - 新增SessionContextService，统一管理历史对话上下文
 - **数据层**: 100%完成，Room数据库、网络层、仓库实现完整
   - 数据库版本升级至v8，新增prompt_templates、prompt_backups表
   - 完整的Migration脚本和测试（1→2→3→4→5→6→7→8）
   - 新增PromptFileStorage、PromptFileBackup、PromptRepositoryImpl等文件管理组件
+  - 新增ConversationLogEntity、DailySummaryEntity、FailedSummaryTaskEntity等记忆系统实体
 - **表现层**: 100%完成，UI组件、屏幕、ViewModel完整实现
   - 联系人画像记忆系统UI：100%完成，四标签页架构完整实现
   - ✅ 概览标签页：DynamicEmotionalHeader、LatestFactHookCard、TopTagsSection
@@ -333,15 +491,24 @@ test/
   - ✅ PromptEditorScreen：支持创建、编辑、验证提示词
   - ✅ PromptEditorViewModel：状态管理和业务逻辑
   - ✅ 提示词组件：CharacterCounter、DiscardConfirmDialog、InlineErrorBanner等
+  - 悬浮窗功能重构UI：100%完成，Tab系统和状态管理完整实现
+  - ✅ FloatingViewV2：支持分析/润色/回复三个功能Tab
+  - ✅ TabSwitcher：Tab切换器和状态指示器
+  - ✅ FloatingBubbleView：悬浮球状态指示与拖动
   - 新增AddFactToStreamDialog、EditConversationDialog、TagConfirmationDialog
 - **依赖注入**: 100%完成，Hilt模块完整配置
   - 新增MemoryModule，管理记忆系统相关依赖
   - 新增PromptModule，管理提示词系统相关依赖
   - 新增DispatcherModule，统一管理协程调度器
+  - 新增FloatingWindowModule，管理悬浮窗相关依赖
+  - 新增NotificationModule，管理通知相关依赖
+- **通知系统**: 100%完成，AI结果通知管理器完整实现
+  - AiResultNotificationManager：统一管理AI完成后的系统通知
 - **测试覆盖**: 99.1% (测试代码行数 / 源代码行数)
   - 单元测试：88个文件，24,470行
   - Android测试：4个文件
   - 新增提示词系统相关完整测试套件
+  - 新增悬浮窗功能重构相关测试套件
   - 代码统计：219个Kotlin文件 (131个主代码 + 88个单元测试)
 
 ### ⚠️ 部分实现/待验证模块
@@ -350,12 +517,20 @@ test/
   - 需要实现：IdentityPrefixHelper、UseCase层集成、系统提示词增强、UI渲染优化
   - 相关文档：TDD-00008-输入内容身份识别与双向对话历史技术设计.md
 - **AI响应解析**: AiResponseParser接口已定义，但实现可能不完整
+  - 代码架构存在：AiResponseParser接口、FallbackHandler等
+  - ⚠️ 集成状态不明：需要验证解析器在实际AI调用中的使用情况
 - **媒体处理**: FeedTextUseCase已实现，但AiRepositoryImpl中transcribeMedia方法未实现
   - 代码架构已设计：ExtractedData模型、AiRepository接口定义
   - ❌ 实际实现：AiRepositoryImpl.transcribeMedia直接返回未实现异常
   - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
 - **规则引擎**: RuleEngine功能完整，但与实际业务流程的集成状态不明
+  - 代码架构完整：RuleEngine、多种匹配策略
+  - ⚠️ 集成状态不明：可能未在实际业务流程中被调用
 - **悬浮窗服务**: FloatingWindowService代码庞大，需要验证与UI层的实际集成
   - ✅ BUG-00014悬浮球状态指示与启动模式修复已完成
   - ✅ BUG-00015三种模式上下文不共通问题修复已完成
+  - ✅ TD-00009悬浮窗功能重构全部完成（46/46任务）
+  - ✅ TD-00010悬浮球状态指示与拖动（23/26任务完成，88.5%）
 - **无障碍服务**: WeChatDetector等工具类存在，但实际集成状态不明
+  - 代码架构存在：WeChatDetector、FloatingWindowManager等
+  - ❌ 实际集成未验证：需要确认与悬浮窗服务的协作
