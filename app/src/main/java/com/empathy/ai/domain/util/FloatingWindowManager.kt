@@ -185,6 +185,36 @@ object FloatingWindowManager {
     }
     
     /**
+     * 检查悬浮窗服务是否正在运行
+     * 
+     * BUG-00019: 用于避免重复启动服务导致状态重置
+     *
+     * @param context 上下文
+     * @return Boolean 服务是否正在运行
+     */
+    fun isServiceRunning(context: Context): Boolean {
+        return try {
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            
+            @Suppress("DEPRECATION")
+            val runningServices = activityManager.getRunningServices(Int.MAX_VALUE)
+            
+            val serviceName = com.empathy.ai.domain.service.FloatingWindowService::class.java.name
+            
+            val isRunning = runningServices.any { serviceInfo ->
+                serviceInfo.service.className == serviceName
+            }
+            
+            android.util.Log.d("FloatingWindowManager", "服务运行状态检查: $serviceName -> $isRunning")
+            isRunning
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowManager", "检查服务运行状态失败", e)
+            // 出错时返回 false，允许尝试启动服务
+            false
+        }
+    }
+    
+    /**
      * 权限请求码
      */
     const val REQUEST_CODE_OVERLAY_PERMISSION = 1001

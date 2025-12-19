@@ -246,8 +246,7 @@ class SessionContextServiceTest {
             contactId = testContactId,
             userInput = userInput,
             aiResponse = null,
-            timestamp = testTimestamp + id * 1000,
-            actionType = "ANALYZE"
+            timestamp = testTimestamp + id * 1000
         )
     }
 }

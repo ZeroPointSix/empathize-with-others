@@ -524,10 +524,13 @@ class FloatingWindowPreferences @Inject constructor(
     /**
      * 获取显示模式
      *
-     * @return 显示模式，默认返回 DIALOG
+     * BUG-00017修复：默认返回 BUBBLE，让首次启动以悬浮球模式显示
+     * 用户点击悬浮球展开对话框后，会保存为 DIALOG 模式
+     *
+     * @return 显示模式，默认返回 BUBBLE
      */
     fun getDisplayMode(): String {
-        return prefs.getString(KEY_DISPLAY_MODE, DISPLAY_MODE_DIALOG) ?: DISPLAY_MODE_DIALOG
+        return prefs.getString(KEY_DISPLAY_MODE, DISPLAY_MODE_BUBBLE) ?: DISPLAY_MODE_BUBBLE
     }
 
     /**

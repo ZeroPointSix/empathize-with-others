@@ -101,6 +101,9 @@ class ResultCard @JvmOverloads constructor(
         riskWarningContainer?.visibility = View.GONE
         strategyNote?.visibility = View.GONE
 
+        // BUG-00017修复：显式设置按钮可见，确保复制和重新生成按钮始终显示
+        ensureButtonsVisible()
+
         visibility = View.VISIBLE
     }
 
@@ -128,6 +131,9 @@ class ResultCard @JvmOverloads constructor(
         // 隐藏策略说明
         strategyNote?.visibility = View.GONE
 
+        // BUG-00017修复：显式设置按钮可见，确保复制和重新生成按钮始终显示
+        ensureButtonsVisible()
+
         visibility = View.VISIBLE
     }
 
@@ -154,6 +160,9 @@ class ResultCard @JvmOverloads constructor(
         } else {
             strategyNote?.visibility = View.GONE
         }
+
+        // BUG-00017修复：显式设置按钮可见，确保复制和重新生成按钮始终显示
+        ensureButtonsVisible()
 
         visibility = View.VISIBLE
     }
@@ -211,6 +220,21 @@ class ResultCard @JvmOverloads constructor(
             RiskLevel.DANGER -> R.color.risk_danger
         }
         riskBadge?.background?.setTint(ContextCompat.getColor(context, backgroundColor))
+    }
+
+    /**
+     * BUG-00017修复：确保复制和重新生成按钮始终可见
+     * 
+     * 问题：分析和润色模式下按钮不可见
+     * 原因：按钮visibility可能在某些情况下被隐藏或未正确初始化
+     * 解决：在每次显示结果时显式设置按钮为VISIBLE
+     */
+    private fun ensureButtonsVisible() {
+        btnCopy?.visibility = View.VISIBLE
+        btnRegenerate?.visibility = View.VISIBLE
+        
+        // 添加调试日志，帮助排查问题
+        android.util.Log.d(TAG, "ensureButtonsVisible: btnCopy=${btnCopy != null}, btnRegenerate=${btnRegenerate != null}")
     }
 
     companion object {

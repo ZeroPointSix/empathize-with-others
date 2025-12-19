@@ -3,8 +3,6 @@ package com.empathy.ai.presentation.ui.screen.contact
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -12,24 +10,21 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
-import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.button.PrimaryButton
 import com.empathy.ai.presentation.ui.component.button.SecondaryButton
 import com.empathy.ai.presentation.ui.component.card.ProfileCard
-import com.empathy.ai.presentation.ui.component.chip.TagChip
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.relationship.FactList
 import com.empathy.ai.presentation.ui.component.relationship.RelationshipScoreSection
-import com.empathy.ai.presentation.ui.component.dialog.AddTagDialog
 import com.empathy.ai.presentation.ui.component.dialog.AddFactToStreamDialog
 import com.empathy.ai.presentation.ui.component.state.ErrorView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
@@ -196,7 +191,8 @@ private fun ContactDetailScreenContent(
         )
     }
 
-    // 添加事实对话框（替换原来的标签对话框，统一使用Fact类型）
+    // BUG-00017修复：移除脑标签功能，只保留事实录入
+    // 添加事实对话框（统一使用Fact类型）
     if (uiState.showAddFactDialog) {
         AddFactToStreamDialog(
             onDismiss = { onEvent(ContactDetailUiEvent.HideAddFactDialog) },
@@ -299,11 +295,13 @@ private fun ContactDetailContent(
             // 事实和标签在联系人创建后通过事实流添加
         }
 
+        // BUG-00017修复：移除脑标签UI，只保留事实录入功能
         // 事实部分（统一使用Fact类型，与联系人画像系统保持一致）
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "画像事实",
@@ -437,23 +435,7 @@ private fun ContactDetailScreenViewPreview() {
                 name = "张三",
                 targetGoal = "建立良好的合作关系，促进项目顺利进行",
                 contextDepth = 10,
-                facts = emptyList(),
-                brainTags = listOf(
-                    BrainTag(
-                        id = 1,
-                        contactId = "1",
-                        content = "不要提工作压力",
-                        type = TagType.RISK_RED,
-                        source = "MANUAL"
-                    ),
-                    BrainTag(
-                        id = 2,
-                        contactId = "1",
-                        content = "喜欢聊摄影技巧",
-                        type = TagType.STRATEGY_GREEN,
-                        source = "MANUAL"
-                    )
-                )
+                facts = emptyList()
             ),
             onEvent = {},
             onNavigateBack = {}
@@ -471,16 +453,7 @@ private fun ContactDetailScreenEditPreview() {
                 isEditMode = true,
                 name = "张三",
                 targetGoal = "建立良好的合作关系",
-                contextDepth = 10,
-                brainTags = listOf(
-                    BrainTag(
-                        id = 1,
-                        contactId = "1",
-                        content = "不要提工作压力",
-                        type = TagType.RISK_RED,
-                        source = "MANUAL"
-                    )
-                )
+                contextDepth = 10
             ),
             onEvent = {},
             onNavigateBack = {}
@@ -537,16 +510,7 @@ private fun ContactDetailScreenDarkPreview() {
                 ),
                 name = "张三",
                 targetGoal = "建立良好的合作关系",
-                contextDepth = 10,
-                brainTags = listOf(
-                    BrainTag(
-                        id = 1,
-                        contactId = "1",
-                        content = "不要提工作压力",
-                        type = TagType.RISK_RED,
-                        source = "MANUAL"
-                    )
-                )
+                contextDepth = 10
             ),
             onEvent = {},
             onNavigateBack = {}

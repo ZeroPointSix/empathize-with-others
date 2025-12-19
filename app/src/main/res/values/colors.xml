@@ -104,4 +104,7 @@
     <color name="warning_text">#E65100</color>
     <color name="error_background">#FFEBEE</color>
     <color name="error_text">#C62828</color>
+
+    <!-- 分隔线颜色 -->
+    <color name="divider">#E0E0E0</color>
 </resources>

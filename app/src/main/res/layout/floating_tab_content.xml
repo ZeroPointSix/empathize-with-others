@@ -29,12 +29,16 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 输入框 -->
+    <!-- 
+        输入框（BUG-00020修复：减少高度）
+        - minLines从3改为2，减少约40dp
+        - maxLines从6改为4，限制最大高度
+    -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
         android:hint="输入内容"
         app:boxCornerRadiusTopStart="8dp"
         app:boxCornerRadiusTopEnd="8dp"
@@ -49,21 +53,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textMultiLine"
-            android:minLines="3"
-            android:maxLines="6"
+            android:minLines="2"
+            android:maxLines="4"
             android:textSize="14sp"
             android:gravity="top" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 发送按钮 -->
+    <!-- 发送按钮（BUG-00020修复：减少高度和margin） -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_submit"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
         android:text="发送"
-        android:textSize="15sp"
+        android:textSize="14sp"
         app:cornerRadius="8dp"
         app:icon="@drawable/ic_send"
         app:iconGravity="end"

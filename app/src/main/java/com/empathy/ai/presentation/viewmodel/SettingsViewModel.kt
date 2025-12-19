@@ -497,6 +497,8 @@ class SettingsViewModel @Inject constructor(
      * 
      * 不仅恢复 UI 状态，还会在状态为启用时自动恢复服务
      * 这解决了应用重启后悬浮窗不自动显示的问题
+     * 
+     * BUG-00019修复：添加服务运行状态检查，避免重复启动服务导致状态重置
      */
     private fun loadFloatingWindowState() {
         val state = floatingWindowPreferences.loadState()
@@ -509,7 +511,13 @@ class SettingsViewModel @Inject constructor(
             viewModelScope.launch {
                 val permissionResult = FloatingWindowManager.hasPermission(getApplication())
                 if (permissionResult is FloatingWindowManager.PermissionResult.Granted) {
-                    // 有权限，自动启动服务恢复悬浮窗
+                    // BUG-00019修复：检查服务是否已运行，避免重复启动
+                    if (FloatingWindowManager.isServiceRunning(getApplication())) {
+                        android.util.Log.d("SettingsViewModel", "悬浮窗服务已运行，跳过启动")
+                        return@launch
+                    }
+                    
+                    // 有权限且服务未运行，自动启动服务恢复悬浮窗
                     android.util.Log.d("SettingsViewModel", "检测到悬浮窗状态为启用，自动恢复服务")
                     startFloatingWindowService()
                 } else {

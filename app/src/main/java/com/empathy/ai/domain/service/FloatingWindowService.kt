@@ -127,6 +127,8 @@ class FloatingWindowService : Service() {
      * 
      * 启动前台服务并显示悬浮视图
      * 
+     * BUG-00019修复：添加幂等性保护，避免重复创建视图
+     * 
      * @param intent 启动意图
      * @param flags 启动标志
      * @param startId 启动 ID
@@ -146,6 +148,12 @@ class FloatingWindowService : Service() {
             startForeground(NOTIFICATION_ID, notification)
             android.util.Log.d("FloatingWindowService", "前台服务启动成功")
             
+            // BUG-00019修复：幂等性检查 - 如果视图已存在则跳过创建
+            if (hasExistingViews()) {
+                android.util.Log.d("FloatingWindowService", "视图已存在，跳过创建（幂等性保护）")
+                return START_STICKY
+            }
+            
             // 显示悬浮视图
             showFloatingView()
             
@@ -160,6 +168,12 @@ class FloatingWindowService : Service() {
                 val fallbackNotification = createFallbackNotification()
                 startForeground(NOTIFICATION_ID, fallbackNotification)
                 android.util.Log.w("FloatingWindowService", "使用降级通知启动前台服务成功")
+                
+                // BUG-00019修复：幂等性检查
+                if (hasExistingViews()) {
+                    android.util.Log.d("FloatingWindowService", "视图已存在，跳过创建（降级路径）")
+                    return START_STICKY
+                }
                 
                 // 显示悬浮视图
                 showFloatingView()
@@ -176,6 +190,24 @@ class FloatingWindowService : Service() {
         }
         
         return START_STICKY
+    }
+    
+    /**
+     * 检查是否已有视图存在
+     * 
+     * BUG-00019: 用于幂等性检查，避免重复创建视图
+     * 
+     * @return true 如果悬浮球或对话框视图已存在
+     */
+    private fun hasExistingViews(): Boolean {
+        val hasBubble = floatingBubbleView != null
+        val hasDialog = floatingViewV2 != null
+        val hasOldView = floatingView != null
+        
+        android.util.Log.d("FloatingWindowService", 
+            "视图状态检查: bubble=$hasBubble, dialog=$hasDialog, oldView=$hasOldView")
+        
+        return hasBubble || hasDialog || hasOldView
     }
     
     /**
@@ -2357,6 +2389,7 @@ class FloatingWindowService : Service() {
      * 从悬浮球展开悬浮窗
      * 
      * TD-00010修复：保存显示模式为对话框
+     * BUG-00019修复：确保 floatingViewV2 存在后再展开
      */
     private fun expandFromBubble() {
         android.util.Log.d("FloatingWindowService", "从悬浮球展开悬浮窗")
@@ -2364,8 +2397,20 @@ class FloatingWindowService : Service() {
         // 隐藏悬浮球
         hideFloatingBubble()
 
-        // 显示悬浮窗
-        floatingViewV2?.visibility = View.VISIBLE
+        // BUG-00019修复：确保 floatingViewV2 存在
+        // 当以悬浮球模式启动时，floatingViewV2 可能未被创建
+        if (floatingViewV2 == null) {
+            android.util.Log.d("FloatingWindowService", "floatingViewV2 为 null，创建新实例")
+            createAndShowFloatingViewV2()
+        } else if (floatingViewV2?.parent == null) {
+            // 视图存在但未添加到 WindowManager
+            android.util.Log.d("FloatingWindowService", "floatingViewV2 未添加到窗口，重新添加")
+            addFloatingViewV2ToWindow()
+        } else {
+            // 视图已存在且已添加，只需设置可见
+            android.util.Log.d("FloatingWindowService", "floatingViewV2 已存在，设置为可见")
+            floatingViewV2?.visibility = View.VISIBLE
+        }
 
         // 取消通知
         aiResultNotificationManager.cancelNotification()
@@ -2375,6 +2420,160 @@ class FloatingWindowService : Service() {
         
         // TD-00010: 保存显示模式为对话框
         floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_DIALOG)
+    }
+    
+    /**
+     * 创建并显示 FloatingViewV2
+     * 
+     * BUG-00019: 从 showFloatingViewV2() 提取的创建逻辑，
+     * 用于在悬浮球展开时懒加载创建对话框视图
+     */
+    private fun createAndShowFloatingViewV2() {
+        try {
+            android.util.Log.d("FloatingWindowService", "创建 FloatingViewV2（懒加载）")
+            
+            val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+            floatingViewV2 = FloatingViewV2(themedContext, windowManager)
+            
+            // 设置回调
+            setupFloatingViewV2Callbacks()
+            
+            // 加载联系人列表
+            loadContactsForFloatingViewV2()
+            
+            // 恢复状态
+            restoreFloatingViewV2State()
+            
+            // 添加到窗口
+            addFloatingViewV2ToWindow()
+            
+            android.util.Log.d("FloatingWindowService", "FloatingViewV2 创建并显示成功")
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "创建 FloatingViewV2 失败", e)
+            floatingViewV2 = null
+            
+            // 显示错误提示
+            ErrorHandler.handleError(this, FloatingWindowError.ServiceError("无法显示悬浮窗：${e.message}"))
+        }
+    }
+    
+    /**
+     * 设置 FloatingViewV2 的回调
+     * 
+     * BUG-00019: 从 showFloatingViewV2() 提取的回调设置逻辑
+     */
+    private fun setupFloatingViewV2Callbacks() {
+        floatingViewV2?.apply {
+            setOnTabChangedListener { tab ->
+                currentUiState = currentUiState.copy(selectedTab = tab)
+                floatingWindowPreferences.saveSelectedTab(tab)
+            }
+
+            setOnContactSelectedListener { contactId ->
+                currentUiState = currentUiState.copy(selectedContactId = contactId)
+                floatingWindowPreferences.saveLastContactId(contactId)
+            }
+
+            setOnSubmitListener { tab, contactId, text ->
+                lastInputText = text
+                lastContactId = contactId
+                when (tab) {
+                    ActionType.ANALYZE -> handleAnalyzeV2(contactId, text)
+                    ActionType.POLISH -> handlePolishV2(contactId, text)
+                    ActionType.REPLY -> handleReplyV2(contactId, text)
+                    else -> handleAnalyzeV2(contactId, text)
+                }
+            }
+
+            setOnCopyListener { text ->
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("AI结果", text)
+                clipboard.setPrimaryClip(clip)
+                android.widget.Toast.makeText(this@FloatingWindowService, "已复制到剪贴板", android.widget.Toast.LENGTH_SHORT).show()
+            }
+
+            setOnRegenerateListener { tab, instruction ->
+                handleRegenerateV2(tab, instruction)
+            }
+
+            setOnMinimizeListener {
+                android.util.Log.d("FloatingWindowService", "收到最小化回调")
+                minimizeFloatingViewV2()
+            }
+        }
+    }
+    
+    /**
+     * 加载联系人列表到 FloatingViewV2
+     * 
+     * BUG-00019: 从 showFloatingViewV2() 提取的联系人加载逻辑
+     */
+    private fun loadContactsForFloatingViewV2() {
+        serviceScope.launch {
+            try {
+                val contacts = contactRepository.getAllProfiles().first()
+                floatingViewV2?.setContacts(contacts)
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "加载联系人失败", e)
+            }
+        }
+    }
+    
+    /**
+     * 恢复 FloatingViewV2 的状态
+     * 
+     * BUG-00019: 从 showFloatingViewV2() 提取的状态恢复逻辑
+     */
+    private fun restoreFloatingViewV2State() {
+        val savedState = floatingWindowPreferences.restoreUiStateAsObject()
+        if (savedState != null) {
+            currentUiState = savedState
+            floatingViewV2?.restoreState(savedState)
+        }
+    }
+    
+    /**
+     * 将 FloatingViewV2 添加到 WindowManager
+     * 
+     * BUG-00019: 从 showFloatingViewV2() 提取的窗口添加逻辑
+     * BUG-00020修复：双重保护确保按钮始终可见
+     *   - 方案A：XML固定内容区域最大高度200dp（floating_result_card.xml）
+     *   - 方案B：本方法限制悬浮窗最大高度（兜底保护）
+     *   - 输入框保持可见，用户可以继续输入对话
+     */
+    private fun addFloatingViewV2ToWindow() {
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
+
+        // BUG-00020方案C：计算悬浮窗最大高度，确保不超过屏幕可视区域
+        val displayMetrics = resources.displayMetrics
+        val screenHeight = displayMetrics.heightPixels
+        val density = displayMetrics.density
+        
+        // 预留系统UI空间（状态栏+导航栏+安全边距）
+        val reservedSpacePx = (100 * density).toInt()
+        val maxHeight = screenHeight - reservedSpacePx
+        
+        android.util.Log.d("FloatingWindowService", 
+            "addFloatingViewV2ToWindow: screenHeight=$screenHeight, maxHeight=$maxHeight")
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            maxHeight,  // BUG-00020方案C：使用计算出的最大高度，而不是WRAP_CONTENT
+            type,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        }
+
+        windowManager.addView(floatingViewV2, params)
+        android.util.Log.d("FloatingWindowService", "FloatingViewV2 已添加到窗口，maxHeight=$maxHeight")
     }
 
     /**

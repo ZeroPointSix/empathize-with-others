@@ -212,119 +212,128 @@ class AiProviderRepositoryImpl @Inject constructor(
      * 
      * URL 构建逻辑与 AiRepositoryImpl 保持一致，确保测试结果准确反映实际请求
      *
+     * 注意：整个网络操作都在 IO 线程执行，避免 NetworkOnMainThreadException
+     * @see BUG-00016 获取模型列表主线程网络异常分析
+     *
      * @param provider 要测试的服务商
      * @return 详细的测试结果
      */
     override suspend fun testConnection(provider: AiProvider): Result<com.empathy.ai.domain.model.ConnectionTestResult> {
-        return try {
-            // 基本验证
-            if (!provider.isValid()) {
-                return Result.success(
-                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.UNKNOWN,
-                        "服务商配置无效"
-                    )
-                )
-            }
-            
-            // 记录开始时间
-            val startTime = System.currentTimeMillis()
-            
-            // 构建测试 URL（使用统一的 URL 构建逻辑）
-            val testUrl = buildModelsUrl(provider.baseUrl)
-            android.util.Log.d("AiProviderRepositoryImpl", "测试连接 URL: $testUrl")
-            
-            // 创建 OkHttp 客户端
-            val client = okhttp3.OkHttpClient.Builder()
-                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                .build()
-            
-            // 构建请求
-            val request = okhttp3.Request.Builder()
-                .url(testUrl)
-                .addHeader("Authorization", "Bearer ${provider.apiKey}")
-                .addHeader("Content-Type", "application/json")
-                .get()
-                .build()
-            
-            // 执行请求
-            val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                client.newCall(request).execute()
-            }
-            
-            // 计算延迟
-            val latencyMs = System.currentTimeMillis() - startTime
-            
-            // 解析响应
-            val result = when (response.code) {
-                200 -> {
-                    com.empathy.ai.domain.model.ConnectionTestResult.success(latencyMs)
-                }
-                401 -> {
-                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.INVALID_API_KEY,
-                        "API Key 无效"
-                    )
-                }
-                403 -> {
-                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.INVALID_API_KEY,
-                        "API Key 权限不足"
-                    )
-                }
-                404 -> {
-                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.ENDPOINT_UNREACHABLE,
-                        "API 端点不存在"
-                    )
-                }
-                429 -> {
-                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.QUOTA_EXCEEDED,
-                        "API 配额已用尽"
-                    )
-                }
-                else -> {
-                    val errorBody = response.body?.string() ?: "未知错误"
-                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.UNKNOWN,
-                        "HTTP ${response.code}: $errorBody"
-                    )
-                }
-            }
-            
-            response.close()
-            Result.success(result)
-            
-        } catch (e: java.net.SocketTimeoutException) {
-            Result.success(
-                com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                    com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.TIMEOUT,
-                    "请求超时"
-                )
-            )
-        } catch (e: java.net.UnknownHostException) {
-            Result.success(
-                com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                    com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.ENDPOINT_UNREACHABLE,
-                    "无法解析主机名"
-                )
-            )
-        } catch (e: java.net.ConnectException) {
-            Result.success(
-                com.empathy.ai.domain.model.ConnectionTestResult.failure(
-                    com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.NETWORK_ERROR,
-                    "网络连接失败"
-                )
-            )
-        } catch (e: Exception) {
-            Result.success(
+        // 基本验证（可以在任何线程执行）
+        if (!provider.isValid()) {
+            return Result.success(
                 com.empathy.ai.domain.model.ConnectionTestResult.failure(
                     com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.UNKNOWN,
-                    e.message ?: "未知错误"
+                    "服务商配置无效"
                 )
             )
+        }
+
+        // 记录开始时间
+        val startTime = System.currentTimeMillis()
+
+        // 构建测试 URL（纯计算，可以在任何线程执行）
+        val testUrl = buildModelsUrl(provider.baseUrl)
+        android.util.Log.d("AiProviderRepositoryImpl", "测试连接 URL: $testUrl")
+
+        // 所有网络操作都在 IO 线程执行
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                // 创建 OkHttp 客户端
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+
+                // 构建请求
+                val request = okhttp3.Request.Builder()
+                    .url(testUrl)
+                    .addHeader("Authorization", "Bearer ${provider.apiKey}")
+                    .addHeader("Content-Type", "application/json")
+                    .get()
+                    .build()
+
+                // 执行请求
+                val response = client.newCall(request).execute()
+
+                // 计算延迟
+                val latencyMs = System.currentTimeMillis() - startTime
+
+                // 解析响应（现在在 IO 线程，可以安全读取响应体）
+                val result = when (response.code) {
+                    200 -> {
+                        response.close()
+                        com.empathy.ai.domain.model.ConnectionTestResult.success(latencyMs)
+                    }
+                    401 -> {
+                        response.close()
+                        com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                            com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.INVALID_API_KEY,
+                            "API Key 无效"
+                        )
+                    }
+                    403 -> {
+                        response.close()
+                        com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                            com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.INVALID_API_KEY,
+                            "API Key 权限不足"
+                        )
+                    }
+                    404 -> {
+                        response.close()
+                        com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                            com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.ENDPOINT_UNREACHABLE,
+                            "API 端点不存在"
+                        )
+                    }
+                    429 -> {
+                        response.close()
+                        com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                            com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.QUOTA_EXCEEDED,
+                            "API 配额已用尽"
+                        )
+                    }
+                    else -> {
+                        val errorBody = response.body?.string() ?: "未知错误"
+                        response.close()
+                        com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                            com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.UNKNOWN,
+                            "HTTP ${response.code}: $errorBody"
+                        )
+                    }
+                }
+
+                Result.success(result)
+
+            } catch (e: java.net.SocketTimeoutException) {
+                Result.success(
+                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.TIMEOUT,
+                        "请求超时"
+                    )
+                )
+            } catch (e: java.net.UnknownHostException) {
+                Result.success(
+                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.ENDPOINT_UNREACHABLE,
+                        "无法解析主机名"
+                    )
+                )
+            } catch (e: java.net.ConnectException) {
+                Result.success(
+                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.NETWORK_ERROR,
+                        "网络连接失败"
+                    )
+                )
+            } catch (e: Exception) {
+                Result.success(
+                    com.empathy.ai.domain.model.ConnectionTestResult.failure(
+                        com.empathy.ai.domain.model.ConnectionTestResult.ErrorType.UNKNOWN,
+                        e.message ?: "未知错误"
+                    )
+                )
+            }
         }
     }
 
@@ -334,102 +343,106 @@ class AiProviderRepositoryImpl @Inject constructor(
      * 调用 OpenAI 兼容的 /models 端点获取可用模型
      * 自动过滤非聊天模型（如 embedding、whisper、dall-e 等）
      *
+     * 注意：整个网络操作都在 IO 线程执行，避免 NetworkOnMainThreadException
+     * @see BUG-00016 获取模型列表主线程网络异常分析
+     *
      * @param provider 要查询的服务商（需要 baseUrl 和 apiKey）
      * @return Result 包含可用模型列表，失败时返回错误信息
      *
      * @see SR-00001 模型列表自动获取与调试日志优化
      */
     override suspend fun fetchAvailableModels(provider: AiProvider): Result<List<AiModel>> {
-        return try {
-            // 基本验证
-            if (provider.baseUrl.isBlank() || provider.apiKey.isBlank()) {
-                return Result.failure(IllegalArgumentException("服务商配置不完整：需要 baseUrl 和 apiKey"))
-            }
+        // 基本验证（可以在任何线程执行）
+        if (provider.baseUrl.isBlank() || provider.apiKey.isBlank()) {
+            return Result.failure(IllegalArgumentException("服务商配置不完整：需要 baseUrl 和 apiKey"))
+        }
 
-            // 构建 Models API URL
-            val modelsUrl = buildModelsUrl(provider.baseUrl)
-            android.util.Log.d("AiProviderRepositoryImpl", "获取模型列表 URL: $modelsUrl")
+        // 构建 Models API URL（纯计算，可以在任何线程执行）
+        val modelsUrl = buildModelsUrl(provider.baseUrl)
+        android.util.Log.d("AiProviderRepositoryImpl", "获取模型列表 URL: $modelsUrl")
 
-            // 创建 OkHttp 客户端
-            val client = okhttp3.OkHttpClient.Builder()
-                .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-                .build()
+        // 所有网络操作都在 IO 线程执行
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                // 创建 OkHttp 客户端
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
 
-            // 构建请求
-            val request = okhttp3.Request.Builder()
-                .url(modelsUrl)
-                .addHeader("Authorization", "Bearer ${provider.apiKey}")
-                .addHeader("Content-Type", "application/json")
-                .get()
-                .build()
+                // 构建请求
+                val request = okhttp3.Request.Builder()
+                    .url(modelsUrl)
+                    .addHeader("Authorization", "Bearer ${provider.apiKey}")
+                    .addHeader("Content-Type", "application/json")
+                    .get()
+                    .build()
 
-            // 执行请求
-            val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                client.newCall(request).execute()
-            }
+                // 执行请求
+                val response = client.newCall(request).execute()
 
-            // 处理响应
-            when (response.code) {
-                200 -> {
-                    val responseBody = response.body?.string()
-                    response.close()
+                // 处理响应（现在在 IO 线程，可以安全读取响应体）
+                when (response.code) {
+                    200 -> {
+                        val responseBody = response.body?.string()
+                        response.close()
 
-                    if (responseBody.isNullOrBlank()) {
-                        return Result.failure(Exception("服务商返回空响应"))
-                    }
-
-                    // 解析响应
-                    val modelsResponse = parseModelsResponse(responseBody)
-                    if (modelsResponse == null) {
-                        return Result.failure(Exception("无法解析模型列表响应"))
-                    }
-
-                    // 过滤并转换模型
-                    val chatModels = modelsResponse.data
-                        .filter { isChatModel(it.id) }
-                        .map { dto ->
-                            AiModel(
-                                id = dto.id,
-                                displayName = generateDisplayName(dto.id)
-                            )
+                        if (responseBody.isNullOrBlank()) {
+                            return@withContext Result.failure(Exception("服务商返回空响应"))
                         }
-                        .sortedBy { it.id }
 
-                    android.util.Log.d("AiProviderRepositoryImpl", "获取到 ${chatModels.size} 个聊天模型")
-                    Result.success(chatModels)
+                        // 解析响应
+                        val modelsResponse = parseModelsResponse(responseBody)
+                        if (modelsResponse == null) {
+                            return@withContext Result.failure(Exception("无法解析模型列表响应"))
+                        }
+
+                        // 过滤并转换模型
+                        val chatModels = modelsResponse.data
+                            .filter { isChatModel(it.id) }
+                            .map { dto ->
+                                AiModel(
+                                    id = dto.id,
+                                    displayName = generateDisplayName(dto.id)
+                                )
+                            }
+                            .sortedBy { it.id }
+
+                        android.util.Log.d("AiProviderRepositoryImpl", "获取到 ${chatModels.size} 个聊天模型")
+                        Result.success(chatModels)
+                    }
+                    401 -> {
+                        response.close()
+                        Result.failure(Exception("API Key 无效（401）"))
+                    }
+                    403 -> {
+                        response.close()
+                        Result.failure(Exception("API Key 权限不足（403）"))
+                    }
+                    404 -> {
+                        response.close()
+                        Result.failure(Exception("该服务商不支持获取模型列表（404）"))
+                    }
+                    429 -> {
+                        response.close()
+                        Result.failure(Exception("API 配额已用尽（429）"))
+                    }
+                    else -> {
+                        val errorBody = response.body?.string() ?: "未知错误"
+                        response.close()
+                        Result.failure(Exception("HTTP ${response.code}: $errorBody"))
+                    }
                 }
-                401 -> {
-                    response.close()
-                    Result.failure(Exception("API Key 无效（401）"))
-                }
-                403 -> {
-                    response.close()
-                    Result.failure(Exception("API Key 权限不足（403）"))
-                }
-                404 -> {
-                    response.close()
-                    Result.failure(Exception("该服务商不支持获取模型列表（404）"))
-                }
-                429 -> {
-                    response.close()
-                    Result.failure(Exception("API 配额已用尽（429）"))
-                }
-                else -> {
-                    val errorBody = response.body?.string() ?: "未知错误"
-                    response.close()
-                    Result.failure(Exception("HTTP ${response.code}: $errorBody"))
-                }
+            } catch (e: java.net.SocketTimeoutException) {
+                Result.failure(Exception("请求超时，请检查网络连接"))
+            } catch (e: java.net.UnknownHostException) {
+                Result.failure(Exception("无法解析主机名，请检查 API 端点"))
+            } catch (e: java.net.ConnectException) {
+                Result.failure(Exception("网络连接失败"))
+            } catch (e: Exception) {
+                android.util.Log.e("AiProviderRepositoryImpl", "获取模型列表失败", e)
+                Result.failure(Exception("获取模型列表失败：${e.message}"))
             }
-        } catch (e: java.net.SocketTimeoutException) {
-            Result.failure(Exception("请求超时，请检查网络连接"))
-        } catch (e: java.net.UnknownHostException) {
-            Result.failure(Exception("无法解析主机名，请检查 API 端点"))
-        } catch (e: java.net.ConnectException) {
-            Result.failure(Exception("网络连接失败"))
-        } catch (e: Exception) {
-            android.util.Log.e("AiProviderRepositoryImpl", "获取模型列表失败", e)
-            Result.failure(Exception("获取模型列表失败：${e.message}"))
         }
     }
 

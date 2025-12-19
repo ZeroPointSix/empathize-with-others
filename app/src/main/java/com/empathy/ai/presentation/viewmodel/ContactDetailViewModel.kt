@@ -424,20 +424,26 @@ class ContactDetailViewModel @Inject constructor(
 
     // === 事实管理方法 ===
 
+    /**
+     * 添加事实
+     *
+     * BUG-00017修复：允许相同key的多个事实，只对完全相同的key+value组合去重
+     * 
+     * 修改原因：
+     * - 原逻辑使用key作为唯一标识，导致相同类型的事实被覆盖
+     * - 用户可能需要记录多个"性格特点"或"兴趣爱好"
+     * - 现在只有key和value都相同时才视为重复
+     */
     private fun addFact(key: String, value: String) {
         if (key.isBlank() || value.isBlank()) return
 
         val currentState = _uiState.value
         val newFacts = currentState.facts.toMutableList()
         
-        // 检查是否已存在相同key的Fact，如果存在则更新，否则添加
-        val existingIndex = newFacts.indexOfFirst { it.key == key }
-        if (existingIndex >= 0) {
-            newFacts[existingIndex] = newFacts[existingIndex].copy(
-                value = value,
-                timestamp = System.currentTimeMillis()
-            )
-        } else {
+        // BUG-00017修复：基于key+value组合去重，而非仅key
+        // 允许相同key的多个不同value的事实
+        val isDuplicate = newFacts.any { it.key == key && it.value == value }
+        if (!isDuplicate) {
             newFacts.add(
                 Fact(
                     key = key,
