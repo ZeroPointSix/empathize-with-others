@@ -114,13 +114,24 @@ object PromptTestDataFactory {
     fun createJustOverWarningPrompt(): String = "A".repeat(801)
 
     /**
-     * 包含所有有效变量的模板
+     * 包含ANALYZE场景所有有效变量的模板
+     * 注意：ANALYZE场景可用变量为 contact_name, relationship_status, risk_tags, strategy_tags, facts_count
      */
     fun createTemplateWithAllVariables(): String = """
         联系人: {{contact_name}}
         关系: {{relationship_status}}
         雷区: {{risk_tags}}
         策略: {{strategy_tags}}
+        事实数: {{facts_count}}
+    """.trimIndent()
+
+    /**
+     * 包含SUMMARY场景所有有效变量的模板
+     * 注意：SUMMARY场景可用变量为 contact_name, relationship_status, facts_count, today_date
+     */
+    fun createTemplateWithAllSummaryVariables(): String = """
+        联系人: {{contact_name}}
+        关系: {{relationship_status}}
         事实数: {{facts_count}}
         日期: {{today_date}}
     """.trimIndent()

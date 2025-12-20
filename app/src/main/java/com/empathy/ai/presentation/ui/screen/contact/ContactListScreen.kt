@@ -180,8 +180,8 @@ private fun ContactListScreenPreview() {
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
                         facts = listOf(
-                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                            Fact("爱好", "摄影", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                            Fact(key = "爱好", value = "摄影", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                         )
                     ),
                     ContactProfile(
@@ -190,7 +190,7 @@ private fun ContactListScreenPreview() {
                         targetGoal = "成为好朋友",
                         contextDepth = 15,
                         facts = listOf(
-                            Fact("职业", "设计师", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                            Fact(key = "职业", value = "设计师", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                         )
                     ),
                     ContactProfile(
@@ -208,8 +208,8 @@ private fun ContactListScreenPreview() {
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
                         facts = listOf(
-                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                            Fact("爱好", "摄影", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                            Fact(key = "爱好", value = "摄影", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                         )
                     ),
                     ContactProfile(
@@ -218,7 +218,7 @@ private fun ContactListScreenPreview() {
                         targetGoal = "成为好朋友",
                         contextDepth = 15,
                         facts = listOf(
-                            Fact("职业", "设计师", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                            Fact(key = "职业", value = "设计师", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                         )
                     ),
                     ContactProfile(
@@ -289,7 +289,7 @@ private fun ContactListScreenDarkPreview() {
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
                         facts = listOf(
-                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                         )
                     )
                 ),
@@ -300,7 +300,7 @@ private fun ContactListScreenDarkPreview() {
                         targetGoal = "建立良好的合作关系",
                         contextDepth = 10,
                         facts = listOf(
-                            Fact("职业", "产品经理", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                         )
                     )
                 )

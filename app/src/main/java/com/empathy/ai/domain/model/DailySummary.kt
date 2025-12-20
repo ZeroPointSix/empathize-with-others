@@ -3,17 +3,24 @@ package com.empathy.ai.domain.model
 /**
  * 每日总结领域模型
  *
- * 表示某个联系人某一天的互动总结
+ * 表示某个联系人某一天或某段时间的互动总结
+ * 支持单日总结（DAILY）和自定义范围总结（CUSTOM_RANGE）
  *
  * @property id 总结ID
  * @property contactId 联系人ID
- * @property summaryDate 总结日期，格式: "yyyy-MM-dd"
+ * @property summaryDate 总结日期，格式: "yyyy-MM-dd"（单日总结使用此字段）
  * @property content 总结内容
  * @property keyEvents 关键事件列表
  * @property newFacts 新发现的事实列表
  * @property updatedTags 标签更新列表
  * @property relationshipScoreChange 关系分数变化 (-10到+10)
  * @property relationshipTrend 关系趋势
+ * @property startDate 范围总结开始日期（仅CUSTOM_RANGE类型使用）
+ * @property endDate 范围总结结束日期（仅CUSTOM_RANGE类型使用）
+ * @property summaryType 总结类型
+ * @property generationSource 生成来源
+ * @property conversationCount 分析的对话数量
+ * @property generatedAt 生成时间戳
  */
 data class DailySummary(
     val id: Long = 0,
@@ -24,7 +31,14 @@ data class DailySummary(
     val newFacts: List<Fact>,
     val updatedTags: List<TagUpdate>,
     val relationshipScoreChange: Int,
-    val relationshipTrend: RelationshipTrend
+    val relationshipTrend: RelationshipTrend,
+    // ==================== v9 新增字段 ====================
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val summaryType: SummaryType = SummaryType.DAILY,
+    val generationSource: GenerationSource = GenerationSource.AUTO,
+    val conversationCount: Int = 0,
+    val generatedAt: Long = System.currentTimeMillis()
 ) {
     init {
         require(contactId.isNotBlank()) { "contactId不能为空" }
@@ -41,5 +55,37 @@ data class DailySummary(
      */
     fun hasSubstantialContent(): Boolean {
         return keyEvents.isNotEmpty() || newFacts.isNotEmpty() || updatedTags.isNotEmpty()
+    }
+
+    /**
+     * 是否为范围总结
+     */
+    fun isRangeSummary(): Boolean = summaryType == SummaryType.CUSTOM_RANGE
+
+    /**
+     * 是否为手动生成
+     */
+    fun isManualGenerated(): Boolean = generationSource == GenerationSource.MANUAL
+
+    /**
+     * 获取显示日期范围
+     */
+    fun getDisplayDateRange(): String {
+        return if (isRangeSummary() && startDate != null && endDate != null) {
+            "$startDate 至 $endDate"
+        } else {
+            summaryDate
+        }
+    }
+
+    /**
+     * 获取日期范围对象（仅范围总结有效）
+     */
+    fun getDateRange(): DateRange? {
+        return if (isRangeSummary() && startDate != null && endDate != null) {
+            DateRange(startDate, endDate)
+        } else {
+            null
+        }
     }
 }

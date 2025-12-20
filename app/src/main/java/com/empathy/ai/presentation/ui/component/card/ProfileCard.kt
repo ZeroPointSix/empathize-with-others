@@ -201,11 +201,11 @@ private fun ProfileCardFullPreview() {
                 targetGoal = "建立长期合作关系，拿下年度大单",
                 contextDepth = 15,
                 facts = listOf(
-                    Fact("电话", "138****1234", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                    Fact("公司", "某某科技有限公司", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                    Fact("职位", "技术总监", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                    Fact("性格", "吃软不吃硬", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                    Fact("爱好", "钓鱼、喝茶", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                    Fact(key = "电话", value = "138****1234", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact(key = "公司", value = "某某科技有限公司", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact(key = "职位", value = "技术总监", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact(key = "性格", value = "吃软不吃硬", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact(key = "爱好", value = "钓鱼、喝茶", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                 )
             ),
             onEdit = {}
@@ -241,7 +241,7 @@ private fun ProfileCardNoGoalPreview() {
                 targetGoal = "",
                 contextDepth = 10,
                 facts = listOf(
-                    Fact("电话", "139****5678", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                    Fact(key = "电话", value = "139****5678", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                 )
             ),
             onEdit = {}
@@ -260,8 +260,8 @@ private fun ProfileCardDarkPreview() {
                 targetGoal = "建立长期合作关系",
                 contextDepth = 15,
                 facts = listOf(
-                    Fact("电话", "138****1234", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL),
-                    Fact("性格", "吃软不吃硬", System.currentTimeMillis(), com.empathy.ai.domain.model.FactSource.MANUAL)
+                    Fact(key = "电话", value = "138****1234", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL),
+                    Fact(key = "性格", value = "吃软不吃硬", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
                 )
             ),
             onEdit = {}

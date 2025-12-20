@@ -72,7 +72,7 @@ fun TopTagsSection(
             ) {
                 items(
                     items = tags.take(5),
-                    key = { it.timestamp }
+                    key = { it.id }  // 使用唯一ID作为key，避免timestamp重复导致崩溃
                 ) { tag ->
                     SolidTagChip(
                         text = tag.value,

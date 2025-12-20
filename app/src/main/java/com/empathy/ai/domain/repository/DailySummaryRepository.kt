@@ -1,11 +1,19 @@
 package com.empathy.ai.domain.repository
 
 import com.empathy.ai.domain.model.DailySummary
+import com.empathy.ai.domain.model.SummaryType
 
 /**
  * 每日总结仓库接口
  *
  * 定义每日总结的数据访问接口
+ *
+ * v9新增方法：
+ * - getSummariesInRange: 获取指定日期范围内的总结
+ * - getSummarizedDatesInRange: 获取已有总结的日期列表
+ * - deleteSummariesInRange: 删除指定范围内的总结
+ * - getManualSummaries: 获取手动生成的总结
+ * - countMissingDatesInRange: 统计缺失总结的日期数量
  */
 interface DailySummaryRepository {
 
@@ -67,4 +75,82 @@ interface DailySummaryRepository {
      * @return 总结列表，按日期倒序
      */
     suspend fun getRecentSummaries(contactId: String, days: Int): List<DailySummary>
+
+    // ==================== v9 新增方法 ====================
+
+    /**
+     * 获取指定日期范围内的总结
+     *
+     * @param contactId 联系人ID
+     * @param startDate 开始日期（包含）
+     * @param endDate 结束日期（包含）
+     * @return 范围内的总结列表，按日期升序排列
+     */
+    suspend fun getSummariesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<List<DailySummary>>
+
+    /**
+     * 获取指定日期范围内已有总结的日期列表
+     *
+     * @param contactId 联系人ID
+     * @param startDate 开始日期（包含）
+     * @param endDate 结束日期（包含）
+     * @return 已有总结的日期列表
+     */
+    suspend fun getSummarizedDatesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<List<String>>
+
+    /**
+     * 删除指定日期范围内的总结
+     *
+     * @param contactId 联系人ID
+     * @param startDate 开始日期（包含）
+     * @param endDate 结束日期（包含）
+     * @return 删除的记录数
+     */
+    suspend fun deleteSummariesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<Int>
+
+    /**
+     * 获取手动生成的总结
+     *
+     * @param contactId 联系人ID
+     * @return 手动生成的总结列表，按生成时间降序排列
+     */
+    suspend fun getManualSummaries(contactId: String): Result<List<DailySummary>>
+
+    /**
+     * 统计指定范围内缺失总结的日期数量
+     *
+     * @param contactId 联系人ID
+     * @param startDate 开始日期（包含）
+     * @param endDate 结束日期（包含）
+     * @return 缺失总结的日期数量
+     */
+    suspend fun countMissingDatesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<Int>
+
+    /**
+     * 获取指定类型的总结
+     *
+     * @param contactId 联系人ID
+     * @param summaryType 总结类型
+     * @return 指定类型的总结列表
+     */
+    suspend fun getSummariesByType(
+        contactId: String,
+        summaryType: SummaryType
+    ): Result<List<DailySummary>>
 }

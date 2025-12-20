@@ -19,7 +19,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
+import org.junit.Assert.assertEquals
 
 /**
  * BUG-00019: 设置界面自动展开悬浮球问题测试
@@ -58,9 +58,9 @@ class SettingsViewModelFloatingWindowTest {
             buttonY = 0
         )
         every { mockPreferences.isEnabled() } returns false
-        every { mockSettingsRepository.getDataMaskingEnabled() } returns Result.success(true)
-        every { mockSettingsRepository.getLocalFirstModeEnabled() } returns Result.success(true)
-        every { mockSettingsRepository.getHistoryConversationCount() } returns Result.success(5)
+        coEvery { mockSettingsRepository.getDataMaskingEnabled() } returns Result.success(true)
+        coEvery { mockSettingsRepository.getLocalFirstModeEnabled() } returns Result.success(true)
+        coEvery { mockSettingsRepository.getHistoryConversationCount() } returns Result.success(5)
         every { mockAiProviderRepository.getAllProviders() } returns flowOf(emptyList())
         
         // Mock FloatingWindowManager

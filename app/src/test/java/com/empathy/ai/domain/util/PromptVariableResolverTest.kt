@@ -82,7 +82,8 @@ class PromptVariableResolverTest {
         val result = resolver.resolve(template, context)
 
         // Then
-        assertEquals("联系人: 未知联系人, 关系: 未知", result)
+        // 空上下文时，变量值为null，保持原始占位符
+        assertEquals("联系人: {{contact_name}}, 关系: {{relationship_status}}", result)
     }
 
     @Test

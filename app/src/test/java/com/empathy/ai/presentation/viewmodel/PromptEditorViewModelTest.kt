@@ -71,7 +71,7 @@ class PromptEditorViewModelTest {
     // ========== 初始化测试 ==========
 
     @Test
-    fun `init loads global prompt successfully`() = runTest {
+    fun `init loads global prompt successfully`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(PromptScene.ANALYZE) } returns Result.success("test prompt")
 
@@ -87,7 +87,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `init loads contact prompt successfully`() = runTest {
+    fun `init loads contact prompt successfully`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getContactPrompt("1") } returns Result.success("contact prompt")
 
@@ -106,7 +106,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `init handles load failure`() = runTest {
+    fun `init handles load failure`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.failure(Exception("Network error"))
 
@@ -123,7 +123,7 @@ class PromptEditorViewModelTest {
     // ========== 输入处理测试 ==========
 
     @Test
-    fun `UpdatePrompt updates current prompt`() = runTest {
+    fun `UpdatePrompt updates current prompt`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("")
         val viewModel = createViewModel()
@@ -138,7 +138,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `large text input is truncated to max length`() = runTest {
+    fun `large text input is truncated to max length`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("")
         val viewModel = createViewModel()
@@ -156,7 +156,7 @@ class PromptEditorViewModelTest {
     // ========== 保存测试 ==========
 
     @Test
-    fun `SavePrompt saves global prompt successfully`() = runTest {
+    fun `SavePrompt saves global prompt successfully`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("")
         coEvery { promptRepository.saveGlobalPrompt(any(), any()) } returns Result.success(Unit)
@@ -182,7 +182,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `SavePrompt handles save failure`() = runTest {
+    fun `SavePrompt handles save failure`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("")
         coEvery { promptRepository.saveGlobalPrompt(any(), any()) } returns Result.failure(Exception("Save failed"))
@@ -203,7 +203,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `SavePrompt does nothing when canSave is false`() = runTest {
+    fun `SavePrompt does nothing when canSave is false`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("")
         val viewModel = createViewModel()
@@ -224,7 +224,7 @@ class PromptEditorViewModelTest {
     // ========== 取消测试 ==========
 
     @Test
-    fun `CancelEdit shows discard dialog when has unsaved changes`() = runTest {
+    fun `CancelEdit shows discard dialog when has unsaved changes`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("original")
         val viewModel = createViewModel()
@@ -242,7 +242,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `CancelEdit emits Cancelled when no unsaved changes`() = runTest {
+    fun `CancelEdit emits Cancelled when no unsaved changes`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("original")
         val viewModel = createViewModel()
@@ -263,7 +263,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `ConfirmDiscard emits Cancelled and hides dialog`() = runTest {
+    fun `ConfirmDiscard emits Cancelled and hides dialog`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("original")
         val viewModel = createViewModel()
@@ -289,7 +289,7 @@ class PromptEditorViewModelTest {
     }
 
     @Test
-    fun `DismissDiscardDialog hides dialog`() = runTest {
+    fun `DismissDiscardDialog hides dialog`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.success("original")
         val viewModel = createViewModel()
@@ -311,7 +311,7 @@ class PromptEditorViewModelTest {
     // ========== 错误处理测试 ==========
 
     @Test
-    fun `ClearError clears error message`() = runTest {
+    fun `ClearError clears error message`() = runTest(testDispatcher) {
         // Given
         coEvery { promptRepository.getGlobalPrompt(any()) } returns Result.failure(Exception("Error"))
         val viewModel = createViewModel()

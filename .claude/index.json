@@ -1,0 +1,193 @@
+{
+  "timestamp": "2025-12-19T21:04:27Z",
+  "project": {
+    "name": "共情AI助手 (Empathy AI Assistant)",
+    "type": "Android Application",
+    "architecture": "Clean Architecture + MVVM",
+    "completion": "88%",
+    "language": "Kotlin",
+    "buildSystem": "Gradle 8.13"
+  },
+  "modules": {
+    "root": {
+      "path": "e:\\hushaokang\\Data-code\\Love",
+      "type": "project_root",
+      "entryFiles": ["build.gradle.kts", "settings.gradle.kts", "gradle/libs.versions.toml"],
+      "configFiles": [".gitignore", "local.properties"],
+      "documentation": ["CLAUDE.md", "WORKSPACE.md"],
+      "scripts": ["scripts/run-tests.bat", "scripts/run-wechat-compatibility-tests.bat"]
+    },
+    "app": {
+      "path": "app",
+      "type": "android_module",
+      "entryFile": "app/src/main/java/com/empathy/ai/presentation/ui/MainActivity.kt",
+      "manifest": "app/src/main/AndroidManifest.xml",
+      "applicationClass": "app/src/main/java/com/empathy/ai/app/EmpathyApplication.kt",
+      "buildConfig": "app/build.gradle.kts",
+      "layers": {
+        "app": {
+          "path": "app/src/main/java/com/empathy/ai/app",
+          "description": "Application层 - 应用入口和全局初始化",
+          "files": ["EmpathyApplication.kt"]
+        },
+        "domain": {
+          "path": "app/src/main/java/com/empathy/ai/domain",
+          "description": "领域层 - 业务逻辑核心，纯Kotlin无Android依赖",
+          "submodules": {
+            "model": {
+              "path": "domain/model",
+              "description": "业务实体模型",
+              "files": ["ChatMessage.kt", "ContactProfile.kt", "AnalysisResult.kt", "BrainTag.kt", "AiProvider.kt"]
+            },
+            "repository": {
+              "path": "domain/repository",
+              "description": "数据仓库接口",
+              "files": ["ContactRepository.kt", "BrainTagRepository.kt", "AiRepository.kt", "ConversationRepository.kt"]
+            },
+            "usecase": {
+              "path": "domain/usecase",
+              "description": "业务用例，封装核心业务逻辑",
+              "files": ["AnalyzeChatUseCase.kt", "SaveProfileUseCase.kt", "GetAllContactsUseCase.kt", "CheckDraftUseCase.kt"]
+            },
+            "service": {
+              "path": "domain/service",
+              "description": "领域服务，处理复杂业务逻辑",
+              "files": ["PrivacyEngine.kt", "RuleEngine.kt", "FloatingWindowService.kt"]
+            },
+            "util": {
+              "path": "domain/util",
+              "description": "领域工具类",
+              "files": ["ErrorHandler.kt", "FloatingWindowManager.kt", "WeChatDetector.kt"]
+            }
+          }
+        },
+        "data": {
+          "path": "app/src/main/java/com/empathy/ai/data",
+          "description": "数据层 - 数据获取与持久化实现",
+          "submodules": {
+            "local": {
+              "path": "data/local",
+              "description": "本地数据存储 - Room数据库",
+              "files": ["AppDatabase.kt"],
+              "submodules": {
+                "entity": {
+                  "path": "data/local/entity",
+                  "description": "数据库实体",
+                  "files": ["ContactProfileEntity.kt", "BrainTagEntity.kt", "ConversationLogEntity.kt", "AiProviderEntity.kt"]
+                },
+                "dao": {
+                  "path": "data/local/dao",
+                  "description": "数据访问对象",
+                  "files": ["ContactDao.kt", "BrainTagDao.kt", "ConversationLogDao.kt", "AiProviderDao.kt"]
+                },
+                "converter": {
+                  "path": "data/local/converter",
+                  "description": "Room类型转换器",
+                  "files": ["RoomTypeConverters.kt", "FactListConverter.kt"]
+                }
+              }
+            },
+            "remote": {
+              "path": "data/remote",
+              "description": "远程数据 - Retrofit API服务",
+              "files": ["api/OpenAiApi.kt"],
+              "submodules": {
+                "model": {
+                  "path": "data/remote/model",
+                  "description": "网络数据传输对象",
+                  "files": ["ChatRequestDto.kt", "ChatResponseDto.kt", "MessageDto.kt"]
+                }
+              }
+            },
+            "repository": {
+              "path": "data/repository",
+              "description": "仓库接口实现",
+              "files": ["ContactRepositoryImpl.kt", "BrainTagRepositoryImpl.kt", "AiRepositoryImpl.kt"]
+            },
+            "parser": {
+              "path": "data/parser",
+              "description": "AI响应解析器",
+              "files": ["AiResponseParser.kt", "JsonCleaner.kt", "FieldMapper.kt"]
+            }
+          }
+        },
+        "presentation": {
+          "path": "app/src/main/java/com/empathy/ai/presentation",
+          "description": "表现层 - UI组件和界面",
+          "submodules": {
+            "ui": {
+              "path": "presentation/ui",
+              "description": "UI组件和屏幕",
+              "submodules": {
+                "screen": {
+                  "path": "presentation/ui/screen",
+                  "description": "功能屏幕",
+                  "files": ["ChatScreen.kt", "ContactListScreen.kt", "ContactDetailScreen.kt", "BrainTagScreen.kt", "SettingsScreen.kt"]
+                },
+                "component": {
+                  "path": "presentation/ui/component",
+                  "description": "可复用UI组件",
+                  "submodules": {
+                    "button": ["PrimaryButton.kt", "SecondaryButton.kt"],
+                    "card": ["AnalysisCard.kt", "ProfileCard.kt", "ProviderCard.kt"],
+                    "dialog": ["AddContactDialog.kt", "AddTagDialog.kt"],
+                    "input": ["CustomTextField.kt", "ContactSearchBar.kt"]
+                  }
+                },
+                "theme": {
+                  "path": "presentation/ui/theme",
+                  "description": "Compose主题配置",
+                  "files": ["Color.kt", "Theme.kt", "Type.kt"]
+                }
+              }
+            },
+            "viewmodel": {
+              "path": "presentation/viewmodel",
+              "description": "MVVM架构的ViewModel层",
+              "files": ["BaseViewModel.kt", "ContactListViewModel.kt", "ChatViewModel.kt", "BrainTagViewModel.kt"]
+            },
+            "navigation": {
+              "path": "presentation/navigation",
+              "description": "导航系统",
+              "files": ["NavGraph.kt", "NavRoutes.kt"]
+            }
+          }
+        },
+        "di": {
+          "path": "app/src/main/java/com/empathy/ai/di",
+          "description": "依赖注入模块 - Hilt配置",
+          "files": ["DatabaseModule.kt", "NetworkModule.kt", "RepositoryModule.kt", "ServiceModule.kt"]
+        }
+      }
+    }
+  },
+  "coverage": {
+    "totalEstimatedFiles": 219,
+    "scannedFiles": 89,
+    "coveragePercentage": 40.6,
+    "ignoredFiles": {
+      "buildArtifacts": 78,
+      "testFiles": 52,
+      "ignoredPatterns": ["*.gradle", "*.iml", ".git/**", "*.apk", "*.jks"]
+    },
+    "gaps": [
+      "app/src/main/java/com/empathy/ai/domain/model/ - 需要扫描更多模型文件",
+      "app/src/main/java/com/empathy/ai/domain/usecase/ - 需要扫描更多用例文件",
+      "app/src/main/java/com/empathy/ai/data/repository/ - 需要扫描更多仓库实现",
+      "app/src/main/java/com/empathy/ai/presentation/ui/component/ - 需要扫描更多UI组件",
+      "测试文件扫描不完整 - 需要补充单元测试和集成测试文件"
+    ]
+  },
+  "truncated": false,
+  "recommendations": {
+    "nextSteps": [
+      "深度扫描domain/model目录，了解所有业务实体模型",
+      "扫描domain/usecase目录，分析核心业务用例实现",
+      "扫描data/repository目录，了解数据层实现细节",
+      "扫描presentation/ui/component目录，了解UI组件架构",
+      "补充测试文件扫描，了解测试覆盖情况"
+    ]
+  },
+  "version": "v1.0.0",
+  "generatedBy": "Claude Code - 初始化架构师"
+}

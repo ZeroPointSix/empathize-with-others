@@ -48,10 +48,10 @@ class ContextBuilderTest {
     fun `selectRelevantFacts优先选择手动添加的Facts`() {
         val now = System.currentTimeMillis()
         val manualFacts = (1..10).map { i ->
-            Fact("手动$i", "值$i", now - i * 1000, FactSource.MANUAL)
+            Fact(key = "手动$i", value = "值$i", timestamp = now - i * 1000, source = FactSource.MANUAL)
         }
         val aiFacts = (1..15).map { i ->
-            Fact("AI$i", "值$i", now - i * 1000, FactSource.AI_INFERRED)
+            Fact(key = "AI$i", value = "值$i", timestamp = now - i * 1000, source = FactSource.AI_INFERRED)
         }
         val allFacts = manualFacts + aiFacts
 
@@ -69,11 +69,11 @@ class ContextBuilderTest {
 
         // 最近7天的AI Facts
         val recentAiFacts = (1..5).map { i ->
-            Fact("最近AI$i", "值$i", now - i * MemoryConstants.ONE_DAY_MILLIS, FactSource.AI_INFERRED)
+            Fact(key = "最近AI$i", value = "值$i", timestamp = now - i * MemoryConstants.ONE_DAY_MILLIS, source = FactSource.AI_INFERRED)
         }
         // 超过7天的AI Facts
         val oldAiFacts = (1..10).map { i ->
-            Fact("旧AI$i", "值$i", now - (recentThreshold + i * MemoryConstants.ONE_DAY_MILLIS), FactSource.AI_INFERRED)
+            Fact(key = "旧AI$i", value = "值$i", timestamp = now - (recentThreshold + i * MemoryConstants.ONE_DAY_MILLIS), source = FactSource.AI_INFERRED)
         }
         val allFacts = recentAiFacts + oldAiFacts
 
@@ -88,7 +88,7 @@ class ContextBuilderTest {
     fun `selectRelevantFacts按时间倒序排列`() {
         val now = System.currentTimeMillis()
         val facts = (1..5).map { i ->
-            Fact("键$i", "值$i", now - i * 1000, FactSource.MANUAL)
+            Fact(key = "键$i", value = "值$i", timestamp = now - i * 1000, source = FactSource.MANUAL)
         }
 
         val result = contextBuilder.selectRelevantFacts(facts)
@@ -131,7 +131,7 @@ class ContextBuilderTest {
     fun `buildAnalysisContext包含已知信息`() {
         val profile = createTestProfile(
             facts = listOf(
-                Fact("职业", "产品经理", System.currentTimeMillis(), FactSource.MANUAL)
+                Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL)
             )
         )
         val result = contextBuilder.buildAnalysisContext(profile, emptyList(), emptyList())
@@ -221,7 +221,7 @@ class ContextBuilderTest {
     fun `buildSummaryPrompt包含已知信息`() {
         val profile = createTestProfile(
             facts = listOf(
-                Fact("职业", "产品经理", System.currentTimeMillis(), FactSource.MANUAL)
+                Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL)
             )
         )
         val result = contextBuilder.buildSummaryPrompt(profile, listOf("对话"))
@@ -232,7 +232,7 @@ class ContextBuilderTest {
     @Test
     fun `buildSummaryPrompt限制Facts数量为10条`() {
         val facts = (1..15).map { i ->
-            Fact("键$i", "值$i", System.currentTimeMillis(), FactSource.MANUAL)
+            Fact(key = "键$i", value = "值$i", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL)
         }
         val profile = createTestProfile(facts = facts)
         val result = contextBuilder.buildSummaryPrompt(profile, listOf("对话"))
