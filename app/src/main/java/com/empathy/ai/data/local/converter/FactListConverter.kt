@@ -78,6 +78,7 @@ class FactListConverter {
 
     /**
      * 尝试解析旧格式Map<String, String>
+     * 为旧数据自动生成UUID
      */
     private fun tryParseOldFormat(json: String): List<Fact> {
         return try {
@@ -85,6 +86,7 @@ class FactListConverter {
             val now = System.currentTimeMillis()
             oldMap.map { (key, value) ->
                 Fact(
+                    id = java.util.UUID.randomUUID().toString(),
                     key = key,
                     value = value,
                     timestamp = now,

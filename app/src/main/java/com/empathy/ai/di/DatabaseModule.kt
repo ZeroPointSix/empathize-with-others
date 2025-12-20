@@ -268,6 +268,49 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移: 版本 8 -> 9
+     * 扩展daily_summaries表支持手动总结功能：
+     * - 添加start_date字段（范围总结开始日期）
+     * - 添加end_date字段（范围总结结束日期）
+     * - 添加summary_type字段（总结类型：DAILY/CUSTOM_RANGE）
+     * - 添加generation_source字段（生成来源：AUTO/MANUAL）
+     * - 添加conversation_count字段（分析的对话数量）
+     * - 添加generated_at字段（生成时间戳）
+     * - 创建summary_type和generation_source索引
+     */
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 添加新字段
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN start_date TEXT DEFAULT NULL"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN end_date TEXT DEFAULT NULL"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN summary_type TEXT NOT NULL DEFAULT 'DAILY'"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN generation_source TEXT NOT NULL DEFAULT 'AUTO'"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN conversation_count INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN generated_at INTEGER NOT NULL DEFAULT 0"
+            )
+
+            // 创建新索引
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_daily_summaries_summary_type ON daily_summaries(summary_type)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_daily_summaries_generation_source ON daily_summaries(generation_source)"
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -296,7 +339,8 @@ object DatabaseModule {
                 MIGRATION_4_5,
                 MIGRATION_5_6,
                 MIGRATION_6_7,
-                MIGRATION_7_8
+                MIGRATION_7_8,
+                MIGRATION_8_9
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据

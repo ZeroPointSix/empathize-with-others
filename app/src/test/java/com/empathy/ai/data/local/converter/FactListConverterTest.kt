@@ -36,10 +36,11 @@ class FactListConverterTest {
     @Test
     fun `fromFactList正确序列化单个Fact`() {
         val facts = listOf(
-            Fact("职业", "产品经理", 1702540800000L, FactSource.MANUAL)
+            Fact(id = "test-id-1", key = "职业", value = "产品经理", timestamp = 1702540800000L, source = FactSource.MANUAL)
         )
         val result = converter.fromFactList(facts)
 
+        assertTrue(result.contains("\"id\":\"test-id-1\""))
         assertTrue(result.contains("\"key\":\"职业\""))
         assertTrue(result.contains("\"value\":\"产品经理\""))
         assertTrue(result.contains("\"timestamp\":1702540800000"))
@@ -49,8 +50,8 @@ class FactListConverterTest {
     @Test
     fun `fromFactList正确序列化多个Facts`() {
         val facts = listOf(
-            Fact("职业", "产品经理", 1702540800000L, FactSource.MANUAL),
-            Fact("爱好", "摄影", 1702540800000L, FactSource.AI_INFERRED)
+            Fact(id = "test-id-1", key = "职业", value = "产品经理", timestamp = 1702540800000L, source = FactSource.MANUAL),
+            Fact(id = "test-id-2", key = "爱好", value = "摄影", timestamp = 1702540800000L, source = FactSource.AI_INFERRED)
         )
         val result = converter.fromFactList(facts)
 
@@ -65,7 +66,7 @@ class FactListConverterTest {
     @Test
     fun `fromFactList处理特殊字符`() {
         val facts = listOf(
-            Fact("备注", "包含\"引号\"和\\斜杠", 1702540800000L, FactSource.MANUAL)
+            Fact(id = "test-id-1", key = "备注", value = "包含\"引号\"和\\斜杠", timestamp = 1702540800000L, source = FactSource.MANUAL)
         )
         val result = converter.fromFactList(facts)
 
@@ -78,7 +79,7 @@ class FactListConverterTest {
     @Test
     fun `fromFactList处理中文字符`() {
         val facts = listOf(
-            Fact("性格特点", "外向、热情、善于沟通", 1702540800000L, FactSource.MANUAL)
+            Fact(id = "test-id-1", key = "性格特点", value = "外向、热情、善于沟通", timestamp = 1702540800000L, source = FactSource.MANUAL)
         )
         val result = converter.fromFactList(facts)
 
@@ -114,10 +115,11 @@ class FactListConverterTest {
 
     @Test
     fun `toFactList正确反序列化单个Fact`() {
-        val json = """[{"key":"职业","value":"产品经理","timestamp":1702540800000,"source":"MANUAL"}]"""
+        val json = """[{"id":"test-id-1","key":"职业","value":"产品经理","timestamp":1702540800000,"source":"MANUAL"}]"""
         val result = converter.toFactList(json)
 
         assertEquals(1, result.size)
+        assertEquals("test-id-1", result[0].id)
         assertEquals("职业", result[0].key)
         assertEquals("产品经理", result[0].value)
         assertEquals(1702540800000L, result[0].timestamp)
@@ -127,8 +129,8 @@ class FactListConverterTest {
     @Test
     fun `toFactList正确反序列化多个Facts`() {
         val json = """[
-            {"key":"职业","value":"产品经理","timestamp":1702540800000,"source":"MANUAL"},
-            {"key":"爱好","value":"摄影","timestamp":1702540800000,"source":"AI_INFERRED"}
+            {"id":"test-id-1","key":"职业","value":"产品经理","timestamp":1702540800000,"source":"MANUAL"},
+            {"id":"test-id-2","key":"爱好","value":"摄影","timestamp":1702540800000,"source":"AI_INFERRED"}
         ]"""
         val result = converter.toFactList(json)
 
@@ -137,6 +139,17 @@ class FactListConverterTest {
         assertEquals("爱好", result[1].key)
         assertEquals(FactSource.MANUAL, result[0].source)
         assertEquals(FactSource.AI_INFERRED, result[1].source)
+    }
+
+    @Test
+    fun `toFactList反序列化时为缺失的id字段生成UUID`() {
+        // 旧格式JSON没有id字段
+        val json = """[{"key":"职业","value":"产品经理","timestamp":1702540800000,"source":"MANUAL"}]"""
+        val result = converter.toFactList(json)
+
+        assertEquals(1, result.size)
+        assertTrue("应该自动生成id", result[0].id.isNotBlank())
+        assertEquals("职业", result[0].key)
     }
 
     @Test
@@ -173,9 +186,9 @@ class FactListConverterTest {
     @Test
     fun `序列化和反序列化往返一致`() {
         val originalFacts = listOf(
-            Fact("职业", "产品经理", 1702540800000L, FactSource.MANUAL),
-            Fact("爱好", "摄影", 1702540800000L, FactSource.AI_INFERRED),
-            Fact("性格", "外向", 1702540800000L, FactSource.MANUAL)
+            Fact(id = "id-1", key = "职业", value = "产品经理", timestamp = 1702540800000L, source = FactSource.MANUAL),
+            Fact(id = "id-2", key = "爱好", value = "摄影", timestamp = 1702540800000L, source = FactSource.AI_INFERRED),
+            Fact(id = "id-3", key = "性格", value = "外向", timestamp = 1702540800000L, source = FactSource.MANUAL)
         )
 
         val json = converter.fromFactList(originalFacts)
@@ -183,6 +196,7 @@ class FactListConverterTest {
 
         assertEquals(originalFacts.size, restoredFacts.size)
         for (i in originalFacts.indices) {
+            assertEquals(originalFacts[i].id, restoredFacts[i].id)
             assertEquals(originalFacts[i].key, restoredFacts[i].key)
             assertEquals(originalFacts[i].value, restoredFacts[i].value)
             assertEquals(originalFacts[i].timestamp, restoredFacts[i].timestamp)
@@ -202,7 +216,7 @@ class FactListConverterTest {
     @Test
     fun `处理emoji字符往返一致`() {
         val originalFacts = listOf(
-            Fact("心情", "开心😀", 1702540800000L, FactSource.MANUAL)
+            Fact(id = "id-1", key = "心情", value = "开心😀", timestamp = 1702540800000L, source = FactSource.MANUAL)
         )
 
         val json = converter.fromFactList(originalFacts)
@@ -216,7 +230,7 @@ class FactListConverterTest {
     @Test
     fun `处理换行符往返一致`() {
         val originalFacts = listOf(
-            Fact("备注", "第一行\n第二行", 1702540800000L, FactSource.MANUAL)
+            Fact(id = "id-1", key = "备注", value = "第一行\n第二行", timestamp = 1702540800000L, source = FactSource.MANUAL)
         )
 
         val json = converter.fromFactList(originalFacts)

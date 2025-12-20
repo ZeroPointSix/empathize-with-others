@@ -29,8 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.BrainTag
@@ -39,6 +41,7 @@ import com.empathy.ai.domain.model.DataStatus
 import com.empathy.ai.domain.model.EmotionType
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FilterType
+import com.empathy.ai.domain.model.SummaryError
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.domain.model.ViewMode
@@ -52,9 +55,20 @@ import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.overview.OverviewTab
 import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTab
+import com.empathy.ai.presentation.ui.screen.contact.summary.ConflictResolutionDialog
+import com.empathy.ai.presentation.ui.screen.contact.summary.DateRangePickerDialog
+import com.empathy.ai.presentation.ui.screen.contact.summary.ManualSummaryFab
+import com.empathy.ai.presentation.ui.screen.contact.summary.SummaryDetailDialog
+import com.empathy.ai.presentation.ui.screen.contact.summary.RangeWarningDialog
+import com.empathy.ai.presentation.ui.screen.contact.summary.SummaryErrorDialog
+import com.empathy.ai.presentation.ui.screen.contact.summary.SummaryProgressDialog
+import com.empathy.ai.presentation.ui.screen.contact.summary.SummaryResultDialog
 import com.empathy.ai.presentation.ui.screen.contact.vault.DataSourceInfo
 import com.empathy.ai.presentation.ui.screen.contact.vault.DataVaultTab
 import com.empathy.ai.presentation.viewmodel.ContactDetailTabViewModel
+import com.empathy.ai.presentation.viewmodel.ManualSummaryUiEvent
+import com.empathy.ai.presentation.viewmodel.ManualSummaryUiState
+import com.empathy.ai.presentation.viewmodel.ManualSummaryViewModel
 
 /**
  * 联系人详情标签页屏幕
@@ -64,6 +78,7 @@ import com.empathy.ai.presentation.viewmodel.ContactDetailTabViewModel
  * @param contactId 联系人ID
  * @param onNavigateBack 返回回调
  * @param viewModel ViewModel
+ * @param manualSummaryViewModel 手动总结ViewModel
  * @param modifier Modifier
  */
 @Composable
@@ -72,9 +87,11 @@ fun ContactDetailTabScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPromptEditor: ((String) -> Unit)? = null,
     viewModel: ContactDetailTabViewModel = hiltViewModel(),
+    manualSummaryViewModel: ManualSummaryViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val summaryUiState by manualSummaryViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // 加载联系人数据
@@ -98,9 +115,22 @@ fun ContactDetailTabScreen(
         }
     }
 
+    // 处理导航到时光轴
+    LaunchedEffect(summaryUiState.navigateToTimeline) {
+        if (summaryUiState.navigateToTimeline) {
+            // 切换到事实流标签页查看总结结果
+            viewModel.onEvent(ContactDetailUiEvent.SwitchTab(DetailTab.FactStream))
+            // 刷新数据以显示新生成的总结
+            viewModel.onEvent(ContactDetailUiEvent.RefreshData)
+            manualSummaryViewModel.onEvent(ManualSummaryUiEvent.ClearNavigation)
+        }
+    }
+
     ContactDetailTabScreenContent(
         uiState = uiState,
+        summaryUiState = summaryUiState,
         onEvent = viewModel::onEvent,
+        onSummaryEvent = manualSummaryViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToPromptEditor = onNavigateToPromptEditor,
         snackbarHostState = snackbarHostState,
@@ -127,7 +157,9 @@ fun ContactDetailTabScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     ContactDetailTabScreenContent(
         uiState = uiState,
+        summaryUiState = ManualSummaryUiState(),
         onEvent = onEvent,
+        onSummaryEvent = {},
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
         modifier = modifier
@@ -141,7 +173,9 @@ fun ContactDetailTabScreen(
 @Composable
 private fun ContactDetailTabScreenContent(
     uiState: ContactDetailUiState,
+    summaryUiState: ManualSummaryUiState,
     onEvent: (ContactDetailUiEvent) -> Unit,
+    onSummaryEvent: (ManualSummaryUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToPromptEditor: ((String) -> Unit)? = null,
     snackbarHostState: SnackbarHostState,
@@ -149,7 +183,19 @@ private fun ContactDetailTabScreenContent(
 ) {
     Scaffold(
         modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            // 在事实流标签页显示手动总结FAB
+            if (uiState.currentTab == DetailTab.FactStream && uiState.contact != null) {
+                ManualSummaryFab(
+                    onClick = {
+                        uiState.contact?.let { contact ->
+                            onSummaryEvent(ManualSummaryUiEvent.ShowDatePicker(contact.id))
+                        }
+                    }
+                )
+            }
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -200,6 +246,12 @@ private fun ContactDetailTabScreenContent(
             }
         }
     }
+
+    // 手动总结相关对话框
+    ManualSummaryDialogs(
+        summaryUiState = summaryUiState,
+        onSummaryEvent = onSummaryEvent
+    )
 }
 
 /**
@@ -478,6 +530,91 @@ private fun DetailTab.toDisplayName(): String {
     }
 }
 
+/**
+ * 手动总结相关对话框
+ *
+ * 集中管理所有手动总结功能的对话框显示逻辑
+ */
+@Composable
+private fun ManualSummaryDialogs(
+    summaryUiState: ManualSummaryUiState,
+    onSummaryEvent: (ManualSummaryUiEvent) -> Unit
+) {
+    // 日期选择对话框
+    if (summaryUiState.showDatePicker) {
+        DateRangePickerDialog(
+            selectedOption = summaryUiState.selectedQuickOption,
+            selectedRange = summaryUiState.selectedDateRange,
+            existingSummaryDates = emptyList(), // TODO: 从状态获取已有总结日期
+            validationError = summaryUiState.validationError,
+            onQuickOptionSelected = { option ->
+                onSummaryEvent(ManualSummaryUiEvent.SelectQuickOption(option))
+            },
+            onCustomRangeSelected = { start, end ->
+                onSummaryEvent(ManualSummaryUiEvent.SelectCustomRange(start, end))
+            },
+            onConfirm = { onSummaryEvent(ManualSummaryUiEvent.ConfirmDateRange) },
+            onDismiss = { onSummaryEvent(ManualSummaryUiEvent.DismissDatePicker) }
+        )
+    }
+
+    // 范围警告对话框
+    if (summaryUiState.showRangeWarning) {
+        RangeWarningDialog(
+            message = summaryUiState.rangeWarningMessage ?: "选择的日期范围较长，可能需要较长时间处理。",
+            onConfirm = { onSummaryEvent(ManualSummaryUiEvent.ConfirmRangeWarning) },
+            onDismiss = { onSummaryEvent(ManualSummaryUiEvent.DismissRangeWarning) }
+        )
+    }
+
+    // 冲突处理对话框
+    if (summaryUiState.showConflictDialog && summaryUiState.conflictResult != null) {
+        ConflictResolutionDialog(
+            conflict = summaryUiState.conflictResult,
+            selectedResolution = summaryUiState.selectedConflictResolution,
+            onResolutionSelected = { resolution ->
+                onSummaryEvent(ManualSummaryUiEvent.SelectConflictResolution(resolution))
+            },
+            onConfirm = { onSummaryEvent(ManualSummaryUiEvent.ConfirmConflictResolution) },
+            onDismiss = { onSummaryEvent(ManualSummaryUiEvent.DismissConflictDialog) }
+        )
+    }
+
+    // 进度对话框
+    if (summaryUiState.showProgressDialog && summaryUiState.task != null) {
+        SummaryProgressDialog(
+            task = summaryUiState.task,
+            onCancel = { onSummaryEvent(ManualSummaryUiEvent.CancelSummary) }
+        )
+    }
+
+    // 结果统计对话框
+    if (summaryUiState.showResultDialog && summaryUiState.summaryResult != null) {
+        SummaryResultDialog(
+            result = summaryUiState.summaryResult,
+            onViewSummary = { onSummaryEvent(ManualSummaryUiEvent.ViewResult) },
+            onDismiss = { onSummaryEvent(ManualSummaryUiEvent.DismissResult) }
+        )
+    }
+
+    // 总结详情对话框
+    if (summaryUiState.showSummaryDetailDialog && summaryUiState.summaryResult != null) {
+        SummaryDetailDialog(
+            summary = summaryUiState.summaryResult.summary,
+            onDismiss = { onSummaryEvent(ManualSummaryUiEvent.DismissSummaryDetail) }
+        )
+    }
+
+    // 错误对话框
+    if (summaryUiState.showErrorDialog && summaryUiState.task?.error != null) {
+        SummaryErrorDialog(
+            error = summaryUiState.task.error,
+            onRetry = { onSummaryEvent(ManualSummaryUiEvent.RetryFailed) },
+            onDismiss = { onSummaryEvent(ManualSummaryUiEvent.DismissError) }
+        )
+    }
+}
+
 // ==================== Previews ====================
 
 @Preview(name = "联系人详情标签页 - 概览", showBackground = true)
@@ -486,7 +623,9 @@ private fun ContactDetailTabScreenOverviewPreview() {
     EmpathyTheme {
         ContactDetailTabScreenContent(
             uiState = createPreviewUiState(DetailTab.Overview),
+            summaryUiState = ManualSummaryUiState(),
             onEvent = {},
+            onSummaryEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() }
         )
@@ -499,7 +638,9 @@ private fun ContactDetailTabScreenFactStreamPreview() {
     EmpathyTheme {
         ContactDetailTabScreenContent(
             uiState = createPreviewUiState(DetailTab.FactStream),
+            summaryUiState = ManualSummaryUiState(),
             onEvent = {},
+            onSummaryEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() }
         )
@@ -512,7 +653,9 @@ private fun ContactDetailTabScreenPersonaPreview() {
     EmpathyTheme {
         ContactDetailTabScreenContent(
             uiState = createPreviewUiState(DetailTab.Persona),
+            summaryUiState = ManualSummaryUiState(),
             onEvent = {},
+            onSummaryEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() }
         )
@@ -525,7 +668,9 @@ private fun ContactDetailTabScreenDataVaultPreview() {
     EmpathyTheme {
         ContactDetailTabScreenContent(
             uiState = createPreviewUiState(DetailTab.DataVault),
+            summaryUiState = ManualSummaryUiState(),
             onEvent = {},
+            onSummaryEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() }
         )
@@ -538,7 +683,9 @@ private fun ContactDetailTabScreenLoadingPreview() {
     EmpathyTheme {
         ContactDetailTabScreenContent(
             uiState = ContactDetailUiState(isLoading = true),
+            summaryUiState = ManualSummaryUiState(),
             onEvent = {},
+            onSummaryEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() }
         )
@@ -555,7 +702,9 @@ private fun ContactDetailTabScreenDarkPreview() {
     EmpathyTheme {
         ContactDetailTabScreenContent(
             uiState = createPreviewUiState(DetailTab.Overview),
+            summaryUiState = ManualSummaryUiState(),
             onEvent = {},
+            onSummaryEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() }
         )

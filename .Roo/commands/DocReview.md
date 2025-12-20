@@ -11,7 +11,8 @@ description: 文档审查 - 审查指定的项目文档，评估文档质量，�
 3. 自动查找相同编号的其他文档作为前置参考（如 `FD-00001`、`TDD-00001` 等）
 4. 读取对应的文档规范（`Rules/开发文档规范.md` 或 `Rules/项目文档规范.md`）
 5. 读取项目架构文档（`.kiro/steering/structure.md`、`.kiro/steering/tech.md`、`.kiro/steering/product.md`）
-6. 进行多维度审查并生成报告
+6. **🔴 新增：对于TDD/TD/IMPL文档，检查功能集成完整性**
+7. 进行多维度审查并生成报告
 
 ## 审查维度
 
@@ -69,6 +70,115 @@ description: 文档审查 - 审查指定的项目文档，评估文档质量，�
 - 命名规范是否一致（PascalCase/camelCase/snake_case）
 - 是否遵循项目的设计原则（隐私优先、本地优先等）
 
+### 7. 🔴 功能集成完整性检查（重点）
+
+**适用文档类型**：TDD、TD、IMPL、CR
+
+**目标**：确保功能不仅代码完整，还正确集成到系统中
+
+#### 7.1 集成点检查清单
+
+| 集成点 | 检查内容 | 严重程度 |
+|--------|---------|---------|
+| **导航集成** | 新页面是否注册到 NavGraph.kt | 🔴 高 |
+| **DI模块集成** | 新Repository/UseCase/Service是否在对应Module中注册 | 🔴 高 |
+| **数据库集成** | 新Entity是否在AppDatabase中注册，新DAO是否在DatabaseModule中提供 | 🔴 高 |
+| **入口点集成** | 功能是否有可访问的入口（按钮、菜单、导航项） | 🔴 高 |
+| **调用链完整** | ViewModel→UseCase→Repository→DAO 调用链是否完整 | 🔴 高 |
+| **字符串资源** | 新增UI文本是否在strings.xml中定义 | 🟡 中 |
+| **权限声明** | 需要的权限是否在AndroidManifest.xml中声明 | 🔴 高 |
+
+#### 7.2 检查方法
+
+**步骤1：从文档提取功能清单**
+```
+1. 读取PRD/FD文档，提取功能点列表
+2. 读取TDD文档，提取技术组件列表（Repository、UseCase、ViewModel、Screen等）
+3. 读取TD文档，提取任务清单中涉及的文件
+```
+
+**步骤2：验证导航集成**
+```
+1. 检查 NavGraph.kt 是否包含新页面的 composable 路由
+2. 检查 NavRoutes.kt 是否定义了新路由常量
+3. 检查是否有其他页面能导航到新页面
+```
+
+**步骤3：验证DI集成**
+```
+1. 检查 RepositoryModule.kt 是否绑定了新Repository
+2. 检查 DatabaseModule.kt 是否提供了新DAO
+3. 检查其他Module（MemoryModule、PromptModule等）是否包含相关依赖
+4. 检查UseCase/ViewModel是否使用@Inject/@HiltViewModel注解
+```
+
+**步骤4：验证数据库集成**
+```
+1. 检查 AppDatabase.kt 是否包含新Entity
+2. 检查是否有对应的Migration脚本
+3. 检查DatabaseModule是否提供新DAO
+```
+
+**步骤5：验证入口点**
+```
+1. 检查是否有UI元素（按钮、菜单项）触发新功能
+2. 检查导航是否可达（从主页面能否到达新功能）
+3. 检查悬浮窗/通知等特殊入口是否正确配置
+```
+
+**步骤6：验证调用链**
+```
+1. 追踪 Screen → ViewModel → UseCase → Repository → DAO
+2. 确保每一层都有正确的依赖注入
+3. 确保没有断链（某层直接跳过中间层）
+```
+
+#### 7.3 常见遗漏场景
+
+| 场景 | 症状 | 检查方法 |
+|------|------|---------|
+| 忘记注册导航 | 页面存在但无法访问 | 搜索NavGraph.kt中是否有对应composable |
+| 忘记绑定Repository | 运行时Hilt注入失败 | 搜索RepositoryModule.kt中是否有@Binds |
+| 忘记提供DAO | 运行时数据库访问失败 | 搜索DatabaseModule.kt中是否有@Provides |
+| 忘记添加Migration | 数据库升级崩溃 | 检查Migration版本号是否连续 |
+| 忘记添加入口按钮 | 功能存在但用户找不到 | 检查UI中是否有触发点 |
+| 忘记注册Entity | 编译时Room报错 | 检查AppDatabase的entities数组 |
+
+#### 7.4 输出格式
+
+```markdown
+## 🔗 功能集成完整性检查
+
+### 功能组件清单
+| 组件类型 | 组件名称 | 集成状态 |
+|---------|---------|---------|
+| Screen | XxxScreen | ✅/❌ |
+| ViewModel | XxxViewModel | ✅/❌ |
+| UseCase | XxxUseCase | ✅/❌ |
+| Repository | XxxRepository | ✅/❌ |
+| DAO | XxxDao | ✅/❌ |
+| Entity | XxxEntity | ✅/❌ |
+
+### 集成点验证
+| 集成点 | 文件 | 状态 | 说明 |
+|--------|------|------|------|
+| 导航注册 | NavGraph.kt | ✅/❌ | [具体说明] |
+| DI绑定 | RepositoryModule.kt | ✅/❌ | [具体说明] |
+| DAO提供 | DatabaseModule.kt | ✅/❌ | [具体说明] |
+| Entity注册 | AppDatabase.kt | ✅/❌ | [具体说明] |
+| 入口点 | [相关文件] | ✅/❌ | [具体说明] |
+
+### ❌ 集成缺失问题
+
+#### INT-001: [问题标题]
+**问题描述**: [具体描述]
+**缺失位置**: [应该添加的文件和位置]
+**修复建议**: 
+```kotlin
+// 需要添加的代码
+```
+```
+
 ## 输出格式
 
 ### 📄 文档信息
@@ -81,6 +191,7 @@ description: 文档审查 - 审查指定的项目文档，评估文档质量，�
 - 内容完整性：X/10
 - 开发可行性：X/10
 - 架构符合性：X/10
+- **功能集成性：X/10**（🔴 新增）
 - 整体评分：X/10
 
 ### ✅ 优点
@@ -99,6 +210,13 @@ description: 文档审查 - 审查指定的项目文档，评估文档质量，�
 
 ### 🔗 前置文档一致性
 - 与相同编号文档的一致性检查结果
+
+### 🔗 功能集成完整性（🔴 新增）
+- 导航集成状态
+- DI模块集成状态
+- 数据库集成状态
+- 入口点可达性
+- 调用链完整性
 
 ### 📋 改进建议
 - 具体的修改建议和优先级

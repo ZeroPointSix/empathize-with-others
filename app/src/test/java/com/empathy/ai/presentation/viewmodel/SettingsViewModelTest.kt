@@ -68,7 +68,7 @@ class SettingsViewModelTest {
      * 测试：选择 AI 服务商
      */
     @Test
-    fun `selectProvider should save provider and show success message`() = runTest {
+    fun `selectProvider should save provider and show success message`() = runTest(testDispatcher) {
         // Given
         val newProvider = "DeepSeek"
         coEvery { settingsRepository.saveAiProvider(any()) } returns Result.success(Unit)
@@ -93,7 +93,7 @@ class SettingsViewModelTest {
      * 测试：加载设置
      */
     @Test
-    fun `init should load settings from repository`() = runTest {
+    fun `init should load settings from repository`() = runTest(testDispatcher) {
         // Given
         coEvery { settingsRepository.getAiProvider() } returns Result.success("DeepSeek")
 
@@ -110,7 +110,7 @@ class SettingsViewModelTest {
      * 测试：显示和隐藏服务商对话框
      */
     @Test
-    fun `show and hide provider dialog`() = runTest {
+    fun `show and hide provider dialog`() = runTest(testDispatcher) {
         // Given
         viewModel = SettingsViewModel(mockApplication, settingsRepository, floatingWindowPreferences, aiProviderRepository)
         advanceUntilIdle()
@@ -134,7 +134,7 @@ class SettingsViewModelTest {
      * 测试：切换数据掩码
      */
     @Test
-    fun `toggleDataMasking should toggle state`() = runTest {
+    fun `toggleDataMasking should toggle state`() = runTest(testDispatcher) {
         // Given
         viewModel = SettingsViewModel(mockApplication, settingsRepository, floatingWindowPreferences, aiProviderRepository)
         advanceUntilIdle()
@@ -153,7 +153,7 @@ class SettingsViewModelTest {
      * 测试：切换本地优先模式
      */
     @Test
-    fun `toggleLocalFirstMode should toggle state`() = runTest {
+    fun `toggleLocalFirstMode should toggle state`() = runTest(testDispatcher) {
         // Given
         viewModel = SettingsViewModel(mockApplication, settingsRepository, floatingWindowPreferences, aiProviderRepository)
         advanceUntilIdle()
@@ -172,7 +172,7 @@ class SettingsViewModelTest {
      * 测试：清除错误
      */
     @Test
-    fun `clearError should clear error message`() = runTest {
+    fun `clearError should clear error message`() = runTest(testDispatcher) {
         // Given
         viewModel = SettingsViewModel(mockApplication, settingsRepository, floatingWindowPreferences, aiProviderRepository)
         advanceUntilIdle()
@@ -189,7 +189,7 @@ class SettingsViewModelTest {
      * 测试：清除成功消息
      */
     @Test
-    fun `clearSuccessMessage should clear success message`() = runTest {
+    fun `clearSuccessMessage should clear success message`() = runTest(testDispatcher) {
         // Given
         coEvery { settingsRepository.saveAiProvider(any()) } returns Result.success(Unit)
         

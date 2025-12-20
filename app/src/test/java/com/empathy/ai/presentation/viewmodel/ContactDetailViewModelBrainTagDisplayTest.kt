@@ -3,7 +3,6 @@ package com.empathy.ai.presentation.viewmodel
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.repository.BrainTagRepository
-import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.DailySummaryRepository
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
@@ -18,7 +17,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -100,7 +98,7 @@ class ContactDetailViewModelBrainTagDisplayTest {
     }
 
     @Test
-    fun `新建联系人时添加单个标签应该显示`() = runTest {
+    fun `新建联系人时添加单个标签应该显示`() = runTest(testDispatcher) {
         // Given: 新建联系人
         viewModel.onEvent(ContactDetailUiEvent.LoadContact(""))
         advanceUntilIdle()
@@ -122,7 +120,7 @@ class ContactDetailViewModelBrainTagDisplayTest {
     }
 
     @Test
-    fun `新建联系人时连续添加多个标签应该全部显示`() = runTest {
+    fun `新建联系人时连续添加多个标签应该全部显示`() = runTest(testDispatcher) {
         // Given: 新建联系人
         viewModel.onEvent(ContactDetailUiEvent.LoadContact(""))
         advanceUntilIdle()
@@ -157,7 +155,7 @@ class ContactDetailViewModelBrainTagDisplayTest {
     }
 
     @Test
-    fun `displayTags应该返回正确的标签列表`() = runTest {
+    fun `displayTags应该返回正确的标签列表`() = runTest(testDispatcher) {
         // Given: 新建联系人并添加标签
         viewModel.onEvent(ContactDetailUiEvent.LoadContact(""))
         advanceUntilIdle()

@@ -3,6 +3,7 @@ package com.empathy.ai.domain.model
 import com.empathy.ai.domain.util.MemoryConstants
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,6 +26,55 @@ class FactTest {
         assertEquals("产品经理", fact.value)
         assertEquals(FactSource.MANUAL, fact.source)
         assertTrue(fact.timestamp > 0)
+        assertTrue(fact.id.isNotBlank())
+    }
+
+    @Test
+    fun `Fact应该有唯一的默认id`() {
+        // Given & When: 创建两个相同内容的Fact
+        val fact1 = Fact(key = "兴趣", value = "音乐", timestamp = 1L, source = FactSource.MANUAL)
+        val fact2 = Fact(key = "兴趣", value = "音乐", timestamp = 1L, source = FactSource.MANUAL)
+
+        // Then: id应该不同
+        assertNotEquals(fact1.id, fact2.id)
+    }
+
+    @Test
+    fun `Fact可以指定自定义id`() {
+        // Given & When
+        val customId = "custom-id-123"
+        val fact = Fact(
+            id = customId,
+            key = "职业",
+            value = "产品经理",
+            timestamp = System.currentTimeMillis(),
+            source = FactSource.MANUAL
+        )
+
+        // Then
+        assertEquals(customId, fact.id)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `创建Fact时id为空抛出异常`() {
+        Fact(
+            id = "",
+            key = "职业",
+            value = "产品经理",
+            timestamp = System.currentTimeMillis(),
+            source = FactSource.MANUAL
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `创建Fact时id为空白抛出异常`() {
+        Fact(
+            id = "   ",
+            key = "职业",
+            value = "产品经理",
+            timestamp = System.currentTimeMillis(),
+            source = FactSource.MANUAL
+        )
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -180,17 +230,29 @@ class FactTest {
     @Test
     fun `Fact的equals方法正确工作`() {
         val timestamp = System.currentTimeMillis()
-        val fact1 = Fact("职业", "产品经理", timestamp, FactSource.MANUAL)
-        val fact2 = Fact("职业", "产品经理", timestamp, FactSource.MANUAL)
+        val id = "same-id"
+        val fact1 = Fact(id, "职业", "产品经理", timestamp, FactSource.MANUAL)
+        val fact2 = Fact(id, "职业", "产品经理", timestamp, FactSource.MANUAL)
 
         assertEquals(fact1, fact2)
     }
 
     @Test
-    fun `不同的Fact不相等`() {
+    fun `不同id的Fact不相等`() {
         val timestamp = System.currentTimeMillis()
-        val fact1 = Fact("职业", "产品经理", timestamp, FactSource.MANUAL)
-        val fact2 = Fact("职业", "工程师", timestamp, FactSource.MANUAL)
+        val fact1 = Fact(key = "职业", value = "产品经理", timestamp = timestamp, source = FactSource.MANUAL)
+        val fact2 = Fact(key = "职业", value = "产品经理", timestamp = timestamp, source = FactSource.MANUAL)
+
+        // 即使内容相同，id不同也不相等
+        assertNotEquals(fact1, fact2)
+    }
+
+    @Test
+    fun `不同内容的Fact不相等`() {
+        val timestamp = System.currentTimeMillis()
+        val id = "same-id"
+        val fact1 = Fact(id, "职业", "产品经理", timestamp, FactSource.MANUAL)
+        val fact2 = Fact(id, "职业", "工程师", timestamp, FactSource.MANUAL)
 
         assertFalse(fact1 == fact2)
     }

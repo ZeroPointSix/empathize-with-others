@@ -206,6 +206,8 @@ class ContactDetailTabViewModel @Inject constructor(
      * 构建时间线项目
      *
      * 包含对话记录、AI总结和用户添加的事实
+     * 
+     * 注意：每个 TimelineItem 必须有唯一的 ID，用于 LazyColumn 的 key
      */
     private fun buildTimelineItems(
         conversations: List<ConversationLog>,
@@ -246,10 +248,11 @@ class ContactDetailTabViewModel @Inject constructor(
         }
         
         // 添加用户手动添加的事实
+        // Fact 模型现在有唯一的 id 字段，直接使用即可
         facts.forEach { fact ->
             items.add(
                 TimelineItem.UserFact(
-                    id = "fact_${fact.timestamp}_${fact.key.hashCode()}",
+                    id = "fact_${fact.id}",
                     timestamp = fact.timestamp,
                     emotionType = EmotionType.NEUTRAL,
                     fact = fact
@@ -511,6 +514,7 @@ class ContactDetailTabViewModel @Inject constructor(
      * 
      * 修复BUG-00003: 添加持久化逻辑，确保事实保存到数据库
      * 修复BUG-00006: 使用增量更新，避免重新加载导致AI对话丢失
+     * 修复BUG-00026: 使用Fact的唯一id字段，避免key重复导致崩溃
      */
     private fun addFactToStream(key: String, value: String) {
         if (key.isBlank() || value.isBlank()) return
@@ -520,7 +524,7 @@ class ContactDetailTabViewModel @Inject constructor(
                 val currentState = _uiState.value
                 val contact = currentState.contact ?: return@launch
                 
-                // 创建新的Fact
+                // 创建新的Fact（自动生成唯一ID）
                 val newFact = Fact(
                     key = key,
                     value = value,
@@ -537,8 +541,9 @@ class ContactDetailTabViewModel @Inject constructor(
                 // 持久化到数据库
                 saveProfileUseCase(updatedContact).onSuccess {
                     // 创建新的时间线项目（用户添加的事实）
+                    // 使用 Fact 的唯一 id 字段确保唯一性
                     val newTimelineItem = TimelineItem.UserFact(
-                        id = "fact_${newFact.timestamp}_${newFact.key.hashCode()}",
+                        id = "fact_${newFact.id}",
                         timestamp = newFact.timestamp,
                         emotionType = EmotionType.NEUTRAL,
                         fact = newFact

@@ -600,6 +600,168 @@ class DatabaseMigrationTest {
     }
 
     /**
+     * 迁移脚本: 版本 8 -> 9
+     * 扩展daily_summaries表支持手动总结
+     */
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE daily_summaries ADD COLUMN start_date TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE daily_summaries ADD COLUMN end_date TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE daily_summaries ADD COLUMN summary_type TEXT NOT NULL DEFAULT 'DAILY'")
+            db.execSQL("ALTER TABLE daily_summaries ADD COLUMN generation_source TEXT NOT NULL DEFAULT 'AUTO'")
+            db.execSQL("ALTER TABLE daily_summaries ADD COLUMN conversation_count INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE daily_summaries ADD COLUMN generated_at INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_summaries_summary_type ON daily_summaries(summary_type)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_summaries_generation_source ON daily_summaries(generation_source)")
+        }
+    }
+
+    /**
+     * 测试迁移 8 -> 9
+     * 验证手动总结字段添加
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrate8To9_addsManualSummaryFields() {
+        // 创建版本8数据库
+        helper.createDatabase(testDbName, 8).apply {
+            // 插入联系人
+            execSQL(
+                """
+                INSERT INTO profiles (id, name, nickname, relationship, notes, relationship_score)
+                VALUES ('contact_1', 'Test', 'T', 'Friend', 'Notes', 50)
+                """.trimIndent()
+            )
+            // 插入已有的每日总结
+            execSQL(
+                """
+                INSERT INTO daily_summaries (contact_id, summary_date, content, key_events_json, relationship_score, created_at)
+                VALUES ('contact_1', '2025-12-15', '测试总结内容', '[]', 5, ${System.currentTimeMillis()})
+                """.trimIndent()
+            )
+            close()
+        }
+
+        // 执行迁移
+        val db = helper.runMigrationsAndValidate(testDbName, 9, true, MIGRATION_8_9)
+
+        // 验证新字段存在且有默认值
+        val cursor = db.query(
+            """
+            SELECT start_date, end_date, summary_type, generation_source, conversation_count, generated_at 
+            FROM daily_summaries WHERE contact_id = 'contact_1'
+            """.trimIndent()
+        )
+        assertTrue("应该能查询到数据", cursor.moveToFirst())
+        assertTrue("start_date默认应该是NULL", cursor.isNull(0))
+        assertTrue("end_date默认应该是NULL", cursor.isNull(1))
+        assertEquals("summary_type默认应该是DAILY", "DAILY", cursor.getString(2))
+        assertEquals("generation_source默认应该是AUTO", "AUTO", cursor.getString(3))
+        assertEquals("conversation_count默认应该是0", 0, cursor.getInt(4))
+        assertEquals("generated_at默认应该是0", 0, cursor.getLong(5))
+        cursor.close()
+
+        // 验证可以插入手动总结
+        db.execSQL(
+            """
+            INSERT INTO daily_summaries (contact_id, summary_date, content, key_events_json, relationship_score, created_at, 
+                start_date, end_date, summary_type, generation_source, conversation_count, generated_at)
+            VALUES ('contact_1', '2025-12-16', '范围总结', '[]', 3, ${System.currentTimeMillis()},
+                '2025-12-10', '2025-12-16', 'CUSTOM_RANGE', 'MANUAL', 15, ${System.currentTimeMillis()})
+            """.trimIndent()
+        )
+
+        val manualCursor = db.query(
+            "SELECT summary_type, generation_source FROM daily_summaries WHERE summary_date = '2025-12-16'"
+        )
+        assertTrue(manualCursor.moveToFirst())
+        assertEquals("CUSTOM_RANGE", manualCursor.getString(0))
+        assertEquals("MANUAL", manualCursor.getString(1))
+        manualCursor.close()
+
+        db.close()
+    }
+
+    /**
+     * 测试迁移 8 -> 9 索引创建
+     * 验证summary_type和generation_source索引
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrate8To9_createsNewIndexes() {
+        // 创建版本8数据库
+        helper.createDatabase(testDbName, 8).apply {
+            close()
+        }
+
+        // 执行迁移
+        val db = helper.runMigrationsAndValidate(testDbName, 9, true, MIGRATION_8_9)
+
+        // 验证新索引存在
+        val indexCursor = db.query(
+            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='daily_summaries'"
+        )
+        val indexes = mutableListOf<String>()
+        while (indexCursor.moveToNext()) {
+            indexes.add(indexCursor.getString(0))
+        }
+        indexCursor.close()
+
+        assertTrue("应该有summary_type索引", indexes.any { it.contains("summary_type") })
+        assertTrue("应该有generation_source索引", indexes.any { it.contains("generation_source") })
+
+        db.close()
+    }
+
+    /**
+     * 测试完整迁移链 1 -> 9
+     * 验证所有迁移脚本可以连续执行
+     */
+    @Test
+    @Throws(IOException::class)
+    fun migrateAll_1To9_succeeds() {
+        // 创建版本1数据库
+        helper.createDatabase(testDbName, 1).apply {
+            execSQL(
+                """
+                INSERT INTO profiles (id, name, nickname, relationship, notes)
+                VALUES ('contact_1', 'Test Contact', 'TC', 'Friend', 'Notes')
+                """.trimIndent()
+            )
+            close()
+        }
+
+        // 执行所有迁移
+        val db = helper.runMigrationsAndValidate(
+            testDbName, 9, true,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+            MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9
+        )
+
+        // 验证原有数据完整
+        val profileCursor = db.query("SELECT * FROM profiles WHERE id = 'contact_1'")
+        assertTrue("联系人数据应该保留", profileCursor.moveToFirst())
+        profileCursor.close()
+
+        // 验证daily_summaries表有新字段
+        val summaryFieldsCursor = db.query("PRAGMA table_info(daily_summaries)")
+        val columns = mutableListOf<String>()
+        while (summaryFieldsCursor.moveToNext()) {
+            columns.add(summaryFieldsCursor.getString(1))
+        }
+        summaryFieldsCursor.close()
+
+        assertTrue("应该有start_date字段", columns.contains("start_date"))
+        assertTrue("应该有end_date字段", columns.contains("end_date"))
+        assertTrue("应该有summary_type字段", columns.contains("summary_type"))
+        assertTrue("应该有generation_source字段", columns.contains("generation_source"))
+        assertTrue("应该有conversation_count字段", columns.contains("conversation_count"))
+        assertTrue("应该有generated_at字段", columns.contains("generated_at"))
+
+        db.close()
+    }
+
+    /**
      * 测试数据完整性
      * 验证迁移后数据关系完整
      */

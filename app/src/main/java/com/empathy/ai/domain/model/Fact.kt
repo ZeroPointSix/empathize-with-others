@@ -2,6 +2,7 @@ package com.empathy.ai.domain.model
 
 import com.empathy.ai.domain.util.DateUtils
 import com.empathy.ai.domain.util.MemoryConstants
+import java.util.UUID
 
 /**
  * 事实领域模型
@@ -9,18 +10,21 @@ import com.empathy.ai.domain.util.MemoryConstants
  * 纯Kotlin类，无Android依赖
  * 表示联系人的一条事实信息
  *
+ * @property id 唯一标识符，用于LazyColumn的key，保证全局唯一
  * @property key 字段名，如"性格特点"、"兴趣爱好"
  * @property value 字段值
  * @property timestamp 创建/更新时间（毫秒）
  * @property source 来源：MANUAL 或 AI_INFERRED
  */
 data class Fact(
+    val id: String = UUID.randomUUID().toString(),
     val key: String,
     val value: String,
     val timestamp: Long,
     val source: FactSource
 ) {
     init {
+        require(id.isNotBlank()) { "Fact的id不能为空" }
         require(key.isNotBlank()) { "Fact的key不能为空" }
         require(value.isNotBlank()) { "Fact的value不能为空" }
         require(timestamp > 0) { "Fact的timestamp必须大于0" }

@@ -228,9 +228,9 @@ private fun FactListPreview() {
     EmpathyTheme {
         FactList(
             facts = listOf(
-                Fact("职业", "产品经理", System.currentTimeMillis(), FactSource.MANUAL),
-                Fact("爱好", "摄影、旅行", System.currentTimeMillis(), FactSource.MANUAL),
-                Fact("性格", "外向热情", System.currentTimeMillis(), FactSource.AI_INFERRED)
+                Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(key = "爱好", value = "摄影、旅行", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(key = "性格", value = "外向热情", timestamp = System.currentTimeMillis(), source = FactSource.AI_INFERRED)
             ),
             isEditMode = true,
             onDeleteFact = {}

@@ -4,8 +4,10 @@ import com.empathy.ai.data.local.dao.DailySummaryDao
 import com.empathy.ai.data.local.entity.DailySummaryEntity
 import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.GenerationSource
 import com.empathy.ai.domain.model.KeyEvent
 import com.empathy.ai.domain.model.RelationshipTrend
+import com.empathy.ai.domain.model.SummaryType
 import com.empathy.ai.domain.model.TagUpdate
 import com.empathy.ai.domain.repository.DailySummaryRepository
 import com.squareup.moshi.Moshi
@@ -110,6 +112,83 @@ class DailySummaryRepositoryImpl @Inject constructor(
         }
     }
 
+    // ==================== v9 新增方法实现 ====================
+
+    override suspend fun getSummariesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<List<DailySummary>> = withContext(Dispatchers.IO) {
+        try {
+            val entities = dao.getSummariesInRange(contactId, startDate, endDate)
+            Result.success(entities.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getSummarizedDatesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            val dates = dao.getSummarizedDatesInRange(contactId, startDate, endDate)
+            Result.success(dates)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteSummariesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val count = dao.deleteSummariesInRange(contactId, startDate, endDate)
+            Result.success(count)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getManualSummaries(
+        contactId: String
+    ): Result<List<DailySummary>> = withContext(Dispatchers.IO) {
+        try {
+            val entities = dao.getManualSummaries(contactId)
+            Result.success(entities.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun countMissingDatesInRange(
+        contactId: String,
+        startDate: String,
+        endDate: String
+    ): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val count = dao.countMissingDatesInRange(contactId, startDate, endDate)
+            Result.success(count)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getSummariesByType(
+        contactId: String,
+        summaryType: SummaryType
+    ): Result<List<DailySummary>> = withContext(Dispatchers.IO) {
+        try {
+            val entities = dao.getSummariesByType(contactId, summaryType.name)
+            Result.success(entities.map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ============================================================================
     // 私有映射函数
     // ============================================================================
@@ -122,7 +201,14 @@ class DailySummaryRepositoryImpl @Inject constructor(
             content = content,
             keyEventsJson = keyEventsAdapter.toJson(keyEvents),
             relationshipScore = relationshipScoreChange,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            // v9 新增字段映射
+            startDate = startDate,
+            endDate = endDate,
+            summaryType = summaryType.name,
+            generationSource = generationSource.name,
+            conversationCount = conversationCount,
+            generatedAt = generatedAt
         )
     }
 
@@ -142,7 +228,22 @@ class DailySummaryRepositoryImpl @Inject constructor(
             newFacts = emptyList(),
             updatedTags = emptyList(),
             relationshipScoreChange = relationshipScore,
-            relationshipTrend = RelationshipTrend.STABLE
+            relationshipTrend = RelationshipTrend.STABLE,
+            // v9 新增字段映射
+            startDate = startDate,
+            endDate = endDate,
+            summaryType = try {
+                SummaryType.valueOf(summaryType)
+            } catch (e: Exception) {
+                SummaryType.DAILY
+            },
+            generationSource = try {
+                GenerationSource.valueOf(generationSource)
+            } catch (e: Exception) {
+                GenerationSource.AUTO
+            },
+            conversationCount = conversationCount,
+            generatedAt = generatedAt
         )
     }
 }

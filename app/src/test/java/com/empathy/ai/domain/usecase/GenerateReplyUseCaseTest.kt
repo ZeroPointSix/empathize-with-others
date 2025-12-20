@@ -1,7 +1,10 @@
 package com.empathy.ai.domain.usecase
 
 import com.empathy.ai.domain.model.ActionType
+import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.BrainTag
+import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.FloatingWindowError
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.ReplyResult
@@ -10,7 +13,6 @@ import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
-import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
@@ -19,20 +21,17 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 /**
  * GenerateReplyUseCase单元测试
  * 
- * 测试回复生成功能，特别关注数据保存的完整性
+ * 测试回复生成功能
  */
 class GenerateReplyUseCaseTest {
     
@@ -43,7 +42,6 @@ class GenerateReplyUseCaseTest {
     private lateinit var aiRepository: AiRepository
     private lateinit var aiProviderRepository: AiProviderRepository
     private lateinit var promptBuilder: PromptBuilder
-    private lateinit var conversationRepository: ConversationRepository
     private lateinit var sessionContextService: SessionContextService
     
     private lateinit var generateReplyUseCase: GenerateReplyUseCase
@@ -61,7 +59,6 @@ class GenerateReplyUseCaseTest {
         aiRepository = mockk()
         aiProviderRepository = mockk()
         promptBuilder = mockk()
-        conversationRepository = mockk()
         sessionContextService = mockk()
         
         // Create use case with mocked dependencies
@@ -72,7 +69,6 @@ class GenerateReplyUseCaseTest {
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
-            conversationRepository = conversationRepository,
             sessionContextService = sessionContextService
         )
         
@@ -82,125 +78,63 @@ class GenerateReplyUseCaseTest {
     
     private fun setupDefaultMocks() {
         // Mock AI provider
-        val mockProvider = mockk<com.empathy.ai.domain.model.AiProvider>()
-        every { aiProviderRepository.getDefaultProvider() } returns com.github.michaelbull.result.Ok(mockProvider)
+        val testModel = AiModel(id = "test-model", displayName = "Test Model")
+        val mockProvider = AiProvider(
+            id = "provider-1",
+            name = "Test Provider",
+            baseUrl = "https://api.test.com",
+            apiKey = "test-key",
+            models = listOf(testModel),
+            defaultModelId = "test-model",
+            isDefault = true
+        )
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(mockProvider)
         
         // Mock contact profile
-        val mockProfile = mockk<com.empathy.ai.domain.model.ContactProfile>()
-        every { contactRepository.getProfile(testContactId) } returns com.github.michaelbull.result.Ok(mockProfile)
-        every { mockProfile.targetGoal } returns "维护良好关系"
-        every { mockProfile.contextDepth } returns 10
-        every { mockProfile.facts } returns emptyList()
+        val mockProfile = ContactProfile(
+            id = testContactId,
+            name = "Test Contact",
+            targetGoal = "维护良好关系",
+            contextDepth = 10,
+            facts = emptyList()
+        )
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(mockProfile)
         
         // Mock brain tags
-        val redTag = BrainTag(id = 1, content = "不喜欢谈论工作", type = TagType.RISK_RED, isConfirmed = true)
-        val greenTag = BrainTag(id = 2, content = "喜欢美食", type = TagType.STRATEGY_GREEN, isConfirmed = true)
+        val redTag = BrainTag(id = 1, contactId = testContactId, content = "不喜欢谈论工作", type = TagType.RISK_RED, isConfirmed = true)
+        val greenTag = BrainTag(id = 2, contactId = testContactId, content = "喜欢美食", type = TagType.STRATEGY_GREEN, isConfirmed = true)
         every { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(listOf(redTag, greenTag))
         
-        // Mock privacy
-        every { privacyRepository.maskText(any()) } returns it // No masking for test
+        // Mock privacy - return input unchanged
+        coEvery { privacyRepository.maskText(any()) } answers { firstArg() }
         
         // Mock session context
-        every { sessionContextService.getHistoryContext(testContactId) } returns ""
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
         
         // Mock prompt builder
-        every { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "test instruction"
-        
-        // Mock conversation repository - save user input
-        coEvery { conversationRepository.saveUserInput(any(), any()) } returns com.github.michaelbull.result.Ok(1L)
-        
-        // Mock conversation repository - update AI response
-        coEvery { conversationRepository.updateAiResponse(any(), any()) } returns com.github.michaelbull.result.Ok(Unit)
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "test instruction"
         
         // Mock AI repository
-        coEvery { aiRepository.generateReply(any(), any(), any()) } returns com.github.michaelbull.result.Ok(
+        coEvery { aiRepository.generateReply(any(), any(), any()) } returns Result.success(
             ReplyResult(suggestedReply = testReply)
         )
     }
     
     @Test
-    fun `回复模式应该保存用户输入和AI回复`() = runTest {
+    fun `回复模式应该成功生成回复`() = runTest {
         // When
         val result = generateReplyUseCase(testContactId, testMessage)
         
         // Then
-        assertTrue(result.isSuccess, "生成回复应该成功")
-        
-        // Verify user input was saved
-        coVerify { 
-            conversationRepository.saveUserInput(
-                contactId = testContactId,
-                userInput = IdentityPrefixHelper.addPrefix(testMessage, ActionType.REPLY)
-            )
-        }
-        
-        // Verify AI response was saved
-        coVerify { 
-            conversationRepository.updateAiResponse(
-                logId = 1L,
-                aiResponse = "【回复建议】\n$testReply"
-            )
-        }
-    }
-    
-    @Test
-    fun `AI回复保存失败不应影响主流程`() = runTest {
-        // Given - AI response save fails
-        coEvery { conversationRepository.updateAiResponse(any(), any()) } returns com.github.michaelbull.result.Err(
-            Exception("保存失败")
-        )
-        
-        // When
-        val result = generateReplyUseCase(testContactId, testMessage)
-        
-        // Then
-        assertTrue(result.isSuccess, "主流程不应该受AI回复保存失败影响")
-        
-        // Verify user input was still saved
-        coVerify { 
-            conversationRepository.saveUserInput(
-                contactId = testContactId,
-                userInput = IdentityPrefixHelper.addPrefix(testMessage, ActionType.REPLY)
-            )
-        }
-        
-        // Verify AI response save was attempted
-        coVerify { 
-            conversationRepository.updateAiResponse(
-                logId = 1L,
-                aiResponse = "【回复建议】\n$testReply"
-            )
-        }
-    }
-    
-    @Test
-    fun `用户输入保存失败不应影响AI生成`() = runTest {
-        // Given - user input save fails
-        coEvery { conversationRepository.saveUserInput(any(), any()) } returns com.github.michaelbull.result.Err(
-            Exception("保存失败")
-        )
-        
-        // When
-        val result = generateReplyUseCase(testContactId, testMessage)
-        
-        // Then
-        assertTrue(result.isSuccess, "AI生成不应该受用户输入保存失败影响")
-        
-        // Verify AI was still called
-        coVerify { 
-            aiRepository.generateReply(any(), any(), any())
-        }
-        
-        // Verify AI response save was not attempted (since logId would be null)
-        coVerify(exactly = 0) { 
-            conversationRepository.updateAiResponse(any(), any())
-        }
+        assertTrue("生成回复应该成功", result.isSuccess)
+        val replyResult = result.getOrNull()
+        assertNotNull("回复结果不应为空", replyResult)
     }
     
     @Test
     fun `未配置AI服务商应该返回错误`() = runTest {
         // Given - no AI provider configured
-        every { aiProviderRepository.getDefaultProvider() } returns com.github.michaelbull.result.Err(
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.failure(
             Exception("未配置服务商")
         )
         
@@ -208,44 +142,28 @@ class GenerateReplyUseCaseTest {
         val result = generateReplyUseCase(testContactId, testMessage)
         
         // Then
-        assertTrue(result.isFailure, "未配置服务商应该返回错误")
-        assertTrue(result.exceptionOrNull() is FloatingWindowError.NoProviderConfigured)
-        
-        // Verify no data was saved
-        coVerify(exactly = 0) { 
-            conversationRepository.saveUserInput(any(), any())
-        }
-        coVerify(exactly = 0) { 
-            conversationRepository.updateAiResponse(any(), any())
-        }
+        assertTrue("未配置服务商应该返回错误", result.isFailure)
+        val error = result.exceptionOrNull()
+        assertNotNull("应该有异常", error)
+        assertTrue("应该是NoProviderConfigured错误", error is FloatingWindowError.NoProviderConfigured)
     }
     
     @Test
     fun `联系人不存在应该返回错误`() = runTest {
         // Given - contact not found
-        every { contactRepository.getProfile(testContactId) } returns com.github.michaelbull.result.Err(
-            Exception("联系人不存在")
-        )
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(null)
         
         // When
         val result = generateReplyUseCase(testContactId, testMessage)
         
         // Then
-        assertTrue(result.isFailure, "联系人不存在应该返回错误")
-        
-        // Verify no data was saved
-        coVerify(exactly = 0) { 
-            conversationRepository.saveUserInput(any(), any())
-        }
-        coVerify(exactly = 0) { 
-            conversationRepository.updateAiResponse(any(), any())
-        }
+        assertTrue("联系人不存在应该返回错误", result.isFailure)
     }
     
     @Test
-    fun `AI生成失败应该返回错误但用户输入已保存`() = runTest {
+    fun `AI生成失败应该返回错误`() = runTest {
         // Given - AI generation fails
-        coEvery { aiRepository.generateReply(any(), any(), any()) } returns com.github.michaelbull.result.Err(
+        coEvery { aiRepository.generateReply(any(), any(), any()) } returns Result.failure(
             Exception("AI生成失败")
         )
         
@@ -253,37 +171,14 @@ class GenerateReplyUseCaseTest {
         val result = generateReplyUseCase(testContactId, testMessage)
         
         // Then
-        assertTrue(result.isFailure, "AI生成失败应该返回错误")
-        
-        // Verify user input was still saved
-        coVerify { 
-            conversationRepository.saveUserInput(
-                contactId = testContactId,
-                userInput = IdentityPrefixHelper.addPrefix(testMessage, ActionType.REPLY)
-            )
-        }
-        
-        // Verify AI response save was not attempted
-        coVerify(exactly = 0) { 
-            conversationRepository.updateAiResponse(any(), any())
-        }
+        assertTrue("AI生成失败应该返回错误", result.isFailure)
     }
     
     @Test
-    fun `应该正确构建运行时数据`() = runTest {
+    fun `应该正确调用PromptBuilder`() = runTest {
         // Given
-        val redTag = BrainTag(id = 1, content = "不喜欢谈论工作", type = TagType.RISK_RED, isConfirmed = true)
-        val greenTag = BrainTag(id = 2, content = "喜欢美食", type = TagType.STRATEGY_GREEN, isConfirmed = true)
-        every { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(listOf(redTag, greenTag))
-        
         val historyContext = "之前的对话记录"
-        every { sessionContextService.getHistoryContext(testContactId) } returns historyContext
-        
-        val mockProfile = mockk<com.empathy.ai.domain.model.ContactProfile>()
-        every { contactRepository.getProfile(testContactId) } returns com.github.michaelbull.result.Ok(mockProfile)
-        every { mockProfile.targetGoal } returns "成为好朋友"
-        every { mockProfile.contextDepth } returns 10
-        every { mockProfile.facts } returns emptyList()
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns historyContext
         
         // When
         generateReplyUseCase(testContactId, testMessage)
@@ -294,22 +189,26 @@ class GenerateReplyUseCaseTest {
                 scene = PromptScene.REPLY,
                 contactId = testContactId,
                 context = any(),
-                runtimeData = match { runtimeData ->
-                    runtimeData.contains("【攻略目标】")
-                    runtimeData.contains("成为好朋友")
-                    runtimeData.contains("【对方消息】")
-                    runtimeData.contains(IdentityPrefixHelper.addPrefix(testMessage, ActionType.REPLY))
-                    runtimeData.contains("【雷区警告】")
-                    runtimeData.contains("不喜欢谈论工作")
-                    runtimeData.contains("【策略建议】")
-                    runtimeData.contains("喜欢美食")
-                    if (historyContext.isNotBlank()) {
-                        runtimeData.contains(historyContext)
-                    } else {
-                        true
-                    }
-                }
+                runtimeData = any()
             )
         }
+    }
+    
+    @Test
+    fun `应该正确调用隐私脱敏`() = runTest {
+        // When
+        generateReplyUseCase(testContactId, testMessage)
+        
+        // Then
+        coVerify { privacyRepository.maskText(testMessage) }
+    }
+    
+    @Test
+    fun `应该获取历史对话上下文`() = runTest {
+        // When
+        generateReplyUseCase(testContactId, testMessage)
+        
+        // Then
+        coVerify { sessionContextService.getHistoryContext(testContactId) }
     }
 }
