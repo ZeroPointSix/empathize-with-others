@@ -32,7 +32,7 @@
 - **Navigation Compose**：2.8.5
 - **Activity Compose**：1.9.3
 - **Material Icons Extended**：完整图标库
-- **Coil**：2.7.0（图片加载和缓存）
+- **Coil**：2.5.0（图片加载和缓存）
 
 ### ✅ 架构
 
@@ -158,6 +158,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 提示词编辑器UI：完整的Compose界面实现
   - 悬浮窗功能重构UI：Tab系统和状态管理完整实现
   - 悬浮球状态指示与拖动UI：流畅交互体验完整实现
+  - MaxHeightScrollView：自适应高度滚动视图组件
 - **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
   - 严格的层级分离和依赖规则
   - Hilt 2.52依赖注入完整配置
@@ -191,8 +192,9 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 新增DispatcherModule支持协程调度器
   - 新增FloatingWindowModule支持悬浮窗系统
   - 新增NotificationModule支持通知系统
+  - 新增SummaryModule支持总结系统
 - **图片加载**: Coil 图片加载和缓存完整实现
-  - Coil 2.7.0 + Compose集成
+  - Coil 2.5.0 + Compose集成
 - **测试框架**: Room Testing、单元测试、UI测试完整实现
   - JUnit 4.13.2 + AndroidX JUnit 1.2.1
   - MockK 1.13.13模拟框架
@@ -201,6 +203,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 提示词系统完整测试套件
   - 悬浮窗功能重构完整测试套件
   - 悬浮球状态指示与拖动相关测试
+  - MaxHeightScrollView相关测试
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
@@ -230,6 +233,11 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 任务状态：技术设计完成
   - 需要实现：IdentityPrefixHelper、UseCase层集成、系统提示词增强、UI渲染优化
   - 相关文档：TDD-00008-输入内容身份识别与双向对话历史技术设计.md
+
+- **手动触发AI总结功能**: 需要实现TD-00011任务
+  - 任务状态：技术设计完成
+  - 需要实现：ManualSummaryUseCase、SummaryTask、SummaryProgressDialog等
+  - 相关文档：TDD-00011-手动触发AI总结功能技术设计.md
 
 - **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
   - 代码架构已设计：ExtractedData模型、AiRepository接口定义
@@ -274,3 +282,9 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ✅ 确保底部操作按钮（复制、重新生成）始终在屏幕可见范围内
   - ✅ 在ResultCard中暴露setMaxHeight接口，支持动态调整
   - ✅ 新增MaxHeightScrollView组件，支持内容超出时的滚动
+
+- **AI响应JSON解析失败问题**: 已完成BUG-00025修复
+  - ✅ 增强EnhancedJsonCleaner的清理能力
+  - ✅ 改进AiResponseCleaner的错误处理机制
+  - ✅ 优化FallbackHandler的错误恢复策略
+  - ✅ 提升AI响应解析的稳定性和容错性

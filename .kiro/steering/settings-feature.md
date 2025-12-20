@@ -1,6 +1,6 @@
 # 设置功能开发规范
 
-> 最后更新: 2025-12-18 | 更新者: Roo
+> 最后更新: 2025-12-20 | 更新者: Claude
 
 ## 🔴 必读文档
 
@@ -36,6 +36,12 @@
    - 应用版本号
    - 应用名称和简介
 
+5. **历史对话计数设置** - 🆕 新增功能
+   - 显示历史对话总数统计
+   - 支持清除历史对话记录
+   - 确认对话框防止误操作
+   - 集成HistoryConversationCountSection组件
+
 ### ❌ 明确不包含（后续版本）
 
 - 主题设置（深色/浅色模式）
@@ -55,7 +61,9 @@ presentation/
 ├── ui/screen/settings/
 │   ├── SettingsScreen.kt          ✅ 已存在
 │   ├── SettingsUiState.kt         ✅ 已存在
-│   └── SettingsUiEvent.kt         ✅ 已存在
+│   ├── SettingsUiEvent.kt         ✅ 已存在
+│   └── component/                        # 🆕 设置组件
+│       └── HistoryConversationCountSection.kt  ✅ 已存在
 ├── viewmodel/
 │   └── SettingsViewModel.kt       ✅ 已存在
 domain/
@@ -66,7 +74,9 @@ data/
 │   └── SettingsRepositoryImpl.kt  ✅ 已存在
 └── local/
     ├── FloatingWindowPreferences.kt  ✅ 已存在
-    └── PrivacyPreferences.kt         ✅ 已创建
+    ├── PrivacyPreferences.kt         ✅ 已存在
+    ├── MemoryPreferences.kt         # 🆕 记忆偏好设置
+    └── ConversationPreferences.kt    # 🆕 对话偏好设置
 ```
 
 ### 关键实现点
@@ -321,6 +331,25 @@ fun `点击本地优先模式开关能正确切换状态`() {
    - ✅ 更新FloatingWindowModule添加依赖注入
    - ✅ 新增相关测试用例验证修复效果
 
+5. **悬浮窗结果页内容过长导致按钮不可见问题**: 已完成BUG-00021修复
+   - ✅ 采用动态高度计算策略，将结果区域最大高度限制为屏幕高度的40%
+   - ✅ 确保底部操作按钮（复制、重新生成）始终在屏幕可见范围内
+   - ✅ 在ResultCard中暴露setMaxHeight接口，支持动态调整
+   - ✅ 新增MaxHeightScrollView组件，支持内容超出时的滚动
+
+6. **AI响应JSON解析失败问题**: 已完成BUG-00025修复
+   - ✅ 增强EnhancedJsonCleaner的清理能力
+   - ✅ 改进AiResponseCleaner的错误处理机制
+   - ✅ 优化FallbackHandler的错误恢复策略
+   - ✅ 提升AI响应解析的稳定性和容错性
+
+7. **历史对话计数设置**: 已完成
+   - ✅ 新增HistoryConversationCountSection组件
+   - ✅ 支持显示历史对话总数统计
+   - ✅ 支持清除历史对话记录功能
+   - ✅ 添加确认对话框防止误操作
+   - ✅ 与SettingsViewModel正确集成
+
 ### ⚠️ 待解决问题
 
 ### 1. 清除数据范围
@@ -337,6 +366,11 @@ fun `点击本地优先模式开关能正确切换状态`() {
 **问题**: TD-00008技术设计已完成，但尚未实现
 
 **建议**: 根据TDD-00008技术设计文档实现IdentityPrefixHelper和相关功能
+
+### 4. 手动触发AI总结功能
+**问题**: TD-00011技术设计已完成，但尚未实现
+
+**建议**: 根据TDD-00011技术设计文档实现ManualSummaryUseCase和相关UI组件
 
 ---
 
