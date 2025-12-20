@@ -74,7 +74,15 @@ com.empathy.ai/
 │   │   ├── ProviderPresets.kt              # 🆕 提供商预设模型
 │   │   ├── PromptHistoryItem.kt           # 🆕 提示词历史项模型
 │   │   ├── MessageSender.kt               # 🆕 消息发送者枚举
-│   │   └── CleanupConfig.kt              # 🆕 清理配置模型
+│   │   ├── CleanupConfig.kt              # 🆕 清理配置模型
+│   │   ├── ConflictResult.kt              # 🆕 冲突结果模型
+│   │   ├── DateRange.kt                  # 🆕 日期范围模型
+│   │   ├── GenerationSource.kt            # 🆕 生成来源枚举
+│   │   ├── SummaryError.kt                # 🆕 总结错误模型
+│   │   ├── SummaryTask.kt                 # 🆕 总结任务模型
+│   │   ├── SummaryTaskStatus.kt            # 🆕 总结任务状态枚举
+│   │   ├── SummaryType.kt                 # 🆕 总结类型枚举
+│   │   └── ViewMode.kt                   # 🆕 视图模式枚举
 │   ├── repository/                        # ✅ 仓库接口
 │   │   ├── AiRepository.kt
 │   │   ├── BrainTagRepository.kt
@@ -104,7 +112,8 @@ com.empathy.ai/
 │   │   ├── GenerateReplyUseCase.kt         # 🆕 生成回复用例
 │   │   ├── RefinementUseCase.kt            # 🆕 优化用例
 │   │   ├── GetBrainTagsUseCase.kt          # 🆕 获取标签用例
-│   │   └── SummarizeDailyConversationsUseCase.kt  # 🆕 每日对话总结用例
+│   │   ├── SummarizeDailyConversationsUseCase.kt  # 🆕 每日对话总结用例
+│   │   └── ManualSummaryUseCase.kt         # 🆕 手动总结用例
 │   ├── service/                          # ✅ 领域服务
 │   │   ├── PrivacyEngine.kt
 │   │   ├── RuleEngine.kt
@@ -145,7 +154,10 @@ com.empathy.ai/
 │       ├── MemoryLogger.kt                 # 🆕 内存日志器
 │       ├── FailedTaskRecovery.kt           # 🆕 失败任务恢复
 │       ├── ContactDetailError.kt            # 🆕 联系人详情错误
-│       └── DateUtils.kt                   # 🆕 日期工具类
+│       ├── DateUtils.kt                   # 🆕 日期工具类
+│       ├── ContextBuilder.kt               # 🆕 上下文构建器
+│       ├── DateRangeValidator.kt           # 🆕 日期范围验证器
+│       └── SummaryConflictChecker.kt       # 🆕 总结冲突检查器
 │
 ├── data/                                   # ✅ 数据层（实现）
 │   ├── local/                          # ✅ 本地存储
@@ -220,21 +232,32 @@ com.empathy.ai/
 │   ├── ui/                             # ✅ UI 组件
 │   │   ├── MainActivity.kt
 │   │   ├── component/               # ✅ 可复用组件
+│   │   │   ├── MaxHeightScrollView.kt    # 🆕 最大高度滚动视图
 │   │   │   ├── button/
 │   │   │   │   ├── PrimaryButton.kt
 │   │   │   │   └── SecondaryButton.kt
 │   │   │   ├── card/
 │   │   │   │   ├── AnalysisCard.kt
 │   │   │   │   ├── ProfileCard.kt
-│   │   │   │   └── ProviderCard.kt
+│   │   │   │   ├── ProviderCard.kt
+│   │   │   │   ├── AiSummaryCard.kt      # 🆕 AI总结卡片
+│   │   │   │   ├── ConversationCard.kt    # 🆕 对话卡片
+│   │   │   │   ├── MilestoneCard.kt      # 🆕 里程碑卡片
+│   │   │   │   └── PhotoMomentCard.kt    # 🆕 照片时刻卡片
 │   │   │   ├── chip/
-│   │   │   │   └── TagChip.kt
+│   │   │   │   ├── TagChip.kt
+│   │   │   │   ├── SolidTagChip.kt       # 🆕 实心标签芯片
+│   │   │   │   ├── GuessedTag.kt         # 🆕 推测标签
+│   │   │   │   └── ConfirmedTag.kt       # 🆕 确认标签
 │   │   │   ├── dialog/
 │   │   │   │   ├── AddContactDialog.kt
 │   │   │   │   ├── AddTagDialog.kt
 │   │   │   │   ├── DeleteTagConfirmDialog.kt
 │   │   │   │   ├── PermissionRequestDialog.kt
-│   │   │   │   └── ProviderFormDialog.kt
+│   │   │   │   ├── ProviderFormDialog.kt
+│   │   │   │   ├── AddFactToStreamDialog.kt      # 🆕 添加事实到流对话框
+│   │   │   │   ├── EditConversationDialog.kt      # 🆕 编辑对话对话框
+│   │   │   │   └── TagConfirmationDialog.kt       # 🆕 标签确认对话框
 │   │   │   ├── input/
 │   │   │   │   ├── ContactSearchBar.kt
 │   │   │   │   ├── CustomTextField.kt
@@ -242,11 +265,13 @@ com.empathy.ai/
 │   │   │   ├── list/
 │   │   │   │   └── ContactListItem.kt
 │   │   │   ├── message/
-│   │   │   │   └── MessageBubble.kt
+│   │   │   │   ├── MessageBubble.kt
+│   │   │   │   └── ConversationBubble.kt       # 🆕 对话气泡
 │   │   │   ├── state/
 │   │   │   │   ├── EmptyView.kt
 │   │   │   │   ├── ErrorView.kt
-│   │   │   │   └── LoadingIndicator.kt
+│   │   │   │   ├── LoadingIndicator.kt
+│   │   │   │   └── StatusBadge.kt          # 🆕 状态徽章
 │   │   │   ├── control/                 # 🆕 控制组件
 │   │   │   │   ├── QuickFilterChips.kt
 │   │   │   │   └── SegmentedControl.kt
@@ -298,9 +323,21 @@ com.empathy.ai/
 │   │       │   │   ├── CategorySection.kt
 │   │       │   │   ├── GuessedTag.kt
 │   │       │   │   └── ConfirmedTag.kt
-│   │       │   └── vault/                           # ✅ 资料库标签页
-│   │       │       ├── DataVaultTab.kt
-│   │       │       └── DataSourceCard.kt
+│   │       │   ├── vault/                           # ✅ 资料库标签页
+│   │       │   │   ├── DataVaultTab.kt
+│   │       │   │   └── DataSourceCard.kt
+│   │       │   └── summary/                         # 🆕 总结标签页
+│   │       │       ├── SummaryProgressDialog.kt        # 🆕 总结进度对话框
+│   │       │       ├── SummaryResultDialog.kt         # 🆕 总结结果对话框
+│   │       │       ├── SummaryDetailDialog.kt         # 🆕 总结详情对话框
+│   │       │       ├── SummaryErrorDialog.kt          # 🆕 总结错误对话框
+│   │       │       ├── QuickDateOptions.kt            # 🆕 快速日期选项
+│   │       │       ├── DateRangePickerDialog.kt       # 🆕 日期范围选择对话框
+│   │       │       ├── RangeWarningDialog.kt          # 🆕 范围警告对话框
+│   │       │       ├── MissingSummaryCard.kt          # 🆕 缺失总结卡片
+│   │       │       ├── ManualSummaryFab.kt            # 🆕 手动总结浮动按钮
+│   │       │       ├── ConflictResolutionDialog.kt     # 🆕 冲突解决对话框
+│   │       │       └── SummarySourceBadge.kt         # 🆕 总结来源徽章
 │   │       ├── settings/
 │   │       │   ├── SettingsScreen.kt
 │   │       │   ├── SettingsUiState.kt
@@ -323,16 +360,18 @@ com.empathy.ai/
 │   │               ├── InlineErrorBanner.kt
 │   │               ├── PromptEditorTopBar.kt
 │   │               └── PromptInputField.kt
-│   └── viewmodel/                    # ✅ ViewModel
-│       ├── BaseViewModel.kt
-│       ├── AiConfigViewModel.kt
-│       ├── BrainTagViewModel.kt
-│       ├── ChatViewModel.kt
-│       ├── ContactDetailViewModel.kt
-│       ├── ContactDetailTabViewModel.kt     # ✅ 四标签页ViewModel
-│       ├── ContactListViewModel.kt
-│       ├── SettingsViewModel.kt
-│       └── PromptEditorViewModel.kt          # 🆕 提示词编辑器ViewModel
+│   ├── viewmodel/                    # ✅ ViewModel
+│   │   ├── BaseViewModel.kt
+│   │   ├── AiConfigViewModel.kt
+│   │   ├── BrainTagViewModel.kt
+│   │   ├── ChatViewModel.kt
+│   │   ├── ContactDetailViewModel.kt
+│   │   ├── ContactDetailTabViewModel.kt     # ✅ 四标签页ViewModel
+│   │   ├── ContactListViewModel.kt
+│   │   ├── SettingsViewModel.kt
+│   │   └── PromptEditorViewModel.kt          # 🆕 提示词编辑器ViewModel
+│   └── util/                             # 🆕 表现层工具类
+│       └── ImageLoaderConfig.kt              # 🆕 图片加载配置
 │
 ├── notification/                            # 🆕 通知模块
 │   └── AiResultNotificationManager.kt       # AI结果通知管理器
@@ -346,7 +385,8 @@ com.empathy.ai/
     ├── PromptModule.kt               # 🆕 提示词系统依赖注入
     ├── DispatcherModule.kt           # 🆕 协程调度器管理
     ├── FloatingWindowModule.kt       # 🆕 悬浮窗依赖注入
-    └── NotificationModule.kt          # 🆕 通知模块依赖注入
+    ├── NotificationModule.kt          # 🆕 通知模块依赖注入
+    └── SummaryModule.kt              # 🆕 总结系统依赖注入
 ```
 
 ## 层级职责
@@ -476,6 +516,7 @@ test/
   - 提示词管理系统：新增PromptContext、PromptError、PromptScene、GlobalPromptConfig等模型
   - 新增PromptBuilder、PromptSanitizer、PromptValidator、PromptVariableResolver、SystemPrompts等工具类
   - 新增SessionContextService，统一管理历史对话上下文
+  - 新增SummaryTask、SummaryTaskStatus、SummaryType等总结相关模型
 - **数据层**: 100%完成，Room数据库、网络层、仓库实现完整
   - 数据库版本升级至v8，新增prompt_templates、prompt_backups表
   - 完整的Migration脚本和测试（1→2→3→4→5→6→7→8）
@@ -495,13 +536,16 @@ test/
   - ✅ FloatingViewV2：支持分析/润色/回复三个功能Tab
   - ✅ TabSwitcher：Tab切换器和状态指示器
   - ✅ FloatingBubbleView：悬浮球状态指示与拖动
+  - ✅ MaxHeightScrollView：自适应高度滚动视图
   - 新增AddFactToStreamDialog、EditConversationDialog、TagConfirmationDialog
+  - 新增总结相关UI组件：SummaryProgressDialog、SummaryResultDialog等
 - **依赖注入**: 100%完成，Hilt模块完整配置
   - 新增MemoryModule，管理记忆系统相关依赖
   - 新增PromptModule，管理提示词系统相关依赖
   - 新增DispatcherModule，统一管理协程调度器
   - 新增FloatingWindowModule，管理悬浮窗相关依赖
   - 新增NotificationModule，管理通知相关依赖
+  - 新增SummaryModule，管理总结系统相关依赖
 - **通知系统**: 100%完成，AI结果通知管理器完整实现
   - AiResultNotificationManager：统一管理AI完成后的系统通知
 - **测试覆盖**: 99.1% (测试代码行数 / 源代码行数)
@@ -516,6 +560,10 @@ test/
   - 任务状态：技术设计完成，待实现
   - 需要实现：IdentityPrefixHelper、UseCase层集成、系统提示词增强、UI渲染优化
   - 相关文档：TDD-00008-输入内容身份识别与双向对话历史技术设计.md
+- **手动触发AI总结功能**: TD-00011技术设计完成
+  - 任务状态：技术设计完成，待实现
+  - 需要实现：ManualSummaryUseCase、SummaryTask、SummaryProgressDialog等
+  - 相关文档：TDD-00011-手动触发AI总结功能技术设计.md
 - **AI响应解析**: AiResponseParser接口已定义，但实现可能不完整
   - 代码架构存在：AiResponseParser接口、FallbackHandler等
   - ⚠️ 集成状态不明：需要验证解析器在实际AI调用中的使用情况
