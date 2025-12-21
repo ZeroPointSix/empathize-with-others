@@ -41,6 +41,11 @@ object NavRoutes {
     const val AI_CONFIG = "ai_config"
 
     /**
+     * 用户画像页面
+     */
+    const val USER_PROFILE = "user_profile"
+
+    /**
      * 联系人详情标签页（新UI）
      * 参数: contactId (String) - 联系人ID
      */

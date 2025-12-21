@@ -14,6 +14,7 @@ import com.empathy.ai.presentation.ui.screen.contact.ContactDetailTabScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
 import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.presentation.ui.screen.tag.BrainTagScreen
+import com.empathy.ai.presentation.ui.screen.userprofile.UserProfileScreen
 
 /**
  * 应用导航图
@@ -99,7 +100,17 @@ fun NavGraph(
                 },
                 onNavigateToPromptEditor = { route ->
                     navController.navigate(route)
+                },
+                onNavigateToUserProfile = {
+                    navController.navigate(NavRoutes.USER_PROFILE)
                 }
+            )
+        }
+
+        // 用户画像页面
+        composable(route = NavRoutes.USER_PROFILE) {
+            UserProfileScreen(
+                onNavigateBack = { navController.navigateUp() }
             )
         }
 

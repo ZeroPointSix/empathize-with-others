@@ -8,7 +8,13 @@
       "Bash(mkdir -p:*)",
       "Bash(./gradlew:*)",
       "Bash(find:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(chmod:*)",
+      "Bash(./scripts/count_code.sh:*)",
+      "Skill(reflash)",
+      "Skill(reflash:*)",
+      "Bash(done:*)"
     ],
     "deny": [],
     "ask": []
