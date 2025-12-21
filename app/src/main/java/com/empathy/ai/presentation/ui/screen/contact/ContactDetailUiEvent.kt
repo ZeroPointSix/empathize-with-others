@@ -76,6 +76,24 @@ sealed class ContactDetailUiEvent {
     data class UpdateNewTagContent(val content: String) : ContactDetailUiEvent()
     data class UpdateNewTagType(val type: TagType) : ContactDetailUiEvent()
     data object ConfirmAddTag : ContactDetailUiEvent()
+
+    // ========== 编辑功能事件（TD-00012） ==========
+    // 事实编辑
+    data class StartEditFact(val fact: Fact) : ContactDetailUiEvent()
+    data class ConfirmEditFact(val factId: String, val newKey: String, val newValue: String) : ContactDetailUiEvent()
+    data object CancelEditFact : ContactDetailUiEvent()
+    data class DeleteFactById(val factId: String) : ContactDetailUiEvent()
+    
+    // 总结编辑
+    data class StartEditSummary(val summaryId: Long) : ContactDetailUiEvent()
+    data class ConfirmEditSummary(val summaryId: Long, val newContent: String) : ContactDetailUiEvent()
+    data object CancelEditSummary : ContactDetailUiEvent()
+    data class DeleteSummary(val summaryId: Long) : ContactDetailUiEvent()
+    
+    // 联系人信息编辑
+    data object StartEditContactInfo : ContactDetailUiEvent()
+    data class ConfirmEditContactInfo(val newName: String, val newTargetGoal: String) : ContactDetailUiEvent()
+    data object CancelEditContactInfo : ContactDetailUiEvent()
     
     // ========== 字段验证事件 ==========
     data object ValidateName : ContactDetailUiEvent()

@@ -12,6 +12,10 @@ import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.DailySummaryRepository
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
+import com.empathy.ai.domain.usecase.EditContactInfoUseCase
+import com.empathy.ai.domain.usecase.EditConversationUseCase
+import com.empathy.ai.domain.usecase.EditFactUseCase
+import com.empathy.ai.domain.usecase.EditSummaryUseCase
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
@@ -53,6 +57,10 @@ class ContactDetailTabViewModelAddFactTest {
     private lateinit var deleteBrainTagUseCase: DeleteBrainTagUseCase
     private lateinit var conversationRepository: ConversationRepository
     private lateinit var dailySummaryRepository: DailySummaryRepository
+    private lateinit var editFactUseCase: EditFactUseCase
+    private lateinit var editConversationUseCase: EditConversationUseCase
+    private lateinit var editSummaryUseCase: EditSummaryUseCase
+    private lateinit var editContactInfoUseCase: EditContactInfoUseCase
 
     private val testContact = ContactProfile(
         id = "test_contact_1",
@@ -93,6 +101,10 @@ class ContactDetailTabViewModelAddFactTest {
         deleteBrainTagUseCase = mockk()
         conversationRepository = mockk()
         dailySummaryRepository = mockk()
+        editFactUseCase = mockk()
+        editConversationUseCase = mockk()
+        editSummaryUseCase = mockk()
+        editContactInfoUseCase = mockk()
 
         // 设置默认mock行为
         coEvery { getContactUseCase(any()) } returns Result.success(testContact)
@@ -108,7 +120,11 @@ class ContactDetailTabViewModelAddFactTest {
             saveProfileUseCase = saveProfileUseCase,
             deleteBrainTagUseCase = deleteBrainTagUseCase,
             conversationRepository = conversationRepository,
-            dailySummaryRepository = dailySummaryRepository
+            dailySummaryRepository = dailySummaryRepository,
+            editFactUseCase = editFactUseCase,
+            editConversationUseCase = editConversationUseCase,
+            editSummaryUseCase = editSummaryUseCase,
+            editContactInfoUseCase = editContactInfoUseCase
         )
     }
 

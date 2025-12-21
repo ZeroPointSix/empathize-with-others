@@ -124,4 +124,45 @@ interface ConversationLogDao {
         """
     )
     suspend fun getRecentConversations(contactId: String, limit: Int): List<ConversationLogEntity>
+
+    // ============================================================================
+    // 编辑追踪扩展方法（v10）
+    // ============================================================================
+
+    /**
+     * 根据ID获取对话记录
+     *
+     * @param logId 对话记录ID
+     * @return 对话记录实体，不存在则返回null
+     */
+    @Query("SELECT * FROM conversation_logs WHERE id = :logId")
+    suspend fun getById(logId: Long): ConversationLogEntity?
+
+    /**
+     * 更新对话内容（编辑，带追踪）
+     *
+     * 使用CASE WHEN保留首次原始值：
+     * - 如果original_user_input为NULL，则保存当前传入的originalInput
+     * - 如果original_user_input已有值，则保留原有值
+     *
+     * @param logId 对话记录ID
+     * @param newUserInput 新的用户输入内容
+     * @param modifiedTime 修改时间
+     * @param originalInput 原始用户输入（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    @Query("""
+        UPDATE conversation_logs SET 
+            user_input = :newUserInput,
+            is_user_modified = 1,
+            last_modified_time = :modifiedTime,
+            original_user_input = CASE WHEN original_user_input IS NULL THEN :originalInput ELSE original_user_input END
+        WHERE id = :logId
+    """)
+    suspend fun updateUserInputWithTracking(
+        logId: Long,
+        newUserInput: String,
+        modifiedTime: Long,
+        originalInput: String
+    ): Int
 }

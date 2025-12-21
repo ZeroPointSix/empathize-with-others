@@ -100,4 +100,30 @@ object DateUtils {
     fun isSameDay(date1: String, date2: String): Boolean {
         return date1 == date2
     }
+
+    /**
+     * 格式化相对时间
+     *
+     * 将时间戳转换为相对时间描述，如"刚刚"、"5分钟前"、"2小时前"等
+     *
+     * @param timestamp 时间戳（毫秒）
+     * @return 相对时间描述字符串
+     */
+    fun formatRelativeTime(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+
+        return when {
+            diff < 0 -> "刚刚" // 处理时间戳在未来的情况
+            diff < 60_000 -> "刚刚"
+            diff < 3600_000 -> "${diff / 60_000}分钟前"
+            diff < 86400_000 -> "${diff / 3600_000}小时前"
+            diff < 604800_000 -> "${diff / 86400_000}天前"
+            else -> {
+                // 超过7天显示具体日期
+                val sdf = SimpleDateFormat("MM-dd", Locale.getDefault())
+                sdf.format(Date(timestamp))
+            }
+        }
+    }
 }

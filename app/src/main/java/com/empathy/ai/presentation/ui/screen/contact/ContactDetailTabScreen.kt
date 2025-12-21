@@ -309,6 +309,7 @@ private fun TabContent(
         when (tab) {
             DetailTab.Overview -> OverviewTabContent(
                 uiState = uiState,
+                onEvent = onEvent,
                 onNavigateBack = onNavigateBack,
                 onViewFactStream = {
                     onEvent(ContactDetailUiEvent.SwitchTab(DetailTab.FactStream))
@@ -336,6 +337,7 @@ private fun TabContent(
 @Composable
 private fun OverviewTabContent(
     uiState: ContactDetailUiState,
+    onEvent: (ContactDetailUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
     onViewFactStream: () -> Unit,
     onNavigateToPromptEditor: ((String) -> Unit)? = null
@@ -358,8 +360,24 @@ private fun OverviewTabContent(
                     )
                 )
             }
+        },
+        // TD-00012: 编辑联系人信息回调
+        onEditContactInfo = {
+            onEvent(ContactDetailUiEvent.StartEditContactInfo)
         }
     )
+    
+    // TD-00012: 编辑联系人信息对话框
+    if (uiState.showEditContactInfoDialog) {
+        com.empathy.ai.presentation.ui.component.dialog.EditContactInfoDialog(
+            initialName = contact.name,
+            initialTargetGoal = contact.targetGoal,
+            onDismiss = { onEvent(ContactDetailUiEvent.CancelEditContactInfo) },
+            onConfirm = { newName, newTargetGoal ->
+                onEvent(ContactDetailUiEvent.ConfirmEditContactInfo(newName, newTargetGoal))
+            }
+        )
+    }
 }
 
 /**
@@ -382,6 +400,15 @@ private fun FactStreamTabContent(
         },
         onConversationEdit = { logId ->
             onEvent(ContactDetailUiEvent.SelectConversation(logId))
+        },
+        // TD-00012: 事实编辑回调
+        onFactEdit = { factId ->
+            val fact = uiState.facts.find { it.id == factId }
+            fact?.let { onEvent(ContactDetailUiEvent.StartEditFact(it)) }
+        },
+        // TD-00012: 总结编辑回调
+        onSummaryEdit = { summaryId ->
+            onEvent(ContactDetailUiEvent.StartEditSummary(summaryId))
         },
         onAddFactClick = {
             onEvent(ContactDetailUiEvent.ShowAddFactToStreamDialog)
@@ -413,6 +440,41 @@ private fun FactStreamTabContent(
                 onEvent(ContactDetailUiEvent.AddFactToStream(key, value))
             }
         )
+    }
+    
+    // TD-00012: 编辑事实对话框
+    if (uiState.showEditFactDialog && uiState.editingFact != null) {
+        com.empathy.ai.presentation.ui.component.dialog.EditFactDialog(
+            fact = uiState.editingFact,
+            onDismiss = { onEvent(ContactDetailUiEvent.CancelEditFact) },
+            onSave = { newKey, newValue ->
+                onEvent(ContactDetailUiEvent.ConfirmEditFact(
+                    uiState.editingFact.id,
+                    newKey,
+                    newValue
+                ))
+            },
+            onDelete = {
+                onEvent(ContactDetailUiEvent.DeleteFactById(uiState.editingFact.id))
+            }
+        )
+    }
+    
+    // TD-00012: 编辑总结对话框
+    if (uiState.showEditSummaryDialog && uiState.editingSummaryId != null) {
+        val editingSummary = uiState.summaries.find { it.id == uiState.editingSummaryId }
+        if (editingSummary != null) {
+            com.empathy.ai.presentation.ui.component.dialog.EditSummaryDialog(
+                summary = editingSummary,
+                onDismiss = { onEvent(ContactDetailUiEvent.CancelEditSummary) },
+                onSave = { newContent ->
+                    onEvent(ContactDetailUiEvent.ConfirmEditSummary(
+                        uiState.editingSummaryId,
+                        newContent
+                    ))
+                }
+            )
+        }
     }
 }
 

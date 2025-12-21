@@ -165,6 +165,23 @@ class ConversationRepositoryImpl @Inject constructor(
     }
 
     // ============================================================================
+    // 编辑追踪扩展方法实现（v10）
+    // ============================================================================
+
+    override suspend fun getById(logId: Long): ConversationLog? = withContext(Dispatchers.IO) {
+        dao.getById(logId)?.toDomain()
+    }
+
+    override suspend fun updateUserInputWithTracking(
+        logId: Long,
+        newUserInput: String,
+        modifiedTime: Long,
+        originalInput: String
+    ): Int = withContext(Dispatchers.IO) {
+        dao.updateUserInputWithTracking(logId, newUserInput, modifiedTime, originalInput)
+    }
+
+    // ============================================================================
     // 私有映射函数
     // ============================================================================
 
@@ -175,7 +192,11 @@ class ConversationRepositoryImpl @Inject constructor(
             userInput = userInput,
             aiResponse = aiResponse,
             timestamp = timestamp,
-            isSummarized = isSummarized
+            isSummarized = isSummarized,
+            // v10 编辑追踪字段映射
+            isUserModified = isUserModified,
+            lastModifiedTime = if (lastModifiedTime > 0) lastModifiedTime else timestamp,
+            originalUserInput = originalUserInput
         )
     }
 }

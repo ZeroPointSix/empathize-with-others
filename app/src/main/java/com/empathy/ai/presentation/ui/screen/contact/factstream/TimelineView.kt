@@ -71,8 +71,13 @@ import com.empathy.ai.presentation.ui.component.emotion.EmotionalTimelineNode
  * - 初始加载时间<1秒
  * - 滚动响应时间<16ms
  *
+ * TD-00012: 支持编辑功能
+ *
  * @param items 时间线项目列表
  * @param onItemClick 项目点击回调
+ * @param onConversationEdit 对话编辑回调
+ * @param onFactEdit 事实编辑回调（TD-00012）
+ * @param onSummaryEdit 总结编辑回调（TD-00012）
  * @param onPerformanceDegraded 性能降级回调（可选）
  * @param modifier Modifier
  */
@@ -82,6 +87,8 @@ fun TimelineView(
     modifier: Modifier = Modifier,
     onItemClick: ((TimelineItem) -> Unit)? = null,
     onConversationEdit: ((Long) -> Unit)? = null,
+    onFactEdit: ((String) -> Unit)? = null,
+    onSummaryEdit: ((Long) -> Unit)? = null,
     onPerformanceDegraded: (() -> Unit)? = null
 ) {
     if (items.isEmpty()) {
@@ -172,6 +179,8 @@ fun TimelineView(
                 item = item,
                 onClick = { onItemClick?.invoke(item) },
                 onConversationEdit = onConversationEdit,
+                onFactEdit = onFactEdit,
+                onSummaryEdit = onSummaryEdit,
                 isSimplified = isDegraded // 降级时使用简化渲染
             )
         }
@@ -200,10 +209,13 @@ fun TimelineView(
  * 时间线行组件
  *
  * 包含情绪节点和卡片
+ * TD-00012: 支持编辑功能
  *
  * @param item 时间线项目
  * @param onClick 点击回调
  * @param onConversationEdit 对话编辑回调
+ * @param onFactEdit 事实编辑回调（TD-00012）
+ * @param onSummaryEdit 总结编辑回调（TD-00012）
  * @param isSimplified 是否使用简化渲染（性能降级模式）
  */
 @Composable
@@ -211,6 +223,8 @@ private fun TimelineRow(
     item: TimelineItem,
     onClick: () -> Unit,
     onConversationEdit: ((Long) -> Unit)? = null,
+    onFactEdit: ((String) -> Unit)? = null,
+    onSummaryEdit: ((Long) -> Unit)? = null,
     isSimplified: Boolean = false
 ) {
     Row(
@@ -241,7 +255,7 @@ private fun TimelineRow(
                 )
                 is TimelineItem.AiSummary -> AiSummaryCard(
                     item = item,
-                    onClick = onClick
+                    onClick = { onSummaryEdit?.invoke(item.summary.id) ?: onClick() }
                 )
                 is TimelineItem.Milestone -> MilestoneCard(
                     item = item,
@@ -254,7 +268,7 @@ private fun TimelineRow(
                 )
                 is TimelineItem.UserFact -> UserFactCard(
                     item = item,
-                    onClick = onClick
+                    onClick = { onFactEdit?.invoke(item.fact.id) ?: onClick() }
                 )
             }
         }

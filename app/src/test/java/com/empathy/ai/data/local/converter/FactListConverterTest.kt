@@ -175,10 +175,23 @@ class FactListConverterTest {
 
     @Test
     fun `toFactList返回空列表当JSON结构不匹配`() {
-        val invalidJson = """{"invalid": 123}"""
+        // 完全无效的JSON格式
+        val invalidJson = """这不是JSON"""
         val result = converter.toFactList(invalidJson)
-        // 应该尝试解析为旧格式，但由于值不是字符串，应该返回空列表
+        // 无效JSON应该返回空列表
         assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `toFactList处理数字值的Map格式`() {
+        // Moshi会将数字值转换为字符串
+        val jsonWithNumber = """{"invalid": 123}"""
+        val result = converter.toFactList(jsonWithNumber)
+        // Moshi的Map<String, String>适配器会将数字转换为字符串
+        // 所以这会被解析为一个有效的旧格式Map
+        assertEquals(1, result.size)
+        assertEquals("invalid", result[0].key)
+        assertEquals("123", result[0].value)
     }
 
     // ==================== 往返测试 ====================

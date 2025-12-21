@@ -36,6 +36,7 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
  * - 管理视图模式切换
  * - 提供流体切换动画
  * - 整合筛选功能
+ * - TD-00012: 支持编辑功能
  *
  * @param items 时间线项目列表
  * @param viewMode 当前视图模式
@@ -44,6 +45,10 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
  * @param onFilterToggle 筛选条件切换回调
  * @param onItemClick 项目点击回调
  * @param onFilterButtonClick 筛选按钮点击回调
+ * @param onConversationEdit 对话编辑回调
+ * @param onFactEdit 事实编辑回调（TD-00012）
+ * @param onSummaryEdit 总结编辑回调（TD-00012）
+ * @param onAddFactClick 添加事实回调
  * @param modifier Modifier
  */
 @Composable
@@ -57,6 +62,8 @@ fun FactStreamTab(
     onItemClick: ((TimelineItem) -> Unit)? = null,
     onFilterButtonClick: (() -> Unit)? = null,
     onConversationEdit: ((Long) -> Unit)? = null,
+    onFactEdit: ((String) -> Unit)? = null,
+    onSummaryEdit: ((Long) -> Unit)? = null,
     onAddFactClick: (() -> Unit)? = null
 ) {
     // 应用筛选
@@ -102,14 +109,18 @@ fun FactStreamTab(
                 ViewMode.Timeline -> TimelineView(
                     items = filteredItems,
                     onItemClick = onItemClick,
-                    onConversationEdit = onConversationEdit
+                    onConversationEdit = onConversationEdit,
+                    onFactEdit = onFactEdit,
+                    onSummaryEdit = onSummaryEdit
                 )
                 ViewMode.List -> ListView(
                     items = filteredItems,
                     selectedFilters = selectedFilters,
                     onFilterToggle = onFilterToggle,
                     onItemClick = onItemClick,
-                    onConversationEdit = onConversationEdit
+                    onConversationEdit = onConversationEdit,
+                    onFactEdit = onFactEdit,
+                    onSummaryEdit = onSummaryEdit
                 )
             }
         }

@@ -18,6 +18,10 @@ import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
 import com.empathy.ai.domain.usecase.SaveProfileUseCase
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
+import com.empathy.ai.domain.usecase.EditFactUseCase
+import com.empathy.ai.domain.usecase.EditConversationUseCase
+import com.empathy.ai.domain.usecase.EditSummaryUseCase
+import com.empathy.ai.domain.usecase.EditContactInfoUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.DetailTab
@@ -40,6 +44,7 @@ import javax.inject.Inject
  * - 处理标签页切换
  * - 构建时间线数据
  * - 处理标签确认/驳回
+ * - 处理编辑功能（TD-00012）
  */
 @HiltViewModel
 class ContactDetailTabViewModel @Inject constructor(
@@ -49,7 +54,12 @@ class ContactDetailTabViewModel @Inject constructor(
     private val saveProfileUseCase: SaveProfileUseCase,
     private val deleteBrainTagUseCase: DeleteBrainTagUseCase,
     private val conversationRepository: ConversationRepository,
-    private val dailySummaryRepository: DailySummaryRepository
+    private val dailySummaryRepository: DailySummaryRepository,
+    // TD-00012: 编辑功能UseCase
+    private val editFactUseCase: EditFactUseCase,
+    private val editConversationUseCase: EditConversationUseCase,
+    private val editSummaryUseCase: EditSummaryUseCase,
+    private val editContactInfoUseCase: EditContactInfoUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ContactDetailUiState())
@@ -99,6 +109,30 @@ class ContactDetailTabViewModel @Inject constructor(
             hideAddFactToStreamDialog()
         } else if (event is ContactDetailUiEvent.AddFactToStream) {
             addFactToStream(event.key, event.value)
+        }
+        // TD-00012: 编辑功能事件
+        else if (event is ContactDetailUiEvent.StartEditFact) {
+            startEditFact(event.fact)
+        } else if (event is ContactDetailUiEvent.ConfirmEditFact) {
+            confirmEditFact(event.factId, event.newKey, event.newValue)
+        } else if (event is ContactDetailUiEvent.CancelEditFact) {
+            cancelEditFact()
+        } else if (event is ContactDetailUiEvent.DeleteFactById) {
+            deleteFactById(event.factId)
+        } else if (event is ContactDetailUiEvent.StartEditSummary) {
+            startEditSummary(event.summaryId)
+        } else if (event is ContactDetailUiEvent.ConfirmEditSummary) {
+            confirmEditSummary(event.summaryId, event.newContent)
+        } else if (event is ContactDetailUiEvent.CancelEditSummary) {
+            cancelEditSummary()
+        } else if (event is ContactDetailUiEvent.DeleteSummary) {
+            deleteSummary(event.summaryId)
+        } else if (event is ContactDetailUiEvent.StartEditContactInfo) {
+            startEditContactInfo()
+        } else if (event is ContactDetailUiEvent.ConfirmEditContactInfo) {
+            confirmEditContactInfo(event.newName, event.newTargetGoal)
+        } else if (event is ContactDetailUiEvent.CancelEditContactInfo) {
+            cancelEditContactInfo()
         }
         // 其他事件不在此ViewModel处理
     }
@@ -532,14 +566,42 @@ class ContactDetailTabViewModel @Inject constructor(
                     source = FactSource.MANUAL
                 )
                 
+                // 调试日志：记录新创建的Fact ID
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "========== 添加事实调试 =========="
+                )
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "新创建的Fact: id=${newFact.id}, key=${newFact.key}"
+                )
+                
                 // 更新联系人的facts列表
                 val updatedFacts = contact.facts + newFact
                 
                 // 创建更新后的联系人对象
                 val updatedContact = contact.copy(facts = updatedFacts)
                 
+                // 调试日志：保存前的facts列表
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "保存前 updatedFacts 数量: ${updatedFacts.size}"
+                )
+                updatedFacts.forEach { f ->
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactDetailTabVM",
+                        "  id=${f.id}, key=${f.key}"
+                    )
+                }
+                
                 // 持久化到数据库
                 saveProfileUseCase(updatedContact).onSuccess {
+                    // 调试日志：保存成功后验证
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactDetailTabVM",
+                        "保存成功! 验证数据库中的数据..."
+                    )
+                    
                     // 创建新的时间线项目（用户添加的事实）
                     // 使用 Fact 的唯一 id 字段确保唯一性
                     val newTimelineItem = TimelineItem.UserFact(
@@ -562,17 +624,477 @@ class ContactDetailTabViewModel @Inject constructor(
                             successMessage = "事实已添加"
                         )
                     }
+                    
+                    // 调试日志：更新后的内存状态
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactDetailTabVM",
+                        "内存状态已更新，新Fact id=${newFact.id}"
+                    )
                 }.onFailure { error ->
+                    com.empathy.ai.domain.util.DebugLogger.e(
+                        "ContactDetailTabVM",
+                        "保存失败: ${error.message}"
+                    )
                     _uiState.update {
                         it.copy(error = "保存失败: ${error.message}")
                     }
                 }
                 
             } catch (e: Exception) {
+                com.empathy.ai.domain.util.DebugLogger.e(
+                    "ContactDetailTabVM",
+                    "添加事实异常",
+                    e
+                )
                 _uiState.update {
                     it.copy(error = e.message ?: "添加事实失败")
                 }
             }
+        }
+    }
+
+    // ========== TD-00012: 编辑功能方法 ==========
+
+    /**
+     * 开始编辑事实
+     */
+    private fun startEditFact(fact: Fact) {
+        _uiState.update {
+            it.copy(
+                showEditFactDialog = true,
+                editingFact = fact
+            )
+        }
+    }
+
+    /**
+     * 确认编辑事实
+     */
+    private fun confirmEditFact(factId: String, newKey: String, newValue: String) {
+        if (newKey.isBlank() || newValue.isBlank()) {
+            _uiState.update { it.copy(error = "内容不能为空") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val contact = currentState.contact ?: return@launch
+                val factToEdit = currentState.facts.find { it.id == factId } ?: return@launch
+
+                // 调用UseCase
+                editFactUseCase(
+                    contactId = contact.id,
+                    factId = factId,
+                    newKey = newKey,
+                    newValue = newValue
+                ).onSuccess { result ->
+                    when (result) {
+                        is com.empathy.ai.domain.model.EditResult.Success -> {
+                            // 更新本地状态
+                            val updatedFacts = currentState.facts.map { fact ->
+                                if (fact.id == factId) {
+                                    fact.copyWithEdit(newKey, newValue)
+                                } else fact
+                            }
+
+                            // 更新时间线项目
+                            val updatedTimelineItems = currentState.timelineItems.map { item ->
+                                if (item is TimelineItem.UserFact && item.fact.id == factId) {
+                                    item.copy(fact = item.fact.copyWithEdit(newKey, newValue))
+                                } else item
+                            }
+
+                            _uiState.update {
+                                it.copy(
+                                    facts = updatedFacts,
+                                    timelineItems = updatedTimelineItems,
+                                    topTags = updatedFacts.sortedByDescending { f -> f.timestamp }.take(5),
+                                    showEditFactDialog = false,
+                                    editingFact = null,
+                                    successMessage = "事实已更新"
+                                )
+                            }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.ValidationError -> {
+                            _uiState.update { it.copy(error = result.message) }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                            _uiState.update { it.copy(error = "未找到事实") }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.NoChanges -> {
+                            _uiState.update {
+                                it.copy(
+                                    showEditFactDialog = false,
+                                    editingFact = null,
+                                    successMessage = "内容未变化"
+                                )
+                            }
+                        }
+                        else -> {
+                            _uiState.update { it.copy(error = "更新事实失败") }
+                        }
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = error.message ?: "更新事实失败")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "更新事实失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 取消编辑事实
+     */
+    private fun cancelEditFact() {
+        _uiState.update {
+            it.copy(
+                showEditFactDialog = false,
+                editingFact = null
+            )
+        }
+    }
+
+    /**
+     * 删除事实
+     * 
+     * 通过更新联系人的facts列表来删除事实
+     */
+    private fun deleteFactById(factId: String) {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val contact = currentState.contact ?: return@launch
+
+                // 调试日志：删除前的状态
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "========== 删除事实调试 =========="
+                )
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "要删除的factId: $factId"
+                )
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "内存中facts数量: ${currentState.facts.size}"
+                )
+                currentState.facts.forEach { f ->
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactDetailTabVM",
+                        "  id=${f.id}, key=${f.key}, 匹配=${f.id == factId}"
+                    )
+                }
+
+                // 从facts列表中移除
+                val updatedFacts = currentState.facts.filter { it.id != factId }
+                
+                com.empathy.ai.domain.util.DebugLogger.d(
+                    "ContactDetailTabVM",
+                    "过滤后facts数量: ${updatedFacts.size}"
+                )
+                
+                val updatedContact = contact.copy(facts = updatedFacts)
+
+                // 保存到数据库
+                saveProfileUseCase(updatedContact).onSuccess {
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactDetailTabVM",
+                        "删除成功，已保存到数据库"
+                    )
+                    
+                    // 更新时间线项目
+                    val updatedTimelineItems = currentState.timelineItems.filter { item ->
+                        !(item is TimelineItem.UserFact && item.fact.id == factId)
+                    }
+
+                    _uiState.update {
+                        it.copy(
+                            contact = updatedContact,
+                            facts = updatedFacts,
+                            timelineItems = updatedTimelineItems,
+                            topTags = updatedFacts.sortedByDescending { f -> f.timestamp }.take(5),
+                            latestFact = updatedFacts.maxByOrNull { f -> f.timestamp },
+                            showEditFactDialog = false,
+                            editingFact = null,
+                            successMessage = "事实已删除"
+                        )
+                    }
+                }.onFailure { error ->
+                    com.empathy.ai.domain.util.DebugLogger.e(
+                        "ContactDetailTabVM",
+                        "删除失败: ${error.message}"
+                    )
+                    _uiState.update {
+                        it.copy(error = error.message ?: "删除事实失败")
+                    }
+                }
+            } catch (e: Exception) {
+                com.empathy.ai.domain.util.DebugLogger.e(
+                    "ContactDetailTabVM",
+                    "删除事实异常",
+                    e
+                )
+                _uiState.update {
+                    it.copy(error = e.message ?: "删除事实失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 开始编辑总结
+     */
+    private fun startEditSummary(summaryId: Long) {
+        val currentState = _uiState.value
+        val summary = currentState.summaries.find { it.id == summaryId }
+
+        _uiState.update {
+            it.copy(
+                showEditSummaryDialog = true,
+                editingSummaryId = summaryId,
+                editingSummaryContent = summary?.content ?: ""
+            )
+        }
+    }
+
+    /**
+     * 确认编辑总结
+     */
+    private fun confirmEditSummary(summaryId: Long, newContent: String) {
+        if (newContent.isBlank()) {
+            _uiState.update { it.copy(error = "内容不能为空") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+
+                editSummaryUseCase(
+                    summaryId = summaryId,
+                    newContent = newContent
+                ).onSuccess { result ->
+                    when (result) {
+                        is com.empathy.ai.domain.model.EditResult.Success -> {
+                            // 更新本地状态
+                            val updatedSummaries = currentState.summaries.map { summary ->
+                                if (summary.id == summaryId) {
+                                    summary.copyWithEdit(newContent)
+                                } else summary
+                            }
+
+                            // 更新时间线项目
+                            val updatedTimelineItems = currentState.timelineItems.map { item ->
+                                if (item is TimelineItem.AiSummary && item.summary.id == summaryId) {
+                                    item.copy(summary = item.summary.copyWithEdit(newContent))
+                                } else item
+                            }
+
+                            _uiState.update {
+                                it.copy(
+                                    summaries = updatedSummaries,
+                                    timelineItems = updatedTimelineItems,
+                                    showEditSummaryDialog = false,
+                                    editingSummaryId = null,
+                                    editingSummaryContent = "",
+                                    successMessage = "总结已更新"
+                                )
+                            }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.ValidationError -> {
+                            _uiState.update { it.copy(error = result.message) }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                            _uiState.update { it.copy(error = "未找到总结") }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.NoChanges -> {
+                            _uiState.update {
+                                it.copy(
+                                    showEditSummaryDialog = false,
+                                    editingSummaryId = null,
+                                    editingSummaryContent = "",
+                                    successMessage = "内容未变化"
+                                )
+                            }
+                        }
+                        else -> {
+                            _uiState.update { it.copy(error = "更新总结失败") }
+                        }
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = error.message ?: "更新总结失败")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "更新总结失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 取消编辑总结
+     */
+    private fun cancelEditSummary() {
+        _uiState.update {
+            it.copy(
+                showEditSummaryDialog = false,
+                editingSummaryId = null,
+                editingSummaryContent = ""
+            )
+        }
+    }
+
+    /**
+     * 删除总结
+     */
+    private fun deleteSummary(summaryId: Long) {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+
+                dailySummaryRepository.deleteSummary(summaryId).onSuccess {
+                    // 从本地状态移除
+                    val updatedSummaries = currentState.summaries.filter { it.id != summaryId }
+                    val updatedTimelineItems = currentState.timelineItems.filter { item ->
+                        !(item is TimelineItem.AiSummary && item.summary.id == summaryId)
+                    }
+
+                    _uiState.update {
+                        it.copy(
+                            summaries = updatedSummaries,
+                            timelineItems = updatedTimelineItems,
+                            summaryCount = updatedSummaries.size,
+                            showEditSummaryDialog = false,
+                            editingSummaryId = null,
+                            successMessage = "总结已删除"
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = error.message ?: "删除总结失败")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "删除总结失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 开始编辑联系人信息
+     */
+    private fun startEditContactInfo() {
+        _uiState.update {
+            it.copy(showEditContactInfoDialog = true)
+        }
+    }
+
+    /**
+     * 确认编辑联系人信息
+     */
+    private fun confirmEditContactInfo(newName: String, newTargetGoal: String) {
+        if (newName.isBlank()) {
+            _uiState.update { it.copy(error = "姓名不能为空") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val contact = currentState.contact ?: return@launch
+
+                // 分别编辑姓名和目标
+                var hasError = false
+                var errorMessage = ""
+
+                // 编辑姓名
+                if (newName != contact.name) {
+                    editContactInfoUseCase.editName(contact.id, newName).onSuccess { result ->
+                        when (result) {
+                            is com.empathy.ai.domain.model.EditResult.ValidationError -> {
+                                hasError = true
+                                errorMessage = result.message
+                            }
+                            is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                                hasError = true
+                                errorMessage = "未找到联系人"
+                            }
+                            else -> { /* Success or NoChanges */ }
+                        }
+                    }.onFailure { error ->
+                        hasError = true
+                        errorMessage = error.message ?: "更新姓名失败"
+                    }
+                }
+
+                if (hasError) {
+                    _uiState.update { it.copy(error = errorMessage) }
+                    return@launch
+                }
+
+                // 编辑目标
+                if (newTargetGoal != contact.targetGoal) {
+                    editContactInfoUseCase.editGoal(contact.id, newTargetGoal).onSuccess { result ->
+                        when (result) {
+                            is com.empathy.ai.domain.model.EditResult.ValidationError -> {
+                                hasError = true
+                                errorMessage = result.message
+                            }
+                            is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                                hasError = true
+                                errorMessage = "未找到联系人"
+                            }
+                            else -> { /* Success or NoChanges */ }
+                        }
+                    }.onFailure { error ->
+                        hasError = true
+                        errorMessage = error.message ?: "更新目标失败"
+                    }
+                }
+
+                if (hasError) {
+                    _uiState.update { it.copy(error = errorMessage) }
+                    return@launch
+                }
+
+                // 更新本地状态
+                val updatedContact = contact.copy(
+                    name = newName,
+                    targetGoal = newTargetGoal
+                )
+
+                _uiState.update {
+                    it.copy(
+                        contact = updatedContact,
+                        showEditContactInfoDialog = false,
+                        successMessage = "联系人信息已更新"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "更新联系人信息失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 取消编辑联系人信息
+     */
+    private fun cancelEditContactInfo() {
+        _uiState.update {
+            it.copy(showEditContactInfoDialog = false)
         }
     }
 }

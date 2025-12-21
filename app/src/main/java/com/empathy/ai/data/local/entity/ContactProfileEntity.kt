@@ -17,6 +17,14 @@ import androidx.room.PrimaryKey
  * - facts字段在Domain层是List<Fact>,在DB层存储为JSON字符串
  * - 使用Moshi在TypeConverter中进行序列化/反序列化
  *
+ * v10新增字段（编辑追踪）:
+ * - is_name_user_modified: 姓名是否被用户修改过
+ * - is_goal_user_modified: 目标是否被用户修改过
+ * - name_last_modified_time: 姓名最后修改时间
+ * - goal_last_modified_time: 目标最后修改时间
+ * - original_name: 原始姓名
+ * - original_goal: 原始目标
+ *
  * @property id 联系人唯一标识(UUID或外部加密ID)
  * @property name 显示名称(e.g., "王总", "李铁柱")
  * @property targetGoal 核心攻略目标(e.g., "拿下合同", "修复父子关系")
@@ -56,5 +64,31 @@ data class ContactProfileEntity(
     val avatarUrl: String? = null,
 
     @ColumnInfo(name = "custom_prompt")
-    val customPrompt: String? = null
+    val customPrompt: String? = null,
+
+    // ==================== v10 编辑追踪字段 ====================
+
+    /** 姓名是否被用户修改过 */
+    @ColumnInfo(name = "is_name_user_modified", defaultValue = "0")
+    val isNameUserModified: Boolean = false,
+
+    /** 目标是否被用户修改过 */
+    @ColumnInfo(name = "is_goal_user_modified", defaultValue = "0")
+    val isGoalUserModified: Boolean = false,
+
+    /** 姓名最后修改时间 */
+    @ColumnInfo(name = "name_last_modified_time", defaultValue = "0")
+    val nameLastModifiedTime: Long = 0L,
+
+    /** 目标最后修改时间 */
+    @ColumnInfo(name = "goal_last_modified_time", defaultValue = "0")
+    val goalLastModifiedTime: Long = 0L,
+
+    /** 原始姓名（修改前） */
+    @ColumnInfo(name = "original_name", defaultValue = "NULL")
+    val originalName: String? = null,
+
+    /** 原始目标（修改前） */
+    @ColumnInfo(name = "original_goal", defaultValue = "NULL")
+    val originalGoal: String? = null
 )

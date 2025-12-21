@@ -34,7 +34,27 @@ class ContactRepositoryImpl @Inject constructor(
     override suspend fun getProfile(id: String): Result<ContactProfile?> {
         return try {
             val entity = dao.getProfileById(id)
-            Result.success(entity?.let { entityToDomain(it) })
+            if (entity == null) {
+                Result.success(null)
+            } else {
+                val profile = entityToDomain(entity)
+                
+                // BUG-00027修复：如果标记需要迁移，同步完成迁移
+                if (migratingContacts.remove(id)) {
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactRepoImpl",
+                        "执行同步迁移: contactId=$id"
+                    )
+                    val migratedJson = factListConverter.fromFactList(profile.facts)
+                    dao.updateFacts(id, migratedJson)
+                    com.empathy.ai.domain.util.DebugLogger.d(
+                        "ContactRepoImpl",
+                        "同步迁移完成: contactId=$id"
+                    )
+                }
+                
+                Result.success(profile)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -179,11 +199,83 @@ class ContactRepositoryImpl @Inject constructor(
     }
 
     // ============================================================================
+    // 编辑追踪扩展方法实现（v10）
+    // ============================================================================
+
+    override suspend fun updateProfile(profile: ContactProfile): Result<Unit> {
+        return try {
+            val entity = domainToEntity(profile)
+            dao.insertOrUpdate(entity)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateName(
+        contactId: String,
+        newName: String,
+        modifiedTime: Long,
+        originalName: String
+    ): Int = withContext(Dispatchers.IO) {
+        dao.updateName(contactId, newName, modifiedTime, originalName)
+    }
+
+    override suspend fun updateGoal(
+        contactId: String,
+        newGoal: String,
+        modifiedTime: Long,
+        originalGoal: String
+    ): Int = withContext(Dispatchers.IO) {
+        dao.updateGoal(contactId, newGoal, modifiedTime, originalGoal)
+    }
+
+    // ============================================================================
     // 私有映射函数
     // ============================================================================
 
+    /**
+     * 需要迁移的联系人ID集合（用于避免重复迁移）
+     * 使用线程安全的Set
+     */
+    private val migratingContacts = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     private fun entityToDomain(entity: ContactProfileEntity): ContactProfile {
         val facts = factListConverter.toFactList(entity.factsJson)
+        
+        // 调试日志：Entity到Domain映射
+        com.empathy.ai.domain.util.DebugLogger.d(
+            "ContactRepoImpl",
+            "========== entityToDomain 映射 =========="
+        )
+        com.empathy.ai.domain.util.DebugLogger.d(
+            "ContactRepoImpl",
+            "contactId=${entity.id}, factsJson长度=${entity.factsJson.length}"
+        )
+        com.empathy.ai.domain.util.DebugLogger.d(
+            "ContactRepoImpl",
+            "转换后facts数量: ${facts.size}"
+        )
+        facts.forEachIndexed { index, fact ->
+            com.empathy.ai.domain.util.DebugLogger.d(
+                "ContactRepoImpl",
+                "  [$index] id=${fact.id}, key=${fact.key}"
+            )
+        }
+        
+        // BUG-00027修复：检测旧格式数据并标记需要迁移
+        // 注意：这里不能直接同步迁移，因为entityToDomain可能在Flow的map中被调用
+        // 我们标记需要迁移的联系人，在getProfile等suspend方法中处理
+        val originalJson = entity.factsJson
+        val needsMigration = facts.isNotEmpty() && !originalJson.contains("\"id\":")
+        
+        if (needsMigration) {
+            com.empathy.ai.domain.util.DebugLogger.w(
+                "ContactRepoImpl",
+                "检测到旧格式数据（无id字段），标记需要迁移: contactId=${entity.id}"
+            )
+            migratingContacts.add(entity.id)
+        }
 
         return ContactProfile(
             id = entity.id,
@@ -193,12 +285,40 @@ class ContactRepositoryImpl @Inject constructor(
             facts = facts,
             relationshipScore = entity.relationshipScore,
             lastInteractionDate = entity.lastInteractionDate,
-            avatarUrl = entity.avatarUrl
+            avatarUrl = entity.avatarUrl,
+            // v10 编辑追踪字段映射
+            isNameUserModified = entity.isNameUserModified,
+            isGoalUserModified = entity.isGoalUserModified,
+            nameLastModifiedTime = entity.nameLastModifiedTime,
+            goalLastModifiedTime = entity.goalLastModifiedTime,
+            originalName = entity.originalName,
+            originalGoal = entity.originalGoal
         )
     }
 
     private fun domainToEntity(profile: ContactProfile): ContactProfileEntity {
+        // 调试日志：Domain到Entity映射前
+        com.empathy.ai.domain.util.DebugLogger.d(
+            "ContactRepoImpl",
+            "========== domainToEntity 映射 =========="
+        )
+        com.empathy.ai.domain.util.DebugLogger.d(
+            "ContactRepoImpl",
+            "contactId=${profile.id}, facts数量=${profile.facts.size}"
+        )
+        profile.facts.forEachIndexed { index, fact ->
+            com.empathy.ai.domain.util.DebugLogger.d(
+                "ContactRepoImpl",
+                "  [$index] id=${fact.id}, key=${fact.key}"
+            )
+        }
+        
         val factsJson = factListConverter.fromFactList(profile.facts)
+        
+        com.empathy.ai.domain.util.DebugLogger.d(
+            "ContactRepoImpl",
+            "序列化后factsJson长度: ${factsJson.length}"
+        )
 
         return ContactProfileEntity(
             id = profile.id,
@@ -208,7 +328,14 @@ class ContactRepositoryImpl @Inject constructor(
             factsJson = factsJson,
             relationshipScore = profile.relationshipScore,
             lastInteractionDate = profile.lastInteractionDate,
-            avatarUrl = profile.avatarUrl
+            avatarUrl = profile.avatarUrl,
+            // v10 编辑追踪字段映射
+            isNameUserModified = profile.isNameUserModified,
+            isGoalUserModified = profile.isGoalUserModified,
+            nameLastModifiedTime = profile.nameLastModifiedTime,
+            goalLastModifiedTime = profile.goalLastModifiedTime,
+            originalName = profile.originalName,
+            originalGoal = profile.originalGoal
         )
     }
 

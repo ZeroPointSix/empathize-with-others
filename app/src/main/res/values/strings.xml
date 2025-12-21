@@ -126,4 +126,68 @@
     <string name="prompt_editor_error_load">加载失败</string>
     <string name="prompt_editor_error_save">保存失败</string>
     <string name="prompt_editor_custom_prompt">专属指令</string>
+    
+    <!-- 编辑功能相关 (TD-00012) -->
+    <string name="edited">已编辑</string>
+    <string name="edited_at">已编辑 %s</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="delete">删除</string>
+    
+    <!-- 事实编辑 -->
+    <string name="edit_fact_title">编辑事实</string>
+    <string name="fact_type_label">事实类型</string>
+    <string name="fact_value_label">事实内容</string>
+    <string name="fact_source_info">来源：%1$s · %2$s</string>
+    <string name="fact_type_personality">性格特点</string>
+    <string name="fact_type_hobby">兴趣爱好</string>
+    <string name="fact_type_work">工作信息</string>
+    <string name="fact_type_family">家庭情况</string>
+    <string name="fact_type_important_date">重要日期</string>
+    <string name="fact_type_taboo">禁忌话题</string>
+    <string name="fact_type_strategy">沟通策略</string>
+    <string name="fact_type_other">其他</string>
+    <string name="delete_fact_title">删除事实</string>
+    <string name="delete_fact_message">确定要删除"%s"吗？此操作不可撤销。</string>
+    
+    <!-- 对话编辑 -->
+    <string name="edit_conversation_title">编辑对话</string>
+    <string name="conversation_content_label">对话内容</string>
+    <string name="conversation_time_info">时间：%s</string>
+    <string name="delete_conversation_title">删除对话</string>
+    <string name="delete_conversation_message">确定要删除这条对话记录吗？此操作不可撤销。</string>
+    
+    <!-- 总结编辑 -->
+    <string name="edit_summary_title">编辑总结</string>
+    <string name="summary_content_label">总结内容</string>
+    <string name="summary_date_range">日期范围：%s</string>
+    <string name="summary_source">来源：%s</string>
+    <string name="summary_conversation_count">分析对话数：%d条</string>
+    <string name="source_manual">手动生成</string>
+    <string name="source_auto">AI自动生成</string>
+    
+    <!-- 联系人信息编辑 -->
+    <string name="edit_contact_name_title">编辑姓名</string>
+    <string name="edit_contact_goal_title">编辑目标</string>
+    <string name="edit_contact_info_title">编辑联系人信息</string>
+    <string name="contact_name_label">联系人姓名</string>
+    <string name="contact_goal_label">攻略目标</string>
+    
+    <!-- 原始内容查看 -->
+    <string name="view_original_content">查看原始内容</string>
+    <string name="original_type">原始类型：%s</string>
+    <string name="original_content">原始内容：%s</string>
+    
+    <!-- 编辑结果提示 -->
+    <string name="edit_success">保存成功</string>
+    <string name="edit_failed">保存失败</string>
+    <string name="edit_no_changes">内容未修改</string>
+    <string name="edit_not_found">记录不存在</string>
+    <string name="delete_success">删除成功</string>
+    <string name="delete_failed">删除失败</string>
+    
+    <!-- 验证错误 -->
+    <string name="validation_empty">内容不能为空</string>
+    <string name="validation_too_long">内容超过最大长度限制</string>
+    <string name="validation_whitespace_only">内容不能只包含空白字符</string>
 </resources>

@@ -6,6 +6,7 @@ import com.empathy.ai.domain.util.MemoryConstants
  * 联系人画像 - 核心"角色卡"（扩展版）
  *
  * 存储目标联系人的基本信息、攻略目标和所有事实性信息
+ * 支持姓名和目标的编辑追踪功能
  *
  * @property id 唯一标识 (UUID 或加密 ID)
  * @property name 显示名称 (例如: "王总", "李铁柱")
@@ -14,6 +15,13 @@ import com.empathy.ai.domain.util.MemoryConstants
  * @property facts 核心事实槽 - 存储所有事实类信息（修改为List<Fact>）
  * @property relationshipScore 关系分数 (0-100，默认50)
  * @property lastInteractionDate 最后互动日期 (格式: "yyyy-MM-dd")
+ * @property avatarUrl 头像URL
+ * @property isNameUserModified 姓名是否被用户修改过
+ * @property isGoalUserModified 目标是否被用户修改过
+ * @property nameLastModifiedTime 姓名最后修改时间
+ * @property goalLastModifiedTime 目标最后修改时间
+ * @property originalName 原始姓名（修改前）
+ * @property originalGoal 原始目标（修改前）
  */
 data class ContactProfile(
     val id: String,
@@ -23,7 +31,14 @@ data class ContactProfile(
     val facts: List<Fact> = emptyList(),
     val relationshipScore: Int = MemoryConstants.DEFAULT_RELATIONSHIP_SCORE,
     val lastInteractionDate: String? = null,
-    val avatarUrl: String? = null
+    val avatarUrl: String? = null,
+    // ==================== 编辑追踪字段 ====================
+    val isNameUserModified: Boolean = false,
+    val isGoalUserModified: Boolean = false,
+    val nameLastModifiedTime: Long = 0L,
+    val goalLastModifiedTime: Long = 0L,
+    val originalName: String? = null,
+    val originalGoal: String? = null
 ) {
     init {
         require(id.isNotBlank()) { "id不能为空" }
@@ -33,6 +48,54 @@ data class ContactProfile(
             relationshipScore in MemoryConstants.MIN_RELATIONSHIP_SCORE..MemoryConstants.MAX_RELATIONSHIP_SCORE
         ) { "relationshipScore必须在0到100之间" }
     }
+
+    /**
+     * 创建姓名编辑后的副本
+     *
+     * @param newName 新的姓名
+     * @return 编辑后的ContactProfile副本
+     */
+    fun copyWithNameEdit(newName: String): ContactProfile {
+        return copy(
+            name = newName,
+            isNameUserModified = true,
+            nameLastModifiedTime = System.currentTimeMillis(),
+            // 仅首次编辑时保存原始值
+            originalName = if (originalName == null) name else originalName
+        )
+    }
+
+    /**
+     * 创建目标编辑后的副本
+     *
+     * @param newGoal 新的目标
+     * @return 编辑后的ContactProfile副本
+     */
+    fun copyWithGoalEdit(newGoal: String): ContactProfile {
+        return copy(
+            targetGoal = newGoal,
+            isGoalUserModified = true,
+            goalLastModifiedTime = System.currentTimeMillis(),
+            // 仅首次编辑时保存原始值
+            originalGoal = if (originalGoal == null) targetGoal else originalGoal
+        )
+    }
+
+    /**
+     * 判断姓名是否有变化
+     *
+     * @param newName 新的姓名
+     * @return 是否有变化
+     */
+    fun hasNameChanges(newName: String): Boolean = name != newName
+
+    /**
+     * 判断目标是否有变化
+     *
+     * @param newGoal 新的目标
+     * @return 是否有变化
+     */
+    fun hasGoalChanges(newGoal: String): Boolean = targetGoal != newGoal
 
     /**
      * 获取最近的Facts（7天内）

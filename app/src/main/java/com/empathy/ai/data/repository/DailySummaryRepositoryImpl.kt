@@ -190,6 +190,32 @@ class DailySummaryRepositoryImpl @Inject constructor(
     }
 
     // ============================================================================
+    // 编辑追踪扩展方法实现（v10）
+    // ============================================================================
+
+    override suspend fun getById(summaryId: Long): DailySummary? = withContext(Dispatchers.IO) {
+        dao.getById(summaryId)?.toDomain()
+    }
+
+    override suspend fun updateContent(
+        summaryId: Long,
+        newContent: String,
+        modifiedTime: Long,
+        originalContent: String
+    ): Int = withContext(Dispatchers.IO) {
+        dao.updateContent(summaryId, newContent, modifiedTime, originalContent)
+    }
+
+    override suspend fun deleteSummary(summaryId: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            dao.deleteById(summaryId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ============================================================================
     // 私有映射函数
     // ============================================================================
 
@@ -208,7 +234,11 @@ class DailySummaryRepositoryImpl @Inject constructor(
             summaryType = summaryType.name,
             generationSource = generationSource.name,
             conversationCount = conversationCount,
-            generatedAt = generatedAt
+            generatedAt = generatedAt,
+            // v10 编辑追踪字段映射
+            isUserModified = isUserModified,
+            lastModifiedTime = lastModifiedTime,
+            originalContent = originalContent
         )
     }
 
@@ -243,7 +273,11 @@ class DailySummaryRepositoryImpl @Inject constructor(
                 GenerationSource.AUTO
             },
             conversationCount = conversationCount,
-            generatedAt = generatedAt
+            generatedAt = generatedAt,
+            // v10 编辑追踪字段映射
+            isUserModified = isUserModified,
+            lastModifiedTime = if (lastModifiedTime > 0) lastModifiedTime else generatedAt,
+            originalContent = originalContent
         )
     }
 }
