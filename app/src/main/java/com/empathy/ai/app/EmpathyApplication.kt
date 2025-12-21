@@ -10,8 +10,10 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Provider
 
 /**
  * Application 入口
@@ -22,37 +24,107 @@ import javax.inject.Inject
  * 1. 初始化 Hilt 依赖注入
  * 2. 恢复悬浮窗服务（如果之前已启用）
  * 3. 触发每日自动总结（记忆系统）
+ * 4. 执行数据清理
+ * 
+ * 容错机制 (BUG-00028 修复)：
+ * - 使用 Provider<T> 延迟注入，避免在 Application 创建时触发 Keystore 访问
+ * - 后台任务延迟执行（1秒），给系统服务（如 Keystore Daemon）更多启动时间
+ * - 所有后台任务失败不影响应用正常启动
+ * - 每个任务独立 try-catch，一个失败不影响其他任务
  */
 @HiltAndroidApp
 class EmpathyApplication : Application() {
     
     companion object {
         private const val TAG = "EmpathyApplication"
+        
+        /**
+         * 启动延迟时间（毫秒）
+         * 
+         * 增加到 1 秒，给 Keystore 等系统服务更多启动时间。
+         * 这是 BUG-00028 修复的一部分：避免在系统服务未就绪时访问 Keystore。
+         */
+        private const val STARTUP_DELAY_MS = 1000L
     }
     
+    /**
+     * 悬浮窗偏好设置（延迟注入）
+     * 
+     * 使用 Provider 确保只在实际需要时才创建实例，
+     * 避免在 Application 创建时触发依赖链。
+     */
     @Inject
-    lateinit var floatingWindowPreferences: FloatingWindowPreferences
+    lateinit var floatingWindowPreferencesProvider: Provider<FloatingWindowPreferences>
     
+    /**
+     * 每日总结用例（延迟注入）
+     * 
+     * 使用 Provider 确保只在实际需要时才创建实例。
+     * 该用例依赖 AiRepository → AiProviderRepository → ApiKeyStorage，
+     * 延迟注入可以避免过早触发 Keystore 访问。
+     */
     @Inject
-    lateinit var summarizeDailyConversationsUseCase: SummarizeDailyConversationsUseCase
+    lateinit var summarizeDailyConversationsUseCaseProvider: Provider<SummarizeDailyConversationsUseCase>
     
+    /**
+     * 数据清理管理器（延迟注入）
+     */
     @Inject
-    lateinit var dataCleanupManager: DataCleanupManager
+    lateinit var dataCleanupManagerProvider: Provider<DataCleanupManager>
     
-    // 应用级协程作用域
+    /**
+     * 应用级协程作用域
+     * 
+     * 使用 SupervisorJob 确保一个子任务失败不会影响其他任务。
+     */
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     override fun onCreate() {
         super.onCreate()
+        Log.d(TAG, "Application onCreate 开始")
         
-        // 恢复悬浮窗服务
-        restoreFloatingWindowService()
+        // 延迟执行后台任务，给系统服务（如 Keystore）更多启动时间
+        // 这是 BUG-00028 修复的关键：避免在系统服务未就绪时访问 Keystore
+        applicationScope.launch {
+            Log.d(TAG, "延迟 ${STARTUP_DELAY_MS}ms 后执行后台任务...")
+            delay(STARTUP_DELAY_MS)
+            initializeBackgroundTasks()
+        }
         
-        // 触发每日自动总结（在后台执行）
-        triggerDailySummary()
+        Log.d(TAG, "Application onCreate 完成（后台任务将延迟执行）")
+    }
+    
+    /**
+     * 初始化后台任务
+     * 
+     * 在延迟后执行，确保系统服务已就绪。
+     * 每个任务独立 try-catch，一个失败不影响其他任务。
+     */
+    private suspend fun initializeBackgroundTasks() {
+        Log.d(TAG, "开始执行后台任务...")
         
-        // 执行数据清理（在后台执行）
-        triggerDataCleanup()
+        // 任务1：恢复悬浮窗服务
+        try {
+            restoreFloatingWindowService()
+        } catch (e: Exception) {
+            Log.e(TAG, "恢复悬浮窗服务失败（不影响应用启动）", e)
+        }
+        
+        // 任务2：触发每日自动总结
+        try {
+            triggerDailySummary()
+        } catch (e: Exception) {
+            Log.e(TAG, "触发每日总结失败（不影响应用启动）", e)
+        }
+        
+        // 任务3：执行数据清理
+        try {
+            triggerDataCleanup()
+        } catch (e: Exception) {
+            Log.e(TAG, "触发数据清理失败（不影响应用启动）", e)
+        }
+        
+        Log.d(TAG, "后台任务执行完成")
     }
     
     /**
@@ -67,7 +139,11 @@ class EmpathyApplication : Application() {
         applicationScope.launch(Dispatchers.IO) {
             try {
                 Log.d(TAG, "开始检查每日总结...")
-                val result = summarizeDailyConversationsUseCase()
+                
+                // 通过 Provider.get() 延迟获取实例
+                // 此时 Keystore 服务应该已经就绪
+                val useCase = summarizeDailyConversationsUseCaseProvider.get()
+                val result = useCase()
                 
                 result.onSuccess { summaryResult ->
                     Log.d(TAG, "每日总结完成: 总计${summaryResult.totalContacts}个联系人, " +
@@ -95,7 +171,8 @@ class EmpathyApplication : Application() {
         applicationScope.launch(Dispatchers.IO) {
             try {
                 Log.d(TAG, "开始检查数据清理...")
-                val result = dataCleanupManager.checkAndCleanup()
+                val manager = dataCleanupManagerProvider.get()
+                val result = manager.checkAndCleanup()
                 
                 if (result != null) {
                     if (result.success) {
@@ -118,35 +195,36 @@ class EmpathyApplication : Application() {
     /**
      * 恢复悬浮窗服务
      * 
-     * 在应用启动时检查悬浮窗状态，如果之前已启用且有权限，则自动启动服务
-     * 这确保了悬浮窗在应用重启后能够自动恢复，而不需要用户手动重新开启
+     * 在应用启动时检查悬浮窗状态，如果之前已启用且有权限，则自动启动服务。
+     * 这确保了悬浮窗在应用重启后能够自动恢复，而不需要用户手动重新开启。
      */
-    private fun restoreFloatingWindowService() {
-        applicationScope.launch {
-            try {
-                // 加载保存的悬浮窗状态
-                val state = floatingWindowPreferences.loadState()
+    private suspend fun restoreFloatingWindowService() {
+        try {
+            Log.d(TAG, "检查悬浮窗服务状态...")
+            
+            // 通过 Provider.get() 延迟获取实例
+            val prefs = floatingWindowPreferencesProvider.get()
+            val state = prefs.loadState()
+            
+            if (state.isEnabled) {
+                // 检查悬浮窗权限
+                val permissionResult = FloatingWindowManager.hasPermission(this@EmpathyApplication)
                 
-                if (state.isEnabled) {
-                    // 检查悬浮窗权限
-                    val permissionResult = FloatingWindowManager.hasPermission(this@EmpathyApplication)
-                    
-                    if (permissionResult is FloatingWindowManager.PermissionResult.Granted) {
-                        // 有权限，启动服务
-                        Log.d(TAG, "应用启动，检测到悬浮窗已启用，自动恢复服务")
-                        FloatingWindowManager.startService(this@EmpathyApplication)
-                    } else {
-                        // 权限丢失，重置状态以保持一致性
-                        Log.w(TAG, "悬浮窗权限丢失，重置状态为关闭")
-                        floatingWindowPreferences.saveEnabled(false)
-                    }
+                if (permissionResult is FloatingWindowManager.PermissionResult.Granted) {
+                    // 有权限，启动服务
+                    Log.d(TAG, "应用启动，检测到悬浮窗已启用，自动恢复服务")
+                    FloatingWindowManager.startService(this@EmpathyApplication)
                 } else {
-                    Log.d(TAG, "悬浮窗未启用，跳过恢复")
+                    // 权限丢失，重置状态以保持一致性
+                    Log.w(TAG, "悬浮窗权限丢失，重置状态为关闭")
+                    prefs.saveEnabled(false)
                 }
-            } catch (e: Exception) {
-                // 恢复失败不应该导致应用崩溃
-                Log.e(TAG, "恢复悬浮窗服务失败", e)
+            } else {
+                Log.d(TAG, "悬浮窗未启用，跳过恢复")
             }
+        } catch (e: Exception) {
+            // 恢复失败不应该导致应用崩溃
+            Log.e(TAG, "恢复悬浮窗服务失败", e)
         }
     }
 }

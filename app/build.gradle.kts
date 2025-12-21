@@ -62,6 +62,8 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        // 禁用不需要的功能，加速编译
+        viewBinding = false
     }
 
     packaging {
@@ -74,6 +76,8 @@ android {
     // 用于数据库版本管理和迁移测试
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
+        arg("room.incremental", "true")
+        arg("room.generateKotlin", "true")
     }
 
     // 单元测试配置
@@ -81,8 +85,19 @@ android {
     testOptions {
         unitTests {
             isReturnDefaultValues = true
+            // 并行执行测试 - 利用多核CPU
+            all {
+                it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+            }
         }
     }
+
+    // 开发时禁用 Lint 检查（可选，节省时间）
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
 }
 
 dependencies {
