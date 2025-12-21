@@ -116,4 +116,48 @@ interface ContactRepository {
         relationshipScore: Int? = null,
         lastInteractionDate: String? = null
     ): Result<Unit>
+
+    /**
+     * 更新联系人画像（完整更新）
+     *
+     * @param profile 更新后的联系人画像
+     * @return 操作结果
+     */
+    suspend fun updateProfile(profile: ContactProfile): Result<Unit>
+
+    // ============================================================================
+    // 编辑追踪扩展方法（v10）
+    // ============================================================================
+
+    /**
+     * 更新联系人姓名（编辑）
+     *
+     * @param contactId 联系人ID
+     * @param newName 新的姓名
+     * @param modifiedTime 修改时间
+     * @param originalName 原始姓名（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    suspend fun updateName(
+        contactId: String,
+        newName: String,
+        modifiedTime: Long,
+        originalName: String
+    ): Int
+
+    /**
+     * 更新联系人目标（编辑）
+     *
+     * @param contactId 联系人ID
+     * @param newGoal 新的目标
+     * @param modifiedTime 修改时间
+     * @param originalGoal 原始目标（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    suspend fun updateGoal(
+        contactId: String,
+        newGoal: String,
+        modifiedTime: Long,
+        originalGoal: String
+    ): Int
 }

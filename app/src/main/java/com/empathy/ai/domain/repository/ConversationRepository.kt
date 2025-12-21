@@ -120,4 +120,32 @@ interface ConversationRepository {
         contactId: String,
         limit: Int
     ): Result<List<ConversationLog>>
+
+    // ============================================================================
+    // 编辑追踪扩展方法（v10）
+    // ============================================================================
+
+    /**
+     * 根据ID获取对话记录
+     *
+     * @param logId 对话记录ID
+     * @return 对话记录，不存在则返回null
+     */
+    suspend fun getById(logId: Long): ConversationLog?
+
+    /**
+     * 更新对话内容（编辑，带追踪）
+     *
+     * @param logId 对话记录ID
+     * @param newUserInput 新的用户输入内容
+     * @param modifiedTime 修改时间
+     * @param originalInput 原始用户输入（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    suspend fun updateUserInputWithTracking(
+        logId: Long,
+        newUserInput: String,
+        modifiedTime: Long,
+        originalInput: String
+    ): Int
 }

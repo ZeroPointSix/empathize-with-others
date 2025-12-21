@@ -1,10 +1,13 @@
 package com.empathy.ai.domain.model
 
+import com.empathy.ai.domain.util.DateUtils
+
 /**
- * 每日总结领域模型
+ * 每日总结领域模型（扩展版）
  *
  * 表示某个联系人某一天或某段时间的互动总结
  * 支持单日总结（DAILY）和自定义范围总结（CUSTOM_RANGE）
+ * 支持编辑追踪功能
  *
  * @property id 总结ID
  * @property contactId 联系人ID
@@ -21,6 +24,9 @@ package com.empathy.ai.domain.model
  * @property generationSource 生成来源
  * @property conversationCount 分析的对话数量
  * @property generatedAt 生成时间戳
+ * @property isUserModified 是否被用户修改过
+ * @property lastModifiedTime 最后修改时间
+ * @property originalContent 原始内容（修改前）
  */
 data class DailySummary(
     val id: Long = 0,
@@ -38,7 +44,11 @@ data class DailySummary(
     val summaryType: SummaryType = SummaryType.DAILY,
     val generationSource: GenerationSource = GenerationSource.AUTO,
     val conversationCount: Int = 0,
-    val generatedAt: Long = System.currentTimeMillis()
+    val generatedAt: Long = System.currentTimeMillis(),
+    // ==================== v10 编辑追踪字段 ====================
+    val isUserModified: Boolean = false,
+    val lastModifiedTime: Long = generatedAt,
+    val originalContent: String? = null
 ) {
     init {
         require(contactId.isNotBlank()) { "contactId不能为空" }
@@ -49,6 +59,37 @@ data class DailySummary(
             "relationshipScoreChange必须在-10到10之间"
         }
     }
+
+    /**
+     * 创建编辑后的副本
+     *
+     * @param newContent 新的总结内容
+     * @return 编辑后的DailySummary副本
+     */
+    fun copyWithEdit(newContent: String): DailySummary {
+        return copy(
+            content = newContent,
+            isUserModified = true,
+            lastModifiedTime = System.currentTimeMillis(),
+            // 仅首次编辑时保存原始值
+            originalContent = if (originalContent == null) content else originalContent
+        )
+    }
+
+    /**
+     * 判断内容是否有变化
+     *
+     * @param newContent 新的内容
+     * @return 是否有变化
+     */
+    fun hasChanges(newContent: String): Boolean {
+        return content != newContent
+    }
+
+    /**
+     * 格式化最后修改时间
+     */
+    fun formatLastModifiedTime(): String = DateUtils.formatRelativeTime(lastModifiedTime)
 
     /**
      * 判断是否有实质性内容

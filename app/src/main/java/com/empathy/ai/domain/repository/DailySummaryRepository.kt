@@ -153,4 +153,40 @@ interface DailySummaryRepository {
         contactId: String,
         summaryType: SummaryType
     ): Result<List<DailySummary>>
+
+    // ============================================================================
+    // 编辑追踪扩展方法（v10）
+    // ============================================================================
+
+    /**
+     * 根据ID获取总结
+     *
+     * @param summaryId 总结ID
+     * @return 总结对象，不存在则返回null
+     */
+    suspend fun getById(summaryId: Long): DailySummary?
+
+    /**
+     * 更新总结内容（编辑）
+     *
+     * @param summaryId 总结ID
+     * @param newContent 新的总结内容
+     * @param modifiedTime 修改时间
+     * @param originalContent 原始内容（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    suspend fun updateContent(
+        summaryId: Long,
+        newContent: String,
+        modifiedTime: Long,
+        originalContent: String
+    ): Int
+
+    /**
+     * 删除指定ID的总结
+     *
+     * @param summaryId 总结ID
+     * @return 操作结果
+     */
+    suspend fun deleteSummary(summaryId: Long): Result<Unit>
 }

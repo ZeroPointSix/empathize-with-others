@@ -185,4 +185,54 @@ interface DailySummaryDao {
         contactId: String,
         summaryType: String
     ): List<DailySummaryEntity>
+
+    // ============================================================================
+    // 编辑追踪扩展方法（v10）
+    // ============================================================================
+
+    /**
+     * 根据ID获取总结
+     *
+     * @param summaryId 总结ID
+     * @return 总结实体，不存在则返回null
+     */
+    @Query("SELECT * FROM daily_summaries WHERE id = :summaryId")
+    suspend fun getById(summaryId: Long): DailySummaryEntity?
+
+    /**
+     * 更新总结内容（编辑）
+     *
+     * 使用CASE WHEN保留首次原始值：
+     * - 如果original_content为NULL，则保存当前传入的originalContent
+     * - 如果original_content已有值，则保留原有值
+     *
+     * @param summaryId 总结ID
+     * @param newContent 新的总结内容
+     * @param modifiedTime 修改时间
+     * @param originalContent 原始内容（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    @Query("""
+        UPDATE daily_summaries SET 
+            content = :newContent,
+            is_user_modified = 1,
+            last_modified_time = :modifiedTime,
+            original_content = CASE WHEN original_content IS NULL THEN :originalContent ELSE original_content END
+        WHERE id = :summaryId
+    """)
+    suspend fun updateContent(
+        summaryId: Long,
+        newContent: String,
+        modifiedTime: Long,
+        originalContent: String
+    ): Int
+
+    /**
+     * 根据ID删除总结
+     *
+     * @param summaryId 总结ID
+     * @return 删除的记录数
+     */
+    @Query("DELETE FROM daily_summaries WHERE id = :summaryId")
+    suspend fun deleteById(summaryId: Long): Int
 }

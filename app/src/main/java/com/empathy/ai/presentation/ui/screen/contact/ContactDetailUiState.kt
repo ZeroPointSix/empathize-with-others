@@ -351,7 +351,59 @@ data class ContactDetailUiState(
     /**
      * 是否显示添加事实到事实流对话框
      */
-    val showAddFactToStreamDialog: Boolean = false
+    val showAddFactToStreamDialog: Boolean = false,
+    
+    // ========== 编辑功能相关（TD-00012） ==========
+    
+    /**
+     * 是否显示编辑事实对话框
+     */
+    val showEditFactDialog: Boolean = false,
+    
+    /**
+     * 当前编辑的事实
+     */
+    val editingFact: Fact? = null,
+    
+    /**
+     * 是否显示编辑总结对话框
+     */
+    val showEditSummaryDialog: Boolean = false,
+    
+    /**
+     * 当前编辑的总结ID
+     */
+    val editingSummaryId: Long? = null,
+    
+    /**
+     * 当前编辑的总结内容
+     */
+    val editingSummaryContent: String = "",
+    
+    /**
+     * 是否显示编辑联系人信息对话框
+     */
+    val showEditContactInfoDialog: Boolean = false,
+    
+    /**
+     * 是否显示删除事实确认对话框
+     */
+    val showDeleteFactConfirmDialog: Boolean = false,
+    
+    /**
+     * 待删除的事实ID
+     */
+    val pendingDeleteFactId: Long? = null,
+    
+    /**
+     * 是否显示删除总结确认对话框
+     */
+    val showDeleteSummaryConfirmDialog: Boolean = false,
+    
+    /**
+     * 待删除的总结ID
+     */
+    val pendingDeleteSummaryId: Long? = null
 ) {
     // ========== 派生状态 ==========
     

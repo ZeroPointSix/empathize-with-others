@@ -35,6 +35,7 @@ import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.chip.SolidTagChip
 import com.empathy.ai.presentation.ui.component.chip.SolidTagColors
+import com.empathy.ai.presentation.ui.component.state.EditedBadge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,11 +47,14 @@ import java.util.Locale
  *
  * 布局结构：
  * - 左侧：日期（MM-DD）
- * - 中间：[类别图标] + 标题文本
+ * - 中间：[类别图标] + 标题文本 + 已编辑标识（TD-00012）
  * - 右侧：状态标签
  *
  * @param item 时间线项目
  * @param onClick 点击回调
+ * @param onConversationEdit 对话编辑回调
+ * @param onFactEdit 事实编辑回调（TD-00012）
+ * @param onSummaryEdit 总结编辑回调（TD-00012）
  * @param modifier Modifier
  */
 @Composable
@@ -58,13 +62,23 @@ fun ListViewRow(
     item: TimelineItem,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    onConversationEdit: (() -> Unit)? = null
+    onConversationEdit: (() -> Unit)? = null,
+    onFactEdit: (() -> Unit)? = null,
+    onSummaryEdit: (() -> Unit)? = null
 ) {
+    // 确定点击回调
+    val clickHandler: (() -> Unit)? = when (item) {
+        is TimelineItem.Conversation -> onConversationEdit
+        is TimelineItem.UserFact -> onFactEdit
+        is TimelineItem.AiSummary -> onSummaryEdit
+        else -> onClick
+    }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = onClick != null || onConversationEdit != null) { 
-                onConversationEdit?.invoke() ?: onClick?.invoke()
+            .clickable(enabled = clickHandler != null) { 
+                clickHandler?.invoke()
             },
         color = MaterialTheme.colorScheme.surface
     ) {
@@ -86,7 +100,7 @@ fun ListViewRow(
                 modifier = Modifier.width(48.dp)
             )
             
-            // 中间：图标 + 标题
+            // 中间：图标 + 标题 + 已编辑标识
             Row(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -103,8 +117,13 @@ fun ListViewRow(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+                // TD-00012: 显示已编辑标识
+                getEditedAt(item)?.let { lastModifiedTime ->
+                    EditedBadge(lastModifiedTime = lastModifiedTime)
+                }
             }
             
             // 右侧：状态标签
@@ -169,6 +188,18 @@ private fun getItemTag(item: TimelineItem): Pair<String, androidx.compose.ui.gra
         }
         is TimelineItem.PhotoMoment -> null
         is TimelineItem.UserFact -> "手动添加" to SolidTagColors.Personality
+    }
+}
+
+/**
+ * TD-00012: 获取项目的编辑时间
+ */
+private fun getEditedAt(item: TimelineItem): Long? {
+    return when (item) {
+        is TimelineItem.Conversation -> if (item.log.isUserModified) item.log.lastModifiedTime else null
+        is TimelineItem.UserFact -> if (item.fact.isUserModified) item.fact.lastModifiedTime else null
+        is TimelineItem.AiSummary -> if (item.summary.isUserModified) item.summary.lastModifiedTime else null
+        else -> null
     }
 }
 

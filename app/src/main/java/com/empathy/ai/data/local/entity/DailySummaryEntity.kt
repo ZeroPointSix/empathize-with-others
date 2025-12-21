@@ -18,6 +18,11 @@ import androidx.room.PrimaryKey
  * - generation_source: 生成来源（AUTO/MANUAL）
  * - conversation_count: 分析的对话数量
  * - generated_at: 生成时间戳
+ *
+ * v10新增字段（编辑追踪）:
+ * - is_user_modified: 是否被用户修改过
+ * - last_modified_time: 最后修改时间
+ * - original_content: 原始内容
  */
 @Entity(
     tableName = "daily_summaries",
@@ -84,5 +89,19 @@ data class DailySummaryEntity(
 
     /** 生成时间戳 */
     @ColumnInfo(name = "generated_at", defaultValue = "0")
-    val generatedAt: Long = 0
+    val generatedAt: Long = 0,
+
+    // ==================== v10 编辑追踪字段 ====================
+
+    /** 是否被用户修改过 */
+    @ColumnInfo(name = "is_user_modified", defaultValue = "0")
+    val isUserModified: Boolean = false,
+
+    /** 最后修改时间 */
+    @ColumnInfo(name = "last_modified_time", defaultValue = "0")
+    val lastModifiedTime: Long = 0L,
+
+    /** 原始内容（修改前） */
+    @ColumnInfo(name = "original_content", defaultValue = "NULL")
+    val originalContent: String? = null
 )

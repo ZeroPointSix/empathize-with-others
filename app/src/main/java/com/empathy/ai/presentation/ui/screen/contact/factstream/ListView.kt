@@ -31,11 +31,15 @@ import com.empathy.ai.presentation.ui.component.control.QuickFilterChips
  * 清单列表视图组件
  *
  * 事实流的列表模式，高信息密度，便于快速检索
+ * TD-00012: 支持编辑功能
  *
  * @param items 时间线项目列表
  * @param selectedFilters 选中的筛选条件
  * @param onFilterToggle 筛选条件切换回调
  * @param onItemClick 项目点击回调
+ * @param onConversationEdit 对话编辑回调
+ * @param onFactEdit 事实编辑回调（TD-00012）
+ * @param onSummaryEdit 总结编辑回调（TD-00012）
  * @param modifier Modifier
  */
 @Composable
@@ -45,7 +49,9 @@ fun ListView(
     onFilterToggle: (FilterType) -> Unit,
     modifier: Modifier = Modifier,
     onItemClick: ((TimelineItem) -> Unit)? = null,
-    onConversationEdit: ((Long) -> Unit)? = null
+    onConversationEdit: ((Long) -> Unit)? = null,
+    onFactEdit: ((String) -> Unit)? = null,
+    onSummaryEdit: ((Long) -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         // 快速筛选
@@ -73,6 +79,12 @@ fun ListView(
                         onClick = { onItemClick?.invoke(item) },
                         onConversationEdit = if (item is TimelineItem.Conversation) {
                             { onConversationEdit?.invoke(item.log.id) }
+                        } else null,
+                        onFactEdit = if (item is TimelineItem.UserFact) {
+                            { onFactEdit?.invoke(item.fact.id) }
+                        } else null,
+                        onSummaryEdit = if (item is TimelineItem.AiSummary) {
+                            { onSummaryEdit?.invoke(item.summary.id) }
                         } else null
                     )
                     HorizontalDivider(

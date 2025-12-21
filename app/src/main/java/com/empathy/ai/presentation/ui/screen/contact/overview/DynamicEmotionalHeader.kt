@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,7 @@ import com.empathy.ai.presentation.theme.RelationshipColors
  * - 展示联系人头像、姓名、相识时长
  * - 根据滚动位置动态调整高度和元素大小
  * - 背景光晕根据关系分数变化
+ * - TD-00012: 支持编辑联系人信息
  *
  * 技术要点：
  * - 使用derivedStateOf优化滚动监听，减少重组
@@ -58,6 +60,7 @@ import com.empathy.ai.presentation.theme.RelationshipColors
  * @param scrollState 滚动状态，用于计算收缩进度
  * @param daysSinceFirstMet 相识天数
  * @param onBackClick 返回按钮点击回调
+ * @param onEditClick 编辑按钮点击回调（TD-00012）
  * @param modifier Modifier
  */
 @Composable
@@ -66,7 +69,8 @@ fun DynamicEmotionalHeader(
     scrollState: LazyListState,
     daysSinceFirstMet: Int,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEditClick: (() -> Unit)? = null
 ) {
     // 计算滚动进度 (0.0 ~ 1.0)
     val scrollProgress by remember {
@@ -173,6 +177,17 @@ fun DynamicEmotionalHeader(
                         text = "已相识 $daysSinceFirstMet 天",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.8f * (1f - scrollProgress))
+                    )
+                }
+            }
+            
+            // TD-00012: 编辑按钮
+            if (onEditClick != null) {
+                IconButton(onClick = onEditClick) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "编辑联系人信息",
+                        tint = Color.White
                     )
                 }
             }

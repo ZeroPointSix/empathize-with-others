@@ -26,6 +26,7 @@ import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard
+import com.empathy.ai.presentation.ui.component.state.EditedBadge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,9 +35,10 @@ import java.util.Locale
  * AI总结卡片组件
  *
  * 展示AI对一段时间的复盘和洞察，具有特殊的视觉风格
+ * TD-00012: 支持点击编辑和显示已编辑标识
  *
  * @param item AI总结数据
- * @param onClick 点击回调
+ * @param onClick 点击回调（用于编辑）
  * @param modifier Modifier
  */
 @Composable
@@ -52,7 +54,7 @@ fun AiSummaryCard(
         onClick = onClick
     ) {
         Column(modifier = Modifier.padding(Dimensions.SpacingMedium)) {
-            // 标题行
+            // 标题行：图标 + 标题 + 已编辑标识
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -66,8 +68,13 @@ fun AiSummaryCard(
                 Text(
                     text = "AI 情感晴雨表",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
                 )
+                // TD-00012: 显示已编辑标识
+                if (item.summary.isUserModified) {
+                    EditedBadge(lastModifiedTime = item.summary.lastModifiedTime)
+                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))

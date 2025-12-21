@@ -23,6 +23,53 @@ object DebugLogger {
      */
     const val MAX_LOG_LENGTH = 4000
 
+    // ============================================================================
+    // 标准日志方法（v10新增）
+    // ============================================================================
+
+    /**
+     * Debug级别日志
+     */
+    fun d(tag: String, message: String) {
+        if (BuildConfig.DEBUG) {
+            Log.d(tag, message)
+        }
+    }
+
+    /**
+     * Warning级别日志
+     */
+    fun w(tag: String, message: String) {
+        Log.w(tag, message)
+    }
+
+    /**
+     * Error级别日志
+     */
+    fun e(tag: String, message: String, throwable: Throwable? = null) {
+        if (throwable != null) {
+            Log.e(tag, message, throwable)
+        } else {
+            Log.e(tag, message)
+        }
+    }
+
+    /**
+     * Info级别日志
+     */
+    fun i(tag: String, message: String) {
+        Log.i(tag, message)
+    }
+
+    /**
+     * Verbose级别日志
+     */
+    fun v(tag: String, message: String) {
+        if (BuildConfig.DEBUG) {
+            Log.v(tag, message)
+        }
+    }
+
     /**
      * Release 模式下的截取长度
      */

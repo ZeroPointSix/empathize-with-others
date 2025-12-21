@@ -311,10 +311,78 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移: 版本 9 -> 10
+     * 添加编辑追踪字段支持事实流内容编辑功能：
+     *
+     * profiles表新增字段：
+     * - is_name_user_modified: 姓名是否被用户修改过
+     * - is_goal_user_modified: 目标是否被用户修改过
+     * - name_last_modified_time: 姓名最后修改时间
+     * - goal_last_modified_time: 目标最后修改时间
+     * - original_name: 原始姓名
+     * - original_goal: 原始目标
+     *
+     * conversation_logs表新增字段：
+     * - is_user_modified: 是否被用户修改过
+     * - last_modified_time: 最后修改时间
+     * - original_user_input: 原始用户输入
+     *
+     * daily_summaries表新增字段：
+     * - is_user_modified: 是否被用户修改过
+     * - last_modified_time: 最后修改时间
+     * - original_content: 原始内容
+     */
+    private val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 扩展 profiles 表
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN is_name_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN is_goal_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN name_last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN goal_last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN original_name TEXT DEFAULT NULL"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN original_goal TEXT DEFAULT NULL"
+            )
+
+            // 2. 扩展 conversation_logs 表
+            db.execSQL(
+                "ALTER TABLE conversation_logs ADD COLUMN is_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE conversation_logs ADD COLUMN last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE conversation_logs ADD COLUMN original_user_input TEXT DEFAULT NULL"
+            )
+
+            // 3. 扩展 daily_summaries 表
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN is_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN original_content TEXT DEFAULT NULL"
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
-     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5）
+     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5→v6→v7→v8→v9→v10）
      * - 已移除fallbackToDestructiveMigration()，确保数据安全
      * - 如果迁移失败，应用会抛出异常而不是删除数据
      *
@@ -323,6 +391,11 @@ object DatabaseModule {
      * - v2→v3: 添加timeout_ms字段
      * - v3→v4: 添加记忆系统表（conversation_logs, daily_summaries）
      * - v4→v5: 添加failed_summary_tasks表
+     * - v5→v6: 添加UI扩展字段（avatar_url, is_confirmed）
+     * - v6→v7: 修复性迁移（修复conversation_logs表结构和索引名称）
+     * - v7→v8: 添加提示词管理系统字段（custom_prompt）
+     * - v8→v9: 扩展daily_summaries表支持手动总结
+     * - v9→v10: 添加编辑追踪字段支持事实流内容编辑
      */
     @Provides
     @Singleton
@@ -340,7 +413,8 @@ object DatabaseModule {
                 MIGRATION_5_6,
                 MIGRATION_6_7,
                 MIGRATION_7_8,
-                MIGRATION_8_9
+                MIGRATION_8_9,
+                MIGRATION_9_10
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据

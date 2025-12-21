@@ -1,5 +1,6 @@
 package com.empathy.ai.presentation.ui.component.relationship
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,24 +28,35 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.ui.component.state.EditedBadge
 
 /**
  * 事实条目组件
  *
- * 显示单条事实信息，包括来源标识
+ * 显示单条事实信息，包括来源标识和编辑状态
  *
  * @param fact 事实数据
  * @param onDelete 删除回调，为null时不显示删除按钮
+ * @param onEdit 编辑回调，为null时不可点击编辑（TD-00012）
  * @param modifier Modifier
  */
 @Composable
 fun FactItem(
     fact: Fact,
     onDelete: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (onEdit != null) {
+                    Modifier.clickable { onEdit() }
+                } else {
+                    Modifier
+                }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -78,11 +90,21 @@ fun FactItem(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = fact.key,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                // 标题行：key + 已编辑标识
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = fact.key,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    // TD-00012: 显示已编辑标识
+                    if (fact.isUserModified) {
+                        EditedBadge(lastModifiedTime = fact.lastModifiedTime)
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = fact.value,
@@ -122,6 +144,7 @@ fun FactItem(
  *
  * @param facts 事实列表
  * @param onDeleteFact 删除事实回调
+ * @param onEditFact 编辑事实回调（TD-00012）
  * @param isEditMode 是否为编辑模式
  * @param modifier Modifier
  */
@@ -129,6 +152,7 @@ fun FactItem(
 fun FactList(
     facts: List<Fact>,
     onDeleteFact: ((Fact) -> Unit)? = null,
+    onEditFact: ((Fact) -> Unit)? = null,
     isEditMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -162,7 +186,8 @@ fun FactList(
                     fact = fact,
                     onDelete = if (isEditMode && onDeleteFact != null) {
                         { onDeleteFact(fact) }
-                    } else null
+                    } else null,
+                    onEdit = onEditFact?.let { { it(fact) } }
                 )
             }
         }
@@ -182,7 +207,8 @@ fun FactList(
                     fact = fact,
                     onDelete = if (isEditMode && onDeleteFact != null) {
                         { onDeleteFact(fact) }
-                    } else null
+                    } else null,
+                    onEdit = onEditFact?.let { { it(fact) } }
                 )
             }
         }

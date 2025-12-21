@@ -119,4 +119,62 @@ interface ContactDao {
      */
     @Query("UPDATE profiles SET custom_prompt = :prompt WHERE id = :contactId")
     suspend fun updateCustomPrompt(contactId: String, prompt: String?)
+
+    // ============================================================================
+    // 编辑追踪扩展方法（v10）
+    // ============================================================================
+
+    /**
+     * 更新联系人姓名（编辑）
+     *
+     * 使用CASE WHEN保留首次原始值：
+     * - 如果original_name为NULL，则保存当前传入的originalName
+     * - 如果original_name已有值，则保留原有值
+     *
+     * @param contactId 联系人ID
+     * @param newName 新的姓名
+     * @param modifiedTime 修改时间
+     * @param originalName 原始姓名（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    @Query("""
+        UPDATE profiles SET 
+            name = :newName,
+            is_name_user_modified = 1,
+            name_last_modified_time = :modifiedTime,
+            original_name = CASE WHEN original_name IS NULL THEN :originalName ELSE original_name END
+        WHERE id = :contactId
+    """)
+    suspend fun updateName(
+        contactId: String,
+        newName: String,
+        modifiedTime: Long,
+        originalName: String
+    ): Int
+
+    /**
+     * 更新联系人目标（编辑）
+     *
+     * 使用CASE WHEN保留首次原始值
+     *
+     * @param contactId 联系人ID
+     * @param newGoal 新的目标
+     * @param modifiedTime 修改时间
+     * @param originalGoal 原始目标（仅首次编辑时保存）
+     * @return 受影响的行数
+     */
+    @Query("""
+        UPDATE profiles SET 
+            target_goal = :newGoal,
+            is_goal_user_modified = 1,
+            goal_last_modified_time = :modifiedTime,
+            original_goal = CASE WHEN original_goal IS NULL THEN :originalGoal ELSE original_goal END
+        WHERE id = :contactId
+    """)
+    suspend fun updateGoal(
+        contactId: String,
+        newGoal: String,
+        modifiedTime: Long,
+        originalGoal: String
+    ): Int
 }
