@@ -14,6 +14,7 @@ import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.PromptBuilder
+import com.empathy.ai.domain.util.UserProfileContextBuilder
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -39,6 +40,7 @@ class PolishDraftUseCaseTest {
     private lateinit var aiProviderRepository: AiProviderRepository
     private lateinit var promptBuilder: PromptBuilder
     private lateinit var sessionContextService: SessionContextService
+    private lateinit var userProfileContextBuilder: UserProfileContextBuilder
 
     private val testContactId = "contact_123"
     private val testDraft = "你好，我想问一下关于项目的事情"
@@ -84,9 +86,12 @@ class PolishDraftUseCaseTest {
         aiProviderRepository = mockk()
         promptBuilder = mockk()
         sessionContextService = mockk()
+        userProfileContextBuilder = mockk()
 
         // 默认返回空历史上下文
         coEvery { sessionContextService.getHistoryContext(any<String>()) } returns ""
+        // 默认返回空用户画像上下文
+        coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.success("")
 
         useCase = PolishDraftUseCase(
             contactRepository = contactRepository,
@@ -95,7 +100,8 @@ class PolishDraftUseCaseTest {
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
-            sessionContextService = sessionContextService
+            sessionContextService = sessionContextService,
+            userProfileContextBuilder = userProfileContextBuilder
         )
     }
 
@@ -292,5 +298,111 @@ class PolishDraftUseCaseTest {
         // Then: 应该正常返回结果
         assertTrue(result.isSuccess)
         assertEquals(testPolishResult, result.getOrNull())
+    }
+
+    // ==================== TD-00013 用户画像上下文测试 ====================
+
+    @Test
+    fun `should include user profile context in runtime data when available`() = runTest {
+        // Given: 有用户画像上下文
+        val userProfileContext = """
+            【用户画像（你的特点）】
+            - 性格特点: 外向、乐观
+            - 沟通风格: 直接、幽默
+        """.trimIndent()
+
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
+        coEvery { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) } returns Result.success(userProfileContext)
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
+
+        // When
+        useCase(testContactId, testDraft)
+
+        // Then: 验证用户画像上下文被包含在运行时数据中
+        coVerify {
+            promptBuilder.buildSystemInstruction(
+                any(),
+                eq(testContactId),
+                any(),
+                match { it.contains("【用户画像（你的特点）】") && it.contains("外向") }
+            )
+        }
+    }
+
+    @Test
+    fun `should call userProfileContextBuilder to get user profile`() = runTest {
+        // Given
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
+        coEvery { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) } returns Result.success("")
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
+
+        // When
+        useCase(testContactId, testDraft)
+
+        // Then: 验证调用了UserProfileContextBuilder
+        coVerify { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) }
+    }
+
+    @Test
+    fun `should work correctly when user profile context fails`() = runTest {
+        // Given: 用户画像获取失败
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
+        coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.failure(Exception("获取失败"))
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
+
+        // When
+        val result = useCase(testContactId, testDraft)
+
+        // Then: 应该正常返回结果（降级处理）
+        assertTrue(result.isSuccess)
+        assertEquals(testPolishResult, result.getOrNull())
+    }
+
+    @Test
+    fun `should place user profile before history context in runtime data`() = runTest {
+        // Given: 同时有用户画像和历史对话
+        val userProfileContext = "【用户画像（你的特点）】\n- 性格特点: 外向"
+        val historyContext = "【历史对话】\n- 你好"
+
+        coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
+        coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
+        coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
+        coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns historyContext
+        coEvery { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) } returns Result.success(userProfileContext)
+        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
+
+        // When
+        useCase(testContactId, testDraft)
+
+        // Then: 验证用户画像在历史对话之前
+        coVerify {
+            promptBuilder.buildSystemInstruction(
+                any(),
+                eq(testContactId),
+                any(),
+                match { 
+                    val userProfileIndex = it.indexOf("【用户画像（你的特点）】")
+                    val historyIndex = it.indexOf("【历史对话】")
+                    userProfileIndex >= 0 && historyIndex >= 0 && userProfileIndex < historyIndex
+                }
+            )
+        }
     }
 }

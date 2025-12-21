@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -137,11 +138,25 @@ class SettingsViewModel @Inject constructor(
      * 加载服务商列表
      *
      * 从数据库加载所有服务商，并更新 UI 状态
+     * 
+     * 注意：使用 Flow.catch 操作符处理异常，而不是 try-catch
+     * 这样可以正确处理 CancellationException（协程取消时的正常信号）
+     * Flow.catch 不会捕获 CancellationException，允许协程正常取消
+     * 
+     * @see BUG-00028 悬浮窗加载时 JobCancellationException 问题
      */
     private fun loadProviders() {
         viewModelScope.launch {
-            try {
-                aiProviderRepository.getAllProviders().collect { providers ->
+            aiProviderRepository.getAllProviders()
+                .catch { e ->
+                    // Flow.catch 不会捕获 CancellationException
+                    // 只有真正的业务异常会到达这里
+                    android.util.Log.e("SettingsViewModel", "加载服务商列表失败", e)
+                    _uiState.update {
+                        it.copy(error = "加载服务商列表失败: ${e.message}")
+                    }
+                }
+                .collect { providers ->
                     val providerNames = providers.map { it.name }
                     
                     // 查找默认服务商
@@ -158,12 +173,6 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("SettingsViewModel", "加载服务商列表失败", e)
-                _uiState.update {
-                    it.copy(error = "加载服务商列表失败: ${e.message}")
-                }
-            }
         }
     }
 

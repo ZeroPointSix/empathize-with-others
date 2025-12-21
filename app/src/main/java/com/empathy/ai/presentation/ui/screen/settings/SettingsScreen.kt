@@ -45,6 +45,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAiConfig: () -> Unit = {},
     onNavigateToPromptEditor: (String) -> Unit = {},
+    onNavigateToUserProfile: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -74,6 +75,7 @@ fun SettingsScreen(
         onNavigateBack = onNavigateBack,
         onNavigateToAiConfig = onNavigateToAiConfig,
         onNavigateToPromptEditor = onNavigateToPromptEditor,
+        onNavigateToUserProfile = onNavigateToUserProfile,
         onRequestPermission = {
             (context as? Activity)?.let { activity ->
                 FloatingWindowManager.requestPermission(activity)
@@ -94,6 +96,7 @@ private fun SettingsScreenContent(
     onNavigateBack: () -> Unit,
     onNavigateToAiConfig: () -> Unit,
     onNavigateToPromptEditor: (String) -> Unit,
+    onNavigateToUserProfile: () -> Unit,
     onRequestPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -176,6 +179,13 @@ private fun SettingsScreenContent(
             // 提示词设置
             PromptSettingsSection(
                 onNavigateToPromptEditor = onNavigateToPromptEditor
+            )
+
+            Divider()
+
+            // 用户画像设置
+            UserProfileSection(
+                onNavigateToUserProfile = onNavigateToUserProfile
             )
 
             Divider()
@@ -674,6 +684,61 @@ private fun AboutSection(
 
 
 /**
+ * 用户画像设置区域
+ */
+@Composable
+private fun UserProfileSection(
+    onNavigateToUserProfile: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "个人画像",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Card(
+            onClick = onNavigateToUserProfile,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "管理个人画像",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "设置您的性格特点、价值观、兴趣爱好等信息",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "进入"
+                )
+            }
+        }
+
+        Text(
+            text = "提示：完善个人画像可以让AI更好地理解您，提供更个性化的沟通建议",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
  * 提示词设置区域
  */
 @Composable
@@ -823,6 +888,7 @@ private fun SettingsScreenPreview() {
             onNavigateBack = {},
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
+            onNavigateToUserProfile = {},
             onRequestPermission = {}
         )
     }
@@ -843,6 +909,7 @@ private fun SettingsScreenConfiguredPreview() {
             onNavigateBack = {},
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
+            onNavigateToUserProfile = {},
             onRequestPermission = {}
         )
     }

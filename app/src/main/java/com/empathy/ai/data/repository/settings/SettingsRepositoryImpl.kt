@@ -1,6 +1,8 @@
 package com.empathy.ai.data.repository.settings
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.empathy.ai.domain.repository.SettingsRepository
@@ -18,6 +20,12 @@ import javax.inject.Singleton
  * - 使用 MasterKey 进行密钥管理
  * - AES-256-GCM 加密算法
  * - 即使设备被 Root，也能提供一定的安全保护
+ * 
+ * 容错机制 (BUG-00028 修复)：
+ * - 完全延迟初始化：构造函数不访问 Keystore，只在首次使用时初始化
+ * - 重试机制：Keystore 服务不可用时自动重试（最多3次，递增延迟）
+ * - 降级策略：多次重试失败后使用普通 SharedPreferences
+ * - 线程安全：使用 synchronized 确保并发安全
  *
  * @property context 应用上下文
  * @property privacyPreferences 隐私设置持久化
@@ -30,10 +38,14 @@ class SettingsRepositoryImpl @Inject constructor(
 ) : SettingsRepository {
 
     companion object {
+        private const val TAG = "SettingsRepositoryImpl"
         private const val PREFS_NAME = "empathy_ai_encrypted_prefs"
+        private const val FALLBACK_PREFS_NAME = "empathy_ai_encrypted_prefs_fallback"
         private const val KEY_API_KEY = "api_key"
         private const val KEY_AI_PROVIDER = "ai_provider"
         private const val KEY_BASE_URL = "base_url"
+        private const val MAX_RETRY_COUNT = 3
+        private const val RETRY_DELAY_MS = 200L
 
         // 默认值
         private const val DEFAULT_PROVIDER = "OpenAI"
@@ -42,31 +54,106 @@ class SettingsRepositoryImpl @Inject constructor(
     }
 
     /**
+     * 标记加密存储是否可用
+     */
+    @Volatile
+    private var isEncryptionAvailable = true
+    
+    /**
+     * 初始化锁，确保线程安全
+     */
+    private val initLock = Any()
+    
+    /**
+     * SharedPreferences 实例（延迟初始化）
+     */
+    private var _prefs: SharedPreferences? = null
+
+    /**
      * EncryptedSharedPreferences 实例
      *
-     * 懒加载初始化，避免应用启动时阻塞
+     * 使用自定义 getter + synchronized 实现延迟初始化，
+     * 避免在 Application 创建时触发 Keystore 访问。
      */
-    private val encryptedPrefs by lazy {
-        try {
-            // 创建或获取 MasterKey
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-
-            // 创建 EncryptedSharedPreferences 实例
-            EncryptedSharedPreferences.create(
-                context,
-                PREFS_NAME,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-        } catch (e: Exception) {
-            // 如果创建失败（例如设备不支持），回退到普通 SharedPreferences
-            // 注意：这只是一个降级方案，会发出警告
-            android.util.Log.w("SettingsRepository", "Failed to create EncryptedSharedPreferences, falling back to regular SharedPreferences", e)
-            context.getSharedPreferences(PREFS_NAME + "_fallback", Context.MODE_PRIVATE)
+    private val encryptedPrefs: SharedPreferences
+        get() {
+            if (_prefs != null) return _prefs!!
+            synchronized(initLock) {
+                if (_prefs == null) {
+                    _prefs = initializePrefs()
+                    Log.d(TAG, "SharedPreferences 初始化完成，加密可用: $isEncryptionAvailable")
+                }
+                return _prefs!!
+            }
         }
+    
+    /**
+     * 初始化 SharedPreferences
+     */
+    private fun initializePrefs(): SharedPreferences {
+        Log.d(TAG, "开始初始化 SharedPreferences...")
+        
+        val masterKey = createMasterKeyWithRetry()
+        if (masterKey != null) {
+            try {
+                val prefs = EncryptedSharedPreferences.create(
+                    context,
+                    PREFS_NAME,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                )
+                Log.d(TAG, "EncryptedSharedPreferences 创建成功")
+                isEncryptionAvailable = true
+                return prefs
+            } catch (e: Exception) {
+                Log.e(TAG, "EncryptedSharedPreferences 创建失败", e)
+            }
+        }
+        
+        Log.w(TAG, "降级使用普通 SharedPreferences，设置数据将以明文存储")
+        isEncryptionAvailable = false
+        return context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+    }
+    
+    /**
+     * 创建 MasterKey，带重试机制
+     */
+    private fun createMasterKeyWithRetry(): MasterKey? {
+        var lastException: Exception? = null
+        
+        for (attempt in 0 until MAX_RETRY_COUNT) {
+            try {
+                val key = MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+                Log.d(TAG, "MasterKey 创建成功 (尝试 ${attempt + 1})")
+                return key
+            } catch (e: Exception) {
+                lastException = e
+                Log.w(TAG, "MasterKey 创建失败 (尝试 ${attempt + 1}/$MAX_RETRY_COUNT): ${e.message}")
+                
+                if (attempt < MAX_RETRY_COUNT - 1) {
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS * (attempt + 1))
+                    } catch (ie: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        break
+                    }
+                }
+            }
+        }
+        
+        Log.e(TAG, "MasterKey 创建失败，已达最大重试次数", lastException)
+        return null
+    }
+    
+    /**
+     * 检查安全存储是否可用
+     */
+    fun isSecureStorageAvailable(): Boolean {
+        encryptedPrefs // 触发初始化
+        return isEncryptionAvailable
     }
 
     /**

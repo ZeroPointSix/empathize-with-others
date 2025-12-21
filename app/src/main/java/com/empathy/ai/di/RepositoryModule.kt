@@ -5,6 +5,7 @@ import com.empathy.ai.data.repository.AiRepositoryImpl
 import com.empathy.ai.data.repository.BrainTagRepositoryImpl
 import com.empathy.ai.data.repository.ContactRepositoryImpl
 import com.empathy.ai.data.repository.PrivacyRepositoryImpl
+import com.empathy.ai.data.repository.UserProfileRepositoryImpl
 import com.empathy.ai.data.repository.settings.SettingsRepositoryImpl
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
@@ -12,6 +13,7 @@ import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.repository.SettingsRepository
+import com.empathy.ai.domain.repository.UserProfileRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -94,4 +96,16 @@ abstract class RepositoryModule {
      */
     @Binds
     abstract fun bindAiProviderRepository(impl: AiProviderRepositoryImpl): AiProviderRepository
+
+    /**
+     * 绑定 UserProfileRepository
+     *
+     * 将 UserProfileRepository 接口绑定到其实现类 UserProfileRepositoryImpl。
+     * 用于用户画像数据的存储和访问。
+     *
+     * @param impl UserProfileRepositoryImpl 实例
+     * @return UserProfileRepository 接口
+     */
+    @Binds
+    abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
 }

@@ -229,6 +229,7 @@ class FloatingWindowService : Service() {
      * 移除悬浮视图并清理所有资源
      * 
      * 需求：8.1, 8.2, 8.3
+     * BUG-00029修复：添加悬浮球视图清理
      */
     override fun onDestroy() {
         super.onDestroy()
@@ -271,6 +272,20 @@ class FloatingWindowService : Service() {
         } catch (e: Exception) {
             android.util.Log.e("FloatingWindowService", "清理最小化指示器失败", e)
         }
+        
+        // BUG-00029修复：移除悬浮球视图
+        try {
+            floatingBubbleView?.let { bubble ->
+                if (bubble.parent != null) {
+                    windowManager.removeView(bubble)
+                    android.util.Log.d("FloatingWindowService", "悬浮球视图移除成功")
+                }
+                bubble.cleanup()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "移除悬浮球视图失败", e)
+        }
+        floatingBubbleView = null
         
         try {
             // TD-00009: 移除新版最小化指示器
@@ -2378,6 +2393,68 @@ class FloatingWindowService : Service() {
             floatingBubbleView = null
         }
     }
+    
+    /**
+     * 安全地显示悬浮球（带返回值）
+     * 
+     * BUG-00029修复：提供返回值以便调用方判断是否成功
+     *
+     * @param state 初始状态，默认为IDLE
+     * @return true 如果悬浮球显示成功，false 如果失败
+     */
+    private fun showFloatingBubbleSafe(state: FloatingBubbleState = FloatingBubbleState.IDLE): Boolean {
+        if (floatingBubbleView != null) {
+            floatingBubbleView?.setState(state)
+            android.util.Log.d("FloatingWindowService", "悬浮球已存在，更新状态为: $state")
+            return true
+        }
+
+        return try {
+            val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+            floatingBubbleView = FloatingBubbleView(themedContext, windowManager)
+
+            // 恢复保存的位置
+            val screenWidth = resources.displayMetrics.widthPixels
+            val screenHeight = resources.displayMetrics.heightPixels
+            val bubbleSizePx = (FloatingBubbleView.BUBBLE_SIZE_DP * resources.displayMetrics.density).toInt()
+            val defaultX = screenWidth - bubbleSizePx - (16 * resources.displayMetrics.density).toInt()
+            val defaultY = (screenHeight - bubbleSizePx) / 2
+
+            val (savedX, savedY) = floatingWindowPreferences.getBubblePosition(defaultX, defaultY)
+
+            // 设置点击监听
+            floatingBubbleView?.setOnBubbleClickListener {
+                expandFromBubble()
+            }
+
+            // 设置位置变化监听
+            floatingBubbleView?.setOnPositionChangedListener { x, y ->
+                floatingWindowPreferences.saveBubblePosition(x, y)
+            }
+
+            // 设置初始状态
+            floatingBubbleView?.setState(state)
+
+            // 创建布局参数并添加到WindowManager
+            val params = floatingBubbleView!!.createLayoutParams(savedX, savedY)
+            windowManager.addView(floatingBubbleView, params)
+
+            android.util.Log.d("FloatingWindowService", "悬浮球已显示，位置: ($savedX, $savedY)，状态: $state")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "显示悬浮球失败", e)
+            // 清理可能部分创建的资源
+            floatingBubbleView?.cleanup()
+            floatingBubbleView = null
+            
+            // 尝试降级方案：显示简单的FAB指示器
+            val fallbackSuccess = showMinimizedIndicatorV2Safe()
+            if (fallbackSuccess) {
+                android.util.Log.w("FloatingWindowService", "悬浮球创建失败，已降级为FAB指示器")
+            }
+            false
+        }
+    }
 
     /**
      * 隐藏悬浮球
@@ -2648,17 +2725,21 @@ class FloatingWindowService : Service() {
      * - 有请求 → LOADING
      * 
      * TD-00010修复：保存显示模式为悬浮球
+     * BUG-00029修复：
+     * 1. 先保存显示模式，确保进程被杀后能正确恢复
+     * 2. 先显示悬浮球再隐藏悬浮窗，确保用户始终有可操作的UI
+     * 3. 悬浮球创建失败时恢复悬浮窗可见性
      */
     private fun minimizeToFloatingBubble() {
         android.util.Log.d("FloatingWindowService", "最小化到悬浮球，hasActiveAiRequest: $hasActiveAiRequest")
+
+        // BUG-00029修复：先保存显示模式，确保进程被杀后能正确恢复
+        floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_BUBBLE)
 
         // 保存当前状态
         floatingViewV2?.let { view ->
             floatingWindowPreferences.saveUiState(view.getCurrentState())
         }
-
-        // 隐藏悬浮窗
-        floatingViewV2?.visibility = View.GONE
 
         // 根据是否有活跃请求决定状态
         val bubbleState = if (hasActiveAiRequest) {
@@ -2667,11 +2748,20 @@ class FloatingWindowService : Service() {
             FloatingBubbleState.IDLE
         }
 
-        // 显示悬浮球
-        showFloatingBubble(bubbleState)
+        // BUG-00029修复：先显示悬浮球，成功后再隐藏悬浮窗
+        val bubbleShown = showFloatingBubbleSafe(bubbleState)
         
-        // TD-00010: 保存显示模式为悬浮球
-        floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_BUBBLE)
+        if (bubbleShown) {
+            // 悬浮球显示成功，隐藏悬浮窗
+            floatingViewV2?.visibility = View.GONE
+            android.util.Log.d("FloatingWindowService", "悬浮球显示成功，已隐藏悬浮窗")
+        } else {
+            // 悬浮球创建失败，恢复悬浮窗可见性和显示模式
+            floatingViewV2?.visibility = View.VISIBLE
+            floatingWindowPreferences.saveDisplayMode(FloatingWindowPreferences.DISPLAY_MODE_DIALOG)
+            android.util.Log.e("FloatingWindowService", "悬浮球创建失败，保持悬浮窗可见")
+            return
+        }
 
         // 保存最小化状态（如果有活跃请求）
         if (hasActiveAiRequest) {

@@ -17,6 +17,7 @@ import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
+import com.empathy.ai.domain.util.UserProfileContextBuilder
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -43,6 +44,7 @@ class GenerateReplyUseCaseTest {
     private lateinit var aiProviderRepository: AiProviderRepository
     private lateinit var promptBuilder: PromptBuilder
     private lateinit var sessionContextService: SessionContextService
+    private lateinit var userProfileContextBuilder: UserProfileContextBuilder
     
     private lateinit var generateReplyUseCase: GenerateReplyUseCase
     
@@ -60,6 +62,7 @@ class GenerateReplyUseCaseTest {
         aiProviderRepository = mockk()
         promptBuilder = mockk()
         sessionContextService = mockk()
+        userProfileContextBuilder = mockk()
         
         // Create use case with mocked dependencies
         generateReplyUseCase = GenerateReplyUseCase(
@@ -69,7 +72,8 @@ class GenerateReplyUseCaseTest {
             aiRepository = aiRepository,
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
-            sessionContextService = sessionContextService
+            sessionContextService = sessionContextService,
+            userProfileContextBuilder = userProfileContextBuilder
         )
         
         // Setup default mock behaviors
@@ -110,6 +114,9 @@ class GenerateReplyUseCaseTest {
         
         // Mock session context
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
+        
+        // Mock user profile context builder
+        coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.success("")
         
         // Mock prompt builder
         coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "test instruction"
@@ -210,5 +217,78 @@ class GenerateReplyUseCaseTest {
         
         // Then
         coVerify { sessionContextService.getHistoryContext(testContactId) }
+    }
+
+    // ==================== TD-00013 用户画像上下文测试 ====================
+
+    @Test
+    fun `应该获取用户画像上下文`() = runTest {
+        // When
+        generateReplyUseCase(testContactId, testMessage)
+        
+        // Then
+        coVerify { userProfileContextBuilder.buildAnalysisContext(any(), testMessage) }
+    }
+
+    @Test
+    fun `用户画像上下文应该包含在运行时数据中`() = runTest {
+        // Given
+        val userProfileContext = """
+            【用户画像（你的特点）】
+            - 性格特点: 外向、乐观
+            - 沟通风格: 直接、幽默
+        """.trimIndent()
+        coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.success(userProfileContext)
+        
+        // When
+        generateReplyUseCase(testContactId, testMessage)
+        
+        // Then
+        coVerify {
+            promptBuilder.buildSystemInstruction(
+                any(),
+                eq(testContactId),
+                any(),
+                match { it.contains("【用户画像（你的特点）】") && it.contains("外向") }
+            )
+        }
+    }
+
+    @Test
+    fun `用户画像获取失败应该降级处理`() = runTest {
+        // Given - 用户画像获取失败
+        coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.failure(Exception("获取失败"))
+        
+        // When
+        val result = generateReplyUseCase(testContactId, testMessage)
+        
+        // Then - 应该正常返回结果（降级处理）
+        assertTrue("用户画像获取失败应该降级处理", result.isSuccess)
+    }
+
+    @Test
+    fun `用户画像应该在历史对话之前`() = runTest {
+        // Given
+        val userProfileContext = "【用户画像（你的特点）】\n- 性格特点: 外向"
+        val historyContext = "【历史对话】\n- 你好"
+        coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.success(userProfileContext)
+        coEvery { sessionContextService.getHistoryContext(testContactId) } returns historyContext
+        
+        // When
+        generateReplyUseCase(testContactId, testMessage)
+        
+        // Then
+        coVerify {
+            promptBuilder.buildSystemInstruction(
+                any(),
+                eq(testContactId),
+                any(),
+                match { 
+                    val userProfileIndex = it.indexOf("【用户画像（你的特点）】")
+                    val historyIndex = it.indexOf("【历史对话】")
+                    userProfileIndex >= 0 && historyIndex >= 0 && userProfileIndex < historyIndex
+                }
+            )
+        }
     }
 }

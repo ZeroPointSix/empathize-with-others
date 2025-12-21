@@ -22,6 +22,7 @@ import com.empathy.ai.domain.util.ConversationContextBuilder
 import com.empathy.ai.domain.util.DateUtils
 import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
+import com.empathy.ai.domain.util.UserProfileContextBuilder
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -50,7 +51,8 @@ class AnalyzeChatUseCase @Inject constructor(
     private val aiProviderRepository: com.empathy.ai.domain.repository.AiProviderRepository,
     private val conversationRepository: ConversationRepository,
     private val promptBuilder: PromptBuilder,
-    private val conversationContextBuilder: ConversationContextBuilder
+    private val conversationContextBuilder: ConversationContextBuilder,
+    private val userProfileContextBuilder: UserProfileContextBuilder
 ) {
     companion object {
         private const val TAG = "AnalyzeChatUseCase"
@@ -138,6 +140,18 @@ class AnalyzeChatUseCase @Inject constructor(
                 IdentityPrefixHelper.addPrefix(message, ActionType.ANALYZE)
             }
             
+            // 【PRD-00013】获取用户画像上下文（智能筛选相关信息）
+            val userProfileContext = try {
+                val userInputForFilter = cleanedContext.joinToString("\n")
+                userProfileContextBuilder.buildAnalysisContext(profile, userInputForFilter)
+                    .getOrNull() ?: ""
+            } catch (e: Exception) {
+                Log.w(TAG, "获取用户画像上下文失败，降级为空上下文", e)
+                ""  // 降级：用户画像获取失败不影响主流程
+            }
+            
+            Log.d(TAG, "用户画像上下文长度: ${userProfileContext.length}")
+            
             // 构建运行时数据（系统自动注入，用户不可见）
             val runtimeData = buildContextData(
                 targetGoal = profile.targetGoal,
@@ -145,7 +159,8 @@ class AnalyzeChatUseCase @Inject constructor(
                 redTags = redTags,
                 greenTags = greenTags,
                 conversationHistory = prefixedContext,  // 使用带前缀的上下文
-                historyContext = historyContext
+                historyContext = historyContext,
+                userProfileContext = userProfileContext  // 【新增】用户画像上下文
             )
             
             // 使用PromptBuilder构建完整系统指令
@@ -288,9 +303,15 @@ class AnalyzeChatUseCase @Inject constructor(
     /**
      * 构建上下文数据
      *
-     * 将联系人信息、标签和聊天记录组装为上下文数据字符串
+     * 将联系人信息、标签、用户画像和聊天记录组装为上下文数据字符串
      *
+     * @param targetGoal 攻略目标
+     * @param facts 已知事实
+     * @param redTags 雷区标签
+     * @param greenTags 策略标签
+     * @param conversationHistory 聊天记录
      * @param historyContext 历史对话上下文（带时间流逝标记）
+     * @param userProfileContext 用户画像上下文（可选）
      */
     private fun buildContextData(
         targetGoal: String,
@@ -298,9 +319,16 @@ class AnalyzeChatUseCase @Inject constructor(
         redTags: List<BrainTag>,
         greenTags: List<BrainTag>,
         conversationHistory: List<String>,
-        historyContext: String = ""
+        historyContext: String = "",
+        userProfileContext: String = ""
     ): String {
         return buildString {
+            // 【新增】用户画像区块（放在最前面，让AI先了解用户特点）
+            if (userProfileContext.isNotBlank()) {
+                appendLine(userProfileContext)
+                appendLine()
+            }
+
             // 【新增】历史对话区块（放在最前面，让AI先了解背景）
             if (historyContext.isNotBlank()) {
                 appendLine(historyContext)
