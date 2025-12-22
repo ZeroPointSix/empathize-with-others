@@ -1,0 +1,71 @@
+// 开发模式配置文件
+// 使用方法: ./gradlew -c dev.gradle assembleDebug
+// 或者通过属性开关: ./gradlew -PdevMode assembleDebug
+
+// 针对开发模式的编译优化
+android {
+    buildTypes {
+        debug {
+            // 禁用不必要的构建功能，加速编译
+            ext.enableCrashlytics = false
+            crunchPngs = false
+
+            // 更快的Dex选项
+            dexOptions {
+                preDexLibraries = true
+                maxProcessCount = 8
+                javaMaxHeapSize = "2g"
+            }
+        }
+    }
+
+    // 禁用不需要的构建特性（开发模式）
+    buildFeatures {
+        buildConfig = false
+        aidl = false
+        renderScript = false
+        resValues = false
+        shaders = false
+    }
+
+    // 测试优化（开发模式）
+    testOptions {
+        unitTests.all {
+            // 开发模式下可以跳过部分测试以加速编译
+            if (project.hasProperty("devMode")) {
+                enabled = false
+            }
+        }
+    }
+}
+
+// 依赖解析优化（开发模式）
+configurations.all {
+    resolutionStrategy {
+        cacheDynamicVersionsFor 10, 'seconds'
+        cacheChangingModulesFor 10, 'seconds'
+    }
+}
+
+// 任务优化
+tasks.whenTaskAdded { task ->
+    // 开发模式下跳过某些耗时任务
+    if (project.hasProperty("devMode")) {
+        when {
+            task.name.startsWith('test') && !task.name.contains('Release') -> {
+                task.enabled = false
+            }
+            task.name.startsWith('lint') -> {
+                task.enabled = false
+            }
+            task.name.contains('Test') -> {
+                task.enabled = false
+            }
+        }
+    }
+}
+
+println "🚀 开发模式配置已应用 - 编译速度优化模式"
+if (project.hasProperty("devMode")) {
+    println "⚡  开发模式已启用 - 跳过测试和Lint检查"
+}

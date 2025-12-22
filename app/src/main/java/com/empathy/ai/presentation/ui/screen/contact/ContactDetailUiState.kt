@@ -403,7 +403,34 @@ data class ContactDetailUiState(
     /**
      * 待删除的总结ID
      */
-    val pendingDeleteSummaryId: Long? = null
+    val pendingDeleteSummaryId: Long? = null,
+    
+    // ========== 标签画像V2相关（TD-00014） ==========
+    
+    /**
+     * 分类列表（用于PersonaTabV2）
+     */
+    val factCategories: List<com.empathy.ai.domain.model.FactCategory> = emptyList(),
+    
+    /**
+     * 标签画像搜索状态
+     */
+    val personaSearchState: com.empathy.ai.domain.model.PersonaSearchState = com.empathy.ai.domain.model.PersonaSearchState(),
+    
+    /**
+     * 编辑模式状态
+     */
+    val editModeState: com.empathy.ai.domain.model.EditModeState = com.empathy.ai.domain.model.EditModeState(),
+    
+    /**
+     * 可用的分类列表（用于移动对话框）
+     */
+    val availableCategories: List<String> = emptyList(),
+    
+    /**
+     * 是否使用PersonaTabV2
+     */
+    val usePersonaTabV2: Boolean = false
 ) {
     // ========== 派生状态 ==========
     

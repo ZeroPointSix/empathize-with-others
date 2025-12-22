@@ -55,6 +55,7 @@ import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.overview.OverviewTab
 import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTab
+import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTabV2
 import com.empathy.ai.presentation.ui.screen.contact.summary.ConflictResolutionDialog
 import com.empathy.ai.presentation.ui.screen.contact.summary.DateRangePickerDialog
 import com.empathy.ai.presentation.ui.screen.contact.summary.ManualSummaryFab
@@ -480,49 +481,116 @@ private fun FactStreamTabContent(
 
 /**
  * 标签画像标签页内容
+ * 
+ * 根据Feature Flag切换使用PersonaTab或PersonaTabV2
+ * - PersonaTab: 旧版本，简单的雷区/策略标签展示
+ * - PersonaTabV2: 新版本，支持分类搜索、编辑模式、批量操作
  */
 @Composable
 private fun PersonaTabContent(
     uiState: ContactDetailUiState,
     onEvent: (ContactDetailUiEvent) -> Unit
 ) {
-    // 将Facts转换为BrainTags用于显示
-    val riskTags = uiState.facts
-        .filter { it.key.contains("雷区") || it.key.contains("禁忌") || it.key.contains("不喜欢") }
-        .mapIndexed { index, fact ->
-            BrainTag(
-                id = index.toLong(),
-                contactId = uiState.contact?.id ?: "",
-                content = fact.value,
-                type = TagType.RISK_RED,
-                isConfirmed = fact.source == com.empathy.ai.domain.model.FactSource.MANUAL,
-                source = fact.source.name
-            )
-        }
-    
-    val strategyTags = uiState.facts
-        .filter { it.key.contains("策略") || it.key.contains("喜欢") || it.key.contains("兴趣") }
-        .mapIndexed { index, fact ->
-            BrainTag(
-                id = (index + 1000).toLong(),
-                contactId = uiState.contact?.id ?: "",
-                content = fact.value,
-                type = TagType.STRATEGY_GREEN,
-                isConfirmed = fact.source == com.empathy.ai.domain.model.FactSource.MANUAL,
-                source = fact.source.name
-            )
-        }
-    
-    PersonaTab(
-        riskTags = riskTags,
-        strategyTags = strategyTags,
-        onConfirmTag = { tag ->
-            onEvent(ContactDetailUiEvent.ConfirmTag(tag.id))
-        },
-        onRejectTag = { tag ->
-            onEvent(ContactDetailUiEvent.RejectTag(tag.id))
-        }
-    )
+    if (uiState.usePersonaTabV2) {
+        // 使用新版PersonaTabV2
+        // TODO: 从系统设置获取深色模式状态
+        val isDarkMode = false
+        
+        PersonaTabV2(
+            categories = uiState.factCategories,
+            searchState = uiState.personaSearchState,
+            editModeState = uiState.editModeState,
+            availableCategories = uiState.availableCategories,
+            isDarkMode = isDarkMode,
+            onSearchQueryChange = { query ->
+                onEvent(ContactDetailUiEvent.UpdatePersonaSearch(query))
+            },
+            onClearSearch = {
+                onEvent(ContactDetailUiEvent.ClearPersonaSearch)
+            },
+            onToggleCategoryExpand = { categoryKey ->
+                onEvent(ContactDetailUiEvent.ToggleCategoryExpand(categoryKey))
+            },
+            onFactClick = { factId ->
+                // 普通点击：查看详情或编辑
+                val fact = uiState.facts.find { it.id == factId }
+                fact?.let { onEvent(ContactDetailUiEvent.StartEditFact(it)) }
+            },
+            onFactLongClick = { factId ->
+                // 长按：进入编辑模式
+                onEvent(ContactDetailUiEvent.EnterEditMode(factId))
+            },
+            onToggleFactSelection = { factId ->
+                onEvent(ContactDetailUiEvent.ToggleFactSelection(factId))
+            },
+            onExitEditMode = {
+                onEvent(ContactDetailUiEvent.ExitEditMode)
+            },
+            onSelectAll = {
+                onEvent(ContactDetailUiEvent.SelectAllFacts)
+            },
+            onDeselectAll = {
+                onEvent(ContactDetailUiEvent.DeselectAllFacts)
+            },
+            onShowDeleteConfirm = {
+                onEvent(ContactDetailUiEvent.ShowBatchDeleteConfirm)
+            },
+            onHideDeleteConfirm = {
+                onEvent(ContactDetailUiEvent.HideBatchDeleteConfirm)
+            },
+            onConfirmDelete = {
+                onEvent(ContactDetailUiEvent.ConfirmBatchDelete)
+            },
+            onShowMoveDialog = {
+                onEvent(ContactDetailUiEvent.ShowBatchMoveDialog)
+            },
+            onHideMoveDialog = {
+                onEvent(ContactDetailUiEvent.HideBatchMoveDialog)
+            },
+            onConfirmMove = { targetCategory ->
+                onEvent(ContactDetailUiEvent.ConfirmBatchMove(targetCategory))
+            }
+        )
+    } else {
+        // 使用旧版PersonaTab
+        // 将Facts转换为BrainTags用于显示
+        val riskTags = uiState.facts
+            .filter { it.key.contains("雷区") || it.key.contains("禁忌") || it.key.contains("不喜欢") }
+            .mapIndexed { index, fact ->
+                BrainTag(
+                    id = index.toLong(),
+                    contactId = uiState.contact?.id ?: "",
+                    content = fact.value,
+                    type = TagType.RISK_RED,
+                    isConfirmed = fact.source == com.empathy.ai.domain.model.FactSource.MANUAL,
+                    source = fact.source.name
+                )
+            }
+        
+        val strategyTags = uiState.facts
+            .filter { it.key.contains("策略") || it.key.contains("喜欢") || it.key.contains("兴趣") }
+            .mapIndexed { index, fact ->
+                BrainTag(
+                    id = (index + 1000).toLong(),
+                    contactId = uiState.contact?.id ?: "",
+                    content = fact.value,
+                    type = TagType.STRATEGY_GREEN,
+                    isConfirmed = fact.source == com.empathy.ai.domain.model.FactSource.MANUAL,
+                    source = fact.source.name
+                )
+            }
+        
+        PersonaTab(
+            riskTags = riskTags,
+            strategyTags = strategyTags,
+            onConfirmTag = { tag ->
+                onEvent(ContactDetailUiEvent.ConfirmTag(tag.id))
+            },
+            onRejectTag = { tag ->
+                onEvent(ContactDetailUiEvent.RejectTag(tag.id))
+            }
+        )
+    }
 }
 
 /**

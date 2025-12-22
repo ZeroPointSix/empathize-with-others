@@ -46,6 +46,17 @@ android {
         debug {
             isMinifyEnabled = false
         }
+
+        // 开发专用变体 - AS 运行时可以选择
+        create("dev") {
+            initWith(getByName("debug"))
+            isMinifyEnabled = false
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+
+            // AGP 8.7.3 兼容的基础优化
+            // 主要通过 applicationIdSuffix 区分版本，避免配置冲突
+        }
     }
 
     compileOptions {
@@ -70,6 +81,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    // Android 资源配置（AGP 8.x 兼容）
+    androidResources {
+        // AGP 8.x 中许多配置选项已被简化或移除
+        // 使用默认配置以确保稳定性
     }
 
     // Room Schema导出配置（TD-001）
@@ -97,6 +114,9 @@ android {
         checkReleaseBuilds = false
         abortOnError = false
     }
+
+    // 依赖解析优化（AGP 8.7.3 兼容方式）
+    // 注意：AndroidXSupportLibraryComponent 在 AGP 8.x 中已更改
 
 }
 

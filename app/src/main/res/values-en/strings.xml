@@ -190,4 +190,28 @@
     <string name="validation_empty">Content cannot be empty</string>
     <string name="validation_too_long">Content exceeds maximum length</string>
     <string name="validation_whitespace_only">Content cannot contain only whitespace</string>
+    
+    <!-- Persona Tab V2 (TD-00014) -->
+    <string name="search_tags_hint">Search tags or categories...</string>
+    <string name="search">Search</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_search_results">No matching tags found</string>
+    <string name="no_tags_yet">No tags yet, AI will infer from conversations</string>
+    <string name="tag_count">%d</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
+    <string name="selected">Selected</string>
+    <string name="exit_edit_mode">Exit edit mode</string>
+    <string name="selected_count">%d selected</string>
+    <string name="select_all">Select all</string>
+    <string name="deselect_all">Deselect all</string>
+    <string name="move_to_category">Move to category</string>
+    <string name="delete_selected">Delete (%d)</string>
+    <string name="move_to_category_title">Move %d tags to</string>
+    <string name="create_new_category">Create new category</string>
+    <string name="category_name">Category name</string>
+    <string name="existing_categories">Existing categories</string>
+    <string name="confirm_move">Confirm move</string>
+    <string name="delete_confirm_title">Confirm delete</string>
+    <string name="delete_tags_confirm_message">Are you sure you want to delete %d selected tags? This action cannot be undone.</string>
 </resources>
