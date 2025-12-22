@@ -365,6 +365,10 @@ private fun OverviewTabContent(
         // TD-00012: 编辑联系人信息回调
         onEditContactInfo = {
             onEvent(ContactDetailUiEvent.StartEditContactInfo)
+        },
+        // TD-00016: 主题设置回调
+        onTopicClick = {
+            onEvent(ContactDetailUiEvent.ShowTopicDialog)
         }
     )
     
@@ -376,6 +380,38 @@ private fun OverviewTabContent(
             onDismiss = { onEvent(ContactDetailUiEvent.CancelEditContactInfo) },
             onConfirm = { newName, newTargetGoal ->
                 onEvent(ContactDetailUiEvent.ConfirmEditContactInfo(newName, newTargetGoal))
+            }
+        )
+    }
+    
+    // TD-00016: 对话主题设置对话框
+    if (uiState.showTopicDialog) {
+        val topicViewModel: com.empathy.ai.presentation.viewmodel.TopicViewModel = 
+            androidx.hilt.navigation.compose.hiltViewModel()
+        val topicUiState by topicViewModel.uiState.collectAsStateWithLifecycle()
+        
+        // 初始化时加载主题数据
+        LaunchedEffect(contact.id) {
+            topicViewModel.loadTopic(contact.id)
+        }
+        
+        // 监听保存成功，关闭对话框
+        LaunchedEffect(topicUiState.saveSuccess) {
+            if (topicUiState.saveSuccess) {
+                onEvent(ContactDetailUiEvent.HideTopicDialog)
+                topicViewModel.onEvent(com.empathy.ai.presentation.viewmodel.TopicUiEvent.ClearSaveSuccess)
+            }
+        }
+        
+        com.empathy.ai.presentation.ui.component.topic.TopicSettingDialog(
+            uiState = topicUiState.copy(showSettingDialog = true),
+            onEvent = { event ->
+                when (event) {
+                    is com.empathy.ai.presentation.viewmodel.TopicUiEvent.HideSettingDialog -> {
+                        onEvent(ContactDetailUiEvent.HideTopicDialog)
+                    }
+                    else -> topicViewModel.onEvent(event)
+                }
             }
         )
     }

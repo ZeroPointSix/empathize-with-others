@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -103,6 +104,15 @@ private fun ContactDetailScreenContent(
                     }
                 },
                 actions = {
+                    // 【TD-00016】主题设置图标
+                    if (!uiState.isNewContact) {
+                        IconButton(onClick = { onEvent(ContactDetailUiEvent.ShowTopicDialog) }) {
+                            Icon(
+                                imageVector = Icons.Default.Topic,
+                                contentDescription = "设置对话主题"
+                            )
+                        }
+                    }
                     if (!uiState.isEditMode && !uiState.isNewContact) {
                         IconButton(onClick = { onEvent(ContactDetailUiEvent.StartEdit) }) {
                             Icon(
@@ -199,6 +209,41 @@ private fun ContactDetailScreenContent(
             onConfirm = { key, value ->
                 onEvent(ContactDetailUiEvent.AddFact(key, value))
                 onEvent(ContactDetailUiEvent.HideAddFactDialog)
+            }
+        )
+    }
+
+    // 【TD-00016】对话主题设置对话框
+    // 注意：主题功能使用独立的TopicViewModel管理状态
+    // 这里只是显示对话框的入口，实际的状态管理由TopicViewModel处理
+    if (uiState.showTopicDialog) {
+        // 使用TopicViewModel的状态和事件
+        val topicViewModel: com.empathy.ai.presentation.viewmodel.TopicViewModel = 
+            androidx.hilt.navigation.compose.hiltViewModel()
+        val topicUiState by topicViewModel.uiState.collectAsStateWithLifecycle()
+        
+        // 初始化时加载主题数据
+        LaunchedEffect(uiState.contactId) {
+            topicViewModel.loadTopic(uiState.contactId)
+        }
+        
+        // 监听保存成功，关闭对话框
+        LaunchedEffect(topicUiState.saveSuccess) {
+            if (topicUiState.saveSuccess) {
+                onEvent(ContactDetailUiEvent.HideTopicDialog)
+                topicViewModel.onEvent(com.empathy.ai.presentation.viewmodel.TopicUiEvent.ClearSaveSuccess)
+            }
+        }
+        
+        com.empathy.ai.presentation.ui.component.topic.TopicSettingDialog(
+            uiState = topicUiState.copy(showSettingDialog = true),
+            onEvent = { event ->
+                when (event) {
+                    is com.empathy.ai.presentation.viewmodel.TopicUiEvent.HideSettingDialog -> {
+                        onEvent(ContactDetailUiEvent.HideTopicDialog)
+                    }
+                    else -> topicViewModel.onEvent(event)
+                }
             }
         )
     }

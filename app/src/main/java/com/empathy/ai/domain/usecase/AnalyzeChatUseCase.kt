@@ -17,6 +17,7 @@ import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.repository.SettingsRepository
+import com.empathy.ai.domain.repository.TopicRepository
 import com.empathy.ai.domain.service.PrivacyEngine
 import com.empathy.ai.domain.util.ConversationContextBuilder
 import com.empathy.ai.domain.util.DateUtils
@@ -52,7 +53,8 @@ class AnalyzeChatUseCase @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val promptBuilder: PromptBuilder,
     private val conversationContextBuilder: ConversationContextBuilder,
-    private val userProfileContextBuilder: UserProfileContextBuilder
+    private val userProfileContextBuilder: UserProfileContextBuilder,
+    private val topicRepository: TopicRepository
 ) {
     companion object {
         private const val TAG = "AnalyzeChatUseCase"
@@ -151,6 +153,16 @@ class AnalyzeChatUseCase @Inject constructor(
             }
             
             Log.d(TAG, "用户画像上下文长度: ${userProfileContext.length}")
+
+            // 【TD-00016】获取当前对话主题
+            val activeTopic = try {
+                topicRepository.getActiveTopic(contactId)
+            } catch (e: Exception) {
+                Log.w(TAG, "获取对话主题失败，降级为无主题", e)
+                null  // 降级：主题获取失败不影响主流程
+            }
+            
+            Log.d(TAG, "当前对话主题: ${activeTopic?.content?.take(50) ?: "无"}")
             
             // 构建运行时数据（系统自动注入，用户不可见）
             val runtimeData = buildContextData(
@@ -165,11 +177,13 @@ class AnalyzeChatUseCase @Inject constructor(
             
             // 使用PromptBuilder构建完整系统指令
             // 三层分离：系统约束 + 用户指令 + 运行时数据
+            // 【TD-00016】使用buildWithTopic方法注入对话主题
             val promptContext = PromptContext.fromContact(profile)
-            val systemInstruction = promptBuilder.buildSystemInstruction(
+            val systemInstruction = promptBuilder.buildWithTopic(
                 scene = PromptScene.ANALYZE,
                 contactId = contactId,
                 context = promptContext,
+                topic = activeTopic,
                 runtimeData = runtimeData  // 运行时数据直接传入，不再使用占位符
             )
 

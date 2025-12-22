@@ -14,6 +14,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.repository.TopicRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
@@ -45,6 +46,7 @@ class GenerateReplyUseCaseTest {
     private lateinit var promptBuilder: PromptBuilder
     private lateinit var sessionContextService: SessionContextService
     private lateinit var userProfileContextBuilder: UserProfileContextBuilder
+    private lateinit var topicRepository: TopicRepository
     
     private lateinit var generateReplyUseCase: GenerateReplyUseCase
     
@@ -63,6 +65,7 @@ class GenerateReplyUseCaseTest {
         promptBuilder = mockk()
         sessionContextService = mockk()
         userProfileContextBuilder = mockk()
+        topicRepository = mockk()
         
         // Create use case with mocked dependencies
         generateReplyUseCase = GenerateReplyUseCase(
@@ -73,7 +76,8 @@ class GenerateReplyUseCaseTest {
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
             sessionContextService = sessionContextService,
-            userProfileContextBuilder = userProfileContextBuilder
+            userProfileContextBuilder = userProfileContextBuilder,
+            topicRepository = topicRepository
         )
         
         // Setup default mock behaviors
@@ -118,8 +122,11 @@ class GenerateReplyUseCaseTest {
         // Mock user profile context builder
         coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.success("")
         
+        // Mock topic repository
+        coEvery { topicRepository.getActiveTopic(any()) } returns null
+        
         // Mock prompt builder
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "test instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "test instruction"
         
         // Mock AI repository
         coEvery { aiRepository.generateReply(any(), any(), any()) } returns Result.success(
@@ -192,10 +199,11 @@ class GenerateReplyUseCaseTest {
         
         // Then
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 scene = PromptScene.REPLY,
                 contactId = testContactId,
                 context = any(),
+                topic = any(),
                 runtimeData = any()
             )
         }
@@ -245,9 +253,10 @@ class GenerateReplyUseCaseTest {
         
         // Then
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 any(),
                 eq(testContactId),
+                any(),
                 any(),
                 match { it.contains("【用户画像（你的特点）】") && it.contains("外向") }
             )
@@ -279,13 +288,14 @@ class GenerateReplyUseCaseTest {
         
         // Then
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 any(),
                 eq(testContactId),
                 any(),
-                match { 
-                    val userProfileIndex = it.indexOf("【用户画像（你的特点）】")
-                    val historyIndex = it.indexOf("【历史对话】")
+                any(),
+                match { runtimeData ->
+                    val userProfileIndex = runtimeData.indexOf("【用户画像（你的特点）】")
+                    val historyIndex = runtimeData.indexOf("【历史对话】")
                     userProfileIndex >= 0 && historyIndex >= 0 && userProfileIndex < historyIndex
                 }
             )

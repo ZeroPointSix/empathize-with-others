@@ -40,6 +40,7 @@ import com.empathy.ai.presentation.ui.component.emotion.EmotionalBackground
  * - 提供情感化的背景
  * - 支持滚动和Sticky Header效果
  * - TD-00012: 支持联系人信息编辑
+ * - TD-00016: 支持对话主题设置
  *
  * @param contact 联系人信息
  * @param topTags 核心标签列表
@@ -48,6 +49,7 @@ import com.empathy.ai.presentation.ui.component.emotion.EmotionalBackground
  * @param onBackClick 返回按钮点击回调
  * @param onViewFactStream 查看事实流回调
  * @param onEditContactInfo 编辑联系人信息回调（TD-00012）
+ * @param onTopicClick 主题设置回调（TD-00016）
  * @param modifier Modifier
  */
 @Composable
@@ -60,7 +62,8 @@ fun OverviewTab(
     modifier: Modifier = Modifier,
     onViewFactStream: (() -> Unit)? = null,
     onEditCustomPrompt: (() -> Unit)? = null,
-    onEditContactInfo: (() -> Unit)? = null
+    onEditContactInfo: (() -> Unit)? = null,
+    onTopicClick: (() -> Unit)? = null
 ) {
     val scrollState = rememberLazyListState()
     
@@ -76,7 +79,8 @@ fun OverviewTab(
                 scrollState = scrollState,
                 daysSinceFirstMet = daysSinceFirstMet,
                 onBackClick = onBackClick,
-                onEditClick = onEditContactInfo
+                onEditClick = onEditContactInfo,
+                onTopicClick = onTopicClick
             )
             
             // 可滚动内容

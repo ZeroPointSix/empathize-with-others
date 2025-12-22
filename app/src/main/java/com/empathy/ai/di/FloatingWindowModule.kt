@@ -5,6 +5,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.repository.TopicRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.usecase.GenerateReplyUseCase
 import com.empathy.ai.domain.usecase.PolishDraftUseCase
@@ -40,6 +41,7 @@ object FloatingWindowModule {
      * BUG-00015修复：添加SessionContextService以支持历史上下文共享
      * BUG-00023修复：移除ConversationRepository，改为用户点击复制按钮时保存
      * TD-00013修复：添加UserProfileContextBuilder以支持用户画像上下文
+     * TD-00016：添加TopicRepository以支持对话主题注入
      */
     @Provides
     @Singleton
@@ -51,7 +53,8 @@ object FloatingWindowModule {
         aiProviderRepository: AiProviderRepository,
         promptBuilder: PromptBuilder,
         sessionContextService: SessionContextService,
-        userProfileContextBuilder: UserProfileContextBuilder
+        userProfileContextBuilder: UserProfileContextBuilder,
+        topicRepository: TopicRepository
     ): PolishDraftUseCase {
         return PolishDraftUseCase(
             contactRepository = contactRepository,
@@ -61,7 +64,8 @@ object FloatingWindowModule {
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
             sessionContextService = sessionContextService,
-            userProfileContextBuilder = userProfileContextBuilder
+            userProfileContextBuilder = userProfileContextBuilder,
+            topicRepository = topicRepository
         )
     }
 
@@ -74,6 +78,7 @@ object FloatingWindowModule {
      * BUG-00015修复：添加SessionContextService以支持历史上下文共享
      * BUG-00023修复：移除ConversationRepository，改为用户点击复制按钮时保存
      * TD-00013修复：添加UserProfileContextBuilder以支持用户画像上下文
+     * TD-00016：添加TopicRepository以支持对话主题注入
      */
     @Provides
     @Singleton
@@ -85,7 +90,8 @@ object FloatingWindowModule {
         aiProviderRepository: AiProviderRepository,
         promptBuilder: PromptBuilder,
         sessionContextService: SessionContextService,
-        userProfileContextBuilder: UserProfileContextBuilder
+        userProfileContextBuilder: UserProfileContextBuilder,
+        topicRepository: TopicRepository
     ): GenerateReplyUseCase {
         return GenerateReplyUseCase(
             contactRepository = contactRepository,
@@ -95,7 +101,8 @@ object FloatingWindowModule {
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
             sessionContextService = sessionContextService,
-            userProfileContextBuilder = userProfileContextBuilder
+            userProfileContextBuilder = userProfileContextBuilder,
+            topicRepository = topicRepository
         )
     }
 
