@@ -95,6 +95,35 @@ sealed class ContactDetailUiEvent {
     data class ConfirmEditContactInfo(val newName: String, val newTargetGoal: String) : ContactDetailUiEvent()
     data object CancelEditContactInfo : ContactDetailUiEvent()
     
+    // ========== 标签画像V2事件（TD-00014） ==========
+    // 搜索相关
+    data class UpdatePersonaSearch(val query: String) : ContactDetailUiEvent()
+    data object ClearPersonaSearch : ContactDetailUiEvent()
+    
+    // 分类展开/折叠
+    data class ToggleCategoryExpand(val categoryKey: String) : ContactDetailUiEvent()
+    
+    // 编辑模式
+    data class EnterEditMode(val initialFactId: String? = null) : ContactDetailUiEvent()
+    data object ExitEditMode : ContactDetailUiEvent()
+    
+    // 标签选择
+    data class ToggleFactSelection(val factId: String) : ContactDetailUiEvent()
+    data class SelectAllInCategory(val categoryKey: String) : ContactDetailUiEvent()
+    data object DeselectAllFacts : ContactDetailUiEvent()
+    data object SelectAllFacts : ContactDetailUiEvent()
+    
+    // 批量操作对话框
+    data object ShowBatchDeleteConfirm : ContactDetailUiEvent()
+    data object HideBatchDeleteConfirm : ContactDetailUiEvent()
+    data object ConfirmBatchDelete : ContactDetailUiEvent()
+    data object ShowBatchMoveDialog : ContactDetailUiEvent()
+    data object HideBatchMoveDialog : ContactDetailUiEvent()
+    data class ConfirmBatchMove(val targetCategory: String) : ContactDetailUiEvent()
+    
+    // Feature Flag
+    data class SetUsePersonaTabV2(val enabled: Boolean) : ContactDetailUiEvent()
+    
     // ========== 字段验证事件 ==========
     data object ValidateName : ContactDetailUiEvent()
     data object ValidateTargetGoal : ContactDetailUiEvent()

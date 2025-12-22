@@ -11,6 +11,8 @@ import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.DailySummaryRepository
+import com.empathy.ai.domain.usecase.BatchDeleteFactsUseCase
+import com.empathy.ai.domain.usecase.BatchMoveFactsUseCase
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.domain.usecase.EditContactInfoUseCase
 import com.empathy.ai.domain.usecase.EditConversationUseCase
@@ -18,8 +20,10 @@ import com.empathy.ai.domain.usecase.EditFactUseCase
 import com.empathy.ai.domain.usecase.EditSummaryUseCase
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
+import com.empathy.ai.domain.usecase.GroupFactsByCategoryUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
 import com.empathy.ai.domain.usecase.SaveProfileUseCase
+import com.empathy.ai.domain.util.FactSearchFilter
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -61,6 +65,11 @@ class ContactDetailTabViewModelAddFactTest {
     private lateinit var editConversationUseCase: EditConversationUseCase
     private lateinit var editSummaryUseCase: EditSummaryUseCase
     private lateinit var editContactInfoUseCase: EditContactInfoUseCase
+    // TD-00014: 新增UseCase
+    private lateinit var groupFactsByCategoryUseCase: GroupFactsByCategoryUseCase
+    private lateinit var batchDeleteFactsUseCase: BatchDeleteFactsUseCase
+    private lateinit var batchMoveFactsUseCase: BatchMoveFactsUseCase
+    private lateinit var factSearchFilter: FactSearchFilter
 
     private val testContact = ContactProfile(
         id = "test_contact_1",
@@ -105,6 +114,11 @@ class ContactDetailTabViewModelAddFactTest {
         editConversationUseCase = mockk()
         editSummaryUseCase = mockk()
         editContactInfoUseCase = mockk()
+        // TD-00014: 新增UseCase
+        groupFactsByCategoryUseCase = mockk()
+        batchDeleteFactsUseCase = mockk()
+        batchMoveFactsUseCase = mockk()
+        factSearchFilter = mockk()
 
         // 设置默认mock行为
         coEvery { getContactUseCase(any()) } returns Result.success(testContact)
@@ -112,6 +126,8 @@ class ContactDetailTabViewModelAddFactTest {
         coEvery { saveProfileUseCase(any()) } returns Result.success(Unit)
         coEvery { conversationRepository.getConversationsByContact(any()) } returns Result.success(listOf(testConversation))
         coEvery { dailySummaryRepository.getSummariesByContact(any()) } returns Result.success(listOf(testSummary))
+        coEvery { groupFactsByCategoryUseCase(any(), any()) } returns emptyList()
+        coEvery { factSearchFilter.filter(any(), any()) } answers { firstArg() }
 
         viewModel = ContactDetailTabViewModel(
             getContactUseCase = getContactUseCase,
@@ -124,7 +140,11 @@ class ContactDetailTabViewModelAddFactTest {
             editFactUseCase = editFactUseCase,
             editConversationUseCase = editConversationUseCase,
             editSummaryUseCase = editSummaryUseCase,
-            editContactInfoUseCase = editContactInfoUseCase
+            editContactInfoUseCase = editContactInfoUseCase,
+            groupFactsByCategoryUseCase = groupFactsByCategoryUseCase,
+            batchDeleteFactsUseCase = batchDeleteFactsUseCase,
+            batchMoveFactsUseCase = batchMoveFactsUseCase,
+            factSearchFilter = factSearchFilter
         )
     }
 

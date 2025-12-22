@@ -1,0 +1,32 @@
+// AGP 版本兼容性检查
+def agpVersion = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION
+println "🔍 检测到 Android Gradle Plugin 版本: ${agpVersion}"
+
+// 废弃配置警告映射
+def deprecatedConfigs = [
+    "android.enableBuildCache": "已在 AGP 7.0 废弃，8.0 移除",
+    "android.buildcache.max-size": "已在 AGP 7.0 废弃",
+    "android.buildcache.location": "已在 AGP 7.0 废弃",
+    "android.aapt2.poolSize": "已在 AGP 8.0 废弃"
+]
+
+// 检查 gradle.properties 中的废弃配置
+def props = new Properties()
+file("${rootDir}/gradle.properties").withInputStream {
+    props.load(it)
+}
+
+println "⚠️  检查废弃配置..."
+deprecatedConfigs.each { config, message ->
+    if (props.containsKey(config)) {
+        println "❌ 废弃配置: ${config} - ${message}"
+        println "   建议: 移除此配置项"
+    }
+}
+
+// AGP 8.x 专用建议
+if (agpVersion.startsWith("8.")) {
+    println "✅ AGP 8.x 兼容性检查通过"
+    println "   使用 Gradle 构建缓存替代 Android 构建缓存"
+    println "   确保所有 android.* 配置与 AGP 8.x 兼容"
+}

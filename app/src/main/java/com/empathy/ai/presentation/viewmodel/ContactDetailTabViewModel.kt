@@ -1,5 +1,6 @@
 package com.empathy.ai.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.BrainTag
@@ -22,10 +23,18 @@ import com.empathy.ai.domain.usecase.EditFactUseCase
 import com.empathy.ai.domain.usecase.EditConversationUseCase
 import com.empathy.ai.domain.usecase.EditSummaryUseCase
 import com.empathy.ai.domain.usecase.EditContactInfoUseCase
+import com.empathy.ai.domain.usecase.GroupFactsByCategoryUseCase
+import com.empathy.ai.domain.usecase.BatchDeleteFactsUseCase
+import com.empathy.ai.domain.usecase.BatchMoveFactsUseCase
+import com.empathy.ai.domain.util.FactSearchFilter
+import com.empathy.ai.domain.model.EditModeState
+import com.empathy.ai.domain.model.PersonaSearchState
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.DetailTab
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,11 +68,28 @@ class ContactDetailTabViewModel @Inject constructor(
     private val editFactUseCase: EditFactUseCase,
     private val editConversationUseCase: EditConversationUseCase,
     private val editSummaryUseCase: EditSummaryUseCase,
-    private val editContactInfoUseCase: EditContactInfoUseCase
+    private val editContactInfoUseCase: EditContactInfoUseCase,
+    // TD-00014: 标签画像V2 UseCase
+    private val groupFactsByCategoryUseCase: GroupFactsByCategoryUseCase,
+    private val batchDeleteFactsUseCase: BatchDeleteFactsUseCase,
+    private val batchMoveFactsUseCase: BatchMoveFactsUseCase,
+    private val factSearchFilter: FactSearchFilter
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "ContactDetailTabVM"
+    }
 
     private val _uiState = MutableStateFlow(ContactDetailUiState())
     val uiState: StateFlow<ContactDetailUiState> = _uiState.asStateFlow()
+    
+    /** 搜索防抖Job */
+    private var searchJob: Job? = null
+    
+    /** 搜索防抖延迟（毫秒） */
+    private object Constants {
+        const val SEARCH_DEBOUNCE_MS = 300L
+    }
 
     /**
      * 统一事件处理入口
@@ -134,6 +160,40 @@ class ContactDetailTabViewModel @Inject constructor(
         } else if (event is ContactDetailUiEvent.CancelEditContactInfo) {
             cancelEditContactInfo()
         }
+        // TD-00014: 标签画像V2事件
+        else if (event is ContactDetailUiEvent.UpdatePersonaSearch) {
+            updatePersonaSearch(event.query)
+        } else if (event is ContactDetailUiEvent.ClearPersonaSearch) {
+            clearPersonaSearch()
+        } else if (event is ContactDetailUiEvent.ToggleCategoryExpand) {
+            toggleCategoryExpand(event.categoryKey)
+        } else if (event is ContactDetailUiEvent.EnterEditMode) {
+            enterEditMode(event.initialFactId)
+        } else if (event is ContactDetailUiEvent.ExitEditMode) {
+            exitEditMode()
+        } else if (event is ContactDetailUiEvent.ToggleFactSelection) {
+            toggleFactSelection(event.factId)
+        } else if (event is ContactDetailUiEvent.SelectAllInCategory) {
+            selectAllInCategory(event.categoryKey)
+        } else if (event is ContactDetailUiEvent.DeselectAllFacts) {
+            deselectAllFacts()
+        } else if (event is ContactDetailUiEvent.SelectAllFacts) {
+            selectAllFacts()
+        } else if (event is ContactDetailUiEvent.ShowBatchDeleteConfirm) {
+            showBatchDeleteConfirm()
+        } else if (event is ContactDetailUiEvent.HideBatchDeleteConfirm) {
+            hideBatchDeleteConfirm()
+        } else if (event is ContactDetailUiEvent.ConfirmBatchDelete) {
+            confirmBatchDelete()
+        } else if (event is ContactDetailUiEvent.ShowBatchMoveDialog) {
+            showBatchMoveDialog()
+        } else if (event is ContactDetailUiEvent.HideBatchMoveDialog) {
+            hideBatchMoveDialog()
+        } else if (event is ContactDetailUiEvent.ConfirmBatchMove) {
+            confirmBatchMove(event.targetCategory)
+        } else if (event is ContactDetailUiEvent.SetUsePersonaTabV2) {
+            setUsePersonaTabV2(event.enabled)
+        }
         // 其他事件不在此ViewModel处理
     }
 
@@ -142,6 +202,9 @@ class ContactDetailTabViewModel @Inject constructor(
      */
     fun loadContactDetail(contactId: String) {
         viewModelScope.launch {
+            Log.d(TAG, "========== loadContactDetail开始 ==========")
+            Log.d(TAG, "contactId=$contactId")
+            
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             try {
@@ -149,13 +212,21 @@ class ContactDetailTabViewModel @Inject constructor(
                 val contactResult = getContactUseCase(contactId)
                 
                 contactResult.onSuccess { contact ->
+                    Log.d(TAG, "联系人加载成功: ${contact?.name}")
+                    Log.d(TAG, "联系人facts数量: ${contact?.facts?.size ?: 0}")
+                    
                     // 加载每日总结
                     val summariesResult = dailySummaryRepository.getSummariesByContact(contactId)
                     val summaries = summariesResult.getOrDefault(emptyList())
+                    Log.d(TAG, "每日总结数量: ${summaries.size}")
                     
                     // 加载对话记录
                     val conversationsResult = conversationRepository.getConversationsByContact(contactId)
                     val conversations = conversationsResult.getOrDefault(emptyList())
+                    Log.d(TAG, "对话记录数量: ${conversations.size}")
+                    conversations.forEachIndexed { index, conv ->
+                        Log.d(TAG, "  [$index] id=${conv.id}, userInput=${conv.userInput.take(50)}...")
+                    }
                     
                     // 构建时间线（使用对话记录、总结数据和用户事实）
                     val timelineItems = buildTimelineItems(
@@ -188,6 +259,19 @@ class ContactDetailTabViewModel @Inject constructor(
                             daysSinceFirstMet = daysSinceFirstMet,
                             conversationCount = conversations.size,
                             summaryCount = summaries.size
+                        )
+                    }
+                    
+                    // TD-00014: 自动启用PersonaTabV2并刷新分类数据
+                    val facts = contact?.facts ?: emptyList()
+                    val categories = refreshCategories(facts)
+                    val availableCategories = categories.map { it.key }
+                    
+                    _uiState.update {
+                        it.copy(
+                            usePersonaTabV2 = true,
+                            factCategories = categories,
+                            availableCategories = availableCategories
                         )
                     }
                     
@@ -1096,5 +1180,336 @@ class ContactDetailTabViewModel @Inject constructor(
         _uiState.update {
             it.copy(showEditContactInfoDialog = false)
         }
+    }
+
+    // ========== TD-00014: 标签画像V2方法 ==========
+
+    /**
+     * 更新标签画像搜索关键词
+     * 
+     * 使用防抖处理，避免频繁搜索
+     */
+    private fun updatePersonaSearch(query: String) {
+        // 取消之前的搜索任务
+        searchJob?.cancel()
+        
+        // 立即更新搜索状态
+        _uiState.update {
+            it.copy(
+                personaSearchState = it.personaSearchState.updateQuery(query)
+            )
+        }
+        
+        // 防抖处理
+        searchJob = viewModelScope.launch {
+            delay(Constants.SEARCH_DEBOUNCE_MS)
+            applyPersonaSearch(query)
+        }
+    }
+
+    /**
+     * 应用搜索过滤
+     */
+    private fun applyPersonaSearch(query: String) {
+        val currentState = _uiState.value
+        val filteredCategories = factSearchFilter.filter(currentState.factCategories, query)
+        
+        _uiState.update {
+            it.copy(
+                factCategories = if (query.isBlank()) {
+                    // 空查询时刷新分类
+                    refreshCategories(it.facts)
+                } else {
+                    filteredCategories
+                },
+                personaSearchState = it.personaSearchState.searchCompleted()
+            )
+        }
+    }
+
+    /**
+     * 清除标签画像搜索
+     */
+    private fun clearPersonaSearch() {
+        searchJob?.cancel()
+        _uiState.update {
+            it.copy(
+                personaSearchState = PersonaSearchState(),
+                factCategories = refreshCategories(it.facts)
+            )
+        }
+    }
+
+    /**
+     * 切换分类展开/折叠状态
+     */
+    private fun toggleCategoryExpand(categoryKey: String) {
+        _uiState.update { currentState ->
+            val updatedCategories = currentState.factCategories.map { category ->
+                if (category.key == categoryKey) {
+                    category.toggleExpanded()
+                } else {
+                    category
+                }
+            }
+            currentState.copy(factCategories = updatedCategories)
+        }
+    }
+
+    /**
+     * 进入编辑模式
+     */
+    private fun enterEditMode(initialFactId: String?) {
+        _uiState.update {
+            it.copy(
+                editModeState = EditModeState.activated(initialFactId)
+            )
+        }
+    }
+
+    /**
+     * 退出编辑模式
+     */
+    private fun exitEditMode() {
+        _uiState.update {
+            it.copy(editModeState = EditModeState())
+        }
+    }
+
+    /**
+     * 切换标签选中状态
+     */
+    private fun toggleFactSelection(factId: String) {
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.toggleSelection(factId)
+            )
+        }
+    }
+
+    /**
+     * 选中分类下的所有标签
+     */
+    private fun selectAllInCategory(categoryKey: String) {
+        val currentState = _uiState.value
+        val category = currentState.factCategories.find { it.key == categoryKey }
+        val factIds = category?.getFactIds() ?: emptyList()
+        
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.selectAll(factIds)
+            )
+        }
+    }
+
+    /**
+     * 取消选中所有标签
+     */
+    private fun deselectAllFacts() {
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.clearSelection()
+            )
+        }
+    }
+
+    /**
+     * 选中所有标签
+     */
+    private fun selectAllFacts() {
+        val currentState = _uiState.value
+        val allFactIds = currentState.factCategories.flatMap { it.getFactIds() }
+        
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.selectAll(allFactIds)
+            )
+        }
+    }
+
+    /**
+     * 显示批量删除确认对话框
+     */
+    private fun showBatchDeleteConfirm() {
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.showDeleteConfirmDialog()
+            )
+        }
+    }
+
+    /**
+     * 隐藏批量删除确认对话框
+     */
+    private fun hideBatchDeleteConfirm() {
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.hideDeleteConfirmDialog()
+            )
+        }
+    }
+
+    /**
+     * 确认批量删除
+     */
+    private fun confirmBatchDelete() {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val contact = currentState.contact ?: return@launch
+                val factIds = currentState.editModeState.selectedFactIds.toList()
+                
+                if (factIds.isEmpty()) return@launch
+                
+                // 调试日志：记录删除前的状态
+                Log.d(TAG, "========== confirmBatchDelete开始 ==========")
+                Log.d(TAG, "contactId=${contact.id}")
+                Log.d(TAG, "要删除的factIds数量=${factIds.size}")
+                Log.d(TAG, "删除前timelineItems数量=${currentState.timelineItems.size}")
+                Log.d(TAG, "删除前对话记录数量=${currentState.timelineItems.count { it is TimelineItem.Conversation }}")
+                Log.d(TAG, "删除前facts数量=${currentState.facts.size}")
+                
+                batchDeleteFactsUseCase(contact.id, factIds).onSuccess { deletedCount ->
+                    Log.d(TAG, "batchDeleteFactsUseCase成功，删除数量=$deletedCount")
+                    
+                    // 【关键修复】先查询数据库中的对话记录数量
+                    val conversationsBeforeRefresh = conversationRepository.getConversationsByContact(contact.id)
+                    Log.d(TAG, "刷新前数据库对话记录数量=${conversationsBeforeRefresh.getOrDefault(emptyList()).size}")
+                    
+                    // 刷新数据
+                    loadContactDetail(contact.id)
+                    
+                    _uiState.update {
+                        it.copy(
+                            editModeState = EditModeState(),
+                            successMessage = "已删除 $deletedCount 个标签"
+                        )
+                    }
+                    
+                    Log.d(TAG, "========== confirmBatchDelete完成 ==========")
+                }.onFailure { error ->
+                    Log.e(TAG, "batchDeleteFactsUseCase失败: ${error.message}")
+                    _uiState.update {
+                        it.copy(
+                            editModeState = it.editModeState.hideDeleteConfirmDialog(),
+                            error = error.message ?: "删除失败"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "confirmBatchDelete异常", e)
+                _uiState.update {
+                    it.copy(
+                        editModeState = it.editModeState.hideDeleteConfirmDialog(),
+                        error = e.message ?: "删除失败"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 显示批量移动对话框
+     */
+    private fun showBatchMoveDialog() {
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.showMoveCategoryDialog()
+            )
+        }
+    }
+
+    /**
+     * 隐藏批量移动对话框
+     */
+    private fun hideBatchMoveDialog() {
+        _uiState.update {
+            it.copy(
+                editModeState = it.editModeState.hideMoveCategoryDialog()
+            )
+        }
+    }
+
+    /**
+     * 确认批量移动
+     */
+    private fun confirmBatchMove(targetCategory: String) {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                val contact = currentState.contact ?: return@launch
+                val factIds = currentState.editModeState.selectedFactIds.toList()
+                
+                if (factIds.isEmpty()) return@launch
+                
+                batchMoveFactsUseCase(contact.id, factIds, targetCategory).onSuccess { movedCount ->
+                    // 刷新数据
+                    loadContactDetail(contact.id)
+                    
+                    _uiState.update {
+                        it.copy(
+                            editModeState = EditModeState(),
+                            successMessage = "已移动 $movedCount 个标签到「$targetCategory」"
+                        )
+                    }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            editModeState = it.editModeState.hideMoveCategoryDialog(),
+                            error = error.message ?: "移动失败"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        editModeState = it.editModeState.hideMoveCategoryDialog(),
+                        error = e.message ?: "移动失败"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 设置是否使用PersonaTabV2
+     */
+    private fun setUsePersonaTabV2(enabled: Boolean) {
+        _uiState.update {
+            it.copy(usePersonaTabV2 = enabled)
+        }
+        
+        // 如果启用V2，刷新分类数据
+        if (enabled) {
+            refreshCategoriesFromCurrentState()
+        }
+    }
+
+    /**
+     * 从当前状态刷新分类数据
+     */
+    private fun refreshCategoriesFromCurrentState() {
+        val currentState = _uiState.value
+        val categories = refreshCategories(currentState.facts)
+        val availableCategories = categories.map { it.key }
+        
+        _uiState.update {
+            it.copy(
+                factCategories = categories,
+                availableCategories = availableCategories
+            )
+        }
+    }
+
+    /**
+     * 刷新分类列表
+     * 
+     * @param facts Fact列表
+     * @return 分组后的FactCategory列表
+     */
+    private fun refreshCategories(facts: List<Fact>): List<com.empathy.ai.domain.model.FactCategory> {
+        // TODO: 从系统设置获取深色模式状态
+        val isDarkMode = false
+        return groupFactsByCategoryUseCase(facts, isDarkMode)
     }
 }
