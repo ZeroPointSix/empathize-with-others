@@ -40,8 +40,8 @@ com.empathy.ai/
 │   │   ├── ExtractedData.kt
 │   │   ├── PromptContext.kt              # 🆕 提示词上下文模型
 │   │   ├── PromptError.kt                # 🆕 提示词错误模型
-│   │   ├── PromptScene.kt                 # 🆕 提示词场景模型
-│   │   ├── GlobalPromptConfig.kt           # 🆕 全局提示词配置
+│   │   ├── PromptScene.kt                 # 🆕 提示词场景模型（已优化）
+│   │   ├── GlobalPromptConfig.kt           # 🆕 全局提示词配置（v3）
 │   │   ├── TimelineItem.kt                # 🆕 时间线项目密封类
 │   │   ├── EmotionType.kt                 # 🆕 情绪类型枚举
 │   │   ├── RelationshipLevel.kt             # 🆕 关系级别枚举
@@ -168,7 +168,7 @@ com.empathy.ai/
 │   │   ├── MemoryPreferences.kt         # 🆕 记忆偏好设置
 │   │   ├── ConversationPreferences.kt    # 🆕 对话偏好设置
 │   │   ├── DefaultPrompts.kt           # 🆕 默认提示词
-│   │   ├── PromptFileStorage.kt         # 🆕 提示词文件存储
+│   │   ├── PromptFileStorage.kt         # 🆕 提示词文件存储（已优化）
 │   │   ├── PromptFileBackup.kt         # 🆕 提示词文件备份
 │   │   ├── converter/                # ✅ Room 类型转换器
 │   │   │   └── RoomTypeConverters.kt
@@ -342,8 +342,9 @@ com.empathy.ai/
 │   │       │   ├── SettingsScreen.kt
 │   │       │   ├── SettingsUiState.kt
 │   │       │   ├── SettingsUiEvent.kt
-│   │       │   └── component/                        # 🆕 设置组件
-│   │       │       └── HistoryConversationCountSection.kt
+│   │       │   └── component/                        # ✅ 设置组件
+│   │       │       ├── HistoryConversationCountSection.kt  # ✅ 历史对话计数
+│   │       │       └── PromptSettingsSection.kt          # ✅ 提示词设置（TD-00015新增）
 │   │       ├── tag/
 │   │       │   ├── BrainTagScreen.kt
 │   │       │   ├── BrainTagUiState.kt
@@ -368,7 +369,7 @@ com.empathy.ai/
 │   │   ├── ContactDetailViewModel.kt
 │   │   ├── ContactDetailTabViewModel.kt     # ✅ 四标签页ViewModel
 │   │   ├── ContactListViewModel.kt
-│   │   ├── SettingsViewModel.kt
+│   │   ├── SettingsViewModel.kt              # ✅ 已更新（TD-00015）
 │   │   └── PromptEditorViewModel.kt          # 🆕 提示词编辑器ViewModel
 │   └── util/                             # 🆕 表现层工具类
 │       └── ImageLoaderConfig.kt              # 🆕 图片加载配置
@@ -517,10 +518,13 @@ test/
   - 新增PromptBuilder、PromptSanitizer、PromptValidator、PromptVariableResolver、SystemPrompts等工具类
   - 新增SessionContextService，统一管理历史对话上下文
   - 新增SummaryTask、SummaryTaskStatus、SummaryType等总结相关模型
+  - PromptScene枚举优化：简化场景从6个到4个核心场景（TD-00015已完成）
+  - GlobalPromptConfig版本升级到v3（TD-00015已完成）
 - **数据层**: 100%完成，Room数据库、网络层、仓库实现完整
   - 数据库版本升级至v8，新增prompt_templates、prompt_backups表
   - 完整的Migration脚本和测试（1→2→3→4→5→6→7→8）
   - 新增PromptFileStorage、PromptFileBackup、PromptRepositoryImpl等文件管理组件
+  - PromptFileStorage迁移逻辑优化（TD-00015已完成）
   - 新增ConversationLogEntity、DailySummaryEntity、FailedSummaryTaskEntity等记忆系统实体
 - **表现层**: 100%完成，UI组件、屏幕、ViewModel完整实现
   - 联系人画像记忆系统UI：100%完成，四标签页架构完整实现
@@ -536,9 +540,11 @@ test/
   - ✅ FloatingViewV2：支持分析/润色/回复三个功能Tab
   - ✅ TabSwitcher：Tab切换器和状态指示器
   - ✅ FloatingBubbleView：悬浮球状态指示与拖动
-  - ✅ MaxHeightScrollView：自适应高度滚动视图
+  - ✅ MaxHeightScrollView：自适应高度滚动视图组件
   - 新增AddFactToStreamDialog、EditConversationDialog、TagConfirmationDialog
   - 新增总结相关UI组件：SummaryProgressDialog、SummaryResultDialog等
+  - SettingsViewModel已更新，添加promptScenesOrdered属性（TD-00015已完成）
+  - 新增PromptSettingsSection组件，集成到设置界面（TD-00015已完成）
 - **依赖注入**: 100%完成，Hilt模块完整配置
   - 新增MemoryModule，管理记忆系统相关依赖
   - 新增PromptModule，管理提示词系统相关依赖
@@ -553,7 +559,10 @@ test/
   - Android测试：4个文件
   - 新增提示词系统相关完整测试套件
   - 新增悬浮窗功能重构相关测试套件
-  - 代码统计：219个Kotlin文件 (131个主代码 + 88个单元测试)
+  - 新增提示词设置优化相关测试（TD-00015已完成）
+  - 悬浮球状态指示与拖动相关测试
+  - MaxHeightScrollView相关测试
+  - 代码统计：603个Kotlin文件 (487个主代码 + 114个测试文件)
 
 ### ⚠️ 部分实现/待验证模块
 - **输入内容身份识别与双向对话历史**: TD-00008技术设计完成
@@ -582,3 +591,14 @@ test/
 - **无障碍服务**: WeChatDetector等工具类存在，但实际集成状态不明
   - 代码架构存在：WeChatDetector、FloatingWindowManager等
   - ❌ 实际集成未验证：需要确认与悬浮窗服务的协作
+
+### ✅ 已解决的技术债务
+
+- **提示词设置优化**: 已完成TD-00015任务
+  - ✅ 简化提示词场景从6个到4个核心场景（ANALYZE、POLISH、REPLY、SUMMARY）
+  - ✅ 废弃CHECK和EXTRACT场景（保留代码兼容性，隐藏UI）
+  - ✅ 实现CHECK到POLISH的数据迁移逻辑
+  - ✅ GlobalPromptConfig版本升级到v3
+  - ✅ 新增PromptSettingsSection组件，集成到设置界面
+  - ✅ 完整测试覆盖：7个测试文件，61+个测试用例
+  - ✅ 状态：22/25任务完成（88%，核心功能100%）

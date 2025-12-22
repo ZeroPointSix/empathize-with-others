@@ -76,6 +76,7 @@ fun SettingsScreen(
         onNavigateToAiConfig = onNavigateToAiConfig,
         onNavigateToPromptEditor = onNavigateToPromptEditor,
         onNavigateToUserProfile = onNavigateToUserProfile,
+        promptScenes = viewModel.promptScenesOrdered,
         onRequestPermission = {
             (context as? Activity)?.let { activity ->
                 FloatingWindowManager.requestPermission(activity)
@@ -97,6 +98,7 @@ private fun SettingsScreenContent(
     onNavigateToAiConfig: () -> Unit,
     onNavigateToPromptEditor: (String) -> Unit,
     onNavigateToUserProfile: () -> Unit,
+    promptScenes: List<PromptScene>,
     onRequestPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -178,6 +180,7 @@ private fun SettingsScreenContent(
 
             // 提示词设置
             PromptSettingsSection(
+                scenes = promptScenes,
                 onNavigateToPromptEditor = onNavigateToPromptEditor
             )
 
@@ -740,96 +743,24 @@ private fun UserProfileSection(
 
 /**
  * 提示词设置区域
+ *
+ * 使用 PromptSettingsSection 组件显示4个核心场景
+ * 
+ * @see TDD-00015 提示词设置优化技术设计
  */
 @Composable
 private fun PromptSettingsSection(
+    scenes: List<PromptScene>,
     onNavigateToPromptEditor: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "提示词设置",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // 聊天分析指令
-        PromptSettingItem(
-            title = "聊天分析指令",
-            description = "自定义AI分析聊天内容时的行为",
-            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.ANALYZE)) }
-        )
-
-        // 安全检查指令
-        PromptSettingItem(
-            title = "安全检查指令",
-            description = "自定义AI检查消息安全性时的行为",
-            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.CHECK)) }
-        )
-
-        // 信息提取指令
-        PromptSettingItem(
-            title = "信息提取指令",
-            description = "自定义AI提取关键信息时的行为",
-            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.EXTRACT)) }
-        )
-
-        // 每日总结指令
-        PromptSettingItem(
-            title = "每日总结指令",
-            description = "自定义AI生成每日总结时的行为",
-            onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.SUMMARY)) }
-        )
-
-        Text(
-            text = "提示：自定义指令可以让AI更好地理解您的需求，提供更精准的分析和建议",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * 提示词设置项
- */
-@Composable
-private fun PromptSettingItem(
-    title: String,
-    description: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "编辑"
-            )
-        }
-    }
+    com.empathy.ai.presentation.ui.screen.settings.component.PromptSettingsSection(
+        scenes = scenes,
+        onSceneClick = { scene ->
+            onNavigateToPromptEditor(PromptEditorRoutes.globalScene(scene))
+        },
+        modifier = modifier
+    )
 }
 
 /**
@@ -889,6 +820,7 @@ private fun SettingsScreenPreview() {
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
             onNavigateToUserProfile = {},
+            promptScenes = PromptScene.SETTINGS_SCENE_ORDER,
             onRequestPermission = {}
         )
     }
@@ -910,6 +842,7 @@ private fun SettingsScreenConfiguredPreview() {
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
             onNavigateToUserProfile = {},
+            promptScenes = PromptScene.SETTINGS_SCENE_ORDER,
             onRequestPermission = {}
         )
     }

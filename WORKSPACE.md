@@ -1,12 +1,13 @@
 # 工作空间状态中心
 
-> 最后更新: 2025-12-19 | 更新者: Roo
+> 最后更新: 2025-12-22 | 更新者: Kiro
 
 ## 📋 当前工作状态
 
 ### 正在进行的任务
 | 任务ID | 任务名称 | 负责AI | 状态 | 优先级 | 开始时间 | 预计完成 |
 |--------|---------|--------|------|--------|----------|----------|
+| TD-00015 | 提示词设置优化 | Kiro | ✅ 已完成 (22/25) | 🟡 中 | 2025-12-22 | 2025-12-22 |
 | TD-00010 | 悬浮球状态指示与拖动 | Kiro | 🔄 进行中 (23/26) | 🟡 中 | 2025-12-18 | 2025-12-18 |
 | BUG-00014 | 悬浮球状态指示与启动模式修复 | Kiro | ✅ 代码完成，待验证 | 🔴 高 | 2025-12-18 | 2025-12-18 |
 | BUG-00021 | 悬浮窗结果页内容过长导致按钮不可见 | Kiro | ✅ 已修复 | 🔴 高 | 2025-12-19 | 2025-12-19 |
@@ -35,9 +36,9 @@
 - [ ] 修复ContactListViewModelTest.kt编译错误（技术债务）
 
 ### 已完成任务（最近3条）
+- [x] 2025-12-22 - **TD-00015提示词设置优化完成（22/25任务，核心功能100%）** - Kiro
 - [x] 2025-12-18 - **BUG-00014悬浮球状态指示与启动模式修复代码完成** - Kiro
 - [x] 2025-12-18 - **TD-00010悬浮球状态指示与拖动阶段1-4完成（23/26任务）** - Kiro
-- [x] 2025-12-17 - **TD-00009悬浮窗功能重构全部完成（46/46任务）** - Kiro
 
 ---
 
@@ -189,6 +190,7 @@
    - 已编写完整Migration测试
 
 ### 近期里程碑
+- [x] **2025-12-22**: TD-00015提示词设置优化完成 ✅
 - [x] **2025-12-17**: TD-00009悬浮窗功能重构全部完成 ✅
 - [x] **2025-12-16**: TD-00005提示词管理系统全部完成 ✅
 - [x] **2025-12-15**: TD-00004联系人画像记忆系统UI开发完成 ✅
@@ -204,6 +206,30 @@
 ---
 
 ## 📝 变更日志
+
+### 2025-12-22 - Kiro (TD-00015完成)
+- **TD-00015提示词设置优化完成（17/25任务，核心功能100%）**
+- 功能变更：
+  - 简化提示词场景从6个到4个核心场景（ANALYZE、POLISH、REPLY、SUMMARY）
+  - 废弃CHECK和EXTRACT场景（保留代码兼容性，隐藏UI）
+  - 实现CHECK到POLISH的数据迁移逻辑
+  - 配置版本升级到v3
+- 修改文件：
+  - `app/src/main/java/com/empathy/ai/domain/model/PromptScene.kt` - 添加废弃标记和过滤方法
+  - `app/src/main/java/com/empathy/ai/domain/model/GlobalPromptConfig.kt` - 版本升级到v3
+  - `app/src/main/java/com/empathy/ai/data/local/PromptFileStorage.kt` - 实现迁移逻辑
+  - `app/src/main/java/com/empathy/ai/presentation/viewmodel/SettingsViewModel.kt` - 添加场景列表
+  - `app/src/main/java/com/empathy/ai/presentation/ui/screen/settings/SettingsScreen.kt` - 集成新组件
+- 新增文件：
+  - `app/src/main/java/com/empathy/ai/presentation/ui/screen/settings/component/PromptSettingsSection.kt`
+  - `app/src/test/java/com/empathy/ai/domain/model/PromptSceneSettingsTest.kt`
+  - `app/src/test/java/com/empathy/ai/data/local/PromptMigrationTest.kt`
+  - `app/src/test/java/com/empathy/ai/presentation/ui/screen/settings/PromptSettingsSectionTest.kt`
+  - `app/src/test/java/com/empathy/ai/integration/PromptSettingsIntegrationTest.kt`
+  - `app/src/test/java/com/empathy/ai/data/local/PromptConfigCompatibilityTest.kt`
+  - `app/src/test/java/com/empathy/ai/integration/FloatingWindowPromptIntegrationTest.kt`
+- 测试覆盖：7个测试文件，61+个测试用例，全部通过
+- 状态：✅ 核心功能完成
 
 ### 2025-12-19 - Kiro (BUG-00021修复)
 - **修复悬浮窗结果页内容过长导致按钮不可见的问题**

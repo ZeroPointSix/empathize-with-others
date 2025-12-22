@@ -8,14 +8,18 @@ package com.empathy.ai.domain.model
  * @property displayName 场景显示名称
  * @property description 场景描述
  * @property availableVariables 该场景可用的变量列表
+ * @property isDeprecated 是否已废弃（废弃场景保留代码但不在设置界面显示）
+ * @property showInSettings 是否在设置界面显示
  *
- * @see PRD-00009 悬浮窗功能重构需求
- * @see TDD-00009 悬浮窗功能重构技术设计
+ * @see PRD-00015 提示词设置优化需求
+ * @see TDD-00015 提示词设置优化技术设计
  */
 enum class PromptScene(
     val displayName: String,
     val description: String,
-    val availableVariables: List<String>
+    val availableVariables: List<String>,
+    val isDeprecated: Boolean = false,
+    val showInSettings: Boolean = true
 ) {
     /**
      * 聊天分析场景 - 分析聊天上下文，提供沟通建议
@@ -29,7 +33,9 @@ enum class PromptScene(
             "risk_tags",
             "strategy_tags",
             "facts_count"
-        )
+        ),
+        isDeprecated = false,
+        showInSettings = true
     ),
 
     /**
@@ -41,16 +47,23 @@ enum class PromptScene(
     CHECK(
         displayName = "安全检查",
         description = "检查草稿内容是否触发风险规则",
-        availableVariables = listOf("contact_name", "risk_tags")
+        availableVariables = listOf("contact_name", "risk_tags"),
+        isDeprecated = true,
+        showInSettings = false
     ),
 
     /**
      * 信息提取场景 - 从文本中提取关键信息
+     *
+     * @deprecated 暂不在设置界面展示
      */
+    @Deprecated("暂不在设置界面展示")
     EXTRACT(
         displayName = "信息提取",
         description = "从文本中提取关键信息",
-        availableVariables = listOf("contact_name")
+        availableVariables = listOf("contact_name"),
+        isDeprecated = true,
+        showInSettings = false
     ),
 
     /**
@@ -64,10 +77,10 @@ enum class PromptScene(
             "relationship_status",
             "facts_count",
             "today_date"
-        )
+        ),
+        isDeprecated = false,
+        showInSettings = true
     ),
-
-    // ==================== 新增场景（TD-00009） ====================
 
     /**
      * 润色优化场景 - 优化用户草稿，使表达更得体
@@ -81,7 +94,9 @@ enum class PromptScene(
             "contact_name",
             "relationship_status",
             "risk_tags"
-        )
+        ),
+        isDeprecated = false,
+        showInSettings = true
     ),
 
     /**
@@ -95,10 +110,34 @@ enum class PromptScene(
             "relationship_status",
             "risk_tags",
             "strategy_tags"
-        )
+        ),
+        isDeprecated = false,
+        showInSettings = true
     );
 
     companion object {
+        /**
+         * 设置界面场景显示顺序
+         * 按照用户使用频率和逻辑顺序排列：分析 → 润色 → 回复 → 总结
+         */
+        val SETTINGS_SCENE_ORDER = listOf(ANALYZE, POLISH, REPLY, SUMMARY)
+
+        /**
+         * 获取在设置界面显示的场景列表
+         * @return 可在设置界面配置的场景列表
+         */
+        fun getSettingsScenes(): List<PromptScene> {
+            return entries.filter { it.showInSettings }
+        }
+
+        /**
+         * 获取活跃（非废弃）的场景列表
+         * @return 活跃场景列表
+         */
+        fun getActiveScenes(): List<PromptScene> {
+            return entries.filter { !it.isDeprecated }
+        }
+
         /**
          * 从 ActionType 获取对应的 PromptScene
          *
@@ -110,7 +149,7 @@ enum class PromptScene(
             ActionType.POLISH -> POLISH
             ActionType.REPLY -> REPLY
             @Suppress("DEPRECATION")
-            ActionType.CHECK -> CHECK
+            ActionType.CHECK -> POLISH  // CHECK映射到POLISH（TD-00015迁移）
         }
     }
 }

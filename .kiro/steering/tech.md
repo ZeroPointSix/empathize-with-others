@@ -159,19 +159,22 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 悬浮窗功能重构UI：Tab系统和状态管理完整实现
   - 悬浮球状态指示与拖动UI：流畅交互体验完整实现
   - MaxHeightScrollView：自适应高度滚动视图组件
+  - PromptSettingsSection：提示词设置界面组件（TD-00015新增）
 - **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
   - 严格的层级分离和依赖规则
   - Hilt 2.52依赖注入完整配置
   - PromptEditorViewModel：完整的状态管理
   - ContactDetailTabViewModel：四标签页状态管理
+  - SettingsViewModel：已更新，添加promptScenesOrdered属性（TD-00015）
   - 新增DispatcherModule：统一协程调度器管理
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
-  - 数据库版本v8，完整Migration链（1→8）
+  - 数据库版本v10，完整Migration链（1→8）
   - Flow响应式数据流
   - 提示词模板和备份表完整实现
   - 记忆系统表：conversation_logs, daily_summaries, failed_summary_tasks
   - Paging 3.3.5分页加载支持
+  - PromptFileStorage迁移逻辑优化（TD-00015已完成）
 - **网络通信**: Retrofit + OkHttp + Moshi 完整实现
   - Retrofit 2.11.0动态URL支持
   - OkHttp 4.12.0 + Logging拦截器
@@ -204,12 +207,14 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 悬浮窗功能重构完整测试套件
   - 悬浮球状态指示与拖动相关测试
   - MaxHeightScrollView相关测试
+  - 提示词设置优化相关测试（TD-00015已完成）
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 219个Kotlin文件，48,476行代码
-  - 主代码：131个文件，24,006行
-  - 单元测试：88个文件，24,470行
+- **代码统计**: 603个Kotlin文件，94,907行代码
+  - 主代码：487个文件，68,675行
+  - 单元测试：114个文件，26,232行
+  - Android测试：20个文件，6,474行
 
 ### ⚠️ 部分实现/待完善功能
 
@@ -288,3 +293,12 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ✅ 改进AiResponseCleaner的错误处理机制
   - ✅ 优化FallbackHandler的错误恢复策略
   - ✅ 提升AI响应解析的稳定性和容错性
+
+- **提示词设置优化**: 已完成TD-00015任务
+  - ✅ 简化提示词场景从6个到4个核心场景（ANALYZE、POLISH、REPLY、SUMMARY）
+  - ✅ 废弃CHECK和EXTRACT场景（保留代码兼容性，隐藏UI）
+  - ✅ 实现CHECK到POLISH的数据迁移逻辑
+  - ✅ GlobalPromptConfig版本升级到v3
+  - ✅ 新增PromptSettingsSection组件，集成到设置界面
+  - ✅ 完整测试覆盖：7个测试文件，61+个测试用例
+  - ✅ 状态：22/25任务完成（88%，核心功能100%）

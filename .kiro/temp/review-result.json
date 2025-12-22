@@ -1,0 +1,40 @@
+﻿{
+    "documentPath":  "test-workflow\\sample-docs\\PRD-99999-测试功能需求.md",
+    "documentType":  "PRD",
+    "suggestions":  [
+                        "补充验收标准，使需求可测试",
+                        "完善界面设计说明",
+                        "添加与 TDD-99999 的关联说明"
+                    ],
+    "missingChapters":  [
+                            "验收标准",
+                            "版本历史"
+                        ],
+    "overallScore":  65,
+    "issues":  [
+                   {
+                       "suggestion":  "添加 \u0027## 4. 验收标准\u0027 章节，包含可测试的验收条件",
+                       "description":  "缺少验收标准章节",
+                       "location":  "文档末尾",
+                       "autoFixable":  true,
+                       "severity":  "error",
+                       "category":  "content"
+                   },
+                   {
+                       "suggestion":  "补充界面设计说明或标注为\u0027待设计\u0027",
+                       "description":  "界面设计章节内容为空",
+                       "location":  "2.2 界面设计",
+                       "autoFixable":  true,
+                       "severity":  "warning",
+                       "category":  "content"
+                   },
+                   {
+                       "suggestion":  "添加版本历史记录变更",
+                       "description":  "建议添加版本历史章节",
+                       "location":  "文档末尾",
+                       "autoFixable":  false,
+                       "severity":  "info",
+                       "category":  "format"
+                   }
+               ]
+}

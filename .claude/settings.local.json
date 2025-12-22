@@ -14,7 +14,9 @@
       "Bash(./scripts/count_code.sh:*)",
       "Skill(reflash)",
       "Skill(reflash:*)",
-      "Bash(done:*)"
+      "Bash(done:*)",
+      "Skill(zcf:init-project)",
+      "Skill(zcf:init-project:*)"
     ],
     "deny": [],
     "ask": []
