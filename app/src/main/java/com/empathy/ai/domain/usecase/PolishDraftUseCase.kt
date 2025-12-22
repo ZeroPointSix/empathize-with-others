@@ -13,6 +13,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.repository.TopicRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.domain.util.PromptBuilder
@@ -48,7 +49,8 @@ class PolishDraftUseCase @Inject constructor(
     private val aiProviderRepository: AiProviderRepository,
     private val promptBuilder: PromptBuilder,
     private val sessionContextService: SessionContextService,
-    private val userProfileContextBuilder: UserProfileContextBuilder
+    private val userProfileContextBuilder: UserProfileContextBuilder,
+    private val topicRepository: TopicRepository
 ) {
     companion object {
         private const val TAG = "PolishDraftUseCase"
@@ -99,18 +101,30 @@ class PolishDraftUseCase @Inject constructor(
             
             Log.d(TAG, "用户画像上下文长度: ${userProfileContext.length}")
 
-            // 7. 构建提示词
+            // 7. 【TD-00016】获取当前对话主题
+            val activeTopic = try {
+                topicRepository.getActiveTopic(contactId)
+            } catch (e: Exception) {
+                Log.w(TAG, "获取对话主题失败，降级为无主题", e)
+                null  // 降级：主题获取失败不影响主流程
+            }
+            
+            Log.d(TAG, "当前对话主题: ${activeTopic?.content?.take(50) ?: "无"}")
+
+            // 8. 构建提示词
             // 【BUG-00023修复】移除自动保存逻辑，改为用户点击复制按钮时保存
             val promptContext = PromptContext.fromContact(profile)
             val runtimeData = buildRuntimeData(prefixedDraft, redTags, historyContext, userProfileContext)
-            val systemInstruction = promptBuilder.buildSystemInstruction(
+            // 【TD-00016】使用buildWithTopic方法注入对话主题
+            val systemInstruction = promptBuilder.buildWithTopic(
                 scene = PromptScene.POLISH,
                 contactId = contactId,
                 context = promptContext,
+                topic = activeTopic,
                 runtimeData = runtimeData
             )
 
-            // 8. 调用AI
+            // 9. 调用AI
             aiRepository.polishDraft(
                 provider = defaultProvider,
                 draft = prefixedDraft,

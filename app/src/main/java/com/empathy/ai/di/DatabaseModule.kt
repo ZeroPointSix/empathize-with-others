@@ -9,6 +9,7 @@ import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.BrainTagDao
 import com.empathy.ai.data.local.dao.ContactDao
 import com.empathy.ai.data.local.dao.ConversationLogDao
+import com.empathy.ai.data.local.dao.ConversationTopicDao
 import com.empathy.ai.data.local.dao.DailySummaryDao
 import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
 import dagger.Module
@@ -379,10 +380,60 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移: 版本 10 -> 11
+     * 添加对话主题功能（TD-00016）：
+     *
+     * 新增conversation_topics表：
+     * - id: 主题唯一标识（主键）
+     * - contact_id: 关联的联系人ID（外键）
+     * - content: 主题内容
+     * - created_at: 创建时间戳
+     * - updated_at: 更新时间戳
+     * - is_active: 是否为活跃主题
+     *
+     * 索引：
+     * - index_conversation_topics_contact_id: 按联系人ID查询
+     * - index_conversation_topics_contact_id_is_active: 按联系人ID和活跃状态查询
+     */
+    private val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 创建conversation_topics表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS conversation_topics (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    FOREIGN KEY (contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            // 创建索引
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS index_conversation_topics_contact_id 
+                ON conversation_topics(contact_id)
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS index_conversation_topics_contact_id_is_active 
+                ON conversation_topics(contact_id, is_active)
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
-     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5→v6→v7→v8→v9→v10）
+     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5→v6→v7→v8→v9→v10→v11）
      * - 已移除fallbackToDestructiveMigration()，确保数据安全
      * - 如果迁移失败，应用会抛出异常而不是删除数据
      *
@@ -396,6 +447,7 @@ object DatabaseModule {
      * - v7→v8: 添加提示词管理系统字段（custom_prompt）
      * - v8→v9: 扩展daily_summaries表支持手动总结
      * - v9→v10: 添加编辑追踪字段支持事实流内容编辑
+     * - v10→v11: 添加conversation_topics表（对话主题功能）
      */
     @Provides
     @Singleton
@@ -414,7 +466,8 @@ object DatabaseModule {
                 MIGRATION_6_7,
                 MIGRATION_7_8,
                 MIGRATION_8_9,
-                MIGRATION_9_10
+                MIGRATION_9_10,
+                MIGRATION_10_11
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据
@@ -441,4 +494,8 @@ object DatabaseModule {
     @Provides
     fun provideFailedSummaryTaskDao(database: AppDatabase): FailedSummaryTaskDao =
         database.failedSummaryTaskDao()
+
+    @Provides
+    fun provideConversationTopicDao(database: AppDatabase): ConversationTopicDao =
+        database.conversationTopicDao()
 }

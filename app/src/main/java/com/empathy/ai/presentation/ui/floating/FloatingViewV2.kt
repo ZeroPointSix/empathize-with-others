@@ -64,6 +64,13 @@ class FloatingViewV2(
     // 当前状态
     private var currentState = FloatingWindowUiState()
     private var contacts: List<ContactProfile> = emptyList()
+    
+    // 【TD-00016】当前主题内容（用于显示主题徽章）
+    private var currentTopicContent: String? = null
+    
+    // 主题相关UI组件
+    private var topicBadge: TextView? = null
+    private var btnTopic: TextView? = null
 
     // 回调
     private var onTabChangedListener: ((ActionType) -> Unit)? = null
@@ -72,6 +79,7 @@ class FloatingViewV2(
     private var onCopyListener: ((String) -> Unit)? = null
     private var onRegenerateListener: ((ActionType, String?) -> Unit)? = null
     private var onMinimizeListener: (() -> Unit)? = null
+    private var onTopicClickListener: (() -> Unit)? = null
 
     init {
         initViews()
@@ -95,6 +103,7 @@ class FloatingViewV2(
 
         // 添加顶部工具栏（只有最小化按钮）
         // BUG-00013: 移除关闭按钮，只保留最小化按钮
+        // TD-00016: 添加主题设置按钮
         val toolbar = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -104,11 +113,58 @@ class FloatingViewV2(
             setPadding(12, 8, 12, 0)
             gravity = android.view.Gravity.END
         }
+        
+        // 【TD-00016】主题徽章 - 显示当前主题预览
+        val density = context.resources.displayMetrics.density
+        topicBadge = TextView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                (32 * density).toInt()
+            ).apply {
+                marginEnd = (8 * density).toInt()
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            maxWidth = (150 * density).toInt()
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            textSize = 12f
+            setTextColor(android.graphics.Color.parseColor("#666666"))
+            setPadding((8 * density).toInt(), (4 * density).toInt(), (8 * density).toInt(), (4 * density).toInt())
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 12 * density
+                setColor(android.graphics.Color.parseColor("#E8F5E9")) // 浅绿色背景
+            }
+            visibility = View.GONE // 默认隐藏，有主题时显示
+        }
+        toolbar.addView(topicBadge)
+        
+        // 【TD-00016】主题设置按钮
+        val topicButtonSize = (40 * density).toInt()
+        val topicBackgroundDrawable = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(android.graphics.Color.parseColor("#E3F2FD")) // 浅蓝色背景
+        }
+        
+        btnTopic = TextView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(topicButtonSize, topicButtonSize).apply {
+                marginEnd = (8 * density).toInt()
+            }
+            text = "📝" // 主题图标
+            textSize = 18f
+            gravity = android.view.Gravity.CENTER
+            background = topicBackgroundDrawable
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                android.util.Log.d(TAG, "主题按钮被点击")
+                onTopicClickListener?.invoke()
+            }
+        }
+        toolbar.addView(btnTopic)
 
         // 最小化按钮 - 使用更醒目的样式
         // BUG-00013: 只保留最小化按钮，移除关闭按钮
         // BUG-00017: 修复按钮不可见问题 - 增大尺寸、添加背景色、使用更醒目的图标
-        val density = context.resources.displayMetrics.density
         val buttonSize = (48 * density).toInt() // 48dp转换为px
         
         // 创建圆形背景
@@ -462,6 +518,35 @@ class FloatingViewV2(
     fun setOnMinimizeListener(listener: () -> Unit) {
         onMinimizeListener = listener
     }
+    
+    /**
+     * 【TD-00016】设置主题点击监听器
+     */
+    fun setOnTopicClickListener(listener: () -> Unit) {
+        onTopicClickListener = listener
+    }
+    
+    /**
+     * 【TD-00016】更新主题显示
+     * 
+     * @param topicContent 主题内容，为null或空时隐藏主题徽章
+     */
+    fun updateTopicDisplay(topicContent: String?) {
+        currentTopicContent = topicContent
+        if (topicContent.isNullOrBlank()) {
+            topicBadge?.visibility = View.GONE
+            btnTopic?.text = "📝" // 无主题时显示普通图标
+        } else {
+            topicBadge?.visibility = View.VISIBLE
+            topicBadge?.text = "🎯 ${topicContent.take(15)}${if (topicContent.length > 15) "..." else ""}"
+            btnTopic?.text = "✏️" // 有主题时显示编辑图标
+        }
+    }
+    
+    /**
+     * 【TD-00016】获取当前主题内容
+     */
+    fun getCurrentTopicContent(): String? = currentTopicContent
 
     // ==================== 私有方法 ====================
 

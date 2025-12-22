@@ -3,6 +3,7 @@ package com.empathy.ai.presentation.ui.screen.contact
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.ConversationLog
+import com.empathy.ai.domain.model.ConversationTopic
 import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FilterType
@@ -352,6 +353,33 @@ data class ContactDetailUiState(
      * 是否显示添加事实到事实流对话框
      */
     val showAddFactToStreamDialog: Boolean = false,
+    
+    // ========== 对话主题相关（TD-00016） ==========
+    
+    /**
+     * 是否显示主题设置对话框
+     */
+    val showTopicDialog: Boolean = false,
+    
+    /**
+     * 当前活跃的对话主题
+     */
+    val currentTopic: ConversationTopic? = null,
+    
+    /**
+     * 主题历史记录
+     */
+    val topicHistory: List<ConversationTopic> = emptyList(),
+    
+    /**
+     * 主题输入内容
+     */
+    val topicInputContent: String = "",
+    
+    /**
+     * 是否正在保存主题
+     */
+    val isSavingTopic: Boolean = false,
     
     // ========== 编辑功能相关（TD-00012） ==========
     

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +62,7 @@ import com.empathy.ai.presentation.theme.RelationshipColors
  * @param daysSinceFirstMet 相识天数
  * @param onBackClick 返回按钮点击回调
  * @param onEditClick 编辑按钮点击回调（TD-00012）
+ * @param onTopicClick 主题设置按钮点击回调（TD-00016）
  * @param modifier Modifier
  */
 @Composable
@@ -70,7 +72,8 @@ fun DynamicEmotionalHeader(
     daysSinceFirstMet: Int,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onEditClick: (() -> Unit)? = null
+    onEditClick: (() -> Unit)? = null,
+    onTopicClick: (() -> Unit)? = null
 ) {
     // 计算滚动进度 (0.0 ~ 1.0)
     val scrollProgress by remember {
@@ -177,6 +180,17 @@ fun DynamicEmotionalHeader(
                         text = "已相识 $daysSinceFirstMet 天",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.8f * (1f - scrollProgress))
+                    )
+                }
+            }
+            
+            // TD-00016: 主题设置按钮
+            if (onTopicClick != null) {
+                IconButton(onClick = onTopicClick) {
+                    Icon(
+                        imageVector = Icons.Default.Topic,
+                        contentDescription = "设置对话主题",
+                        tint = Color.White
                     )
                 }
             }

@@ -1,6 +1,7 @@
 package com.empathy.ai.domain.util
 
 import android.util.Log
+import com.empathy.ai.domain.model.ConversationTopic
 import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.repository.PromptRepository
@@ -44,6 +45,7 @@ class PromptBuilder @Inject constructor(
         private const val USER_PROMPT_TITLE = "【用户自定义指令】"
         private const val CONTACT_PROMPT_TITLE = "【针对此联系人的特殊指令】"
         private const val CONTEXT_DATA_TITLE = "【上下文数据】"
+        private const val TOPIC_TITLE = "【当前对话主题】"
         
         /**
          * 上下文数据占位符（已废弃，保留用于向后兼容）
@@ -135,6 +137,55 @@ class PromptBuilder @Inject constructor(
         contactId: String? = null,
         context: PromptContext
     ): String = buildSystemInstruction(scene, contactId, context, runtimeData = "")
+
+    /**
+     * 构建包含对话主题的系统指令
+     *
+     * 当用户设置了对话主题时，将主题内容注入到系统提示词中，
+     * 帮助AI更好地理解对话背景并提供更精准的回复。
+     *
+     * @param scene 场景类型
+     * @param contactId 联系人ID（可选）
+     * @param context 变量上下文
+     * @param topic 当前对话主题（可选）
+     * @param runtimeData 运行时数据
+     * @return 构建好的包含主题的系统指令
+     */
+    suspend fun buildWithTopic(
+        scene: PromptScene,
+        contactId: String? = null,
+        context: PromptContext,
+        topic: ConversationTopic?,
+        runtimeData: String = ""
+    ): String {
+        // 先构建基础指令
+        val baseInstruction = buildSystemInstruction(scene, contactId, context, runtimeData)
+
+        // 如果没有主题，直接返回基础指令
+        if (topic == null || topic.content.isBlank()) {
+            return baseInstruction
+        }
+
+        // 构建主题部分
+        val topicSection = buildTopicSection(topic)
+
+        // 将主题注入到系统指令中（在Footer之前）
+        return "$baseInstruction\n\n$topicSection"
+    }
+
+    /**
+     * 构建主题部分的提示词
+     */
+    private fun buildTopicSection(topic: ConversationTopic): String {
+        return buildString {
+            appendLine(TOPIC_TITLE)
+            appendLine("用户设置了以下对话主题，请在回复时充分考虑这个背景：")
+            appendLine()
+            appendLine(topic.content)
+            appendLine()
+            append("请确保你的回复与上述主题保持一致和相关。")
+        }
+    }
 
     /**
      * 仅获取用户自定义指令部分

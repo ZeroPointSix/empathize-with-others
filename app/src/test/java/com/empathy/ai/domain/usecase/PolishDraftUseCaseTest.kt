@@ -12,6 +12,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
+import com.empathy.ai.domain.repository.TopicRepository
 import com.empathy.ai.domain.service.SessionContextService
 import com.empathy.ai.domain.util.PromptBuilder
 import com.empathy.ai.domain.util.UserProfileContextBuilder
@@ -41,6 +42,7 @@ class PolishDraftUseCaseTest {
     private lateinit var promptBuilder: PromptBuilder
     private lateinit var sessionContextService: SessionContextService
     private lateinit var userProfileContextBuilder: UserProfileContextBuilder
+    private lateinit var topicRepository: TopicRepository
 
     private val testContactId = "contact_123"
     private val testDraft = "你好，我想问一下关于项目的事情"
@@ -87,11 +89,14 @@ class PolishDraftUseCaseTest {
         promptBuilder = mockk()
         sessionContextService = mockk()
         userProfileContextBuilder = mockk()
+        topicRepository = mockk()
 
         // 默认返回空历史上下文
         coEvery { sessionContextService.getHistoryContext(any<String>()) } returns ""
         // 默认返回空用户画像上下文
         coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.success("")
+        // 默认返回空主题
+        coEvery { topicRepository.getActiveTopic(any()) } returns null
 
         useCase = PolishDraftUseCase(
             contactRepository = contactRepository,
@@ -101,7 +106,8 @@ class PolishDraftUseCaseTest {
             aiProviderRepository = aiProviderRepository,
             promptBuilder = promptBuilder,
             sessionContextService = sessionContextService,
-            userProfileContextBuilder = userProfileContextBuilder
+            userProfileContextBuilder = userProfileContextBuilder,
+            topicRepository = topicRepository
         )
     }
 
@@ -112,7 +118,7 @@ class PolishDraftUseCaseTest {
         coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(testRedTags)
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -161,7 +167,7 @@ class PolishDraftUseCaseTest {
         coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(testRedTags)
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.failure(
             RuntimeException("AI调用失败")
         )
@@ -196,7 +202,7 @@ class PolishDraftUseCaseTest {
         coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
         coEvery { privacyRepository.maskText(sensitiveText) } returns maskedText
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -213,7 +219,7 @@ class PolishDraftUseCaseTest {
         coEvery { contactRepository.getProfile(testContactId) } returns Result.success(testProfile)
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(testRedTags)
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -221,9 +227,10 @@ class PolishDraftUseCaseTest {
 
         // Then
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 any(),
                 eq(testContactId),
+                any(),
                 any(),
                 match { it.contains("雷区警告") && it.contains("不要提加班") }
             )
@@ -246,7 +253,7 @@ class PolishDraftUseCaseTest {
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns historyContext
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -254,9 +261,10 @@ class PolishDraftUseCaseTest {
 
         // Then: 验证历史上下文被包含在运行时数据中
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 any(),
                 eq(testContactId),
+                any(),
                 any(),
                 match { it.contains("【历史对话】") && it.contains("你好") }
             )
@@ -271,7 +279,7 @@ class PolishDraftUseCaseTest {
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -289,7 +297,7 @@ class PolishDraftUseCaseTest {
         coEvery { brainTagRepository.getTagsForContact(testContactId) } returns flowOf(emptyList())
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -317,7 +325,7 @@ class PolishDraftUseCaseTest {
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
         coEvery { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) } returns Result.success(userProfileContext)
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -325,9 +333,10 @@ class PolishDraftUseCaseTest {
 
         // Then: 验证用户画像上下文被包含在运行时数据中
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 any(),
                 eq(testContactId),
+                any(),
                 any(),
                 match { it.contains("【用户画像（你的特点）】") && it.contains("外向") }
             )
@@ -343,7 +352,7 @@ class PolishDraftUseCaseTest {
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
         coEvery { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) } returns Result.success("")
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -362,7 +371,7 @@ class PolishDraftUseCaseTest {
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns ""
         coEvery { userProfileContextBuilder.buildAnalysisContext(any(), any()) } returns Result.failure(Exception("获取失败"))
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -385,7 +394,7 @@ class PolishDraftUseCaseTest {
         coEvery { privacyRepository.maskText(testDraft) } returns testMaskedDraft
         coEvery { sessionContextService.getHistoryContext(testContactId) } returns historyContext
         coEvery { userProfileContextBuilder.buildAnalysisContext(testProfile, testDraft) } returns Result.success(userProfileContext)
-        coEvery { promptBuilder.buildSystemInstruction(any(), any(), any(), any()) } returns "system instruction"
+        coEvery { promptBuilder.buildWithTopic(any(), any(), any(), any(), any()) } returns "system instruction"
         coEvery { aiRepository.polishDraft(any(), any(), any()) } returns Result.success(testPolishResult)
 
         // When
@@ -393,9 +402,10 @@ class PolishDraftUseCaseTest {
 
         // Then: 验证用户画像在历史对话之前
         coVerify {
-            promptBuilder.buildSystemInstruction(
+            promptBuilder.buildWithTopic(
                 any(),
                 eq(testContactId),
+                any(),
                 any(),
                 match { 
                     val userProfileIndex = it.indexOf("【用户画像（你的特点）】")

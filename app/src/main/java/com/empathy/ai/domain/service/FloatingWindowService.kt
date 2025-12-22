@@ -92,6 +92,10 @@ class FloatingWindowService : Service() {
     @Inject
     lateinit var conversationRepository: com.empathy.ai.domain.repository.ConversationRepository
     
+    // 【TD-00016】添加TopicRepository用于悬浮窗主题设置
+    @Inject
+    lateinit var topicRepository: com.empathy.ai.domain.repository.TopicRepository
+    
     private lateinit var windowManager: WindowManager
     private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
     private var floatingViewV2: FloatingViewV2? = null  // TD-00009: 新版View
@@ -1905,6 +1909,8 @@ class FloatingWindowService : Service() {
             setOnContactSelectedListener { contactId ->
                 currentUiState = currentUiState.copy(selectedContactId = contactId)
                 floatingWindowPreferences.saveLastContactId(contactId)
+                // 【TD-00016】联系人选择后加载对应的主题
+                loadTopicForContact(contactId)
             }
 
             setOnSubmitListener { tab, contactId, text ->
@@ -1941,6 +1947,12 @@ class FloatingWindowService : Service() {
                 android.util.Log.d("FloatingWindowService", "收到最小化回调，准备调用minimizeFloatingViewV2()")
                 minimizeFloatingViewV2()
             }
+            
+            // 【TD-00016】主题设置按钮点击回调
+            setOnTopicClickListener {
+                android.util.Log.d("FloatingWindowService", "主题按钮被点击")
+                showTopicSettingDialog()
+            }
         }
 
         // 加载联系人列表
@@ -1952,6 +1964,9 @@ class FloatingWindowService : Service() {
                 android.util.Log.e("FloatingWindowService", "加载联系人失败", e)
             }
         }
+        
+        // 【TD-00016】监听联系人选择变化，更新主题显示
+        // 注意：这里需要在联系人选择后加载对应的主题
 
         // 恢复状态
         val savedState = floatingWindowPreferences.restoreUiStateAsObject()
@@ -2561,6 +2576,8 @@ class FloatingWindowService : Service() {
             setOnContactSelectedListener { contactId ->
                 currentUiState = currentUiState.copy(selectedContactId = contactId)
                 floatingWindowPreferences.saveLastContactId(contactId)
+                // 【TD-00016】联系人选择后加载对应的主题
+                loadTopicForContact(contactId)
             }
 
             setOnSubmitListener { tab, contactId, text ->
@@ -2596,6 +2613,12 @@ class FloatingWindowService : Service() {
             setOnMinimizeListener {
                 android.util.Log.d("FloatingWindowService", "收到最小化回调")
                 minimizeFloatingViewV2()
+            }
+            
+            // 【TD-00016】主题设置按钮点击回调
+            setOnTopicClickListener {
+                android.util.Log.d("FloatingWindowService", "主题按钮被点击（setupFloatingViewV2Callbacks）")
+                showTopicSettingDialog()
             }
         }
     }
@@ -2829,6 +2852,230 @@ class FloatingWindowService : Service() {
 
         // 清除最小化状态
         floatingWindowPreferences.clearMinimizeState()
+    }
+
+    // ==================== 【TD-00016】对话主题功能 ====================
+    
+    /**
+     * 加载联系人的当前主题
+     * 
+     * 当用户选择联系人时调用，从数据库加载该联系人的活跃主题并更新UI显示
+     * 
+     * @param contactId 联系人ID
+     */
+    private fun loadTopicForContact(contactId: String) {
+        serviceScope.launch {
+            try {
+                android.util.Log.d("FloatingWindowService", "加载联系人主题: contactId=$contactId")
+                val topic = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    topicRepository.getActiveTopic(contactId)
+                }
+                
+                // 更新UI显示
+                val topicContent = topic?.content
+                floatingViewV2?.updateTopicDisplay(topicContent)
+                android.util.Log.d("FloatingWindowService", "主题加载完成: ${topicContent ?: "无主题"}")
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "加载主题失败", e)
+                floatingViewV2?.updateTopicDisplay(null)
+            }
+        }
+    }
+    
+    /**
+     * 显示主题设置对话框
+     * 
+     * 当用户点击主题按钮时调用，显示一个对话框让用户设置或编辑当前对话主题
+     */
+    private fun showTopicSettingDialog() {
+        val contactId = currentUiState.selectedContactId
+        if (contactId == null) {
+            android.widget.Toast.makeText(
+                this,
+                "请先选择联系人",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        serviceScope.launch {
+            try {
+                // 获取当前主题
+                val currentTopic = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    topicRepository.getActiveTopic(contactId)
+                }
+                val currentContent = currentTopic?.content ?: ""
+                
+                // 在主线程显示对话框
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    showTopicInputDialog(contactId, currentContent)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "获取当前主题失败", e)
+                // 即使获取失败也显示对话框，让用户可以设置新主题
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    showTopicInputDialog(contactId, "")
+                }
+            }
+        }
+    }
+    
+    /**
+     * 显示主题输入对话框
+     * 
+     * @param contactId 联系人ID
+     * @param currentContent 当前主题内容（用于编辑）
+     */
+    private fun showTopicInputDialog(contactId: String, currentContent: String) {
+        val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_GiveLove)
+        
+        // 创建输入框
+        val inputEditText = android.widget.EditText(themedContext).apply {
+            hint = "例如：讨论周末聚会安排"
+            setText(currentContent)
+            setSelection(currentContent.length)
+            maxLines = 3
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            setPadding(48, 32, 48, 32)
+        }
+        
+        // 创建对话框
+        val dialog = android.app.AlertDialog.Builder(themedContext)
+            .setTitle("设置对话主题")
+            .setMessage("设置当前对话的主题，AI会根据主题提供更精准的建议")
+            .setView(inputEditText)
+            .setPositiveButton("保存") { _, _ ->
+                val newContent = inputEditText.text.toString().trim()
+                if (newContent.isNotBlank()) {
+                    saveTopic(contactId, newContent)
+                } else if (currentContent.isNotBlank()) {
+                    // 如果清空了内容，则清除主题
+                    clearTopic(contactId)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .apply {
+                // 如果有现有主题，添加清除按钮
+                if (currentContent.isNotBlank()) {
+                    setNeutralButton("清除主题") { _, _ ->
+                        clearTopic(contactId)
+                    }
+                }
+            }
+            .create()
+        
+        // 设置对话框窗口类型为悬浮窗
+        dialog.window?.setType(
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE
+            }
+        )
+        
+        dialog.show()
+        
+        // 自动弹出键盘
+        inputEditText.requestFocus()
+        inputEditText.postDelayed({
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.showSoftInput(inputEditText, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }, 200)
+    }
+    
+    /**
+     * 保存对话主题
+     * 
+     * @param contactId 联系人ID
+     * @param content 主题内容
+     */
+    private fun saveTopic(contactId: String, content: String) {
+        serviceScope.launch {
+            try {
+                android.util.Log.d("FloatingWindowService", "保存主题: contactId=$contactId, content=$content")
+                
+                val topic = com.empathy.ai.domain.model.ConversationTopic(
+                    id = java.util.UUID.randomUUID().toString(),
+                    contactId = contactId,
+                    content = content,
+                    isActive = true,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
+                
+                val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    topicRepository.setTopic(topic)
+                }
+                
+                result.onSuccess {
+                    android.util.Log.d("FloatingWindowService", "主题保存成功")
+                    // 更新UI显示
+                    floatingViewV2?.updateTopicDisplay(content)
+                    android.widget.Toast.makeText(
+                        this@FloatingWindowService,
+                        "主题已设置",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }.onFailure { error ->
+                    android.util.Log.e("FloatingWindowService", "主题保存失败", error)
+                    android.widget.Toast.makeText(
+                        this@FloatingWindowService,
+                        "保存失败：${error.message}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "保存主题异常", e)
+                android.widget.Toast.makeText(
+                    this@FloatingWindowService,
+                    "保存失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+    
+    /**
+     * 清除对话主题
+     * 
+     * @param contactId 联系人ID
+     */
+    private fun clearTopic(contactId: String) {
+        serviceScope.launch {
+            try {
+                android.util.Log.d("FloatingWindowService", "清除主题: contactId=$contactId")
+                
+                val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    topicRepository.clearTopic(contactId)
+                }
+                
+                result.onSuccess {
+                    android.util.Log.d("FloatingWindowService", "主题清除成功")
+                    // 更新UI显示
+                    floatingViewV2?.updateTopicDisplay(null)
+                    android.widget.Toast.makeText(
+                        this@FloatingWindowService,
+                        "主题已清除",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }.onFailure { error ->
+                    android.util.Log.e("FloatingWindowService", "主题清除失败", error)
+                    android.widget.Toast.makeText(
+                        this@FloatingWindowService,
+                        "清除失败：${error.message}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FloatingWindowService", "清除主题异常", e)
+                android.widget.Toast.makeText(
+                    this@FloatingWindowService,
+                    "清除失败：${e.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     companion object {

@@ -77,6 +77,10 @@ sealed class ContactDetailUiEvent {
     data class UpdateNewTagType(val type: TagType) : ContactDetailUiEvent()
     data object ConfirmAddTag : ContactDetailUiEvent()
 
+    // ========== 对话主题事件（TD-00016） ==========
+    data object ShowTopicDialog : ContactDetailUiEvent()
+    data object HideTopicDialog : ContactDetailUiEvent()
+
     // ========== 编辑功能事件（TD-00012） ==========
     // 事实编辑
     data class StartEditFact(val fact: Fact) : ContactDetailUiEvent()

@@ -145,6 +145,12 @@ class ContactDetailViewModel @Inject constructor(
         } else if (event is ContactDetailUiEvent.ConfirmAddTag) {
             confirmAddTag()
         }
+        // === 对话主题事件（TD-00016） ===
+        else if (event is ContactDetailUiEvent.ShowTopicDialog) {
+            showTopicDialog()
+        } else if (event is ContactDetailUiEvent.HideTopicDialog) {
+            hideTopicDialog()
+        }
         // === 字段验证事件 ===
         else if (event is ContactDetailUiEvent.ValidateName) {
             validateName()
@@ -736,6 +742,26 @@ class ContactDetailViewModel @Inject constructor(
                 newTagContent = "",
                 newTagType = TagType.STRATEGY_GREEN,
                 newTagContentError = null
+            ) 
+        }
+    }
+
+    // === 对话主题对话框管理方法（TD-00016） ===
+
+    private fun showTopicDialog() {
+        _uiState.update { 
+            it.copy(
+                showTopicDialog = true,
+                topicInputContent = it.currentTopic?.content ?: ""
+            ) 
+        }
+    }
+
+    private fun hideTopicDialog() {
+        _uiState.update { 
+            it.copy(
+                showTopicDialog = false,
+                topicInputContent = ""
             ) 
         }
     }

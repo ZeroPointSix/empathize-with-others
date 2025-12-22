@@ -1,0 +1,157 @@
+# Kiro Hooks 配置文件
+# 此文件定义了所有hooks的行为和参数
+
+# 全局配置
+global:
+  # 是否启用hooks系统
+  enabled: true
+  # hooks执行超时时间（毫秒）
+  timeout: 30000
+  # 最大并发hooks数量
+  max_concurrent: 5
+  # 日志级别
+  log_level: INFO
+
+# 用户意图分析Hook
+user-intent-analysis:
+  # 是否启用
+  enabled: true
+  # 触发事件
+  event: onUserInput
+  # 执行优先级（1-10，数字越大优先级越高）
+  priority: 10
+  # 强制读取规则文件
+  force-read-rules: true
+  # 最大输入长度（字符）
+  max-input-length: 10000
+  # 启用安全检查
+  security-check: true
+  # 启用冲突检测
+  conflict-detection: true
+  # 启用依赖检查
+  dependency-check: true
+  # 自动分配代理（需要用户确认）
+  auto-assign-agent: false
+  # 缓存规则文件内容（秒）
+  cache-duration: 300
+  # 安全配置
+  security:
+    # 允许的文件路径模式
+    allowed_paths:
+      - "Rules/RulesReadMe.md"
+      - "WORKSPACE.md"
+      - ".kiro/settings/hooks.yaml"
+    # 禁止的关键词
+    blocked_keywords:
+      - "system("
+      - "exec("
+      - "eval("
+      - "import os"
+      - "subprocess"
+      - "rm -rf"
+      - "del /"
+    # 最大分析时间（毫秒）
+    max-analysis-time: 5000
+
+# 自动编译检查Hook
+auto-compile-check:
+  enabled: true
+  event: onFileSave
+  file-pattern: "**/*.kt"
+  priority: 5
+  # 只检查语法，不执行完整构建
+  syntax-only: true
+  # 显示错误数量限制
+  max-errors: 10
+
+# 文档自动审查Hook
+auto-doc-review:
+  enabled: true
+  event: onFileSave
+  file-pattern: "文档/开发文档/**/*.md"
+  priority: 6
+  # 自动修复格式问题
+  auto-fix: false
+  # 自动生成DR报告
+  generate-dr: false
+  # 发现问题时通知
+  notify-on-issues: true
+  # 支持的文档类型
+  doc-types:
+    - PRD
+    - FD
+    - TDD
+    - TD
+    - IMPL
+    - BUG
+    - CR
+    - DR
+
+# UseCase测试提醒Hook
+auto-test-reminder:
+  enabled: true
+  event: onFileSave
+  file-pattern: "**/domain/usecase/*.kt"
+  priority: 4
+  # 自动生成测试骨架
+  auto-generate-test: false
+  # 测试文件路径模板
+  test-path-template: "app/src/test/java/com/empathy/ai/{package}/{name}Test.kt"
+
+# 会话结束自动总结Hook
+session-end-summary:
+  enabled: true
+  event: onSessionEnd
+  priority: 8
+  # 自动审查新文档
+  auto-doc-review: true
+  # 更新WORKSPACE.md
+  update-workspace: true
+  # 检查Git状态
+  git-status-check: true
+  # 统计代码变更
+  code-stats: true
+  # 扫描的文档目录
+  doc-dirs:
+    - "文档/开发文档/PRD"
+    - "文档/开发文档/FD"
+    - "文档/开发文档/TDD"
+    - "文档/开发文档/TD"
+    - "文档/开发文档/IMPL"
+    - "文档/开发文档/BUG"
+
+# Hook执行顺序配置
+execution-order:
+  # 用户输入时的执行顺序
+  onUserInput:
+    - user-intent-analysis
+  # 文件保存时的执行顺序
+  onFileSave:
+    - auto-compile-check
+    - auto-doc-review
+    - auto-test-reminder
+  # 会话结束时的执行顺序
+  onSessionEnd:
+    - session-end-summary
+
+# 错误处理配置
+error-handling:
+  # 是否在hook失败时继续执行其他hooks
+  continue-on-error: true
+  # 错误日志路径
+  error-log-path: ".kiro/logs/hooks-errors.log"
+  # 最大错误日志大小（MB）
+  max-log-size: 10
+  # 是否发送错误通知
+  notify-on-error: true
+
+# 性能监控配置
+performance:
+  # 是否启用性能监控
+  enabled: true
+  # 慢查询阈值（毫秒）
+  slow-threshold: 1000
+  # 性能日志路径
+  perf-log-path: ".kiro/logs/hooks-performance.log"
+  # 是否记录详细统计
+  detailed-stats: true
