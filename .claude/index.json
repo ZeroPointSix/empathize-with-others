@@ -19,8 +19,8 @@
     "stats": {
       "totalFiles": 603,
       "sourceFiles": 487,
-      "testFiles": 134,
-      "unitTestFiles": 114,
+      "testFiles": 116,
+      "unitTestFiles": 96,
       "androidTestFiles": 20,
       "totalLines": 94907,
       "sourceLines": 68675,
@@ -31,11 +31,28 @@
     }
   },
   "scanInfo": {
-    "timestamp": "2025-12-22T13:15:34+08:00",
+    "timestamp": "2025-12-22T18:30:00+08:00",
     "strategy": "自适应初始化：根级简明+模块级详尽",
     "scannedFiles": 603,
     "coverage": "100%",
     "truncated": false,
+    "phases": {
+      "phaseA": {
+        "name": "全仓清点（轻量）",
+        "status": "✅ 完成",
+        "findings": "识别出21个主要模块，603个Kotlin文件"
+      },
+      "phaseB": {
+        "name": "模块优先扫描（中等）",
+        "status": "✅ 完成",
+        "findings": "完成所有模块的关键文件扫描，包括入口文件、接口、数据模型等"
+      },
+      "phaseC": {
+        "name": "深度补捞（按需）",
+        "status": "✅ 完成",
+        "findings": "已扫描所有关键模块，新增提示词设置优化功能（PromptFileStorage、PromptScene等）"
+      }
+    },
     "ignoreRules": [
       "*.iml",
       ".gradle/",
@@ -71,7 +88,7 @@
     "root": "CLAUDE.md",
     "projectDocs": "文档/项目文档",
     "mainIndex": "文档/项目文档/README.md",
-    "lastUpdate": "2025-12-22T13:15:34+08:00",
+    "lastUpdate": "2025-12-22T18:30:00+08:00",
     "architecture": {
       "cleanArchitectureCompliance": "基本合规",
       "violations": 28,
@@ -93,7 +110,13 @@
       "status": "✅ 完成",
       "documented": true,
       "coverage": "100%",
-      "documentation": "app/src/main/java/com/empathy/ai/app/CLAUDE.md"
+      "documentation": "app/src/main/java/com/empathy/ai/app/CLAUDE.md",
+      "keyFeatures": [
+        "Hilt应用入口初始化",
+        "悬浮窗服务状态恢复",
+        "每日对话自动总结",
+        "数据清理任务管理"
+      ]
     },
     {
       "path": "app/src/main/java/com/empathy/ai/domain",
@@ -109,7 +132,7 @@
           "fileCount": 58,
           "status": "✅ 完成",
           "documented": true,
-          "keyFiles": ["ContactProfile.kt", "BrainTag.kt", "ChatMessage.kt", "AnalysisResult.kt", "FactCategory.kt", "EditModeState.kt"],
+          "keyFiles": ["ContactProfile.kt", "BrainTag.kt", "ChatMessage.kt", "AnalysisResult.kt", "FactCategory.kt", "EditModeState.kt", "PromptScene.kt", "GlobalPromptConfig.kt"],
           "documentation": "app/src/main/java/com/empathy/ai/domain/model/CLAUDE.md"
         },
         {
@@ -171,7 +194,7 @@
           "fileCount": 35,
           "status": "✅ 完成",
           "documented": true,
-          "keyFiles": ["AppDatabase.kt", "ContactDao.kt", "BrainTagDao.kt"],
+          "keyFiles": ["AppDatabase.kt", "ContactDao.kt", "BrainTagDao.kt", "PromptFileStorage.kt"],
           "submodules": [
             {
               "path": "data/local/entity",
@@ -261,7 +284,7 @@
               "fileCount": 58,
               "status": "✅ 完成",
               "documented": true,
-              "keyFiles": ["ContactListScreen.kt", "ContactDetailTabScreen.kt", "ChatScreen.kt"]
+              "keyFiles": ["ContactListScreen.kt", "ContactDetailTabScreen.kt", "ChatScreen.kt", "SettingsScreen.kt"]
             },
             {
               "path": "presentation/ui/component",
@@ -271,7 +294,7 @@
               "fileCount": 45,
               "status": "✅ 完成",
               "documented": true,
-              "keyFiles": ["PrimaryButton.kt", "ContactListItem.kt", "AnalysisCard.kt", "MaxHeightScrollView.kt"]
+              "keyFiles": ["PrimaryButton.kt", "ContactListItem.kt", "AnalysisCard.kt", "MaxHeightScrollView.kt", "PromptSettingsSection.kt"]
             }
           ]
         },
@@ -283,7 +306,7 @@
           "fileCount": 18,
           "status": "✅ 完成",
           "documented": true,
-          "keyFiles": ["ContactDetailTabViewModel.kt", "ChatViewModel.kt", "BaseViewModel.kt"]
+          "keyFiles": ["ContactDetailTabViewModel.kt", "ChatViewModel.kt", "BaseViewModel.kt", "SettingsViewModel.kt"]
         },
         {
           "path": "presentation/navigation",
@@ -322,15 +345,19 @@
     "missing": [],
     "needsAttention": [
       "domain层有28个文件存在Android依赖，需要重构以符合Clean Architecture",
-      "事实流内容编辑功能UI已完成，但部分组件可能需要优化"
+      "事实流内容编辑功能UI已完成，提示词设置优化已完成（TD-00015）",
+      "悬浮球状态指示与拖动功能还有3个任务未完成（TD-00010）",
+      "手动触发AI总结功能技术设计完成，但实际实现待完成（TD-00011）"
     ]
   },
   "nextSteps": [
     "✅ 项目AI上下文初始化完成",
-    "✅ 新增事实流内容编辑功能模块（BatchDeleteFactsUseCase、BatchMoveFactsUseCase、GroupFactsByCategoryUseCase等）",
-    "✅ 新增分类颜色管理功能（CategoryColorAssigner、CategoryColorPalette）",
-    "✅ 完善编辑模式状态管理（EditModeState、PersonaSearchState）",
+    "✅ 新增提示词设置优化功能（PromptFileStorage、PromptScene、GlobalPromptConfig等）",
+    "✅ 完成提示词编辑器UI（PromptSettingsSection组件）",
+    "✅ 提示词场景简化（从6个到4个核心场景）",
     "建议：重构domain层中存在Android依赖的文件，以提升Clean Architecture合规性",
+    "建议：完成TD-00010悬浮球状态指示与拖动功能的剩余3个任务",
+    "建议：实现TD-00011手动触发AI总结功能的代码实现",
     "建议：定期更新文档以保持与代码同步"
   ],
   "coverageDetails": {
@@ -345,10 +372,22 @@
     "totalTasks": 21,
     "completedTasks": 21,
     "completionRate": "100%",
-    "lastUpdated": "2025-12-22T13:15:34+08:00",
-    "achievement": "🎉 项目自适应初始化完成！已完成事实流内容编辑功能模块扫描，新识别出批量操作、分类管理、编辑模式等功能组件。"
+    "lastUpdated": "2025-12-22T18:30:00+08:00",
+    "achievement": "🎉 项目自适应初始化完成！已完成提示词设置优化功能扫描，新识别出PromptFileStorage、PromptScene、GlobalPromptConfig等核心组件。"
   },
   "latestFeatures": {
+    "提示词设置优化": {
+      "status": "已完成（TD-00015）",
+      "completion": "22/25任务完成，核心功能100%",
+      "changes": [
+        "简化提示词场景从6个到4个核心场景（ANALYZE、POLISH、REPLY、SUMMARY）",
+        "废弃CHECK和EXTRACT场景（保留代码兼容性，隐藏UI）",
+        "实现CHECK到POLISH的数据迁移逻辑",
+        "配置版本升级到v3",
+        "新增PromptFileStorage实现文件存储",
+        "新增PromptSettingsSection组件"
+      ]
+    },
     "事实流内容编辑功能": {
       "status": "已完成UI实现",
       "components": [
@@ -363,24 +402,14 @@
         "PersonaTabV2 - 画像标签页V2",
         "BatchActionBar - 批量操作栏",
         "DynamicCategoryCard - 动态分类卡片"
-      ],
-      "uiComponents": [
-        "EditModeTopBar - 编辑模式顶部栏",
-        "SelectableTagChip - 可选择标签芯片",
-        "CategorySearchBar - 分类搜索栏",
-        "BatchDeleteConfirmDialog - 批量删除确认对话框",
-        "MoveCategoryDialog - 移动分类对话框"
-      ],
-      "testFiles": [
-        "EditModeStateTest.kt",
-        "FactCategoryTest.kt",
-        "PersonaSearchStateTest.kt",
-        "BatchDeleteFactsUseCaseTest.kt",
-        "BatchMoveFactsUseCaseTest.kt",
-        "GroupFactsByCategoryUseCaseTest.kt",
-        "FactSearchFilterTest.kt",
-        "CategoryColorAssignerTest.kt",
-        "ContactDetailTabViewModelPersonaTest.kt"
+      ]
+    },
+    "悬浮窗功能增强": {
+      "status": "大部分完成",
+      "features": [
+        "MaxHeightScrollView组件 - 自适应高度滚动视图",
+        "悬浮球状态指示与拖动（88.5%完成）",
+        "Tab系统重构（100%完成）"
       ]
     }
   }

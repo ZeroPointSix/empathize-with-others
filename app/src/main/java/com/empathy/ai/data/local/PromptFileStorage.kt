@@ -1,6 +1,7 @@
 package com.empathy.ai.data.local
 
 import android.content.Context
+import android.util.Log
 import com.empathy.ai.di.IoDispatcher
 import com.empathy.ai.domain.model.GlobalPromptConfig
 import com.empathy.ai.domain.model.PromptError
@@ -22,6 +23,8 @@ import javax.inject.Singleton
  * 提示词JSON文件存储
  *
  * 负责全局提示词配置的读写，支持内存缓存和自动备份
+ *
+ * @see TDD-00015 提示词设置优化技术设计
  */
 @Singleton
 class PromptFileStorage @Inject constructor(
@@ -31,6 +34,7 @@ class PromptFileStorage @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     companion object {
+        private const val TAG = "PromptFileStorage"
         private const val PROMPTS_DIR = "prompts"
         private const val GLOBAL_PROMPTS_FILE = "global_prompts.json"
 
@@ -40,8 +44,9 @@ class PromptFileStorage @Inject constructor(
          * 版本历史：
          * - v1: 初始版本，用户提示词包含变量占位符
          * - v2: 三层分离架构，用户提示词不再包含变量占位符
+         * - v3: 简化为4个场景，CHECK合并到POLISH，EXTRACT隐藏
          */
-        private const val CURRENT_CONFIG_VERSION = 2
+        private const val CURRENT_CONFIG_VERSION = 3
 
         /**
          * 旧版本提示词中的变量占位符模式
@@ -72,6 +77,7 @@ class PromptFileStorage @Inject constructor(
      *
      * 优先从缓存读取，缓存未命中则从文件读取
      * 文件不存在时自动创建默认配置
+     * 自动执行版本迁移
      *
      * @return 全局配置或错误
      */
@@ -98,16 +104,97 @@ class PromptFileStorage @Inject constructor(
                 // 检查是否发生了迁移（版本号变化）
                 val originalVersion = extractVersionFromJson(json)
                 if (originalVersion < CURRENT_CONFIG_VERSION) {
+                    // 执行迁移
+                    val migratedConfig = migrateIfNeeded(config, originalVersion)
                     // 迁移后自动保存，确保下次读取时不需要再次迁移
-                    writeGlobalConfigInternal(config)
+                    writeGlobalConfigInternal(migratedConfig)
+                    cachedConfig = migratedConfig
+                    Log.i(TAG, "配置已迁移: v$originalVersion -> v${migratedConfig.version}")
+                    return@withContext Result.success(migratedConfig)
                 }
 
                 cachedConfig = config
                 Result.success(config)
             } catch (e: Exception) {
+                Log.e(TAG, "读取配置失败", e)
                 tryRestoreFromBackup()
             }
         }
+    }
+
+    /**
+     * 执行必要的迁移
+     *
+     * @param config 当前配置
+     * @param fromVersion 原始版本号
+     * @return 迁移后的配置
+     */
+    private fun migrateIfNeeded(config: GlobalPromptConfig, fromVersion: Int): GlobalPromptConfig {
+        var migratedConfig = config
+
+        // 迁移版本2 -> 3：合并CHECK到POLISH
+        if (fromVersion < 3) {
+            migratedConfig = migrateCheckToPolish(migratedConfig)
+            Log.i(TAG, "执行迁移 v$fromVersion -> v3: CHECK合并到POLISH")
+        }
+
+        return migratedConfig.copy(version = CURRENT_CONFIG_VERSION)
+    }
+
+    /**
+     * 将CHECK场景的自定义提示词合并到POLISH
+     *
+     * 迁移规则：
+     * - 如果CHECK有自定义内容（非空且非默认值），追加到POLISH
+     * - 迁移后更新版本号
+     * - 保留原有POLISH内容
+     *
+     * @param config 原配置
+     * @return 迁移后的配置
+     */
+    @Suppress("DEPRECATION")
+    private fun migrateCheckToPolish(config: GlobalPromptConfig): GlobalPromptConfig {
+        val checkConfig = config.prompts[PromptScene.CHECK]
+        val polishConfig = config.prompts[PromptScene.POLISH]
+
+        // 如果CHECK有自定义内容且不是默认值（空字符串）
+        if (checkConfig != null &&
+            checkConfig.userPrompt.isNotBlank() &&
+            checkConfig.userPrompt != DefaultPrompts.getDefault(PromptScene.CHECK)
+        ) {
+            // 合并到POLISH
+            val mergedPrompt = buildString {
+                // 保留POLISH原有内容
+                val existingPolish = polishConfig?.userPrompt
+                    ?: DefaultPrompts.getDefault(PromptScene.POLISH)
+                if (existingPolish.isNotBlank()) {
+                    append(existingPolish)
+                    appendLine()
+                    appendLine()
+                }
+                appendLine("【原安全检查指令（已合并）】")
+                append(checkConfig.userPrompt)
+            }
+
+            val updatedPolishConfig = (polishConfig ?: ScenePromptConfig(
+                userPrompt = DefaultPrompts.getDefault(PromptScene.POLISH),
+                enabled = true
+            )).copy(userPrompt = mergedPrompt)
+
+            Log.i(TAG, "CHECK自定义内容已合并到POLISH")
+            
+            // 移除废弃场景，只保留活跃场景
+            val updatedPrompts = config.prompts
+                .filterKeys { !it.isDeprecated }
+                .toMutableMap()
+            updatedPrompts[PromptScene.POLISH] = updatedPolishConfig
+            
+            return config.copy(prompts = updatedPrompts)
+        }
+
+        // 没有需要合并的内容，只移除废弃场景
+        val updatedPrompts = config.prompts.filterKeys { !it.isDeprecated }
+        return config.copy(prompts = updatedPrompts)
     }
 
     /**
@@ -131,6 +218,7 @@ class PromptFileStorage @Inject constructor(
                     cachedConfig = config
                     Result.success(Unit)
                 } catch (e: Exception) {
+                    Log.e(TAG, "保存配置失败", e)
                     Result.failure(PromptError.StorageError("保存配置失败", e))
                 }
             }
@@ -189,7 +277,7 @@ class PromptFileStorage @Inject constructor(
             val promptsMap = rootMap["prompts"] as? Map<String, Map<String, Any>> ?: emptyMap()
 
             // 检测是否需要迁移（旧版本数据）
-            val needsMigration = version < CURRENT_CONFIG_VERSION
+            val needsLegacyMigration = version < 2
 
             val prompts = promptsMap.mapNotNull { (key, value) ->
                 val scene = try {
@@ -202,7 +290,7 @@ class PromptFileStorage @Inject constructor(
                 val enabled = value["enabled"] as? Boolean ?: true
 
                 // 迁移逻辑：如果是旧版本且包含变量占位符，清空用户提示词
-                if (needsMigration && containsLegacyVariables(userPrompt)) {
+                if (needsLegacyMigration && containsLegacyVariables(userPrompt)) {
                     userPrompt = ""
                 }
 
@@ -217,13 +305,14 @@ class PromptFileStorage @Inject constructor(
                 scene to ScenePromptConfig(userPrompt, enabled, history)
             }.toMap()
 
-            // 返回迁移后的配置（使用新版本号）
+            // 返回解析后的配置（保持原版本号，迁移在外部处理）
             GlobalPromptConfig(
-                version = if (needsMigration) CURRENT_CONFIG_VERSION else version,
+                version = version,
                 lastModified = lastModified,
                 prompts = prompts
             )
         } catch (e: Exception) {
+            Log.e(TAG, "解析配置JSON失败", e)
             null
         }
     }
@@ -263,6 +352,7 @@ class PromptFileStorage @Inject constructor(
         }
 
         // 备份恢复失败，创建默认配置
+        Log.w(TAG, "备份恢复失败，创建默认配置")
         val defaultConfig = GlobalPromptConfig.createDefault { scene ->
             DefaultPrompts.getDefault(scene)
         }

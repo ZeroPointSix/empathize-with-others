@@ -71,6 +71,32 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 3. **不要**忘记处理 Result.failure 情况
 4. **不要**在 Composable 中执行耗时操作
 
+## 最新架构规范实践
+
+### Clean Architecture 层级依赖规则
+- **Domain层**：不依赖任何其他层级，纯Kotlin代码
+- **Data层**：只依赖Domain层，实现Repository接口
+- **Presentation层**：只依赖Domain层，通过ViewModel调用UseCase
+- **DI层**：管理所有层级的依赖注入
+
+### 提示词系统最佳实践（TD-00015已完成）
+- 使用4个核心场景：ANALYZE、POLISH、REPLY、SUMMARY
+- 废弃场景（CHECK、EXTRACT）保留代码兼容性，隐藏UI
+- GlobalPromptConfig版本管理，当前版本v3
+- 使用PromptFileStorage进行文件管理和迁移
+
+### 悬浮窗架构最佳实践
+- 使用FloatingWindowServiceV2进行生命周期管理
+- 通过SessionContextService实现三种模式上下文共享
+- 使用MaxHeightScrollView防止内容过长导致按钮不可见
+- 通过FloatingBubbleState管理悬浮球状态显示
+
+### 数据库迁移最佳实践
+- 使用Room的Migration API进行增量式迁移
+- 导出Schema文件到$projectDir/schemas目录
+- 为每个Migration编写单元测试
+- 避免使用fallbackToDestructiveMigration()
+
 ## 文档位置
 
 - 产品概览：`.kiro/steering/product.md`

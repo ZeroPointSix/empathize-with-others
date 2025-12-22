@@ -3,6 +3,7 @@ package com.empathy.ai.presentation.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.repository.SettingsRepository
 import com.empathy.ai.domain.util.FloatingWindowManager
 import com.empathy.ai.presentation.ui.screen.settings.SettingsUiEvent
@@ -25,6 +26,7 @@ import javax.inject.Inject
  * 3. 调用 Repository 保存和读取设置
  * 4. 管理 API Key 的安全存储
  * 5. 管理悬浮窗权限和服务
+ * 6. 提供提示词场景列表（TD-00015）
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -39,6 +41,14 @@ class SettingsViewModel @Inject constructor(
 
     // 公开不可变状态
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+    
+    /**
+     * 获取设置界面显示的场景列表（按预定义顺序）
+     * 只返回4个核心场景：ANALYZE、POLISH、REPLY、SUMMARY
+     *
+     * @see TDD-00015 提示词设置优化技术设计
+     */
+    val promptScenesOrdered: List<PromptScene> = PromptScene.SETTINGS_SCENE_ORDER
     
     // 处理状态标志
     private var isProcessingFloatingWindowToggle = false

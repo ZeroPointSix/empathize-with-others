@@ -1,6 +1,6 @@
 # 设置功能开发规范
 
-> 最后更新: 2025-12-20 | 更新者: Claude
+> 最后更新: 2025-12-22 | 更新者: Roo
 
 ## 🔴 必读文档
 
@@ -36,11 +36,18 @@
    - 应用版本号
    - 应用名称和简介
 
-5. **历史对话计数设置** - 🆕 新增功能
+5. **历史对话计数设置** - ✅ 已完成
    - 显示历史对话总数统计
    - 支持清除历史对话记录
    - 确认对话框防止误操作
    - 集成HistoryConversationCountSection组件
+
+6. **提示词设置优化** - ✅ 已完成（TD-00015）
+   - 显示4个核心场景（分析、润色、回复、总结）
+   - 隐藏废弃场景（安全检查、信息提取）
+   - 点击场景项跳转到提示词编辑器
+   - 完成数据迁移（CHECK合并到POLISH）
+   - 集成PromptSettingsSection组件
 
 ### ❌ 明确不包含（后续版本）
 
@@ -62,8 +69,9 @@ presentation/
 │   ├── SettingsScreen.kt          ✅ 已存在
 │   ├── SettingsUiState.kt         ✅ 已存在
 │   ├── SettingsUiEvent.kt         ✅ 已存在
-│   └── component/                        # 🆕 设置组件
-│       └── HistoryConversationCountSection.kt  ✅ 已存在
+│   └── component/                        # ✅ 设置组件
+│       ├── HistoryConversationCountSection.kt  ✅ 已存在
+│       └── PromptSettingsSection.kt          ✅ 已存在（TD-00015新增）
 ├── viewmodel/
 │   └── SettingsViewModel.kt       ✅ 已存在
 domain/
@@ -121,7 +129,7 @@ class SettingsViewModel @Inject constructor(
     private val floatingWindowPreferences: FloatingWindowPreferences,
     private val privacyPreferences: PrivacyPreferences,  // 🆕 注入
     private val aiProviderRepository: AiProviderRepository
-) : AndroidViewModel(application) {
+) : AndroidViewModel(getApplication()) {
     
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -349,6 +357,15 @@ fun `点击本地优先模式开关能正确切换状态`() {
    - ✅ 支持清除历史对话记录功能
    - ✅ 添加确认对话框防止误操作
    - ✅ 与SettingsViewModel正确集成
+
+8. **提示词设置优化**: 已完成（TD-00015）
+   - ✅ 简化提示词场景从6个到4个核心场景（分析、润色、回复、总结）
+   - ✅ 废弃CHECK和EXTRACT场景（保留代码兼容性，隐藏UI）
+   - ✅ 实现CHECK到POLISH的数据迁移逻辑
+   - ✅ GlobalPromptConfig版本升级到v3
+   - ✅ 新增PromptSettingsSection组件，集成到设置界面
+   - ✅ 完整测试覆盖：7个测试文件，61+个测试用例
+   - ✅ 状态：22/25任务完成（88%，核心功能100%）
 
 ### ⚠️ 待解决问题
 
