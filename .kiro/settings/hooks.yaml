@@ -12,6 +12,41 @@ global:
   # 日志级别
   log_level: INFO
 
+# 高危操作防护Hook（最高优先级）
+dangerous-action-guard:
+  enabled: true
+  event: onUserInput
+  priority: 10
+  # 高危操作关键词
+  high-risk-patterns:
+    - "删除.*(?:文件|目录|文件夹|模块)"
+    - "移除.*(?:文件|代码|模块)"
+    - "清空"
+    - "rm\\s+-rf"
+    - "git\\s+reset\\s+--hard"
+    - "git\\s+revert"
+    - "回退.*(?:版本|提交)"
+    - "撤销.*(?:更改|提交)"
+    - "DROP\\s+TABLE"
+    - "TRUNCATE"
+    - "批量.*(?:删除|修改)"
+    - "重构整个"
+  # 中危操作关键词
+  medium-risk-patterns:
+    - "覆盖.*文件"
+    - "替换.*现有"
+    - "修改.*配置"
+  # 确认方式
+  confirmation:
+    high-risk: "确认执行"
+    medium-risk: "Y"
+  # 白名单
+  whitelist:
+    - "删除临时文件"
+    - "清空缓存"
+    - "删除build目录"
+    - "清理构建"
+
 # 用户意图分析Hook
 user-intent-analysis:
   # 是否启用
@@ -98,6 +133,33 @@ auto-test-reminder:
   # 测试文件路径模板
   test-path-template: "app/src/test/java/com/empathy/ai/{package}/{name}Test.kt"
 
+# PRD文档调研触发器Hook
+prd-research-trigger:
+  enabled: true
+  event: onUserInput
+  priority: 9
+  # 触发模式（正则表达式）
+  trigger-patterns:
+    - "PRD.*(?:FD|TDD|TD|功能文档|技术设计|任务清单)"
+    - "根据PRD.*(?:编写|设计|创建|开始)"
+    - "PRD-\\d{5}.*(?:开始|实现|开发)"
+  # 调研配置
+  research:
+    default-level: 2
+    auto-execute: false
+    timeout: 15
+    use-subagent: true
+    subagent-type: context-gatherer
+  # 目标文档类型
+  doc-type-mapping:
+    FD: "功能文档"
+    TDD: "技术设计文档"
+    TD: "任务清单文档"
+  # 调研完成后行为
+  post-research:
+    load-to-context: true
+    require-confirmation: true
+
 # 会话结束自动总结Hook
 session-end-summary:
   enabled: true
@@ -119,6 +181,72 @@ session-end-summary:
     - "文档/开发文档/TD"
     - "文档/开发文档/IMPL"
     - "文档/开发文档/BUG"
+
+# BUG修复前深度分析Hook
+bug-analysis-trigger:
+  enabled: true
+  event: onUserInput
+  priority: 8
+  # 触发模式
+  trigger-patterns:
+    - "修复.*(?:问题|bug|错误)"
+    - "解决.*(?:问题|bug|错误)"
+    - "(?:报错|崩溃|异常|闪退)"
+    - "(?:不工作|失效|无响应|卡住)"
+    - "BUG[:：]"
+    - "debug"
+  # 错误日志检测
+  error-detection:
+    patterns:
+      - "Exception"
+      - "Error"
+      - "Crash"
+      - "java\\.lang\\."
+      - "at com\\.empathy\\.ai\\."
+  # 分析配置
+  analysis:
+    use-subagent: true
+    subagent-type: context-gatherer
+    timeout: 10
+    generate-doc: true
+    doc-path: "文档/开发文档/BUG"
+  # 自动修复配置
+  auto-fix:
+    enabled: false
+    require-confirmation: true
+  # 严重程度判断
+  severity:
+    high: ["崩溃", "闪退", "数据丢失", "Crash", "ANR"]
+    medium: ["功能异常", "无响应", "显示错误"]
+    low: ["UI问题", "样式问题"]
+
+# 文档编写后自动审查Hook
+auto-doc-review-after-write:
+  enabled: true
+  event: onFileSave
+  priority: 7
+  # 触发的文档类型
+  file-pattern: "文档/开发文档/{FD,TDD,TD}/**/*.md"
+  doc-types:
+    - FD
+    - TDD
+    - TD
+  # 审查配置
+  review:
+    use-subagent: true
+    subagent-type: general-task-execution
+    timeout: 10
+    generate-dr: true
+    dr-path: "文档/开发文档/DR"
+  # 自动优化配置
+  auto-fix:
+    enabled: false
+    only-critical: true
+    backup: true
+  # 通知配置
+  notification:
+    on-complete: true
+    on-critical: true
 
 # Hook执行顺序配置
 execution-order:

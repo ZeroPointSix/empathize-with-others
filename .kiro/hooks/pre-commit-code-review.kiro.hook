@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "提交前代码审查",
+  "description": "在每次提交代码前自动触发，分析已修改的代码是否符合项目规范和业界最佳实践，帮助确保代码质量",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "请你分析我们git diff里面新修改的代码判断一下是否符合行业规范和业界最佳实践,更加重要的是判断是否符合我们的项目规范和文档规划"
+  },
+  "workspaceFolderName": "Love",
+  "shortName": "pre-commit-code-review"
+}
