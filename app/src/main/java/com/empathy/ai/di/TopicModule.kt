@@ -1,5 +1,6 @@
 package com.empathy.ai.di
 
+import com.empathy.ai.data.di.IoDispatcher
 import com.empathy.ai.data.local.dao.ConversationTopicDao
 import com.empathy.ai.data.repository.TopicRepositoryImpl
 import com.empathy.ai.domain.repository.TopicRepository

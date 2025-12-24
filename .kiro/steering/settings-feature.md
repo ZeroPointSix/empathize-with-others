@@ -1,13 +1,13 @@
 # 设置功能开发规范
 
-> 最后更新: 2025-12-22 | 更新者: Roo
+> 最后更新: 2025-12-24 | 更新者: Kiro
 
 ## 🔴 必读文档
 
 **开发设置功能相关代码前，必须先阅读：**
 
 1. **[PRD-00002-设置功能需求](../../文档/开发文档/PRD/PRD-00002-设置功能需求.md)** - 完整需求文档
-2. **[Rules/WORKSPACE.md](../../Rules/WORKSPACE.md)** - 当前工作状态
+2. **[WORKSPACE.md](../../WORKSPACE.md)** - 当前工作状态
 
 ---
 
@@ -61,37 +61,40 @@
 
 ## 架构要求
 
-### 文件位置
+### 文件位置（多模块架构）
 
 ```
-presentation/
-├── ui/screen/settings/
-│   ├── SettingsScreen.kt          ✅ 已存在
-│   ├── SettingsUiState.kt         ✅ 已存在
-│   ├── SettingsUiEvent.kt         ✅ 已存在
-│   └── component/                        # ✅ 设置组件
-│       ├── HistoryConversationCountSection.kt  ✅ 已存在
-│       └── PromptSettingsSection.kt          ✅ 已存在（TD-00015新增）
-├── viewmodel/
-│   └── SettingsViewModel.kt       ✅ 已存在
-domain/
+:domain/src/main/kotlin/com/empathy/ai/domain/
 └── repository/
     └── SettingsRepository.kt      ✅ 已存在
-data/
+
+:data/src/main/kotlin/com/empathy/ai/data/
 ├── repository/settings/
 │   └── SettingsRepositoryImpl.kt  ✅ 已存在
 └── local/
     ├── FloatingWindowPreferences.kt  ✅ 已存在
     ├── PrivacyPreferences.kt         ✅ 已存在
-    ├── MemoryPreferences.kt         # 🆕 记忆偏好设置
-    └── ConversationPreferences.kt    # 🆕 对话偏好设置
+    ├── MemoryPreferences.kt          ✅ 已存在
+    ├── ConversationPreferences.kt    ✅ 已存在
+    └── UserProfilePreferences.kt     ✅ 已存在
+
+:presentation/src/main/kotlin/com/empathy/ai/presentation/
+├── ui/screen/settings/
+│   ├── SettingsScreen.kt          ✅ 已存在
+│   ├── SettingsUiState.kt         ✅ 已存在
+│   ├── SettingsUiEvent.kt         ✅ 已存在
+│   └── component/
+│       ├── HistoryConversationCountSection.kt  ✅ 已存在
+│       └── PromptSettingsSection.kt            ✅ 已存在
+└── viewmodel/
+    └── SettingsViewModel.kt       ✅ 已存在
 ```
 
 ### 关键实现点
 
 #### 1. 隐私设置持久化
 
-**已创建 `PrivacyPreferences.kt`**：
+**位置**: `data/src/main/kotlin/com/empathy/ai/data/local/PrivacyPreferences.kt`
 
 ```kotlin
 @Singleton
@@ -99,17 +102,17 @@ class PrivacyPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val prefs = context.getSharedPreferences("privacy_settings", Context.MODE_PRIVATE)
-    
+
     companion object {
         private const val KEY_DATA_MASKING = "data_masking_enabled"
         private const val KEY_LOCAL_FIRST = "local_first_mode_enabled"
     }
-    
+
     fun isDataMaskingEnabled(): Boolean = prefs.getBoolean(KEY_DATA_MASKING, true)
     fun setDataMaskingEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_DATA_MASKING, enabled).apply()
     }
-    
+
     fun isLocalFirstModeEnabled(): Boolean = prefs.getBoolean(KEY_LOCAL_FIRST, true)
     fun setLocalFirstModeEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_LOCAL_FIRST, enabled).apply()
@@ -119,7 +122,7 @@ class PrivacyPreferences @Inject constructor(
 
 #### 2. ViewModel中的持久化调用
 
-**修改 `SettingsViewModel.kt`**：
+**位置**: `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/SettingsViewModel.kt`
 
 ```kotlin
 @HiltViewModel
@@ -130,10 +133,10 @@ class SettingsViewModel @Inject constructor(
     private val privacyPreferences: PrivacyPreferences,  // 🆕 注入
     private val aiProviderRepository: AiProviderRepository
 ) : AndroidViewModel(getApplication()) {
-    
+
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
-    
+
     // 加载设置
     private fun loadSettings() {
         viewModelScope.launch {
@@ -145,21 +148,21 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
-    
+
     // 切换数据掩码
     private fun toggleDataMasking() {
         val newValue = !_uiState.value.dataMaskingEnabled
         privacyPreferences.setDataMaskingEnabled(newValue)
         _uiState.update { it.copy(dataMaskingEnabled = newValue) }
     }
-    
+
     // 切换本地优先模式
     private fun toggleLocalFirstMode() {
         val newValue = !_uiState.value.localFirstMode
         privacyPreferences.setLocalFirstModeEnabled(newValue)
         _uiState.update { it.copy(localFirstMode = newValue) }
     }
-    
+
     fun onEvent(event: SettingsUiEvent) {
         when (event) {
             is SettingsUiEvent.ToggleDataMasking -> toggleDataMasking()
@@ -185,7 +188,7 @@ class PrivacyEngine @Inject constructor(
         if (!privacyPreferences.isDataMaskingEnabled()) {
             return text  // 未启用，直接返回原文
         }
-        
+
         // 执行掩码逻辑
         val mappings = privacyRepository.getAllMappingRules()
         // 应用掩码规则...
@@ -212,7 +215,7 @@ class CheckDraftUseCase @Inject constructor(
                 return Result.success(localResult)
             }
         }
-        
+
         // 使用AI检查
         return aiRepository.checkSafety(draft)
     }
@@ -253,10 +256,10 @@ fun `数据掩码开关能正确保存和读取`() {
     // Given
     val context = ApplicationProvider.getApplicationContext<Context>()
     val preferences = PrivacyPreferences(context)
-    
+
     // When
     preferences.setDataMaskingEnabled(false)
-    
+
     // Then
     assertFalse(preferences.isDataMaskingEnabled())
 }
@@ -266,10 +269,10 @@ fun `本地优先模式开关能正确保存和读取`() {
     // Given
     val context = ApplicationProvider.getApplicationContext<Context>()
     val preferences = PrivacyPreferences(context)
-    
+
     // When
     preferences.setLocalFirstModeEnabled(false)
-    
+
     // Then
     assertFalse(preferences.isLocalFirstModeEnabled())
 }
@@ -286,10 +289,10 @@ fun `点击数据掩码开关能正确切换状态`() {
             onEvent = {}
         )
     }
-    
+
     // 点击开关
     composeTestRule.onNodeWithText("数据掩码").performClick()
-    
+
     // 验证状态已改变
     composeTestRule.onNodeWithText("已关闭").assertIsDisplayed()
 }
@@ -302,10 +305,10 @@ fun `点击本地优先模式开关能正确切换状态`() {
             onEvent = {}
         )
     }
-    
+
     // 点击开关
     composeTestRule.onNodeWithText("本地优先模式").performClick()
-    
+
     // 验证状态已改变
     composeTestRule.onNodeWithText("已关闭").assertIsDisplayed()
 }
@@ -366,6 +369,14 @@ fun `点击本地优先模式开关能正确切换状态`() {
    - ✅ 新增PromptSettingsSection组件，集成到设置界面
    - ✅ 完整测试覆盖：7个测试文件，61+个测试用例
    - ✅ 状态：22/25任务完成（88%，核心功能100%）
+
+9. **Clean Architecture多模块改造**: 已完成（TD-00017）
+   - ✅ 创建:domain模块（纯Kotlin，无Android依赖）
+   - ✅ 创建:data模块（Android Library，Room、Retrofit、Repository实现）
+   - ✅ 创建:presentation模块（Android Library，Compose UI、ViewModel）
+   - ✅ 重构:app模块（应用入口、Android服务、DI聚合）
+   - ✅ 完成65/65任务，100%完成率
+   - ✅ Release APK构建成功（4.2MB）
 
 ### ⚠️ 待解决问题
 

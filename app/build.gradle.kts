@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.ksp)  // 保留KSP用于Room和Moshi
+    alias(libs.plugins.kotlin.kapt)  // 使用KAPT处理Hilt
 }
 
 android {
@@ -97,6 +98,15 @@ android {
         arg("room.generateKotlin", "true")
     }
 
+    // KAPT配置 - 用于Hilt，解决多模块兼容性问题
+    kapt {
+        correctErrorTypes = true
+        arguments {
+            arg("dagger.fastInit", "enabled")
+            arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+        }
+    }
+
     // 单元测试配置
     // 允许Android框架方法返回默认值，避免"Method not mocked"错误
     testOptions {
@@ -121,6 +131,11 @@ android {
 }
 
 dependencies {
+    // 模块依赖
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":presentation"))
+
     // Desugaring (Java 8+ API support for minSdk=24)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
@@ -158,30 +173,29 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
 
-    // Hilt (依赖注入)
+    // Hilt (依赖注入) - 使用KAPT替代KSP，解决多模块兼容性问题
     implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    // Room (本地数据库)
+    // Room (本地数据库) - app模块需要Room用于DI配置
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
-    // Room Testing (迁移测试)
     androidTestImplementation(libs.androidx.room.testing)
 
     // Paging (分页加载)
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
 
-    // Retrofit & Networking (网络请求)
+    // Retrofit & Networking (网络请求) - app模块需要用于DI配置
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.moshi)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
 
-    // Moshi (JSON解析)
+    // Moshi (JSON解析) - app模块需要用于DI配置
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     ksp(libs.moshi.codegen)
@@ -190,7 +204,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
-    // Security (加密存储)
+    // Security (加密存储) - app模块需要用于DI配置
     implementation(libs.androidx.security.crypto)
 
     // FFmpeg Kit (音视频处理) - 暂时注释,Phase 2 添加

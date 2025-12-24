@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    BUG-00020修复：结果卡片布局重构
+    
+    设计目标：
+    1. 分析内容和回复建议放在可滚动区域
+    2. 复制和重新生成按钮固定在底部，始终可见
+    3. 滚动区域有最大高度限制，避免占满屏幕
+    
+    布局结构：
+    - 标题栏（固定）
+    - 可滚动内容区域（有最大高度限制）
+    - 按钮栏（固定在底部）
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/result_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/result_card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 标题栏（BUG-00024修复：减少padding） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp">
+
+            <!-- 结果类型图标和标题 -->
+            <TextView
+                android:id="@+id/result_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="分析结果"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold" />
+
+            <!-- 风险等级标签 -->
+            <TextView
+                android:id="@+id/risk_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_risk_badge"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- 
+            可滚动内容区域（BUG-00024最终修复）
+            
+            固定最大高度为120dp，确保按钮永远有空间显示
+            内容超出120dp时通过滚动查看
+            
+            计算依据（BUG-00024修复后）：
+            - 屏幕最小高度约600dp
+            - 固定元素：toolbar(48) + tabSwitcher(48) + contact_selector(56) + input(60) + submit(40) + 标题栏(36) + 按钮栏(48) + margin(40) ≈ 376dp
+            - 剩余空间：600 - 376 = 224dp
+            - 安全值：120dp（留有充足余量给按钮）
+        -->
+        <com.empathy.ai.presentation.ui.component.MaxHeightScrollView
+            android:id="@+id/result_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:maxHeight="120dp"
+            android:fadeScrollbars="false"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:paddingHorizontal="8dp">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+            
+                <!-- 结果内容（分析+建议） -->
+                <TextView
+                    android:id="@+id/result_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:lineSpacingMultiplier="1.4" />
+
+                <!-- 风险提示（润色场景） -->
+                <LinearLayout
+                    android:id="@+id/risk_warning_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_warning"
+                    android:padding="8dp"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚠️"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/risk_warning_text"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:textSize="12sp"
+                        android:textColor="@color/warning_text" />
+
+                </LinearLayout>
+
+                <!-- 策略说明（回复场景） -->
+                <TextView
+                    android:id="@+id/strategy_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_hint"
+                    android:textStyle="italic"
+                    android:visibility="gone" />
+                    
+            </LinearLayout>
+        </com.empathy.ai.presentation.ui.component.MaxHeightScrollView>
+
+        <!-- 分隔线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/divider" />
+
+        <!-- 操作按钮栏（BUG-00024修复：减少高度和padding，确保按钮完整显示） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:background="@color/result_card_background">
+
+            <!-- 复制按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_copy"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="复制"
+                android:textSize="12sp"
+                android:minWidth="72dp"
+                android:paddingHorizontal="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_copy"
+                app:iconSize="16dp"
+                app:iconGravity="start"
+                app:iconPadding="2dp"
+                app:cornerRadius="6dp"
+                style="@style/Widget.Material3.Button.TextButton" />
+
+            <!-- 重新生成按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_regenerate"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="重新生成"
+                android:textSize="12sp"
+                android:minWidth="88dp"
+                android:paddingHorizontal="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_refresh"
+                app:iconSize="16dp"
+                app:iconGravity="start"
+                app:iconPadding="2dp"
+                app:cornerRadius="6dp"
+                style="@style/Widget.Material3.Button.TonalButton" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

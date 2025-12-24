@@ -48,4 +48,9 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Give Love"
+
+// 模块配置
 include(":app")
+include(":domain")
+include(":data")
+include(":presentation")

@@ -1,4 +1,4 @@
-package com.empathy.ai.domain.util
+﻿package com.empathy.ai.domain.util
 
 import android.util.Log
 

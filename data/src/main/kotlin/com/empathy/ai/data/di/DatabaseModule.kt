@@ -1,0 +1,501 @@
+﻿package com.empathy.ai.data.di
+
+import android.content.Context
+import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.empathy.ai.data.local.AppDatabase
+import com.empathy.ai.data.local.dao.AiProviderDao
+import com.empathy.ai.data.local.dao.BrainTagDao
+import com.empathy.ai.data.local.dao.ContactDao
+import com.empathy.ai.data.local.dao.ConversationLogDao
+import com.empathy.ai.data.local.dao.ConversationTopicDao
+import com.empathy.ai.data.local.dao.DailySummaryDao
+import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+/**
+ * 数据库模块
+ *
+ * 提供 Room Database 和 DAO 的依赖注入配置。
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+
+    /**
+     * 数据库迁移: 版本 1 -> 2
+     * 添加 ai_providers 表
+     */
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS ai_providers (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    name TEXT NOT NULL,
+                    base_url TEXT NOT NULL,
+                    api_key_ref TEXT NOT NULL,
+                    models_json TEXT NOT NULL,
+                    default_model_id TEXT NOT NULL,
+                    is_default INTEGER NOT NULL DEFAULT 0,
+                    timeout_ms INTEGER NOT NULL DEFAULT 30000,
+                    created_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS idx_ai_providers_is_default 
+                ON ai_providers(is_default)
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 2 -> 3
+     * 为 ai_providers 表添加 timeout_ms 字段
+     */
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                ALTER TABLE ai_providers 
+                ADD COLUMN timeout_ms INTEGER NOT NULL DEFAULT 30000
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 3 -> 4
+     * 添加记忆系统相关表和字段
+     */
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 创建conversation_logs表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS conversation_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    user_input TEXT NOT NULL,
+                    ai_response TEXT,
+                    timestamp INTEGER NOT NULL,
+                    is_summarized INTEGER NOT NULL DEFAULT 0,
+                    FOREIGN KEY(contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            // 索引名称必须与 Entity @Index 注解生成的名称一致
+            // Room 自动生成格式: index_{tableName}_{columnName}
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_contact_id ON conversation_logs(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_timestamp ON conversation_logs(timestamp)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_is_summarized ON conversation_logs(is_summarized)")
+
+            // 2. 创建daily_summaries表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS daily_summaries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    summary_date TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    key_events_json TEXT NOT NULL,
+                    relationship_score INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    FOREIGN KEY(contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            // 索引名称必须与 Entity @Index 注解生成的名称一致
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_summaries_contact_id ON daily_summaries(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_daily_summaries_summary_date ON daily_summaries(summary_date)")
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS index_daily_summaries_contact_id_summary_date " +
+                    "ON daily_summaries(contact_id, summary_date)"
+            )
+
+            // 3. 添加profiles新字段
+            db.execSQL("ALTER TABLE profiles ADD COLUMN relationship_score INTEGER NOT NULL DEFAULT 50")
+            db.execSQL("ALTER TABLE profiles ADD COLUMN last_interaction_date TEXT")
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 4 -> 5
+     * 添加失败任务表
+     */
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS failed_summary_tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    summary_date TEXT NOT NULL,
+                    failure_reason TEXT NOT NULL,
+                    retry_count INTEGER NOT NULL DEFAULT 0,
+                    failed_at INTEGER NOT NULL,
+                    last_retry_at INTEGER
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_failed_contact ON failed_summary_tasks(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_failed_at ON failed_summary_tasks(failed_at)")
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 5 -> 6
+     * 添加UI扩展字段：
+     * - profiles表添加avatar_url字段
+     * - brain_tags表添加is_confirmed字段
+     */
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 为profiles表添加avatar_url字段
+            db.execSQL("ALTER TABLE profiles ADD COLUMN avatar_url TEXT")
+            
+            // 为brain_tags表添加is_confirmed字段（默认为1=true，表示已确认）
+            db.execSQL("ALTER TABLE brain_tags ADD COLUMN is_confirmed INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 6 -> 7
+     * 修复性迁移：修复 conversation_logs 表结构
+     * 
+     * 问题背景：
+     * - 某些设备上 conversation_logs 表可能缺少 timestamp 和 is_summarized 字段
+     * - 索引名称可能与 Entity 定义不匹配
+     * - 外键约束可能缺失
+     * 
+     * 修复策略：
+     * 1. 检测表结构是否完整
+     * 2. 如果不完整，重建表并迁移数据
+     * 3. 确保索引名称与 Entity @Index 注解一致
+     */
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 检查 conversation_logs 表结构
+            val cursor = db.query("PRAGMA table_info(conversation_logs)")
+            val columns = mutableSetOf<String>()
+            while (cursor.moveToNext()) {
+                columns.add(cursor.getString(1)) // column name at index 1
+            }
+            cursor.close()
+
+            // 2. 如果缺少必要字段，需要重建表
+            val needsRebuild = !columns.contains("timestamp") || !columns.contains("is_summarized")
+            
+            if (needsRebuild) {
+                // 备份旧表
+                db.execSQL("ALTER TABLE conversation_logs RENAME TO conversation_logs_backup")
+                
+                // 创建新表（完整结构）
+                db.execSQL("""
+                    CREATE TABLE conversation_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        contact_id TEXT NOT NULL,
+                        user_input TEXT NOT NULL,
+                        ai_response TEXT,
+                        timestamp INTEGER NOT NULL DEFAULT 0,
+                        is_summarized INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                
+                // 迁移数据（处理可能缺失的字段）
+                val backupColumns = mutableSetOf<String>()
+                val backupCursor = db.query("PRAGMA table_info(conversation_logs_backup)")
+                while (backupCursor.moveToNext()) {
+                    backupColumns.add(backupCursor.getString(1))
+                }
+                backupCursor.close()
+                
+                // 构建迁移SQL
+                val hasTimestamp = backupColumns.contains("timestamp")
+                val hasIsSummarized = backupColumns.contains("is_summarized")
+                
+                val timestampExpr = if (hasTimestamp) "timestamp" else "0"
+                val isSummarizedExpr = if (hasIsSummarized) "is_summarized" else "0"
+                
+                db.execSQL("""
+                    INSERT INTO conversation_logs (id, contact_id, user_input, ai_response, timestamp, is_summarized)
+                    SELECT id, contact_id, user_input, ai_response, $timestampExpr, $isSummarizedExpr
+                    FROM conversation_logs_backup
+                """.trimIndent())
+                
+                // 删除备份表
+                db.execSQL("DROP TABLE conversation_logs_backup")
+            }
+            
+            // 3. 修复索引名称（删除旧的，创建新的）
+            // 删除可能存在的旧索引（使用旧命名格式）
+            db.execSQL("DROP INDEX IF EXISTS idx_conv_contact")
+            db.execSQL("DROP INDEX IF EXISTS idx_conv_timestamp")
+            db.execSQL("DROP INDEX IF EXISTS idx_conv_summarized")
+            
+            // 创建正确名称的索引（与 Entity @Index 注解一致）
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_contact_id ON conversation_logs(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_timestamp ON conversation_logs(timestamp)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_conversation_logs_is_summarized ON conversation_logs(is_summarized)")
+            
+            // 4. 同样修复 failed_summary_tasks 表的索引
+            db.execSQL("DROP INDEX IF EXISTS idx_failed_contact")
+            db.execSQL("DROP INDEX IF EXISTS idx_failed_at")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_failed_summary_tasks_contact_id ON failed_summary_tasks(contact_id)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_failed_summary_tasks_failed_at ON failed_summary_tasks(failed_at)")
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 7 -> 8
+     * 添加提示词管理系统字段：
+     * - profiles表添加custom_prompt字段（联系人专属提示词）
+     */
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 为profiles表添加custom_prompt字段
+            db.execSQL("ALTER TABLE profiles ADD COLUMN custom_prompt TEXT DEFAULT NULL")
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 8 -> 9
+     * 扩展daily_summaries表支持手动总结功能：
+     * - 添加start_date字段（范围总结开始日期）
+     * - 添加end_date字段（范围总结结束日期）
+     * - 添加summary_type字段（总结类型：DAILY/CUSTOM_RANGE）
+     * - 添加generation_source字段（生成来源：AUTO/MANUAL）
+     * - 添加conversation_count字段（分析的对话数量）
+     * - 添加generated_at字段（生成时间戳）
+     * - 创建summary_type和generation_source索引
+     */
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 添加新字段
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN start_date TEXT DEFAULT NULL"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN end_date TEXT DEFAULT NULL"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN summary_type TEXT NOT NULL DEFAULT 'DAILY'"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN generation_source TEXT NOT NULL DEFAULT 'AUTO'"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN conversation_count INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN generated_at INTEGER NOT NULL DEFAULT 0"
+            )
+
+            // 创建新索引
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_daily_summaries_summary_type ON daily_summaries(summary_type)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_daily_summaries_generation_source ON daily_summaries(generation_source)"
+            )
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 9 -> 10
+     * 添加编辑追踪字段支持事实流内容编辑功能：
+     *
+     * profiles表新增字段：
+     * - is_name_user_modified: 姓名是否被用户修改过
+     * - is_goal_user_modified: 目标是否被用户修改过
+     * - name_last_modified_time: 姓名最后修改时间
+     * - goal_last_modified_time: 目标最后修改时间
+     * - original_name: 原始姓名
+     * - original_goal: 原始目标
+     *
+     * conversation_logs表新增字段：
+     * - is_user_modified: 是否被用户修改过
+     * - last_modified_time: 最后修改时间
+     * - original_user_input: 原始用户输入
+     *
+     * daily_summaries表新增字段：
+     * - is_user_modified: 是否被用户修改过
+     * - last_modified_time: 最后修改时间
+     * - original_content: 原始内容
+     */
+    private val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 扩展 profiles 表
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN is_name_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN is_goal_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN name_last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN goal_last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN original_name TEXT DEFAULT NULL"
+            )
+            db.execSQL(
+                "ALTER TABLE profiles ADD COLUMN original_goal TEXT DEFAULT NULL"
+            )
+
+            // 2. 扩展 conversation_logs 表
+            db.execSQL(
+                "ALTER TABLE conversation_logs ADD COLUMN is_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE conversation_logs ADD COLUMN last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE conversation_logs ADD COLUMN original_user_input TEXT DEFAULT NULL"
+            )
+
+            // 3. 扩展 daily_summaries 表
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN is_user_modified INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN last_modified_time INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "ALTER TABLE daily_summaries ADD COLUMN original_content TEXT DEFAULT NULL"
+            )
+        }
+    }
+
+    /**
+     * 数据库迁移: 版本 10 -> 11
+     * 添加对话主题功能（TD-00016）：
+     *
+     * 新增conversation_topics表：
+     * - id: 主题唯一标识（主键）
+     * - contact_id: 关联的联系人ID（外键）
+     * - content: 主题内容
+     * - created_at: 创建时间戳
+     * - updated_at: 更新时间戳
+     * - is_active: 是否为活跃主题
+     *
+     * 索引：
+     * - index_conversation_topics_contact_id: 按联系人ID查询
+     * - index_conversation_topics_contact_id_is_active: 按联系人ID和活跃状态查询
+     */
+    private val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 创建conversation_topics表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS conversation_topics (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    FOREIGN KEY (contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            // 创建索引
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS index_conversation_topics_contact_id 
+                ON conversation_topics(contact_id)
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS index_conversation_topics_contact_id_is_active 
+                ON conversation_topics(contact_id, is_active)
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
+     * 提供 AppDatabase 实例
+     *
+     * 数据库配置说明（T057/T058）：
+     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5→v6→v7→v8→v9→v10→v11）
+     * - 已移除fallbackToDestructiveMigration()，确保数据安全
+     * - 如果迁移失败，应用会抛出异常而不是删除数据
+     *
+     * 迁移历史：
+     * - v1→v2: 添加ai_providers表
+     * - v2→v3: 添加timeout_ms字段
+     * - v3→v4: 添加记忆系统表（conversation_logs, daily_summaries）
+     * - v4→v5: 添加failed_summary_tasks表
+     * - v5→v6: 添加UI扩展字段（avatar_url, is_confirmed）
+     * - v6→v7: 修复性迁移（修复conversation_logs表结构和索引名称）
+     * - v7→v8: 添加提示词管理系统字段（custom_prompt）
+     * - v8→v9: 扩展daily_summaries表支持手动总结
+     * - v9→v10: 添加编辑追踪字段支持事实流内容编辑
+     * - v10→v11: 添加conversation_topics表（对话主题功能）
+     */
+    @Provides
+    @Singleton
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "empathy_ai_database"
+        )
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+                MIGRATION_6_7,
+                MIGRATION_7_8,
+                MIGRATION_8_9,
+                MIGRATION_9_10,
+                MIGRATION_10_11
+            )
+            // T058: 已移除fallbackToDestructiveMigration()
+            // 确保数据安全，迁移失败时抛出异常而不是删除数据
+            .build()
+    }
+
+    @Provides
+    fun provideContactDao(database: AppDatabase): ContactDao = database.contactDao()
+
+    @Provides
+    fun provideBrainTagDao(database: AppDatabase): BrainTagDao = database.brainTagDao()
+
+    @Provides
+    fun provideAiProviderDao(database: AppDatabase): AiProviderDao = database.aiProviderDao()
+
+    @Provides
+    fun provideConversationLogDao(database: AppDatabase): ConversationLogDao =
+        database.conversationLogDao()
+
+    @Provides
+    fun provideDailySummaryDao(database: AppDatabase): DailySummaryDao =
+        database.dailySummaryDao()
+
+    @Provides
+    fun provideFailedSummaryTaskDao(database: AppDatabase): FailedSummaryTaskDao =
+        database.failedSummaryTaskDao()
+
+    @Provides
+    fun provideConversationTopicDao(database: AppDatabase): ConversationTopicDao =
+        database.conversationTopicDao()
+}

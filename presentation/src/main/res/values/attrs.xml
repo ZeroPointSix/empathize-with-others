@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    自定义View属性定义
+    
+    @see BUG-00018 分析模式复制/重新生成按钮不可见问题
+-->
+<resources>
+
+    <!-- MaxHeightScrollView自定义属性 -->
+    <declare-styleable name="MaxHeightScrollView">
+        <!-- 最大高度限制 -->
+        <attr name="maxHeight" format="dimension" />
+    </declare-styleable>
+
+</resources>

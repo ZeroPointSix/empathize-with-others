@@ -4,7 +4,7 @@
   "description": "在每次提交代码前自动触发，分析已修改的代码是否符合项目规范和业界最佳实践，帮助确保代码质量",
   "version": "1",
   "when": {
-    "type": "agentStop"
+    "type": "userTriggered"
   },
   "then": {
     "type": "askAgent",
