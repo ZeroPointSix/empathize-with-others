@@ -1,22 +1,13 @@
 package com.empathy.ai.di
 
-import com.empathy.ai.domain.repository.AiProviderRepository
-import com.empathy.ai.domain.repository.AiRepository
-import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
-import com.empathy.ai.domain.repository.ConversationRepository
 import com.empathy.ai.domain.repository.DailySummaryRepository
-import com.empathy.ai.domain.usecase.ManualSummaryUseCase
-import com.empathy.ai.domain.util.ContextBuilder
 import com.empathy.ai.domain.util.DateRangeValidator
-import com.empathy.ai.domain.util.PromptBuilder
 import com.empathy.ai.domain.util.SummaryConflictChecker
-import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Singleton
 
 /**
@@ -25,7 +16,10 @@ import javax.inject.Singleton
  * 提供手动触发AI总结功能所需的依赖：
  * - DateRangeValidator: 日期范围验证器
  * - SummaryConflictChecker: 冲突检测器
- * - ManualSummaryUseCase: 手动总结用例
+ *
+ * 注意：ManualSummaryUseCase已有@Inject constructor，Hilt会自动处理依赖注入。
+ *
+ * @see TDD-00017 Clean Architecture模块化改造技术设计
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -33,6 +27,8 @@ object SummaryModule {
 
     /**
      * 提供日期范围验证器
+     *
+     * DateRangeValidator没有@Inject注解，需要手动提供
      */
     @Provides
     @Singleton
@@ -44,6 +40,8 @@ object SummaryModule {
 
     /**
      * 提供冲突检测器
+     *
+     * SummaryConflictChecker没有@Inject注解，需要手动提供
      */
     @Provides
     @Singleton
@@ -53,38 +51,5 @@ object SummaryModule {
         return SummaryConflictChecker(dailySummaryRepository)
     }
 
-    /**
-     * 提供手动总结用例
-     */
-    @Provides
-    @Singleton
-    fun provideManualSummaryUseCase(
-        conversationRepository: ConversationRepository,
-        dailySummaryRepository: DailySummaryRepository,
-        contactRepository: ContactRepository,
-        brainTagRepository: BrainTagRepository,
-        aiRepository: AiRepository,
-        aiProviderRepository: AiProviderRepository,
-        dateRangeValidator: DateRangeValidator,
-        conflictChecker: SummaryConflictChecker,
-        contextBuilder: ContextBuilder,
-        promptBuilder: PromptBuilder,
-        moshi: Moshi,
-        @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ): ManualSummaryUseCase {
-        return ManualSummaryUseCase(
-            conversationRepository = conversationRepository,
-            dailySummaryRepository = dailySummaryRepository,
-            contactRepository = contactRepository,
-            brainTagRepository = brainTagRepository,
-            aiRepository = aiRepository,
-            aiProviderRepository = aiProviderRepository,
-            dateRangeValidator = dateRangeValidator,
-            conflictChecker = conflictChecker,
-            contextBuilder = contextBuilder,
-            promptBuilder = promptBuilder,
-            moshi = moshi,
-            ioDispatcher = ioDispatcher
-        )
-    }
+    // ManualSummaryUseCase已有@Inject constructor，Hilt自动处理依赖注入
 }

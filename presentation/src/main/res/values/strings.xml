@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 通用 -->
+    <string name="btn_confirm">确认</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_back">返回</string>
+    <string name="btn_retry">重试</string>
+    <string name="loading">加载中...</string>
+    <string name="error_generic">发生错误，请重试</string>
+    <string name="empty_data">暂无数据</string>
+    
+    <!-- 悬浮窗相关 -->
+    <string name="floating_button_desc">悬浮按钮</string>
+    <string name="floating_window_permission">悬浮窗权限</string>
+    <string name="floating_window_enabled">悬浮窗已启用</string>
+    <string name="floating_window_disabled">悬浮窗已禁用</string>
+    
+    <!-- 联系人详情页 - 标签页 -->
+    <string name="tab_overview">概览</string>
+    <string name="tab_fact_stream">事实流</string>
+    <string name="tab_persona">标签画像</string>
+    <string name="tab_data_vault">资料库</string>
+    
+    <!-- 联系人详情页 - 概览 -->
+    <string name="relationship_score">关系分数</string>
+    <string name="top_tags">核心标签</string>
+    <string name="latest_fact">最新动态</string>
+    <string name="no_tags">暂无标签</string>
+    <string name="no_facts">暂无动态</string>
+    
+    <!-- 联系人详情页 - 事实流 -->
+    <string name="view_timeline">时光轴</string>
+    <string name="view_list">清单</string>
+    <string name="filter_all">全部</string>
+    <string name="filter_ai_summary">AI总结</string>
+    <string name="filter_conflict">冲突</string>
+    <string name="filter_date">约会</string>
+    <string name="filter_gift">礼物</string>
+    <string name="empty_timeline">暂无时间线记录</string>
+    
+    <!-- 联系人详情页 - 标签画像 -->
+    <string name="tag_risk">雷区标签</string>
+    <string name="tag_strategy">策略标签</string>
+    <string name="tag_confirmed">已确认</string>
+    <string name="tag_guessed">AI推测</string>
+    <string name="tag_confirm_title">确认标签</string>
+    <string name="tag_confirm_message">确认这个标签是准确的吗？</string>
+    <string name="tag_reject">驳回</string>
+    <string name="empty_tags">暂无标签，AI会根据对话自动推测</string>
+    
+    <!-- 联系人详情页 - 资料库 -->
+    <string name="data_source_wechat">微信</string>
+    <string name="data_source_sms">短信</string>
+    <string name="data_source_call">通话</string>
+    <string name="data_source_photo">照片</string>
+    <string name="data_status_completed">已完成</string>
+    <string name="data_status_processing">处理中</string>
+    <string name="data_status_failed">失败</string>
+    <string name="data_status_not_available">不可用</string>
+    
+    <!-- 情绪类型 -->
+    <string name="emotion_sweet">甜蜜</string>
+    <string name="emotion_conflict">冲突</string>
+    <string name="emotion_gift">礼物</string>
+    <string name="emotion_date">约会</string>
+    <string name="emotion_deep_talk">深谈</string>
+    <string name="emotion_neutral">平淡</string>
+    
+    <!-- 无障碍描述 -->
+    <string name="cd_back_button">返回上一页</string>
+    <string name="cd_relationship_score">关系分数：%1$d分</string>
+    <string name="cd_tag_confirmed">已确认标签：%1$s</string>
+    <string name="cd_tag_guessed">AI推测标签：%1$s，点击确认或驳回</string>
+    <string name="cd_emotion_node">情绪节点：%1$s</string>
+    <string name="cd_timeline_item">时间线项目：%1$s</string>
+    <string name="cd_data_source">数据源：%1$s，状态：%2$s</string>
+    <string name="cd_view_mode_switch">切换视图模式</string>
+    <string name="cd_filter_chip">筛选：%1$s</string>
+    <string name="cd_loading">正在加载</string>
+    <string name="cd_error">错误：%1$s</string>
+    <string name="cd_empty">无数据</string>
+    
+    <!-- 设置页面 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_ai_provider">AI服务商</string>
+    <string name="settings_privacy">隐私保护</string>
+    <string name="settings_data_masking">数据掩码</string>
+    <string name="settings_local_first">本地优先模式</string>
+    <string name="settings_floating_window">悬浮窗</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_version">版本</string>
+    <string name="settings_prompt">提示词设置</string>
+    <string name="settings_prompt_analyze">聊天分析指令</string>
+    <string name="settings_prompt_check">安全检查指令</string>
+    <string name="settings_prompt_extract">信息提取指令</string>
+    <string name="settings_prompt_summary">每日总结指令</string>
+    
+    <!-- AI 分析设置 -->
+    <string name="settings_history_count_title">历史对话条数</string>
+    <string name="settings_history_count_none">不发送历史</string>
+    <string name="settings_history_count_none_desc">每次分析独立，不包含历史对话</string>
+    <string name="settings_history_count_5">最近5条</string>
+    <string name="settings_history_count_5_desc">推荐，平衡上下文和Token消耗</string>
+    <string name="settings_history_count_10">最近10条</string>
+    <string name="settings_history_count_10_desc">更完整的上下文，Token消耗较高</string>
+    <string name="settings_history_count_hint">发送给AI的历史对话数量，帮助AI理解对话上下文和时间间隔</string>
+    
+    <!-- 提示词编辑器 -->
+    <string name="prompt_editor_title_global">编辑指令</string>
+    <string name="prompt_editor_title_contact">编辑 %s 的专属指令</string>
+    <string name="prompt_editor_cancel">取消</string>
+    <string name="prompt_editor_save">完成</string>
+    <string name="prompt_editor_placeholder_analyze">例如：请帮我分析她这句话的潜台词...</string>
+    <string name="prompt_editor_placeholder_check">例如：检查时要特别注意工作相关话题...</string>
+    <string name="prompt_editor_placeholder_extract">例如：重点关注对方提到的兴趣爱好...</string>
+    <string name="prompt_editor_placeholder_summary">例如：总结今天的对话亮点和需要注意的地方...</string>
+    <string name="prompt_editor_placeholder_contact">例如：和她聊天时要注意避开前任话题...</string>
+    <string name="prompt_editor_discard_title">放弃修改？</string>
+    <string name="prompt_editor_discard_message">你有未保存的修改，确定要放弃吗？</string>
+    <string name="prompt_editor_discard_confirm">放弃</string>
+    <string name="prompt_editor_discard_cancel">继续编辑</string>
+    <string name="prompt_editor_error_load">加载失败</string>
+    <string name="prompt_editor_error_save">保存失败</string>
+    <string name="prompt_editor_custom_prompt">专属指令</string>
+    
+    <!-- 编辑功能相关 (TD-00012) -->
+    <string name="edited">已编辑</string>
+    <string name="edited_at">已编辑 %s</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="delete">删除</string>
+    
+    <!-- 事实编辑 -->
+    <string name="edit_fact_title">编辑事实</string>
+    <string name="fact_type_label">事实类型</string>
+    <string name="fact_value_label">事实内容</string>
+    <string name="fact_source_info">来源：%1$s · %2$s</string>
+    <string name="fact_type_personality">性格特点</string>
+    <string name="fact_type_hobby">兴趣爱好</string>
+    <string name="fact_type_work">工作信息</string>
+    <string name="fact_type_family">家庭情况</string>
+    <string name="fact_type_important_date">重要日期</string>
+    <string name="fact_type_taboo">禁忌话题</string>
+    <string name="fact_type_strategy">沟通策略</string>
+    <string name="fact_type_other">其他</string>
+    <string name="delete_fact_title">删除事实</string>
+    <string name="delete_fact_message">确定要删除"%s"吗？此操作不可撤销。</string>
+    
+    <!-- 对话编辑 -->
+    <string name="edit_conversation_title">编辑对话</string>
+    <string name="conversation_content_label">对话内容</string>
+    <string name="conversation_time_info">时间：%s</string>
+    <string name="delete_conversation_title">删除对话</string>
+    <string name="delete_conversation_message">确定要删除这条对话记录吗？此操作不可撤销。</string>
+    
+    <!-- 总结编辑 -->
+    <string name="edit_summary_title">编辑总结</string>
+    <string name="summary_content_label">总结内容</string>
+    <string name="summary_date_range">日期范围：%s</string>
+    <string name="summary_source">来源：%s</string>
+    <string name="summary_conversation_count">分析对话数：%d条</string>
+    <string name="source_manual">手动生成</string>
+    <string name="source_auto">AI自动生成</string>
+    
+    <!-- 联系人信息编辑 -->
+    <string name="edit_contact_name_title">编辑姓名</string>
+    <string name="edit_contact_goal_title">编辑目标</string>
+    <string name="edit_contact_info_title">编辑联系人信息</string>
+    <string name="contact_name_label">联系人姓名</string>
+    <string name="contact_goal_label">攻略目标</string>
+    
+    <!-- 原始内容查看 -->
+    <string name="view_original_content">查看原始内容</string>
+    <string name="original_type">原始类型：%s</string>
+    <string name="original_content">原始内容：%s</string>
+    
+    <!-- 编辑结果提示 -->
+    <string name="edit_success">保存成功</string>
+    <string name="edit_failed">保存失败</string>
+    <string name="edit_no_changes">内容未修改</string>
+    <string name="edit_not_found">记录不存在</string>
+    <string name="delete_success">删除成功</string>
+    <string name="delete_failed">删除失败</string>
+    
+    <!-- 验证错误 -->
+    <string name="validation_empty">内容不能为空</string>
+    <string name="validation_too_long">内容超过最大长度限制</string>
+    <string name="validation_whitespace_only">内容不能只包含空白字符</string>
+    
+    <!-- 标签画像V2 (TD-00014) -->
+    <string name="search_tags_hint">搜索标签或分类...</string>
+    <string name="search">搜索</string>
+    <string name="clear_search">清除搜索</string>
+    <string name="no_search_results">未找到匹配的标签</string>
+    <string name="no_tags_yet">暂无标签，AI会根据对话自动推测</string>
+    <string name="tag_count">%d个</string>
+    <string name="collapse">折叠</string>
+    <string name="expand">展开</string>
+    <string name="selected">已选中</string>
+    <string name="exit_edit_mode">退出编辑模式</string>
+    <string name="selected_count">已选择 %d 项</string>
+    <string name="select_all">全选</string>
+    <string name="deselect_all">取消全选</string>
+    <string name="move_to_category">移动分类</string>
+    <string name="delete_selected">删除 (%d)</string>
+    <string name="move_to_category_title">移动 %d 个标签到</string>
+    <string name="create_new_category">创建新分类</string>
+    <string name="category_name">分类名称</string>
+    <string name="existing_categories">现有分类</string>
+    <string name="confirm_move">确认移动</string>
+    <string name="delete_confirm_title">确认删除</string>
+    <string name="delete_tags_confirm_message">确定要删除选中的 %d 个标签吗？此操作不可撤销。</string>
+</resources>

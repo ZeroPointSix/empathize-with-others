@@ -6,6 +6,16 @@
 - 文档和回答：中文
 - 代码注释/变量名/类名：英文
 
+## 🆕 多模块架构 (TD-00017)
+
+项目采用Clean Architecture多模块架构：
+```
+:domain/        # 纯Kotlin - 业务模型、UseCase
+:data/          # Android Library - Room、Retrofit、Repository实现
+:presentation/  # Android Library - Compose UI、ViewModel
+:app/           # Application - 应用入口、Android服务
+```
+
 ## 常用命令
 
 ```bash
@@ -21,6 +31,11 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 ./gradlew connectedAndroidTest   # 设备测试
 ./gradlew clean                  # 清理构建
 ./gradlew --stop                 # 停止 Daemon（释放内存）
+
+# 模块级构建命令
+./gradlew :domain:build          # 构建domain模块（纯Kotlin）
+./gradlew :data:assembleDebug    # 构建data模块
+./gradlew :presentation:assembleDebug  # 构建presentation模块
 ```
 
 ## 架构规范（必须遵守）
@@ -45,6 +60,7 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 | ViewModel | 功能+ViewModel | `ContactDetailViewModel` |
 | Screen | 功能+Screen | `ContactDetailScreen` |
 | UiState | 功能+UiState | `ContactDetailUiState` |
+| UiEvent | 功能+UiEvent | `ContactDetailUiEvent` |
 | Repository | 领域+Repository | `ContactRepository` |
 
 ## 边界情况检查清单
@@ -66,18 +82,42 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 
 ## 常见错误模式（避免）
 
-1. **不要**在 ViewModel 中直接调用 Repository
+1. **不要**在 ViewModel 中直接调用 Repository（应通过UseCase）
 2. **不要**在 Domain 层引入 Android 依赖
 3. **不要**忘记处理 Result.failure 情况
 4. **不要**在 Composable 中执行耗时操作
 
 ## 最新架构规范实践
 
+### 🆕 多模块Clean Architecture (TD-00017已完成)
+- **:domain模块**：纯Kotlin，无Android依赖，包含Model、Repository接口、UseCase、Service、Util
+  - 68个业务模型
+  - 12个Repository接口
+  - 37个UseCase
+  - 2个领域服务
+  - 28个工具类
+- **:data模块**：Android Library，包含Room、Retrofit、Repository实现、DI模块
+  - 6个DI模块
+  - 7个DAO
+  - 7个Entity
+  - 10个Repository实现
+- **:presentation模块**：Android Library，包含Compose UI、ViewModel、Navigation
+  - 180+个UI组件文件
+  - 13个ViewModel
+- **:app模块**：Application，包含应用入口、Android服务、应用级DI模块
+  - 9个应用级DI模块
+  - FloatingWindowService
+  - EmpathyApplication
+
+### DI模块分布
+- **:data模块**：DatabaseModule、NetworkModule、RepositoryModule、MemoryModule、PromptModule、DispatcherModule
+- **:app模块**：LoggerModule、AppDispatcherModule、ServiceModule、FloatingWindowModule、NotificationModule、SummaryModule、EditModule、PersonaModule、TopicModule、UserProfileModule
+
 ### Clean Architecture 层级依赖规则
 - **Domain层**：不依赖任何其他层级，纯Kotlin代码
 - **Data层**：只依赖Domain层，实现Repository接口
 - **Presentation层**：只依赖Domain层，通过ViewModel调用UseCase
-- **DI层**：管理所有层级的依赖注入
+- **App层**：聚合所有模块依赖，管理应用级组件
 
 ### 提示词系统最佳实践（TD-00015已完成）
 - 使用4个核心场景：ANALYZE、POLISH、REPLY、SUMMARY
@@ -102,4 +142,5 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 - 产品概览：`.kiro/steering/product.md`
 - 技术栈：`.kiro/steering/tech.md`
 - 项目结构：`.kiro/steering/structure.md`
+- 设置功能：`.kiro/steering/settings-feature.md`
 - 当前任务：`WORKSPACE.md`

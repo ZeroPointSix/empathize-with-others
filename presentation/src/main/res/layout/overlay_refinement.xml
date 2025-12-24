@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/refinement_overlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- 对话框卡片 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/refinement_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/dialog_background">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- 标题 -->
+            <TextView
+                android:id="@+id/refinement_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔄 重新生成"
+                android:textSize="18sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <!-- 说明文字 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="您可以直接重新生成，或输入调整方向让AI按您的要求优化"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="16dp" />
+
+            <!-- 微调输入框 -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/refinement_input_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="调整方向（可选）"
+                app:placeholderText="婉一些、更正式一点..."
+                app:boxCornerRadiusTopStart="8dp"
+                app:boxCornerRadiusTopEnd="8dp"
+                app:boxCornerRadiusBottomStart="8dp"
+                app:boxCornerRadiusBottomEnd="8dp"
+                app:counterEnabled="true"
+                app:counterMaxLength="200"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/refinement_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:maxLines="3"
+                    android:textSize="14sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 按钮栏（BUG-00017修复：简化为两个按钮） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end"
+                android:layout_marginTop="20dp">
+
+                <!-- 取消按钮 -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_cancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="取消"
+                    android:textSize="14sp"
+                    app:cornerRadius="8dp"
+                    style="@style/Widget.Material3.Button.TextButton" />
+
+                <!-- 生成按钮（合并原来的两个按钮：有输入则按方向生成，无输入则直接生成） -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_regenerate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="生成"
+                    android:textSize="14sp"
+                    app:cornerRadius="8dp"
+                    style="@style/Widget.Material3.Button.TonalButton" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

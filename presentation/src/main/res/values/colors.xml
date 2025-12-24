@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Material Design 3 Light Theme Colors -->
+    <color name="md_theme_light_primary">#2196F3</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#BBDEFB</color>
+    <color name="md_theme_light_onPrimaryContainer">#0D47A1</color>
+    
+    <color name="md_theme_light_secondary">#03A9F4</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#B3E5FC</color>
+    <color name="md_theme_light_onSecondaryContainer">#01579B</color>
+    
+    <color name="md_theme_light_tertiary">#00BCD4</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#B2EBF2</color>
+    <color name="md_theme_light_onTertiaryContainer">#006064</color>
+    
+    <color name="md_theme_light_error">#F44336</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFCDD2</color>
+    <color name="md_theme_light_onErrorContainer">#B71C1C</color>
+    
+    <color name="md_theme_light_background">#FAFAFA</color>
+    <color name="md_theme_light_onBackground">#212121</color>
+    
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#212121</color>
+    <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
+    <color name="md_theme_light_onSurfaceVariant">#757575</color>
+    
+    <color name="md_theme_light_outline">#BDBDBD</color>
+    <color name="md_theme_light_outlineVariant">#E0E0E0</color>
+    
+    <!-- Material Design 3 Dark Theme Colors -->
+    <color name="md_theme_dark_primary">#90CAF9</color>
+    <color name="md_theme_dark_onPrimary">#0D47A1</color>
+    <color name="md_theme_dark_primaryContainer">#1565C0</color>
+    <color name="md_theme_dark_onPrimaryContainer">#E3F2FD</color>
+    
+    <color name="md_theme_dark_secondary">#81D4FA</color>
+    <color name="md_theme_dark_onSecondary">#01579B</color>
+    <color name="md_theme_dark_secondaryContainer">#0277BD</color>
+    <color name="md_theme_dark_onSecondaryContainer">#E1F5FE</color>
+    
+    <color name="md_theme_dark_tertiary">#80DEEA</color>
+    <color name="md_theme_dark_onTertiary">#006064</color>
+    <color name="md_theme_dark_tertiaryContainer">#00838F</color>
+    <color name="md_theme_dark_onTertiaryContainer">#E0F7FA</color>
+    
+    <color name="md_theme_dark_error">#EF5350</color>
+    <color name="md_theme_dark_onError">#B71C1C</color>
+    <color name="md_theme_dark_errorContainer">#C62828</color>
+    <color name="md_theme_dark_onErrorContainer">#FFEBEE</color>
+    
+    <color name="md_theme_dark_background">#121212</color>
+    <color name="md_theme_dark_onBackground">#E0E0E0</color>
+    
+    <color name="md_theme_dark_surface">#1E1E1E</color>
+    <color name="md_theme_dark_onSurface">#E0E0E0</color>
+    <color name="md_theme_dark_surfaceVariant">#2C2C2C</color>
+    <color name="md_theme_dark_onSurfaceVariant">#BDBDBD</color>
+    
+    <color name="md_theme_dark_outline">#757575</color>
+    <color name="md_theme_dark_outlineVariant">#424242</color>
+    
+    <!-- 悬浮窗颜色 -->
+    <color name="floating_background">#F5F5F5</color>
+    <color name="floating_primary">#2196F3</color>
+    <color name="floating_accent">#FF4081</color>
+    
+    <!-- 文本颜色 -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    
+    <!-- 功能颜色 -->
+    <color name="analyze_color">#4CAF50</color>
+    <color name="check_color">#FF9800</color>
+    <color name="polish_color">#9C27B0</color>
+    <color name="reply_color">#2196F3</color>
+
+    <!-- 悬浮窗Tab颜色 -->
+    <color name="floating_tab_background">#EEEEEE</color>
+    <color name="tab_selected_background">#2196F3</color>
+    <color name="tab_unselected_background">#00000000</color>
+    <color name="tab_selected_text">#FFFFFF</color>
+    <color name="tab_unselected_text">#757575</color>
+
+    <!-- 结果卡片颜色 -->
+    <color name="result_card_background">#FFFFFF</color>
+    <color name="dialog_background">#FFFFFF</color>
+
+    <!-- 风险等级颜色 -->
+    <color name="risk_safe">#4CAF50</color>
+    <color name="risk_warning">#FF9800</color>
+    <color name="risk_danger">#F44336</color>
+
+    <!-- 警告和错误颜色 -->
+    <color name="warning_background">#FFF3E0</color>
+    <color name="warning_text">#E65100</color>
+    <color name="error_background">#FFEBEE</color>
+    <color name="error_text">#C62828</color>
+
+    <!-- 分隔线颜色 -->
+    <color name="divider">#E0E0E0</color>
+</resources>

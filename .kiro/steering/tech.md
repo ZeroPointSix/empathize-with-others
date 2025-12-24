@@ -13,6 +13,42 @@
 
 **所有文档和回答必须使用中文。** 代码注释、变量名、类名等保持英文，但所有说明文档、开发指南和与开发者的沟通必须使用中文。
 
+## 🆕 多模块构建系统 (TD-00017)
+
+> 2025-12-24 更新 - 项目已完成Clean Architecture多模块改造
+
+### 模块配置
+
+| 模块 | 类型 | 插件 | 主要依赖 |
+|------|------|------|----------|
+| `:domain` | Kotlin Library | `java-library`, `kotlin.jvm` | kotlinx.coroutines |
+| `:data` | Android Library | `android.library`, `kotlin.android`, `ksp`, `hilt` | Room, Retrofit, Moshi, :domain |
+| `:presentation` | Android Library | `android.library`, `kotlin.android`, `kotlin.compose`, `hilt`, `kapt` | Compose, Navigation, :domain |
+| `:app` | Application | `android.application`, `kotlin.android`, `kotlin.compose`, `hilt`, `ksp`, `kapt` | 所有模块 |
+
+### 构建工具版本
+
+- **Build Tool**: Gradle 8.13 with Kotlin DSL
+- **AGP**: 8.7.3
+- **Kotlin**: 2.0.21 (K2编译器)
+- **JDK**: 17
+- **KSP**: 2.0.21-1.0.28 (Room, Moshi)
+- **KAPT**: Hilt注解处理
+
+### 模块构建命令
+
+```bash
+# 构建单个模块
+./gradlew :domain:build          # 纯Kotlin模块
+./gradlew :data:assembleDebug    # 数据层
+./gradlew :presentation:assembleDebug  # 表现层
+./gradlew :app:assembleDebug     # 完整应用
+
+# 构建所有模块
+./gradlew assembleDebug          # Debug APK
+./gradlew assembleRelease        # Release APK
+```
+
 ## 构建系统
 
 - **Build Tool**: Gradle 8.13 with Kotlin DSL
@@ -147,9 +183,10 @@ implementation("androidx.core:core-ktx:1.15.0")
 
 ### ✅ 完全实现的技术栈
 
-- **构建系统**: Gradle 8.13 + Kotlin DSL + KSP 完整配置
+- **构建系统**: Gradle 8.13 + Kotlin DSL + KSP + KAPT 完整配置
   - Gradle版本目录管理，统一依赖版本
-  - KSP配置用于Room和Hilt编译时处理
+  - KSP配置用于Room和Moshi编译时处理
+  - KAPT配置用于Hilt编译时处理（解决多模块兼容性问题）
   - Desugaring配置支持Java 8+ API (minSdk=24)
 - **UI框架**: Jetpack Compose + Material Design 3 完整实现
   - Compose BOM 2024.12.01统一版本管理
@@ -166,7 +203,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - PromptEditorViewModel：完整的状态管理
   - ContactDetailTabViewModel：四标签页状态管理
   - SettingsViewModel：已更新，添加promptScenesOrdered属性（TD-00015）
-  - 新增DispatcherModule：统一协程调度器管理
+  - 新增AppDispatcherModule：统一协程调度器管理
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
   - 数据库版本v10，完整Migration链（1→8）
@@ -190,12 +227,16 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ApiKeyStorage：API密钥安全存储
 - **依赖注入**: Hilt 模块完整配置
   - DatabaseModule、NetworkModule、RepositoryModule
-  - 新增MemoryModule支持记忆系统
-  - 新增PromptModule支持提示词系统
-  - 新增DispatcherModule支持协程调度器
-  - 新增FloatingWindowModule支持悬浮窗系统
-  - 新增NotificationModule支持通知系统
-  - 新增SummaryModule支持总结系统
+  - MemoryModule支持记忆系统
+  - PromptModule支持提示词系统
+  - DispatcherModule支持协程调度器
+  - FloatingWindowModule支持悬浮窗系统
+  - NotificationModule支持通知系统
+  - SummaryModule支持总结系统
+  - EditModule支持编辑功能
+  - PersonaModule支持画像功能
+  - TopicModule支持主题功能
+  - UserProfileModule支持用户画像功能
 - **图片加载**: Coil 图片加载和缓存完整实现
   - Coil 2.5.0 + Compose集成
 - **测试框架**: Room Testing、单元测试、UI测试完整实现
@@ -211,10 +252,11 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 603个Kotlin文件，94,907行代码
-  - 主代码：487个文件，68,675行
-  - 单元测试：114个文件，26,232行
-  - Android测试：20个文件，6,474行
+- **代码统计**: 368个Kotlin文件（不含测试）
+  - domain模块：147个文件（68模型 + 12Repository + 37UseCase + 2Service + 28Util）
+  - data模块：29个文件（6DI + 7DAO + 7Entity + 10Repository + Parser + Util）
+  - presentation模块：180+个文件（UI组件、ViewModel、Navigation、Theme）
+  - app模块：12个文件（9DI + Service + Application）
 
 ### ⚠️ 部分实现/待完善功能
 
@@ -236,7 +278,8 @@ implementation("androidx.core:core-ktx:1.15.0")
 
 - **输入内容身份识别与双向对话历史**: 需要实现TD-00008任务
   - 任务状态：技术设计完成
-  - 需要实现：IdentityPrefixHelper、UseCase层集成、系统提示词增强、UI渲染优化
+  - IdentityPrefixHelper工具类已实现
+  - 需要实现：UseCase层集成、系统提示词增强、UI渲染优化
   - 相关文档：TDD-00008-输入内容身份识别与双向对话历史技术设计.md
 
 - **手动触发AI总结功能**: 需要实现TD-00011任务
@@ -262,6 +305,14 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ⚠️ 集成状态不明：可能未在实际业务流程中被调用
 
 ### ✅ 已解决的技术债务
+
+- **Clean Architecture多模块改造**: 已完成TD-00017任务
+  - ✅ 创建:domain模块（纯Kotlin，无Android依赖）
+  - ✅ 创建:data模块（Android Library，Room、Retrofit、Repository实现）
+  - ✅ 创建:presentation模块（Android Library，Compose UI、ViewModel）
+  - ✅ 重构:app模块（应用入口、Android服务、DI聚合）
+  - ✅ 完成65/65任务，100%完成率
+  - ✅ Release APK构建成功（4.2MB）
 
 - **Room数据库迁移问题**: 已完成完整的Migration脚本和测试
   - ✅ 移除fallbackToDestructiveMigration()，确保数据安全

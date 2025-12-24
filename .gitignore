@@ -13,3 +13,22 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# 临时构建日志
+build_*.txt
+build_log.txt
+sourcesets.txt
+
+# JVM崩溃日志
+hs_err_pid*.log
+replay_pid*.log
+
+# 发布文件（已归档到releases目录）
+*.apk
+*.jks
+
+# 模块构建目录
+/app/build
+/domain/build
+/data/build
+/presentation/build

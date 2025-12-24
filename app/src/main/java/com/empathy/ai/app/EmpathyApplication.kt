@@ -6,6 +6,7 @@ import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.domain.usecase.SummarizeDailyConversationsUseCase
 import com.empathy.ai.domain.util.DataCleanupManager
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.util.AndroidFloatingWindowManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +56,14 @@ class EmpathyApplication : Application() {
      */
     @Inject
     lateinit var floatingWindowPreferencesProvider: Provider<FloatingWindowPreferences>
+    
+    /**
+     * 悬浮窗管理器（延迟注入）
+     * 
+     * 使用 Provider 确保只在实际需要时才创建实例。
+     */
+    @Inject
+    lateinit var floatingWindowManagerProvider: Provider<AndroidFloatingWindowManager>
     
     /**
      * 每日总结用例（延迟注入）
@@ -207,13 +216,16 @@ class EmpathyApplication : Application() {
             val state = prefs.loadState()
             
             if (state.isEnabled) {
+                // 通过 Provider.get() 延迟获取 FloatingWindowManager 实例
+                val floatingWindowManager = floatingWindowManagerProvider.get()
+                
                 // 检查悬浮窗权限
-                val permissionResult = FloatingWindowManager.hasPermission(this@EmpathyApplication)
+                val permissionResult = floatingWindowManager.hasPermission()
                 
                 if (permissionResult is FloatingWindowManager.PermissionResult.Granted) {
                     // 有权限，启动服务
                     Log.d(TAG, "应用启动，检测到悬浮窗已启用，自动恢复服务")
-                    FloatingWindowManager.startService(this@EmpathyApplication)
+                    floatingWindowManager.startService()
                 } else {
                     // 权限丢失，重置状态以保持一致性
                     Log.w(TAG, "悬浮窗权限丢失，重置状态为关闭")

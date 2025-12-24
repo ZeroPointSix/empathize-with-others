@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:maxHeight="500dp"
+    android:fillViewport="true">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/floating_background">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+        <!-- 标题栏 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+            
+            <!-- 标题 -->
+            <TextView
+                android:id="@+id/dialog_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="请输入内容"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+            
+            <!-- 最小化按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_minimize"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                android:text="—"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:cornerRadius="20dp"
+                app:iconGravity="textStart"
+                style="@style/Widget.Material3.Button.IconButton" />
+        </LinearLayout>
+
+        <!-- 输入区域容器（用于整体隐藏） -->
+        <LinearLayout
+            android:id="@+id/input_section_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 联系人选择器标签 -->
+            <TextView
+                android:id="@+id/contact_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="选择联系人"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <!-- 联系人选择器 -->
+            <Spinner
+                android:id="@+id/contact_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:minHeight="48dp"
+                android:background="@android:drawable/edit_text"
+                android:padding="12dp" />
+
+            <!-- 文本输入框标签 -->
+            <TextView
+                android:id="@+id/input_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="输入内容"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <!-- 文本输入框容器 -->
+            <ScrollView
+                android:id="@+id/input_text_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="200dp"
+                android:fillViewport="true">
+
+                <EditText
+                    android:id="@+id/input_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="120dp"
+                    android:gravity="top|start"
+                    android:hint="请输入或粘贴内容（最多5000字符）"
+                    android:textColorHint="@color/text_hint"
+                    android:inputType="textMultiLine"
+                    android:maxLength="5000"
+                    android:padding="12dp"
+                    android:background="@android:drawable/edit_text"
+                    android:scrollbars="vertical" />
+
+            </ScrollView>
+
+            <!-- 字符计数 -->
+            <TextView
+                android:id="@+id/char_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0/5000"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:gravity="end"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+
+        <!-- 加载指示器和提示 -->
+        <LinearLayout
+            android:id="@+id/loading_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:id="@+id/loading_indicator"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:indeterminateTint="@color/floating_primary" />
+
+            <TextView
+                android:id="@+id/loading_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="正在处理..."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="12dp" />
+
+        </LinearLayout>
+
+        <!-- 结果展示区域 -->
+        <ScrollView
+            android:id="@+id/result_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="300dp"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text">
+                
+                <!-- 分析结果标题 -->
+                <TextView
+                    android:id="@+id/result_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="💭 AI 分析结果"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="12dp" />
+                
+                <!-- 对方状态 -->
+                <TextView
+                    android:id="@+id/result_emotion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp" />
+                
+                <!-- 关键洞察 -->
+                <TextView
+                    android:id="@+id/result_insights"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp" />
+                
+                <!-- 建议回复 -->
+                <TextView
+                    android:id="@+id/result_suggestions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="8dp" />
+                
+                <!-- 复制按钮 -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_copy_result"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="复制建议"
+                    android:textSize="14sp"
+                    style="@style/Widget.Material3.Button.TextButton" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- 按钮组 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="取消"
+                android:textSize="15sp"
+                android:paddingHorizontal="24dp"
+                android:layout_marginEnd="12dp"
+                style="@style/Widget.Material3.Button.TextButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_confirm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="确认"
+                android:textSize="15sp"
+                android:paddingHorizontal="24dp"
+                app:cornerRadius="8dp"
+                app:backgroundTint="@color/floating_primary" />
+
+        </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</ScrollView>
