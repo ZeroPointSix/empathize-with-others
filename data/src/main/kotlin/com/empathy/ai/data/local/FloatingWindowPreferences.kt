@@ -18,13 +18,6 @@ import javax.inject.Singleton
  * 悬浮窗状态持久化类
  * 
  * 实现FloatingWindowPreferencesRepository接口，遵循Clean Architecture原则
- * 
- * 职责：
- * - 保存悬浮窗的启用状态和位置信息
- * - 加载悬浮窗的配置
- * - 保存和恢复最小化请求信息
- * - 保存和恢复最小化指示器位置
- * - 提供线程安全的读写操作
  */
 @Singleton
 class FloatingWindowPreferences @Inject constructor(
@@ -59,9 +52,8 @@ class FloatingWindowPreferences @Inject constructor(
     
     override fun isEnabled(): Boolean = prefs.getBoolean(KEY_IS_ENABLED, false)
 
-    
     override fun saveButtonPosition(x: Int, y: Int) {
-        require(x >= 0 && y >= 0) { "Position coordinates must be non-negative: x=$x, y=$y" }
+        require(x >= 0 && y >= 0) { "Position coordinates must be non-negative" }
         prefs.edit {
             putInt(KEY_BUTTON_X, x)
             putInt(KEY_BUTTON_Y, y)
@@ -83,7 +75,7 @@ class FloatingWindowPreferences @Inject constructor(
             prefs.edit { putString(KEY_MINIMIZED_REQUEST, json) }
             true
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to save request info: ${e.message}", e)
+            android.util.Log.e(TAG, "Failed to save request info", e)
             false
         }
     }
@@ -94,7 +86,7 @@ class FloatingWindowPreferences @Inject constructor(
         return try {
             requestInfoAdapter.fromJson(json)
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to parse request info: ${e.message}", e)
+            android.util.Log.e(TAG, "Failed to parse request info", e)
             clearRequestInfo()
             null
         }
@@ -103,7 +95,7 @@ class FloatingWindowPreferences @Inject constructor(
     override fun clearRequestInfo() { prefs.edit { remove(KEY_MINIMIZED_REQUEST) } }
     
     override fun saveIndicatorPosition(x: Int, y: Int) {
-        require(x >= 0 && y >= 0) { "Position coordinates must be non-negative: x=$x, y=$y" }
+        require(x >= 0 && y >= 0) { "Position coordinates must be non-negative" }
         prefs.edit {
             putInt(KEY_INDICATOR_X, x)
             putInt(KEY_INDICATOR_Y, y)
@@ -113,31 +105,47 @@ class FloatingWindowPreferences @Inject constructor(
     override fun getIndicatorPosition(): Pair<Int, Int> {
         val x = prefs.getInt(KEY_INDICATOR_X, INVALID_POSITION)
         val y = prefs.getInt(KEY_INDICATOR_Y, INVALID_POSITION)
-        return if (x == INVALID_POSITION || y == INVALID_POSITION) getButtonPosition() else Pair(x, y)
+        return if (x == INVALID_POSITION || y == INVALID_POSITION) {
+            getButtonPosition()
+        } else {
+            Pair(x, y)
+        }
     }
     
     override fun getButtonPosition(): Pair<Int, Int> = Pair(getButtonX(), getButtonY())
 
-
-    override fun saveSelectedTab(tabName: String) { prefs.edit { putString(KEY_SELECTED_TAB, tabName) } }
-    override fun saveSelectedTab(tab: com.empathy.ai.domain.model.ActionType) { saveSelectedTab(tab.name) }
+    override fun saveSelectedTab(tabName: String) {
+        prefs.edit { putString(KEY_SELECTED_TAB, tabName) }
+    }
     
-    override fun getSelectedTab(): String = prefs.getString(KEY_SELECTED_TAB, DEFAULT_TAB_NAME) ?: DEFAULT_TAB_NAME
+    override fun saveSelectedTab(tab: ActionType) { saveSelectedTab(tab.name) }
     
-    override fun getSelectedTabAsActionType(): com.empathy.ai.domain.model.ActionType {
+    override fun getSelectedTab(): String {
+        return prefs.getString(KEY_SELECTED_TAB, DEFAULT_TAB_NAME) ?: DEFAULT_TAB_NAME
+    }
+    
+    override fun getSelectedTabAsActionType(): ActionType {
         val tabName = getSelectedTab()
         return try {
-            com.empathy.ai.domain.model.ActionType.valueOf(tabName)
+            ActionType.valueOf(tabName)
         } catch (e: IllegalArgumentException) {
-            com.empathy.ai.domain.model.ActionType.ANALYZE
+            ActionType.ANALYZE
         }
     }
 
-    override fun saveLastContactId(contactId: String) { prefs.edit { putString(KEY_LAST_CONTACT_ID, contactId) } }
+    override fun saveLastContactId(contactId: String) {
+        prefs.edit { putString(KEY_LAST_CONTACT_ID, contactId) }
+    }
+    
     override fun getLastContactId(): String? = prefs.getString(KEY_LAST_CONTACT_ID, null)
 
-    override fun saveInputText(text: String) { prefs.edit { putString(KEY_SAVED_INPUT_TEXT, text) } }
-    override fun getInputText(): String = prefs.getString(KEY_SAVED_INPUT_TEXT, DEFAULT_INPUT_TEXT) ?: DEFAULT_INPUT_TEXT
+    override fun saveInputText(text: String) {
+        prefs.edit { putString(KEY_SAVED_INPUT_TEXT, text) }
+    }
+    
+    override fun getInputText(): String {
+        return prefs.getString(KEY_SAVED_INPUT_TEXT, DEFAULT_INPUT_TEXT) ?: DEFAULT_INPUT_TEXT
+    }
 
     override fun saveUiState(tabName: String, contactId: String?, inputText: String) {
         prefs.edit {
@@ -148,16 +156,18 @@ class FloatingWindowPreferences @Inject constructor(
         }
     }
 
-    override fun saveUiState(state: com.empathy.ai.domain.model.FloatingWindowUiState) {
+    override fun saveUiState(state: FloatingWindowUiState) {
         saveUiState(state.selectedTab.name, state.selectedContactId, state.inputText)
     }
 
-    override fun restoreUiState(): Triple<String, String?, String> = Triple(getSelectedTab(), getLastContactId(), getInputText())
+    override fun restoreUiState(): Triple<String, String?, String> {
+        return Triple(getSelectedTab(), getLastContactId(), getInputText())
+    }
 
-    override fun restoreUiStateAsObject(): com.empathy.ai.domain.model.FloatingWindowUiState? {
+    override fun restoreUiStateAsObject(): FloatingWindowUiState? {
         if (!hasSavedUiState()) return null
         val (tabName, contactId, inputText) = restoreUiState()
-        return com.empathy.ai.domain.model.FloatingWindowUiState.fromPersisted(tabName, contactId, inputText)
+        return FloatingWindowUiState.fromPersisted(tabName, contactId, inputText)
     }
 
     override fun clearSavedUiState() {
@@ -169,7 +179,6 @@ class FloatingWindowPreferences @Inject constructor(
 
     override fun hasSavedUiState(): Boolean = prefs.getBoolean(KEY_HAS_SAVED_STATE, false)
 
-
     override fun saveBubblePosition(x: Int, y: Int) {
         prefs.edit {
             putInt(KEY_BUBBLE_X, x)
@@ -180,23 +189,27 @@ class FloatingWindowPreferences @Inject constructor(
     override fun getBubblePosition(defaultX: Int, defaultY: Int): Pair<Int, Int> {
         val x = prefs.getInt(KEY_BUBBLE_X, INVALID_POSITION)
         val y = prefs.getInt(KEY_BUBBLE_Y, INVALID_POSITION)
-        return if (x == INVALID_POSITION || y == INVALID_POSITION) Pair(defaultX, defaultY) else Pair(x, y)
+        return if (x == INVALID_POSITION || y == INVALID_POSITION) {
+            Pair(defaultX, defaultY)
+        } else {
+            Pair(x, y)
+        }
     }
 
-    override fun saveBubbleState(state: com.empathy.ai.domain.model.FloatingBubbleState) {
+    override fun saveBubbleState(state: FloatingBubbleState) {
         prefs.edit { putString(KEY_BUBBLE_STATE, state.name) }
     }
 
-    override fun getBubbleState(): com.empathy.ai.domain.model.FloatingBubbleState {
+    override fun getBubbleState(): FloatingBubbleState {
         val stateName = prefs.getString(KEY_BUBBLE_STATE, null)
         return if (stateName.isNullOrBlank()) {
-            com.empathy.ai.domain.model.FloatingBubbleState.IDLE
+            FloatingBubbleState.IDLE
         } else {
             try {
-                com.empathy.ai.domain.model.FloatingBubbleState.valueOf(stateName)
+                FloatingBubbleState.valueOf(stateName)
             } catch (e: IllegalArgumentException) {
                 android.util.Log.e(TAG, "Invalid bubble state: $stateName", e)
-                com.empathy.ai.domain.model.FloatingBubbleState.IDLE
+                FloatingBubbleState.IDLE
             }
         }
     }
@@ -230,13 +243,14 @@ class FloatingWindowPreferences @Inject constructor(
                prefs.getString(KEY_MINIMIZE_REQUEST_INFO, null) != null
     }
 
-
     override fun saveDisplayMode(mode: String) {
         prefs.edit { putString(KEY_DISPLAY_MODE, mode) }
         android.util.Log.d(TAG, "保存显示模式: $mode")
     }
 
-    override fun getDisplayMode(): String = prefs.getString(KEY_DISPLAY_MODE, DISPLAY_MODE_BUBBLE) ?: DISPLAY_MODE_BUBBLE
+    override fun getDisplayMode(): String {
+        return prefs.getString(KEY_DISPLAY_MODE, DISPLAY_MODE_BUBBLE) ?: DISPLAY_MODE_BUBBLE
+    }
 
     override fun shouldStartAsBubble(): Boolean = getDisplayMode() == DISPLAY_MODE_BUBBLE
 

@@ -16,7 +16,10 @@
       "Skill(reflash:*)",
       "Bash(done:*)",
       "Skill(zcf:init-project)",
-      "Skill(zcf:init-project:*)"
+      "Skill(zcf:init-project:*)",
+      "Bash(powershell:*)",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(bc:*)"
     ],
     "deny": [],
     "ask": []

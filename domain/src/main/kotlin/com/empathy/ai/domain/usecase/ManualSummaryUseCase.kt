@@ -1,6 +1,5 @@
-﻿package com.empathy.ai.domain.usecase
+package com.empathy.ai.domain.usecase
 
-import com.empathy.ai.domain.model.AiSummaryResponse
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ConflictResolution
 import com.empathy.ai.domain.model.ConversationLog
@@ -67,6 +66,7 @@ class ManualSummaryUseCase @Inject constructor(
     fun interface ProgressCallback {
         fun onProgress(progress: Float, step: String)
     }
+
 
     suspend operator fun invoke(
         contactId: String,
@@ -180,6 +180,7 @@ class ManualSummaryUseCase @Inject constructor(
         }
     }
 
+
     private suspend fun generateAiSummary(
         profile: com.empathy.ai.domain.model.ContactProfile,
         conversations: List<ConversationLog>,
@@ -274,6 +275,7 @@ class ManualSummaryUseCase @Inject constructor(
             relationshipTrend = if (scoreChange > 0) RelationshipTrend.IMPROVING else RelationshipTrend.STABLE
         )
     }
+
 
     private suspend fun syncSummaryDataToContact(
         profile: com.empathy.ai.domain.model.ContactProfile,
