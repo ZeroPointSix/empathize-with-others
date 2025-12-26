@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>共情AI助手 - 联系人列表</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: auto;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* 暖金色主题变量 */
+    :root {
+      --primary: #F5A623;
+      --primary-light: #F7C548;
+      --primary-dark: #D4881A;
+      --bg-page: #F7F7F7;
+      --bg-card: #FFFFFF;
+      --text-primary: #191919;
+      --text-secondary: #999999;
+      --divider: #E5E5E5;
+    }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-[#F7F7F7] flex flex-col font-sans overflow-hidden">
+    
+    <!-- Header - 微信风格 -->
+    <div class="flex items-center justify-between px-4 h-14 bg-[#F7F7F7] shrink-0 border-b border-slate-100">
+      <div class="w-10"></div>
+      <h1 class="text-[17px] font-semibold text-slate-900">联系人画像</h1>
+      <div class="flex items-center gap-3">
+        <button class="w-8 h-8 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors">
+          <span class="material-symbols-outlined text-[22px]">search</span>
+        </button>
+        <button class="w-8 h-8 flex items-center justify-center text-[#F5A623] hover:text-[#D4881A] transition-colors">
+          <span class="material-symbols-outlined text-[22px]">person_add</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="px-3 py-2 bg-[#F7F7F7]">
+      <div class="bg-white h-9 rounded-lg flex items-center justify-center gap-1.5 text-slate-400 shadow-sm">
+        <span class="material-symbols-outlined text-lg">search</span>
+        <span class="text-sm">搜索联系人</span>
+      </div>
+    </div>
+
+    <!-- Contact List -->
+    <div class="flex-1 overflow-y-auto no-scrollbar">
+      <div class="bg-white">
+        
+        <!-- Contact Item 1: 重要联系人 -->
+        <div class="flex items-center px-4 py-3 active:bg-slate-50 transition-colors cursor-pointer">
+          <!-- 暖金色渐变头像 -->
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#F5A623] to-[#F7C548] flex items-center justify-center text-white shrink-0 font-bold text-lg shadow-sm">
+            张
+          </div>
+          <div class="ml-3 flex-1 border-b border-slate-100 py-1 min-w-0">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="text-[16px] font-medium text-slate-900 truncate">张三</span>
+                <!-- 关系标签 -->
+                <span class="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[10px] rounded font-medium">重要</span>
+              </div>
+              <span class="text-[11px] text-slate-400">3天前</span>
+            </div>
+            <div class="text-[13px] text-slate-500 truncate mt-0.5">
+              <span class="text-[#F5A623]">目标：</span>建立良好的合作关系
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Item 2: 普通联系人 -->
+        <div class="flex items-center px-4 py-3 active:bg-slate-50 transition-colors cursor-pointer">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-400 to-indigo-500 flex items-center justify-center text-white shrink-0 font-bold text-lg shadow-sm">
+            李
+          </div>
+          <div class="ml-3 flex-1 border-b border-slate-100 py-1 min-w-0">
+            <div class="flex justify-between items-center">
+              <span class="text-[16px] font-medium text-slate-900 truncate">李四</span>
+              <span class="text-[11px] text-slate-400">昨天</span>
+            </div>
+            <div class="text-[13px] text-slate-500 truncate mt-0.5">
+              <span class="text-[#F5A623]">目标：</span>成为好朋友，分享生活
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Item 3: 带风险标签 -->
+        <div class="flex items-center px-4 py-3 active:bg-slate-50 transition-colors cursor-pointer">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-rose-400 to-rose-500 flex items-center justify-center text-white shrink-0 font-bold text-lg shadow-sm">
+            王
+          </div>
+          <div class="ml-3 flex-1 border-b border-slate-100 py-1 min-w-0">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="text-[16px] font-medium text-slate-900 truncate">王五</span>
+                <!-- 风险标签 -->
+                <span class="px-1.5 py-0.5 bg-rose-50 text-rose-600 text-[10px] rounded font-medium">⚠️ 雷区</span>
+              </div>
+              <span class="text-[11px] text-slate-400">10/24</span>
+            </div>
+            <div class="text-[13px] text-slate-500 truncate mt-0.5">
+              <span class="text-[#F5A623]">目标：</span>保持适当距离
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Item 4: 新联系人 -->
+        <div class="flex items-center px-4 py-3 active:bg-slate-50 transition-colors cursor-pointer">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center text-white shrink-0 font-bold text-lg shadow-sm">
+            赵
+          </div>
+          <div class="ml-3 flex-1 border-b border-slate-100 py-1 min-w-0">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="text-[16px] font-medium text-slate-900 truncate">赵六</span>
+                <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] rounded font-medium">新</span>
+              </div>
+              <span class="text-[11px] text-slate-400">刚刚</span>
+            </div>
+            <div class="text-[13px] text-slate-500 truncate mt-0.5">
+              <span class="text-[#F5A623]">目标：</span>商业合作伙伴
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Item 5: 带照片头像 -->
+        <div class="flex items-center px-4 py-3 active:bg-slate-50 transition-colors cursor-pointer">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white shrink-0 font-bold text-lg shadow-sm overflow-hidden">
+            <span>L</span>
+          </div>
+          <div class="ml-3 flex-1 border-b border-slate-100 py-1 min-w-0">
+            <div class="flex justify-between items-center">
+              <span class="text-[16px] font-medium text-slate-900 truncate">Lucy</span>
+              <span class="text-[11px] text-slate-400">10/22</span>
+            </div>
+            <div class="text-[13px] text-slate-500 truncate mt-0.5">
+              <span class="text-[#F5A623]">目标：</span>学习交流伙伴
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Item 6 -->
+        <div class="flex items-center px-4 py-3 active:bg-slate-50 transition-colors cursor-pointer">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center text-white shrink-0 font-bold text-lg shadow-sm">
+            陈
+          </div>
+          <div class="ml-3 flex-1 py-1 min-w-0">
+            <div class="flex justify-between items-center">
+              <span class="text-[16px] font-medium text-slate-900 truncate">陈小美</span>
+              <span class="text-[11px] text-slate-400">10/20</span>
+            </div>
+            <div class="text-[13px] text-slate-500 truncate mt-0.5">
+              <span class="text-[#F5A623]">目标：</span>保持定期联系
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Empty State (Hidden) -->
+      <div class="hidden flex-col items-center justify-center py-20 px-8">
+        <div class="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+          <span class="material-symbols-outlined text-[40px] text-[#F5A623]">person_add</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-800 mb-2">还没有联系人</h3>
+        <p class="text-sm text-slate-500 text-center mb-6">添加第一个联系人，开始建立有意义的连接吧！</p>
+        <button class="h-11 px-6 bg-gradient-to-r from-[#F5A623] to-[#F7C548] text-white rounded-lg font-medium shadow-md shadow-amber-200 hover:shadow-lg transition-all active:scale-95">
+          添加联系人
+        </button>
+      </div>
+
+      <!-- Bottom Spacer -->
+      <div class="h-24"></div>
+    </div>
+
+    <!-- FAB Button -->
+    <div class="absolute bottom-24 right-4">
+      <button class="w-14 h-14 bg-gradient-to-br from-[#F5A623] to-[#F7C548] rounded-full shadow-lg shadow-amber-200 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[28px]">person_add</span>
+      </button>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="h-20 bg-white/95 backdrop-blur-lg border-t border-slate-100 flex items-center justify-around px-2 shrink-0">
+      <!-- Nav: 联系人 (Active) -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-[#F5A623]">
+        <span class="material-symbols-outlined text-[24px]">contacts</span>
+        <span class="text-[11px] font-medium">联系人</span>
+      </button>
+      <!-- Nav: AI军师 -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
+        <span class="material-symbols-outlined text-[24px]">smart_toy</span>
+        <span class="text-[11px] font-medium">AI军师</span>
+      </button>
+      <!-- Nav: 设置 -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 transition-colors">
+        <span class="material-symbols-outlined text-[24px]">settings</span>
+        <span class="text-[11px] font-medium">设置</span>
+      </button>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -262,14 +262,15 @@ class ContactDetailTabViewModel @Inject constructor(
                         )
                     }
                     
-                    // TD-00014: 自动启用PersonaTabV2并刷新分类数据
+                    // TD-00014: 刷新分类数据
+                    // 注意：usePersonaTabV2 = false 使用现代化iOS风格的PersonaTab
                     val facts = contact?.facts ?: emptyList()
                     val categories = refreshCategories(facts)
                     val availableCategories = categories.map { it.key }
                     
                     _uiState.update {
                         it.copy(
-                            usePersonaTabV2 = true,
+                            usePersonaTabV2 = false,  // 使用现代化iOS风格的PersonaTab
                             factCategories = categories,
                             availableCategories = availableCategories
                         )

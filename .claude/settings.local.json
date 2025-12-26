@@ -19,7 +19,15 @@
       "Skill(zcf:init-project:*)",
       "Bash(powershell:*)",
       "Bash(powershell.exe -Command:*)",
-      "Bash(bc:*)"
+      "Bash(bc:*)",
+      "Skill(产品经理)",
+      "Skill(产品经理:*)",
+      "Bash(cat:*)",
+      "Bash(mv:*)",
+      "Bash(claude:*)",
+      "Bash(ls:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

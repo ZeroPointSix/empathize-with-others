@@ -19,7 +19,7 @@
 
 ## 🆕 多模块架构 (TD-00017 Clean Architecture模块化改造)
 
-> 2025-12-24 更新 - 项目已完成Clean Architecture多模块改造
+> 2025-12-25 更新 - 项目已完成Clean Architecture多模块改造
 
 ### 模块结构
 
@@ -470,6 +470,6 @@ class ChatViewModel @Inject constructor(
 
 ---
 
-**文档版本**: 2.1
-**最后更新**: 2025-12-24
-**更新内容**: TD-00017 Clean Architecture模块化改造完成，更新模块文件统计
+**文档版本**: 2.2
+**最后更新**: 2025-12-25
+**更新内容**: 基于实际代码架构刷新项目结构文档，更新模块文件统计

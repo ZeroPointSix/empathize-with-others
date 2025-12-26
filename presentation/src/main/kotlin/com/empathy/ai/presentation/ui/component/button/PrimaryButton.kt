@@ -20,6 +20,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import com.empathy.ai.presentation.theme.AnimationSpec
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -45,9 +53,24 @@ fun PrimaryButton(
     icon: ImageVector? = null,
     size: ButtonSize = ButtonSize.Medium
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(
+            durationMillis = AnimationSpec.DurationFast,
+            easing = AnimationSpec.EasingStandard
+        ),
+        label = "ButtonScale"
+    )
+
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        },
+        interactionSource = interactionSource,
         enabled = enabled && !loading,
         contentPadding = size.contentPadding,
         colors = ButtonDefaults.buttonColors(

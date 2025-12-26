@@ -12,6 +12,21 @@ object NavRoutes {
     const val CONTACT_LIST = "contact_list"
 
     /**
+     * AI军师页面
+     */
+    const val AI_ADVISOR = "ai_advisor"
+
+    /**
+     * 底部导航栏路由列表
+     * 用于底部导航栏的Tab切换
+     */
+    val BOTTOM_NAV_ROUTES = listOf(
+        CONTACT_LIST,
+        AI_ADVISOR,
+        SETTINGS
+    )
+
+    /**
      * 联系人详情页面
      * 参数: contactId (String) - 联系人ID，空字符串表示新建
      */
@@ -51,6 +66,12 @@ object NavRoutes {
      */
     const val CONTACT_DETAIL_TAB = "contact_detail_tab/{contactId}"
     const val CONTACT_DETAIL_TAB_ARG_ID = "contactId"
+
+    /**
+     * 新建联系人页面（iOS风格）
+     * TD-00020 T065: 添加CREATE_CONTACT路由常量
+     */
+    const val CREATE_CONTACT = "create_contact"
 
     /**
      * 创建联系人详情路由

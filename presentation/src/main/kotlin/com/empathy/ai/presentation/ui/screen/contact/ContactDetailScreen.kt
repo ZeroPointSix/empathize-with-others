@@ -14,11 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.button.PrimaryButton
 import com.empathy.ai.presentation.ui.component.button.SecondaryButton
@@ -27,8 +27,10 @@ import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.relationship.FactList
 import com.empathy.ai.presentation.ui.component.relationship.RelationshipScoreSection
 import com.empathy.ai.presentation.ui.component.dialog.AddFactToStreamDialog
-import com.empathy.ai.presentation.ui.component.state.ErrorView
+import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
+import com.empathy.ai.presentation.util.UserFriendlyError
+import androidx.compose.material.icons.filled.Warning
 import com.empathy.ai.presentation.viewmodel.ContactDetailViewModel
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
@@ -156,9 +158,13 @@ private fun ContactDetailScreenContent(
                     )
                 }
                 uiState.error != null -> {
-                    ErrorView(
-                        message = uiState.error,
-                        onRetry = { onEvent(ContactDetailUiEvent.ReloadContact) }
+                    FriendlyErrorCard(
+                        error = UserFriendlyError(
+                            title = "出错了",
+                            message = uiState.error ?: "未知错误",
+                            icon = Icons.Default.Warning
+                        ),
+                        onAction = { onEvent(ContactDetailUiEvent.ReloadContact) }
                     )
                 }
                 else -> {
@@ -202,9 +208,9 @@ private fun ContactDetailScreenContent(
     }
 
     // BUG-00017修复：移除脑标签功能，只保留事实录入
-    // 添加事实对话框（统一使用Fact类型）
+    // 添加事实对话框 - 使用iOS风格底部弹窗
     if (uiState.showAddFactDialog) {
-        AddFactToStreamDialog(
+        com.empathy.ai.presentation.ui.component.dialog.IOSAddFactBottomSheet(
             onDismiss = { onEvent(ContactDetailUiEvent.HideAddFactDialog) },
             onConfirm = { key, value ->
                 onEvent(ContactDetailUiEvent.AddFact(key, value))
@@ -260,8 +266,8 @@ private fun ContactDetailContent(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(AppSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.lg)
     ) {
         // 如果是查看模式，显示ProfileCard
         if (!uiState.isEditMode && uiState.originalProfile != null) {
@@ -386,7 +392,7 @@ private fun ContactDetailContent(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.md)
                 ) {
                     SecondaryButton(
                         text = "取消",

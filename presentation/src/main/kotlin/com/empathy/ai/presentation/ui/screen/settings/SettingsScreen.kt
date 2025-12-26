@@ -1,44 +1,47 @@
 package com.empathy.ai.presentation.ui.screen.settings
 
 import android.app.Activity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import com.empathy.ai.presentation.theme.AppSpacing
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.presentation.navigation.NavRoutes
 import com.empathy.ai.presentation.navigation.PromptEditorRoutes
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSBackground
+import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.theme.iOSGreen
+import com.empathy.ai.presentation.theme.iOSPurple
+import com.empathy.ai.presentation.theme.iOSRed
+import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.ui.component.dialog.PermissionRequestDialog
-import com.empathy.ai.presentation.ui.screen.settings.component.HistoryConversationCountSection
+import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
+import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
+import com.empathy.ai.presentation.ui.component.ios.IOSSwitch
+import com.empathy.ai.presentation.ui.component.navigation.EmpathyBottomNavigation
 import com.empathy.ai.presentation.viewmodel.SettingsViewModel
 
 /**
- * 设置页面
- *
- * 功能：
- * - API Key 配置
- * - AI 服务商选择
- * - 隐私设置
- * - 关于信息
- *
- * @param onNavigateBack 返回回调
- * @param viewModel 设置 ViewModel
+ * 设置页面（iOS风格）
  */
 @Composable
 fun SettingsScreen(
@@ -46,27 +49,24 @@ fun SettingsScreen(
     onNavigateToAiConfig: () -> Unit = {},
     onNavigateToPromptEditor: (String) -> Unit = {},
     onNavigateToUserProfile: () -> Unit = {},
+    onNavigate: (String) -> Unit = {},
+    onAddClick: () -> Unit = {},
+    currentRoute: String = NavRoutes.SETTINGS,
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // 处理成功消息
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
-            // 3秒后自动清除
             kotlinx.coroutines.delay(3000)
             viewModel.onEvent(SettingsUiEvent.ClearSuccessMessage)
         }
     }
 
-    // 监听权限变化
     DisposableEffect(Unit) {
-        onDispose {
-            // 当页面销毁时检查权限状态
-            viewModel.checkFloatingWindowPermission()
-        }
+        onDispose { viewModel.checkFloatingWindowPermission() }
     }
 
     SettingsScreenContent(
@@ -76,6 +76,9 @@ fun SettingsScreen(
         onNavigateToAiConfig = onNavigateToAiConfig,
         onNavigateToPromptEditor = onNavigateToPromptEditor,
         onNavigateToUserProfile = onNavigateToUserProfile,
+        onNavigate = onNavigate,
+        onAddClick = onAddClick,
+        currentRoute = currentRoute,
         promptScenes = viewModel.promptScenesOrdered,
         onRequestPermission = {
             (context as? Activity)?.let { activity ->
@@ -86,10 +89,10 @@ fun SettingsScreen(
     )
 }
 
+
 /**
- * 设置页面内容（无状态）
+ * 设置页面内容（iOS风格）
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsScreenContent(
     uiState: SettingsUiState,
@@ -98,27 +101,24 @@ private fun SettingsScreenContent(
     onNavigateToAiConfig: () -> Unit,
     onNavigateToPromptEditor: (String) -> Unit,
     onNavigateToUserProfile: () -> Unit,
+    onNavigate: (String) -> Unit,
+    onAddClick: () -> Unit,
+    currentRoute: String,
     promptScenes: List<PromptScene>,
     onRequestPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("设置") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
-                        )
-                    }
-                }
+        containerColor = iOSBackground,
+        bottomBar = {
+            EmpathyBottomNavigation(
+                currentRoute = currentRoute,
+                onNavigate = onNavigate,
+                onAddClick = onAddClick
             )
         },
         snackbarHost = {
-            // 显示错误或成功消息
             uiState.error?.let { error ->
                 Snackbar(
                     action = {
@@ -126,81 +126,152 @@ private fun SettingsScreenContent(
                             Text("关闭")
                         }
                     }
-                ) {
-                    Text(error)
-                }
+                ) { Text(error) }
             }
             uiState.successMessage?.let { message ->
-                Snackbar {
-                    Text(message)
-                }
+                Snackbar { Text(message) }
             }
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .background(iOSBackground)
         ) {
-            // 悬浮窗设置
-            FloatingWindowSection(
-                uiState = uiState,
-                onEvent = onEvent
-            )
+            // iOS大标题
+            item {
+                Text(
+                    text = "设置",
+                    fontSize = 34.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = iOSTextPrimary,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                )
+            }
 
-            Divider()
+            // AI配置分组
+            item {
+                IOSSettingsSection(title = "AI 配置") {
+                    IOSSettingsItem(
+                        icon = Icons.Default.Settings,
+                        iconBackgroundColor = iOSBlue,
+                        title = "AI 服务商",
+                        value = uiState.selectedProvider.ifEmpty { "未配置" },
+                        onClick = onNavigateToAiConfig
+                    )
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSPurple,
+                        title = "提示词设置",
+                        showDivider = false,
+                        onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.ANALYZE)) }
+                    )
+                }
+            }
 
-            // AI 服务商选择（API Key 在服务商配置中统一管理）
-            AiProviderSection(
-                uiState = uiState,
-                onEvent = onEvent,
-                onNavigateToAiConfig = onNavigateToAiConfig
-            )
+            // 悬浮窗分组
+            item {
+                IOSSettingsSection(title = "悬浮窗") {
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSGreen,
+                        title = "启用悬浮窗",
+                        subtitle = if (uiState.hasFloatingWindowPermission) null else "需要悬浮窗权限",
+                        showArrow = false,
+                        showDivider = false,
+                        trailing = {
+                            IOSSwitch(
+                                checked = uiState.floatingWindowEnabled,
+                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleFloatingWindow) },
+                                enabled = uiState.hasFloatingWindowPermission || !uiState.floatingWindowEnabled
+                            )
+                        },
+                        onClick = if (!uiState.hasFloatingWindowPermission) {
+                            { onEvent(SettingsUiEvent.ShowPermissionDialog) }
+                        } else null
+                    )
+                }
+            }
 
-            Divider()
+            // 隐私保护分组
+            item {
+                IOSSettingsSection(title = "隐私保护") {
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSBlue,
+                        title = "数据掩码",
+                        subtitle = "AI 分析前自动掩码敏感信息",
+                        showArrow = false,
+                        trailing = {
+                            IOSSwitch(
+                                checked = uiState.dataMaskingEnabled,
+                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleDataMasking) }
+                            )
+                        }
+                    )
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSGreen,
+                        title = "本地优先模式",
+                        subtitle = "优先使用本地规则，减少 AI 调用",
+                        showArrow = false,
+                        showDivider = false,
+                        trailing = {
+                            IOSSwitch(
+                                checked = uiState.localFirstMode,
+                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleLocalFirstMode) }
+                            )
+                        }
+                    )
+                }
+            }
 
-            // 隐私设置
-            PrivacySection(
-                uiState = uiState,
-                onEvent = onEvent
-            )
+            // 个人画像分组
+            item {
+                IOSSettingsSection(title = "个人画像") {
+                    IOSSettingsItem(
+                        icon = Icons.Default.Person,
+                        iconBackgroundColor = iOSPurple,
+                        title = "管理个人画像",
+                        subtitle = "设置您的性格特点、价值观等",
+                        showDivider = false,
+                        onClick = onNavigateToUserProfile
+                    )
+                }
+            }
 
-            Divider()
+            // 数据管理分组
+            item {
+                IOSSettingsSection(title = "数据管理") {
+                    IOSSettingsItem(
+                        icon = Icons.Default.Delete,
+                        iconBackgroundColor = iOSRed,
+                        title = "清除所有设置",
+                        showDivider = false,
+                        onClick = { onEvent(SettingsUiEvent.ShowClearDataDialog) }
+                    )
+                }
+            }
 
-            // AI 分析设置
-            AiAnalysisSection(
-                uiState = uiState,
-                onEvent = onEvent
-            )
+            // 关于分组
+            item {
+                IOSSettingsSection(title = "关于") {
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = Color.Gray,
+                        title = "版本",
+                        value = uiState.appVersion,
+                        showArrow = false,
+                        showDivider = false
+                    )
+                }
+            }
 
-            Divider()
-
-            // 提示词设置
-            PromptSettingsSection(
-                scenes = promptScenes,
-                onNavigateToPromptEditor = onNavigateToPromptEditor
-            )
-
-            Divider()
-
-            // 用户画像设置
-            UserProfileSection(
-                onNavigateToUserProfile = onNavigateToUserProfile
-            )
-
-            Divider()
-
-            // 关于
-            AboutSection(
-                uiState = uiState,
-                onEvent = onEvent
-            )
+            item { Spacer(modifier = Modifier.height(32.dp)) }
         }
 
-        // 服务商选择对话框
+        // 对话框
         if (uiState.showProviderDialog) {
             ProviderSelectionDialog(
                 selectedProvider = uiState.selectedProvider,
@@ -210,59 +281,13 @@ private fun SettingsScreenContent(
             )
         }
 
-        // 清除数据确认对话框
         if (uiState.showClearDataDialog) {
-            AlertDialog(
-                onDismissRequest = { onEvent(SettingsUiEvent.HideClearDataDialog) },
-                title = { Text("清除所有设置") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("确定要清除以下数据吗？")
-                        
-                        Text(
-                            text = "将被清除：",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text("• AI服务商配置", style = MaterialTheme.typography.bodySmall)
-                        Text("• 隐私保护设置", style = MaterialTheme.typography.bodySmall)
-                        Text("• 悬浮窗设置", style = MaterialTheme.typography.bodySmall)
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        Text(
-                            text = "不会清除：",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Text("• 联系人数据", style = MaterialTheme.typography.bodySmall)
-                        Text("• 标签数据", style = MaterialTheme.typography.bodySmall)
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        Text(
-                            text = "此操作不可恢复！",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = { onEvent(SettingsUiEvent.ClearAllData) }
-                    ) {
-                        Text("确定清除", color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onEvent(SettingsUiEvent.HideClearDataDialog) }) {
-                        Text("取消")
-                    }
-                }
+            ClearDataDialog(
+                onConfirm = { onEvent(SettingsUiEvent.ClearAllData) },
+                onDismiss = { onEvent(SettingsUiEvent.HideClearDataDialog) }
             )
         }
 
-        // 权限说明对话框
         if (uiState.showPermissionDialog) {
             PermissionRequestDialog(
                 onConfirm = {
@@ -275,497 +300,7 @@ private fun SettingsScreenContent(
     }
 }
 
-/**
- * 悬浮窗设置区域
- */
-@Composable
-private fun FloatingWindowSection(
-    uiState: SettingsUiState,
-    onEvent: (SettingsUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "悬浮窗功能",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "启用悬浮窗",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = if (uiState.hasFloatingWindowPermission) {
-                            "在聊天应用上显示快捷按钮"
-                        } else {
-                            "需要悬浮窗权限"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (uiState.hasFloatingWindowPermission) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        }
-                    )
-                }
-                Switch(
-                    checked = uiState.floatingWindowEnabled,
-                    onCheckedChange = { onEvent(SettingsUiEvent.ToggleFloatingWindow) },
-                    enabled = uiState.hasFloatingWindowPermission || !uiState.floatingWindowEnabled
-                )
-            }
-        }
-
-        // 权限状态提示
-        if (!uiState.hasFloatingWindowPermission) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "警告",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "需要悬浮窗权限",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = "点击查看说明并授权",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
-                    IconButton(onClick = { onEvent(SettingsUiEvent.ShowPermissionDialog) }) {
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = "查看",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-        }
-
-        Text(
-            text = "提示：悬浮窗功能用于在聊天应用上显示快捷按钮，方便您快速访问 AI 助手功能",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * AI 服务商选择区域
- *
- * API Key 在服务商配置中统一管理
- */
-@Composable
-private fun AiProviderSection(
-    uiState: SettingsUiState,
-    onEvent: (SettingsUiEvent) -> Unit,
-    onNavigateToAiConfig: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "AI 服务商",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // 如果有服务商，显示选择卡片
-        if (uiState.availableProviders.isNotEmpty()) {
-            Card(
-                onClick = { onEvent(SettingsUiEvent.ShowProviderDialog) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "当前服务商",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = uiState.selectedProvider,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = "选择"
-                    )
-                }
-            }
-        } else {
-            // 如果没有服务商，显示提示卡片
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "提示",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = "尚未配置 AI 服务商",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                    Text(
-                        text = "请先添加至少一个 AI 服务商才能使用 AI 功能",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-        }
-
-        // 管理服务商按钮
-        OutlinedButton(
-            onClick = onNavigateToAiConfig,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("管理 AI 服务商")
-        }
-
-        Text(
-            text = "提示：您可以添加多个 AI 服务商，每个服务商有独立的 API Key 和模型配置",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * 隐私设置区域
- */
-@Composable
-private fun PrivacySection(
-    uiState: SettingsUiState,
-    onEvent: (SettingsUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "隐私设置",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // 数据掩码开关
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "数据掩码",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "AI 分析前自动掩码敏感信息",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = uiState.dataMaskingEnabled,
-                    onCheckedChange = { onEvent(SettingsUiEvent.ToggleDataMasking) }
-                )
-            }
-        }
-
-        // 本地优先模式
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "本地优先模式",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "优先使用本地规则，减少 AI 调用",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = uiState.localFirstMode,
-                    onCheckedChange = { onEvent(SettingsUiEvent.ToggleLocalFirstMode) }
-                )
-            }
-        }
-    }
-}
-
-/**
- * AI 分析设置区域
- */
-@Composable
-private fun AiAnalysisSection(
-    uiState: SettingsUiState,
-    onEvent: (SettingsUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "AI 分析设置",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            HistoryConversationCountSection(
-                selectedCount = uiState.historyConversationCount,
-                options = uiState.historyCountOptions,
-                onCountChange = { count ->
-                    onEvent(SettingsUiEvent.ChangeHistoryConversationCount(count))
-                }
-            )
-        }
-    }
-}
-
-/**
- * 关于区域
- */
-@Composable
-private fun AboutSection(
-    uiState: SettingsUiState,
-    onEvent: (SettingsUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "关于",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "应用版本",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = uiState.appVersion,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Text(
-                    text = "共情 AI 助手",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = "隐私优先的社交沟通助手",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        
-        // 数据管理
-        Text(
-            text = "数据管理",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        OutlinedButton(
-            onClick = { onEvent(SettingsUiEvent.ShowClearDataDialog) },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("清除所有设置")
-        }
-        
-        Text(
-            text = "注意：此操作将清除所有设置数据，但不会删除联系人和标签",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-
-
-/**
- * 用户画像设置区域
- */
-@Composable
-private fun UserProfileSection(
-    onNavigateToUserProfile: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "个人画像",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Card(
-            onClick = onNavigateToUserProfile,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "管理个人画像",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "设置您的性格特点、价值观、兴趣爱好等信息",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "进入"
-                )
-            }
-        }
-
-        Text(
-            text = "提示：完善个人画像可以让AI更好地理解您，提供更个性化的沟通建议",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * 提示词设置区域
- *
- * 使用 PromptSettingsSection 组件显示4个核心场景
- * 
- * @see TDD-00015 提示词设置优化技术设计
- */
-@Composable
-private fun PromptSettingsSection(
-    scenes: List<PromptScene>,
-    onNavigateToPromptEditor: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    com.empathy.ai.presentation.ui.screen.settings.component.PromptSettingsSection(
-        scenes = scenes,
-        onSceneClick = { scene ->
-            onNavigateToPromptEditor(PromptEditorRoutes.globalScene(scene))
-        },
-        modifier = modifier
-    )
-}
-
-/**
- * 服务商选择对话框
- */
 @Composable
 private fun ProviderSelectionDialog(
     selectedProvider: String,
@@ -782,30 +317,62 @@ private fun ProviderSelectionDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = AppSpacing.sm),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = provider == selectedProvider,
                             onClick = { onProviderSelected(provider) }
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppSpacing.sm))
                         Text(provider)
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
+            TextButton(onClick = onDismiss) { Text("关闭") }
+        }
+    )
+}
+
+@Composable
+private fun ClearDataDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("清除所有设置") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                Text("确定要清除以下数据吗？")
+                Text("将被清除：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                Text("• AI服务商配置", style = MaterialTheme.typography.bodySmall)
+                Text("• 隐私保护设置", style = MaterialTheme.typography.bodySmall)
+                Text("• 悬浮窗设置", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(AppSpacing.xs))
+                Text("不会清除：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
+                Text("• 联系人数据", style = MaterialTheme.typography.bodySmall)
+                Text("• 标签数据", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("此操作不可恢复！", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("确定清除", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
         }
     )
 }
 
 // ==================== Previews ====================
 
-@Preview(name = "设置页面 - 无服务商", showBackground = true)
+@Preview(name = "设置页面 - iOS风格", showBackground = true)
 @Composable
 private fun SettingsScreenPreview() {
     EmpathyTheme {
@@ -820,13 +387,16 @@ private fun SettingsScreenPreview() {
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
             onNavigateToUserProfile = {},
+            onNavigate = {},
+            onAddClick = {},
+            currentRoute = NavRoutes.SETTINGS,
             promptScenes = PromptScene.SETTINGS_SCENE_ORDER,
             onRequestPermission = {}
         )
     }
 }
 
-@Preview(name = "设置页面 - 已配置服务商", showBackground = true)
+@Preview(name = "设置页面 - 已配置", showBackground = true)
 @Composable
 private fun SettingsScreenConfiguredPreview() {
     EmpathyTheme {
@@ -842,6 +412,9 @@ private fun SettingsScreenConfiguredPreview() {
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
             onNavigateToUserProfile = {},
+            onNavigate = {},
+            onAddClick = {},
+            currentRoute = NavRoutes.SETTINGS,
             promptScenes = PromptScene.SETTINGS_SCENE_ORDER,
             onRequestPermission = {}
         )

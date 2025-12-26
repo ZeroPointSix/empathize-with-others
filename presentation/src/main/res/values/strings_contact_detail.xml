@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 
+    TD-00020 联系人详情页UI优化 - 新增字符串资源
+    注意：通用字符串（如tab_overview、btn_cancel等）已在strings.xml中定义
+    此文件仅包含TD-00020新增的字符串
+    -->
+    
+    <!-- 概览页 - 新增 -->
+    <string name="label_days_known">已相识 %d 天</string>
+    <string name="label_relationship_good">关系良好</string>
+    <string name="label_relationship_normal">关系一般</string>
+    <string name="label_relationship_warning">需要关注</string>
+    <string name="label_core_tags">核心标签</string>
+    <string name="label_new_discovery">新发现</string>
+    <string name="label_custom_prompt">为%s设置专属AI分析指令</string>
+    <string name="label_ai_learning">AI正在学习中…</string>
+    <string name="label_relationship_score">关系分数</string>
+    <string name="label_trend_up">近期上升</string>
+    <string name="label_trend_down">近期下降</string>
+    <string name="label_trend_stable">保持稳定</string>
+    
+    <!-- 事实流页 - 新增 -->
+    <string name="btn_manual_summary">手动总结</string>
+    <string name="label_ai_suggestion">AI 建议</string>
+    <string name="label_score_change">关系分数 %+d</string>
+    <string name="empty_fact_stream">暂无记录</string>
+    <string name="error_load_facts">加载失败，请重试</string>
+    
+    <!-- 画像库页 - 新增 -->
+    <string name="category_interests">兴趣爱好</string>
+    <string name="category_work">工作信息</string>
+    <string name="category_strategy">沟通策略</string>
+    <string name="category_risk">雷区标签</string>
+    <string name="label_tag_count">%d个</string>
+    <string name="risk_high">高风险</string>
+    <string name="risk_medium">中风险</string>
+    <string name="risk_low">低风险</string>
+    <string name="label_ai_inference">AI 自动推测</string>
+    <string name="btn_accept_all">全部采纳</string>
+    <string name="btn_add_tag">添加标签</string>
+    <string name="label_inferred_from">基于%s推测</string>
+    <string name="hint_ai_learning">AI 正在学习这位联系人的特征，随着数据积累会有更多推测</string>
+    
+    <!-- 资料库页 - 新增 -->
+    <string name="title_data_source">数据来源</string>
+    <string name="subtitle_data_source">管理与该联系人相关的所有数据</string>
+    <string name="label_total_count">数据总量</string>
+    <string name="label_count_unit">条</string>
+    <string name="data_chat">聊天记录</string>
+    <string name="data_chat_subtitle">对话历史</string>
+    <string name="data_summary">AI 总结</string>
+    <string name="data_summary_subtitle">智能分析</string>
+    <string name="data_image">图片</string>
+    <string name="data_image_subtitle">媒体文件</string>
+    <string name="data_voice">语音消息</string>
+    <string name="data_voice_subtitle">音频记录</string>
+    <string name="data_video">视频</string>
+    <string name="data_video_subtitle">视频动态</string>
+    <string name="data_file">文件</string>
+    <string name="data_file_subtitle">其他文档</string>
+    <string name="hint_media_developing">媒体功能开发中</string>
+    <string name="status_completed">已完成</string>
+    <string name="status_processing">处理中</string>
+    <string name="status_not_available">不可用</string>
+    <string name="status_failed">失败</string>
+    
+    <!-- 新建联系人页 - 新增 -->
+    <string name="title_new_contact">新建联系人</string>
+    <string name="btn_add_photo">添加照片</string>
+    <string name="label_name">姓名</string>
+    <string name="hint_name">输入姓名</string>
+    <string name="label_goal">沟通目标</string>
+    <string name="hint_goal">例如：建立初步信任</string>
+    <string name="btn_add_fact">添加画像事实</string>
+    <string name="hint_goal_tip">设定明确的沟通目标有助于 AI 提供更精准的建议。</string>
+    <string name="hint_fact_tip">添加关于此联系人的事实，帮助 AI 更好地理解你们的关系。</string>
+    
+    <!-- 通用 - 新增 -->
+    <string name="label_loading">加载中…</string>
+    <string name="label_expand">展开</string>
+    <string name="label_collapse">收起</string>
+</resources>

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.RelationshipLevel
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TagType
@@ -1092,18 +1093,63 @@ class ContactDetailViewModel @Inject constructor(
 
     /**
      * 确认标签
+     * 将AI推测的标签标记为已确认状态
+     * 注意：factId实际上是BrainTag的id或Fact的timestamp
      */
     private fun confirmTag(factId: Long) {
-        // TODO: 实现标签确认逻辑
-        _uiState.update { it.copy(successMessage = "标签已确认") }
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                // 使用timestamp匹配Fact（与ContactDetailTabViewModel保持一致）
+                val factToConfirm = currentState.facts.find { it.timestamp == factId }
+                
+                if (factToConfirm != null) {
+                    // 将AI推测的标签转为手动确认
+                    val confirmedFact = factToConfirm.copy(
+                        source = FactSource.MANUAL
+                    )
+                    
+                    val updatedFacts = currentState.facts.map { fact ->
+                        if (fact.timestamp == factId) confirmedFact else fact
+                    }
+                    _uiState.update { 
+                        it.copy(
+                            facts = updatedFacts,
+                            successMessage = "标签已确认"
+                        ) 
+                    }
+                }
+                // 刷新数据以同步服务器状态
+                refreshData()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "确认标签失败: ${e.message}") }
+            }
+        }
     }
 
     /**
      * 拒绝标签
+     * 将AI推测的标签标记为已拒绝状态并从列表中移除
+     * 注意：factId实际上是BrainTag的id或Fact的timestamp
      */
     private fun rejectTag(factId: Long) {
-        // TODO: 实现标签拒绝逻辑
-        _uiState.update { it.copy(successMessage = "标签已拒绝") }
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                // 使用timestamp匹配并移除Fact（与ContactDetailTabViewModel保持一致）
+                val updatedFacts = currentState.facts.filter { it.timestamp != factId }
+                _uiState.update { 
+                    it.copy(
+                        facts = updatedFacts,
+                        successMessage = "标签已拒绝"
+                    ) 
+                }
+                // 刷新数据以同步服务器状态
+                refreshData()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "拒绝标签失败: ${e.message}") }
+            }
+        }
     }
 
     /**

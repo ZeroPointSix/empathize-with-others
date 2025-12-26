@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资料库-数据来源</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: auto;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-[#F5F7FA] flex flex-col font-sans select-none overflow-hidden">
+  <!-- iOS Status Bar Placeholder -->
+  <div class="h-12 w-full bg-[#F5F7FA]"></div>
+
+  <!-- Top Navigation / Tabs -->
+  <div class="bg-[#F5F7FA] border-b border-slate-200 sticky top-0 z-10">
+    <div class="flex px-4 items-center h-12">
+      <div class="flex-1 flex justify-around">
+        <div class="px-3 py-2 text-[15px] text-slate-500 font-medium hover:text-slate-700 transition-colors">概览</div>
+        <div class="px-3 py-2 text-[15px] text-slate-500 font-medium hover:text-slate-700 transition-colors">事实流</div>
+        <div class="px-3 py-2 text-[15px] text-slate-500 font-medium hover:text-slate-700 transition-colors">画像</div>
+        <!-- Active Tab: Indigo Brand Color -->
+        <div class="px-3 py-2 text-[15px] text-indigo-600 font-bold border-b-[2px] border-indigo-600">资料库</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Scrollable Content -->
+  <div class="flex-1 overflow-y-auto no-scrollbar pb-32">
+    <!-- Header Section with Search -->
+    <div class="px-5 pt-4 pb-4">
+      <h1 class="text-[28px] font-bold text-slate-900 tracking-tight">数据来源</h1>
+      <!-- Search Bar -->
+      <div class="mt-3 w-full h-10 bg-white border border-slate-200 rounded-xl flex items-center px-3 gap-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+        <span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+        <span class="text-[15px] text-slate-400">搜索关键词...</span>
+      </div>
+    </div>
+
+    <!-- Stats Summary (Colorful Accent) -->
+    <div class="px-5 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex justify-between items-center relative overflow-hidden">
+        <!-- Decorative Background Blur -->
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-60"></div>
+        
+        <div class="relative z-10">
+          <p class="text-indigo-600/80 text-[11px] font-bold uppercase tracking-wider">Total Sources</p>
+          <p class="text-slate-900 text-3xl font-bold mt-1 tracking-tight">1,284 <span class="text-sm font-normal text-slate-400 ml-0.5">items</span></p>
+        </div>
+        <div class="relative z-10 w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+          <span class="material-symbols-outlined">analytics</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Grid (Colorful Icons) -->
+    <div class="px-5 grid grid-cols-2 gap-3">
+      <!-- Card: Chat (Blue) -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all group hover:border-blue-200">
+        <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <span class="material-symbols-outlined text-blue-600">chat_bubble</span>
+            </div>
+            <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">842</span>
+        </div>
+        <p class="text-[16px] font-semibold text-slate-900">聊天记录</p>
+        <p class="text-[12px] text-slate-400 mt-0.5">Chat History</p>
+      </div>
+
+      <!-- Card: AI Summary (Violet) -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all group hover:border-violet-200">
+        <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                <span class="material-symbols-outlined text-violet-600">auto_awesome</span>
+            </div>
+            <span class="text-[11px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-md">12</span>
+        </div>
+        <p class="text-[16px] font-semibold text-slate-900">AI 总结</p>
+        <p class="text-[12px] text-slate-400 mt-0.5">Smart Summary</p>
+      </div>
+
+      <!-- Card: Images (Pink) -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all group hover:border-pink-200">
+        <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center group-hover:bg-pink-100 transition-colors">
+                <span class="material-symbols-outlined text-pink-600">image</span>
+            </div>
+            <span class="text-[11px] font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded-md">156</span>
+        </div>
+        <p class="text-[16px] font-semibold text-slate-900">媒体文件</p>
+        <p class="text-[12px] text-slate-400 mt-0.5">Media Files</p>
+      </div>
+
+      <!-- Card: Voice (Cyan) -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all group hover:border-cyan-200">
+        <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
+                <span class="material-symbols-outlined text-cyan-600">mic</span>
+            </div>
+            <span class="text-[11px] font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-md">48</span>
+        </div>
+        <p class="text-[16px] font-semibold text-slate-900">语音消息</p>
+        <p class="text-[12px] text-slate-400 mt-0.5">Voice Messages</p>
+      </div>
+
+      <!-- Card: Video (Orange) -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all group hover:border-orange-200">
+        <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                <span class="material-symbols-outlined text-orange-600">videocam</span>
+            </div>
+            <span class="text-[11px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md">0</span>
+        </div>
+        <p class="text-[16px] font-semibold text-slate-900">视频动态</p>
+        <p class="text-[12px] text-slate-400 mt-0.5">Videos</p>
+      </div>
+
+      <!-- Card: Files (Emerald) -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-95 transition-all group hover:border-emerald-200">
+        <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                <span class="material-symbols-outlined text-emerald-600">folder</span>
+            </div>
+            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">226</span>
+        </div>
+        <p class="text-[16px] font-semibold text-slate-900">其他文档</p>
+        <p class="text-[12px] text-slate-400 mt-0.5">Documents</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="absolute bottom-0 left-0 right-0 h-24 bg-transparent z-20 pointer-events-none">
+    <div class="absolute bottom-0 w-full h-20 bg-white/90 backdrop-blur-xl border-t border-slate-200 flex items-center justify-around px-6 pb-6 pointer-events-auto">
+      <div class="flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined text-slate-400 text-[26px]">home</span>
+        <span class="text-[11px] text-slate-400 font-medium">首页</span>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined text-indigo-600 text-[26px]">database</span>
+        <span class="text-[11px] text-indigo-600 font-medium">资料库</span>
+      </div>
+      <div class="w-12"></div> <!-- Spacer for FAB -->
+      <div class="flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined text-slate-400 text-[26px]">explore</span>
+        <span class="text-[11px] text-slate-400 font-medium">发现</span>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined text-slate-400 text-[26px]">settings</span>
+        <span class="text-[11px] text-slate-400 font-medium">设置</span>
+      </div>
+    </div>
+    <!-- Floating Action Button (Brand Color) -->
+    <button class="absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-200 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto hover:bg-indigo-700">
+      <span class="material-symbols-outlined text-3xl">add</span>
+    </button>
+  </div>
+
+  <!-- iOS Home Indicator -->
+  <div class="absolute bottom-0 w-full h-8 flex justify-center items-end pb-2 z-30 pointer-events-none">
+    <div class="w-32 h-1.5 bg-slate-900/20 rounded-full"></div>
+  </div>
+</div>
+  <script>
+    // 初始化图标库
+    // Material Symbols 使用 CSS，无需初始化
+  </script>
+</body>
+</html>

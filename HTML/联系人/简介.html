@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人画像 - 李晓彤</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: auto;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-[#F2F2F7] flex flex-col font-sans text-slate-900 relative overflow-hidden">
+    <!-- Top Gradient/Cover Background -->
+    <div class="absolute top-0 left-0 right-0 h-[340px] bg-gradient-to-b from-[#E5E5EA] via-[#F2F2F7] to-[#F2F2F7] z-0 pointer-events-none"></div>
+
+    <!-- Sticky Header & Nav -->
+    <div class="sticky top-0 z-50 bg-[#F2F2F7]/85 backdrop-blur-xl border-b border-slate-200/50 transition-all duration-300">
+        <!-- Top Actions -->
+        <div class="flex justify-between items-center px-4 h-[52px]">
+            <button id="btn-back" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 hover:bg-white transition-colors text-slate-900 backdrop-blur-md shadow-sm border border-white/20">
+                <span class="material-symbols-outlined text-[22px]">arrow_back</span>
+            </button>
+            <div class="flex gap-3">
+                <button id="btn-folder" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 hover:bg-white transition-colors text-slate-900 backdrop-blur-md shadow-sm border border-white/20">
+                    <span class="material-symbols-outlined text-[22px]">folder_open</span>
+                </button>
+                <button id="btn-edit" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 hover:bg-white transition-colors text-slate-900 backdrop-blur-md shadow-sm border border-white/20">
+                    <span class="material-symbols-outlined text-[22px]">edit</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex justify-around items-end px-2 h-11 mt-1">
+            <button id="tab-overview" class="relative px-4 py-2.5 text-[15px] font-bold text-slate-900">
+                概览
+                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-slate-900 rounded-full"></div>
+            </button>
+            <button id="tab-facts" class="px-4 py-2.5 text-[15px] font-medium text-slate-500 hover:text-slate-700 transition-colors">事实流</button>
+            <button id="tab-persona" class="px-4 py-2.5 text-[15px] font-medium text-slate-500 hover:text-slate-700 transition-colors">画像</button>
+            <button id="tab-library" class="px-4 py-2.5 text-[15px] font-medium text-slate-500 hover:text-slate-700 transition-colors">资料库</button>
+        </div>
+    </div>
+
+    <!-- Main Scroll Area -->
+    <div class="flex-1 overflow-y-auto no-scrollbar relative z-10 px-4 pb-24 pt-4">
+        
+        <!-- Large Profile Header (Cover Feel) -->
+        <div class="flex flex-col mb-8 mt-2 pl-2">
+            <div class="flex items-end gap-5">
+                <!-- Avatar: Larger, White Ring, No Gray Border -->
+                <div class="relative group cursor-pointer active:scale-95 transition-transform" id="btn-avatar">
+                    <div class="w-[96px] h-[96px] rounded-full bg-slate-200 ring-[4px] ring-white shadow-lg overflow-hidden flex items-center justify-center">
+                        <span class="material-symbols-outlined text-5xl text-slate-400">person</span>
+                    </div>
+                    <!-- Status Indicator -->
+                    <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-[3px] border-white rounded-full shadow-sm"></div>
+                </div>
+                
+                <!-- Name & Meta -->
+                <div class="pb-2 flex flex-col">
+                    <h1 class="text-[34px] font-bold text-slate-900 tracking-tight leading-none mb-2">李晓彤</h1>
+                    <div class="flex items-center gap-2">
+                        <!-- Optimized Tag: No gray bg, subtle brand color -->
+                        <span class="text-[13px] font-medium text-blue-600 bg-blue-50/80 px-2.5 py-1 rounded-full backdrop-blur-sm">已相识 0 天</span>
+                        <span class="text-[13px] text-slate-400">上海 · 静安</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 1: Health (Updated) -->
+        <div id="card-health" class="bg-white rounded-[24px] p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.06)] border border-slate-100/80 mb-5 cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.99]">
+            <div class="flex justify-between items-start mb-6">
+                <span class="text-[15px] font-bold text-slate-900">关系健康度</span>
+                <span class="material-symbols-outlined text-slate-300">info</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <!-- Ring Chart: Round Cap, Gradient feel -->
+                <div class="relative w-[80px] h-[80px] flex items-center justify-center shrink-0">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="40" cy="40" r="36" stroke="#F1F5F9" stroke-width="6" fill="none"/>
+                        <circle cx="40" cy="40" r="36" stroke="#F97316" stroke-width="6" fill="none" stroke-dasharray="226" stroke-dashoffset="113" stroke-linecap="round" class="drop-shadow-sm"/>
+                    </svg>
+                    <!-- Number: SF Pro Display Light/Heavy feel -->
+                    <span class="absolute text-[32px] font-light text-slate-900 tracking-tighter">50</span>
+                </div>
+                
+                <!-- Content -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[19px] font-bold text-slate-900">关系一般</span>
+                        <!-- Tag: Subtle Orange -->
+                        <span class="px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[11px] font-bold">需关注</span>
+                    </div>
+                    <p class="text-[14px] text-slate-500 leading-relaxed">
+                        互动频率较低，建议增加日常问候与分享，重建连接感。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Core Tags (No Gray Box, Quote Style) -->
+        <div id="card-tags" class="bg-white rounded-[24px] p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.06)] border border-slate-100/80 mb-5 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+            <!-- Decorative Quote Icon -->
+            <span class="material-symbols-outlined absolute top-4 left-4 text-7xl text-blue-50/80 -z-0 select-none">format_quote</span>
+            
+            <div class="relative z-10 pl-2">
+                <h2 class="text-[15px] font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-blue-500 rounded-full"></span>
+                    核心标签
+                </h2>
+                <!-- Typography: Serif/Italic for emotion -->
+                <p class="text-[18px] text-slate-800 font-serif italic leading-relaxed opacity-90">
+                    “近期可能感到被冷落或缺乏关注，需要通过极端言语（如‘分手’）来试探和引起注意。”
+                </p>
+            </div>
+        </div>
+
+        <!-- Card 3: Discovery -->
+        <div id="card-discovery" class="bg-white rounded-[24px] p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.06)] border border-slate-100/80 mb-5 cursor-pointer hover:shadow-lg transition-all duration-300 active:scale-[0.99]">
+            <div class="flex items-center gap-3 mb-4">
+                <!-- Vibrant Solid Background Icon -->
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-200">
+                    <span class="material-symbols-outlined text-[20px]">lightbulb</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[16px] font-bold text-slate-900">最新发现</span>
+                    <span class="text-[12px] text-slate-400">AI 智能分析 · 3天前</span>
+                </div>
+            </div>
+            <div class="pl-[52px]">
+                <p class="text-[15px] text-slate-600 leading-relaxed">
+                    检测到情绪波动模式，建议在晚间时段增加关心频率，避免长时间未回复消息。
+                </p>
+            </div>
+        </div>
+
+        <!-- Card 4: Instructions -->
+        <div id="card-instruction" class="bg-white rounded-[24px] shadow-[0_10px_40px_-12px_rgba(0,0,0,0.06)] border border-slate-100/80 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
+            <div class="p-5 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <!-- Vibrant Solid Background Icon -->
+                    <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                        <span class="material-symbols-outlined text-[22px]">terminal</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[16px] font-bold text-slate-900">专属分析指令</span>
+                        <span class="text-[13px] text-slate-400">已配置个性化逻辑</span>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-slate-300">chevron_right</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+  <script>
+    // 初始化图标库
+    // Material Symbols 和 Font Awesome 使用 CSS，无需初始化
+  </script>
+</body>
+</html>

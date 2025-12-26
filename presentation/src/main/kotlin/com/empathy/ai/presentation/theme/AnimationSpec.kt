@@ -106,4 +106,85 @@ object AnimationSpec {
         durationMillis = DurationFast,
         easing = EasingStandard
     )
+
+    // ========== Phase 2: 交互动效系统扩展 ==========
+
+    /**
+     * 页面进入动画时长 (300ms)
+     */
+    const val DurationPageEnter = 300
+
+    /**
+     * 页面退出动画时长 (250ms)
+     */
+    const val DurationPageExit = 250
+
+    /**
+     * 弹簧阻尼比 (0.8f)
+     * 用于由于用户交互引起的弹性动画
+     */
+    const val SpringDampingRatio = 0.8f
+
+    /**
+     * 弹簧刚度 (300f)
+     */
+    const val SpringStiffness = 300f
+
+    /**
+     * 页面进入转场 (Forward Enter)
+     * 从右侧滑入 + 淡入
+     */
+    val PageEnterTransition = androidx.compose.animation.slideInHorizontally(
+        initialOffsetX = { fullWidth -> fullWidth },
+        animationSpec = tween(DurationPageEnter, easing = EasingStandard)
+    ) + androidx.compose.animation.fadeIn(
+        animationSpec = tween(DurationPageEnter)
+    )
+
+    /**
+     * 页面退出转场 (Forward Exit)
+     * 向左侧滑出1/3 + 淡出
+     */
+    val PageExitTransition = androidx.compose.animation.slideOutHorizontally(
+        targetOffsetX = { fullWidth -> -fullWidth / 3 },
+        animationSpec = tween(DurationPageExit, easing = EasingStandard)
+    ) + androidx.compose.animation.fadeOut(
+        animationSpec = tween(DurationPageExit)
+    )
+
+    /**
+     * 页面返回进入转场 (Back Enter)
+     * 从左侧1/3滑入 + 淡入
+     */
+    val PagePopEnterTransition = androidx.compose.animation.slideInHorizontally(
+        initialOffsetX = { fullWidth -> -fullWidth / 3 },
+        animationSpec = tween(DurationPageEnter, easing = EasingStandard)
+    ) + androidx.compose.animation.fadeIn(
+        animationSpec = tween(DurationPageEnter)
+    )
+
+    /**
+     * 页面返回退出转场 (Back Exit)
+     * 向右侧滑出 + 淡出
+     */
+    val PagePopExitTransition = androidx.compose.animation.slideOutHorizontally(
+        targetOffsetX = { fullWidth -> fullWidth },
+        animationSpec = tween(DurationPageExit, easing = EasingStandard)
+    ) + androidx.compose.animation.fadeOut(
+        animationSpec = tween(DurationPageExit)
+    )
+
+    /**
+     * 简单的淡入转场
+     */
+    val FadeInTransition = androidx.compose.animation.fadeIn(
+        animationSpec = tween(DurationNormal)
+    )
+
+    /**
+     * 简单的淡出转场
+     */
+    val FadeOutTransition = androidx.compose.animation.fadeOut(
+        animationSpec = tween(DurationNormal)
+    )
 }

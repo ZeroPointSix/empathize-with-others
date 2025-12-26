@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>共情AI助手 - 设置 v3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: auto;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-[#F2F2F7] flex flex-col font-sans text-black overflow-hidden">
+    
+    <!-- Header - iOS风格大标题 -->
+    <div class="pt-14 pb-2 px-4 bg-[#F2F2F7] sticky top-0 z-10">
+      <h1 class="text-[34px] font-bold tracking-tight leading-tight">设置</h1>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto px-4 pb-10 no-scrollbar">
+      
+      <!-- Profile Card -->
+      <div class="bg-white rounded-xl flex items-center p-4 mb-6 mt-2">
+        <div class="w-[60px] h-[60px] rounded-full bg-[#C7C7CC] flex items-center justify-center text-white shrink-0">
+          <span class="material-symbols-outlined text-[32px]">person</span>
+        </div>
+        <div class="ml-4 flex-1">
+          <h2 class="text-[17px] font-semibold leading-tight">共情AI</h2>
+          <p class="text-[14px] text-[#8E8E93] mt-0.5">隐私优先 · 本地存储</p>
+        </div>
+        <span class="material-symbols-outlined text-[#C7C7CC]">chevron_right</span>
+      </div>
+
+      <!-- Section: AI 配置 -->
+      <h3 class="text-[13px] font-normal text-[#8E8E93] uppercase ml-4 mb-2 tracking-wide">AI 配置</h3>
+      <div class="bg-white rounded-xl overflow-hidden mb-6">
+        <!-- Item: AI 服务商 -->
+        <div class="flex items-center pl-4 active:bg-[#E5E5EA] transition-colors cursor-pointer">
+          <div class="w-7 h-7 rounded-md bg-[#007AFF] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4 border-b border-[#E5E5EA]">
+            <span class="text-[17px]">AI 服务商</span>
+            <div class="flex items-center gap-1">
+              <span class="text-[17px] text-[#8E8E93]">DeepSeek</span>
+              <span class="material-symbols-outlined text-[#C7C7CC] text-[20px]">chevron_right</span>
+            </div>
+          </div>
+        </div>
+        <!-- Item: 提示词设置（合并为一个入口，点击进入编辑器可切换场景） -->
+        <div class="flex items-center pl-4 active:bg-[#E5E5EA] transition-colors cursor-pointer">
+          <div class="w-7 h-7 rounded-md bg-[#5856D6] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">edit_note</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4">
+            <span class="text-[17px]">提示词设置</span>
+            <span class="material-symbols-outlined text-[#C7C7CC] text-[20px]">chevron_right</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: 悬浮窗 -->
+      <h3 class="text-[13px] font-normal text-[#8E8E93] uppercase ml-4 mb-2 tracking-wide">悬浮窗</h3>
+      <div class="bg-white rounded-xl overflow-hidden mb-6">
+        <!-- Item: 启用悬浮窗 -->
+        <div class="flex items-center pl-4">
+          <div class="w-7 h-7 rounded-md bg-[#007AFF] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">picture_in_picture_alt</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4 border-b border-[#E5E5EA]">
+            <span class="text-[17px]">启用悬浮窗</span>
+            <!-- iOS Toggle - Active -->
+            <div class="w-[51px] h-[31px] bg-[#34C759] rounded-full relative cursor-pointer">
+              <div class="w-[27px] h-[27px] bg-white rounded-full shadow absolute top-[2px] right-[2px]"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Item: 默认模式 -->
+        <div class="flex items-center pl-4 active:bg-[#E5E5EA] transition-colors cursor-pointer">
+          <div class="w-7 h-7 rounded-md bg-[#8E8E93] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">tune</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4">
+            <span class="text-[17px]">默认模式</span>
+            <div class="flex items-center gap-1">
+              <span class="text-[17px] text-[#8E8E93]">分析</span>
+              <span class="material-symbols-outlined text-[#C7C7CC] text-[20px]">chevron_right</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: 隐私保护 -->
+      <h3 class="text-[13px] font-normal text-[#8E8E93] uppercase ml-4 mb-2 tracking-wide">隐私保护</h3>
+      <div class="bg-white rounded-xl overflow-hidden mb-6">
+        <!-- Item: 数据掩码 -->
+        <div class="flex items-center pl-4">
+          <div class="w-7 h-7 rounded-md bg-[#FF3B30] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">shield</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4 border-b border-[#E5E5EA]">
+            <span class="text-[17px]">数据掩码</span>
+            <div class="w-[51px] h-[31px] bg-[#34C759] rounded-full relative cursor-pointer">
+              <div class="w-[27px] h-[27px] bg-white rounded-full shadow absolute top-[2px] right-[2px]"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Item: 本地优先 -->
+        <div class="flex items-center pl-4">
+          <div class="w-7 h-7 rounded-md bg-[#34C759] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">smartphone</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4">
+            <span class="text-[17px]">本地优先模式</span>
+            <div class="w-[51px] h-[31px] bg-[#34C759] rounded-full relative cursor-pointer">
+              <div class="w-[27px] h-[27px] bg-white rounded-full shadow absolute top-[2px] right-[2px]"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: 数据管理 -->
+      <h3 class="text-[13px] font-normal text-[#8E8E93] uppercase ml-4 mb-2 tracking-wide">数据管理</h3>
+      <div class="bg-white rounded-xl overflow-hidden mb-6">
+        <!-- Item: 历史对话 -->
+        <div class="flex items-center pl-4 active:bg-[#E5E5EA] transition-colors cursor-pointer">
+          <div class="w-7 h-7 rounded-md bg-[#007AFF] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">history</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4 border-b border-[#E5E5EA]">
+            <span class="text-[17px]">历史对话</span>
+            <div class="flex items-center gap-1">
+              <span class="text-[17px] text-[#8E8E93]">128条</span>
+              <span class="material-symbols-outlined text-[#C7C7CC] text-[20px]">chevron_right</span>
+            </div>
+          </div>
+        </div>
+        <!-- Item: 清除数据 -->
+        <div class="flex items-center pl-4 active:bg-[#E5E5EA] transition-colors cursor-pointer">
+          <div class="w-7 h-7 rounded-md bg-[#FF3B30] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4">
+            <span class="text-[17px] text-[#FF3B30]">清除所有数据</span>
+            <span class="material-symbols-outlined text-[#C7C7CC] text-[20px]">chevron_right</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: 关于 -->
+      <h3 class="text-[13px] font-normal text-[#8E8E93] uppercase ml-4 mb-2 tracking-wide">关于</h3>
+      <div class="bg-white rounded-xl overflow-hidden mb-8">
+        <div class="flex items-center pl-4">
+          <div class="w-7 h-7 rounded-md bg-[#8E8E93] flex items-center justify-center text-white shrink-0">
+            <span class="material-symbols-outlined text-[18px]">info</span>
+          </div>
+          <div class="ml-3 flex-1 flex items-center justify-between py-3 pr-4">
+            <span class="text-[17px]">版本</span>
+            <span class="text-[17px] text-[#8E8E93]">1.0.0</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="text-center text-[#8E8E93] text-[13px] mb-8">
+        <p>共情AI · 隐私优先</p>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="h-[50px] bg-[#F7F7F7] border-t border-[#E5E5EA] flex items-center justify-around shrink-0 relative">
+      <button class="flex-1 flex flex-col items-center justify-center text-[#8E8E93]">
+        <span class="material-symbols-outlined text-[24px]">contacts</span>
+        <span class="text-[10px]">联系人</span>
+      </button>
+      <div class="flex-1 flex justify-center">
+        <button class="w-12 h-12 -mt-4 bg-[#FA5151] rounded-full shadow-lg flex items-center justify-center text-white">
+          <span class="material-symbols-outlined text-[26px]">add</span>
+        </button>
+      </div>
+      <button class="flex-1 flex flex-col items-center justify-center text-[#8E8E93]">
+        <span class="material-symbols-outlined text-[24px]">smart_toy</span>
+        <span class="text-[10px]">AI军师</span>
+      </button>
+      <button class="flex-1 flex flex-col items-center justify-center text-[#07C160]">
+        <span class="material-symbols-outlined text-[24px]">settings</span>
+        <span class="text-[10px]">设置</span>
+      </button>
+    </div>
+
+    <!-- iOS Home Indicator -->
+    <div class="h-[34px] bg-[#F7F7F7] flex justify-center items-start pt-2">
+      <div class="w-[134px] h-[5px] bg-black rounded-full"></div>
+    </div>
+
+  </div>
+</body>
+</html>

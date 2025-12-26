@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 配置 - Modern iOS Inset</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: auto;
+    }
+    body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+input::placeholder { color: #8E8E93; opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-[#F2F2F7] flex flex-col font-sans antialiased overflow-hidden">
+  <!-- Header -->
+  <header class="bg-[#F2F2F7]/80 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-300/30">
+    <!-- Status Bar Spacer (Approx) -->
+    <div class="h-[44px] w-full"></div>
+    
+    <!-- Navigation Bar -->
+    <div class="flex items-center justify-between px-2 h-[44px]">
+      <button id="btn-back" class="flex items-center text-[#007AFF] active:opacity-50 transition-opacity pl-2">
+        <span class="material-symbols-outlined text-[30px] -ml-1">chevron_left</span>
+        <span class="text-[17px] leading-none -mt-0.5">设置</span>
+      </button>
+      <button id="btn-add" class="px-4 text-[#007AFF] active:opacity-50 transition-opacity">
+        <span class="material-symbols-outlined text-[26px]">add</span>
+      </button>
+    </div>
+    
+    <!-- Large Title -->
+    <div class="px-5 pb-2">
+      <h1 class="text-[34px] font-bold text-black tracking-tight leading-tight">AI 配置</h1>
+    </div>
+    
+    <!-- Search Bar -->
+    <div class="px-4 pb-3">
+      <div class="bg-[#E3E3E8] rounded-[10px] h-[36px] flex items-center px-3 gap-2">
+        <span class="material-symbols-outlined text-[#8E8E93] text-[20px]">search</span>
+        <input id="input-search" type="text" placeholder="搜索" class="bg-transparent border-none outline-none text-[17px] w-full placeholder-[#8E8E93] text-black caret-[#007AFF]">
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Area -->
+  <main class="flex-1 overflow-y-auto no-scrollbar pb-10">
+    <div class="pt-6">
+      
+      <!-- Section: Active Configurations -->
+      <div class="mb-8">
+        <h3 class="px-5 text-[13px] font-medium text-[#8E8E93] uppercase tracking-wide mb-2">推理引擎</h3>
+        
+        <div class="bg-white mx-4 rounded-[12px] overflow-hidden shadow-sm">
+          <!-- Item 1: ModelScope (Active) -->
+          <div id="card-config-modelscope" class="relative flex items-center p-3 pl-4 active:bg-[#F2F2F7] transition-colors cursor-pointer group">
+            <!-- Icon -->
+            <div class="w-[40px] h-[40px] bg-[#007AFF] rounded-[10px] flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-[24px]">cloud</span>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 min-w-0 ml-3.5 py-1">
+              <div class="flex justify-between items-center">
+                <span class="text-[17px] font-semibold text-black">魔搭 ModelScope</span>
+                <span class="material-symbols-outlined text-[#007AFF] text-[20px] font-bold mr-3">check</span>
+              </div>
+              <div class="text-[15px] text-[#8E8E93] truncate">默认推理引擎</div>
+            </div>
+            
+            <!-- Divider -->
+            <div class="absolute bottom-0 right-0 left-[68px] h-[0.5px] bg-[#C6C6C8]"></div>
+          </div>
+
+          <!-- Item 2: DeepSeek (Inactive) -->
+          <div id="card-config-deepseek" class="flex items-center p-3 pl-4 active:bg-[#F2F2F7] transition-colors cursor-pointer">
+            <!-- Icon -->
+            <div class="w-[40px] h-[40px] bg-[#5856D6] rounded-[10px] flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-[24px]">psychology</span>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 min-w-0 ml-3.5 py-1">
+              <div class="flex justify-between items-center">
+                <span class="text-[17px] font-semibold text-black">DeepSeek</span>
+              </div>
+              <div class="text-[15px] text-[#8E8E93] truncate">备用推理引擎</div>
+            </div>
+          </div>
+        </div>
+        <p class="px-5 mt-2 text-[13px] text-[#8E8E93]">向左滑动列表项可进行编辑或删除。</p>
+      </div>
+
+      <!-- Section: General Options -->
+      <div class="mb-8">
+        <h3 class="px-5 text-[13px] font-medium text-[#8E8E93] uppercase tracking-wide mb-2">通用选项</h3>
+        
+        <div class="bg-white mx-4 rounded-[12px] overflow-hidden shadow-sm">
+          <!-- Proxy Settings -->
+          <div id="row-proxy" class="relative flex items-center p-3 pl-4 active:bg-[#F2F2F7] transition-colors cursor-pointer">
+            <div class="w-[29px] h-[29px] bg-[#AF52DE] rounded-[7px] flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-[18px]">vpn_lock</span>
+            </div>
+            <div class="flex-1 ml-3 text-[17px] text-black">网络代理设置</div>
+            <span class="material-symbols-outlined text-[#C7C7CC] text-[20px] mr-2">chevron_right</span>
+            <!-- Divider -->
+            <div class="absolute bottom-0 right-0 left-[56px] h-[0.5px] bg-[#C6C6C8]"></div>
+          </div>
+          
+          <!-- Usage Stats -->
+          <div id="row-usage" class="flex items-center p-3 pl-4 active:bg-[#F2F2F7] transition-colors cursor-pointer">
+            <div class="w-[29px] h-[29px] bg-[#FF9500] rounded-[7px] flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-white text-[18px]">bar_chart</span>
+            </div>
+            <div class="flex-1 ml-3 text-[17px] text-black">用量统计</div>
+            <span class="material-symbols-outlined text-[#C7C7CC] text-[20px] mr-2">chevron_right</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+  <script>
+    // 初始化图标库
+    // Material Symbols 和 Font Awesome 使用 CSS，无需初始化
+  </script>
+</body>
+</html>

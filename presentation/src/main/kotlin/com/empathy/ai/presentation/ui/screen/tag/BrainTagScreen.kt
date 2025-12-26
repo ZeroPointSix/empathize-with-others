@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.ui.component.chip.TagChip
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
+import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicator
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
@@ -114,7 +116,8 @@ private fun BrainTagScreenContent(
                     EmptyView(
                         message = "还没有标签",
                         actionText = "添加标签",
-                        onAction = { onEvent(BrainTagUiEvent.ShowAddDialog) }
+                        onAction = { onEvent(BrainTagUiEvent.ShowAddDialog) },
+                        emptyType = EmptyType.NoTags
                     )
                 }
                 else -> {
@@ -178,8 +181,8 @@ private fun TagList(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(AppSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.lg)
     ) {
         // 雷区标签
         if (landmineTags.isNotEmpty()) {
@@ -204,7 +207,7 @@ private fun TagList(
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppSpacing.sm))
             }
         }
 
@@ -256,7 +259,7 @@ private fun AddTagDialog(
         title = { Text("添加标签") },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.lg)
             ) {
                 CustomTextField(
                     value = tagContent,
@@ -273,7 +276,7 @@ private fun AddTagDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
                 ) {
                     FilterChip(
                         selected = selectedTagType == TagType.RISK_RED,

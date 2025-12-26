@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 助手 (Analysis & Reply)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: auto;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-slate-50 flex flex-col font-sans relative overflow-hidden">
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-30">
+    <div class="px-4 pt-14 pb-3 flex justify-between items-center">
+       <button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-colors">
+         <span class="material-symbols-outlined">arrow_back</span>
+       </button>
+       <span class="text-[17px] font-semibold text-slate-900">AI 军师</span>
+       <button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-colors">
+         <span class="material-symbols-outlined">history</span>
+       </button>
+    </div>
+  </div>
+
+  <!-- Main Content (Scrollable) -->
+  <div class="flex-1 overflow-y-auto pb-32 no-scrollbar">
+    
+    <!-- 2.3 Tab Switcher -->
+    <div class="px-4 mt-4">
+      <div class="bg-slate-200/60 p-1 rounded-xl flex">
+        <!-- Active Tab: Analyze -->
+        <button class="flex-1 h-10 rounded-lg bg-white text-blue-600 shadow-sm text-sm font-medium flex items-center justify-center gap-1.5 transition-all">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+          分析
+        </button>
+        <!-- Inactive Tab: Polish -->
+        <button class="flex-1 h-10 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/50 text-sm font-medium flex items-center justify-center gap-1.5 transition-all">
+          <span class="material-symbols-outlined text-[18px]">edit_note</span>
+          润色
+        </button>
+        <!-- Inactive Tab: Reply -->
+        <button class="flex-1 h-10 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/50 text-sm font-medium flex items-center justify-center gap-1.5 transition-all">
+          <span class="material-symbols-outlined text-[18px]">chat</span>
+          回复
+        </button>
+      </div>
+    </div>
+
+    <!-- 2.4 Tab Content Area -->
+    <div class="p-4 flex flex-col gap-4">
+      
+      <!-- 2.4.1 Contact Selector -->
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 ml-1">分析对象</label>
+        <button class="w-full bg-white border border-slate-200 rounded-lg px-3 py-3 flex justify-between items-center shadow-sm active:bg-slate-50 transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">A</div>
+            <span class="text-sm text-slate-900 font-medium">Alice</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400">arrow_drop_down</span>
+        </button>
+      </div>
+
+      <!-- 2.4.2 Input Box -->
+      <div class="bg-white border border-slate-200 rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all overflow-hidden">
+        <textarea 
+          class="w-full p-3 text-sm text-slate-700 placeholder:text-slate-400 border-none focus:ring-0 resize-none min-h-[56px] max-h-[120px] bg-transparent"
+          placeholder="粘贴对方发来的消息..."
+          rows="3"
+        ></textarea>
+        
+        <!-- Footer: Counter & Send Button -->
+        <div class="flex justify-between items-center px-3 pb-3 pt-1">
+          <span class="text-[11px] text-slate-400 font-medium">0/2000</span>
+          <!-- 2.4.3 Send Button -->
+          <button class="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[13px] font-medium flex items-center gap-1.5 shadow-md shadow-slate-200 transition-all active:scale-95">
+            分析
+            <span class="material-symbols-outlined text-[16px]">send</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2.5 Result Card -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mt-2">
+        <!-- Title Bar -->
+        <div class="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+           <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600">search</span>
+              <span class="font-semibold text-slate-800 text-sm">分析结果</span>
+           </div>
+           <!-- 2.5.3 Risk Badge: Safe -->
+           <div class="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-100 flex items-center gap-1">
+             <span class="material-symbols-outlined text-[11px] text-emerald-600">check_circle</span>
+             <span class="text-[11px] font-bold text-emerald-700">SAFE</span>
+           </div>
+        </div>
+
+        <!-- Content (MaxHeightScrollView) -->
+        <div class="p-4">
+           <div class="max-h-[120px] overflow-y-auto pr-1 no-scrollbar">
+              <div class="text-sm text-slate-600 leading-relaxed space-y-3">
+                <p><span class="font-semibold text-slate-800">【军师分析】</span> 对方这句话虽然表面在抱怨工作累，实际上是在展示自己的价值，并隐含了求安慰的心理。</p>
+                <p><span class="font-semibold text-slate-800">【话术建议】</span> 不要只说“辛苦了”，建议肯定她的能力，同时给一点情绪价值。例如：“这么复杂的项目都能搞定，不愧是你，但也别太拼了，我会心疼。”</p>
+              </div>
+           </div>
+        </div>
+
+        <!-- 2.5.4 Action Buttons -->
+        <div class="px-4 pb-4 flex gap-3">
+           <button class="flex-1 h-9 rounded-lg text-slate-600 hover:bg-slate-50 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors border border-transparent hover:border-slate-100">
+              <span class="material-symbols-outlined text-[16px]">content_copy</span>
+              复制
+           </button>
+           <button class="flex-1 h-9 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors">
+              <span class="material-symbols-outlined text-[16px]">refresh</span>
+              重新生成
+           </button>
+        </div>
+      </div>
+
+      <!-- UI Kit: Floating Bubble States (Added for Spec Visualization) -->
+      <div class="mt-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="h-px flex-1 bg-slate-200"></span>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">UI 规范：悬浮球状态</span>
+          <span class="h-px flex-1 bg-slate-200"></span>
+        </div>
+        <div class="bg-slate-50/50 rounded-xl border border-slate-200 border-dashed p-4 grid grid-cols-4 gap-2">
+           <!-- IDLE -->
+           <div class="flex flex-col items-center gap-2">
+             <div class="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center shadow-md">
+                <span class="material-symbols-outlined text-white text-[32px]">smart_toy</span>
+             </div>
+             <span class="text-[10px] text-slate-500 font-medium">IDLE</span>
+           </div>
+           <!-- LOADING -->
+           <div class="flex flex-col items-center gap-2">
+             <div class="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center shadow-md">
+                <div class="w-8 h-8 border-[3px] border-white/30 border-t-white rounded-full animate-spin"></div>
+             </div>
+             <span class="text-[10px] text-slate-500 font-medium">LOADING</span>
+           </div>
+           <!-- SUCCESS -->
+           <div class="flex flex-col items-center gap-2">
+             <div class="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-200">
+                <span class="material-symbols-outlined text-white text-[32px]">check</span>
+             </div>
+             <span class="text-[10px] text-slate-500 font-medium">SUCCESS</span>
+           </div>
+           <!-- ERROR -->
+           <div class="flex flex-col items-center gap-2">
+             <div class="w-14 h-14 rounded-full bg-rose-500 flex items-center justify-center shadow-md shadow-rose-200">
+                <span class="material-symbols-outlined text-white text-[32px]">priority_high</span>
+             </div>
+             <span class="text-[10px] text-slate-500 font-medium">ERROR</span>
+           </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Live Floating Bubble (Interactive Demo) -->
+  <div class="absolute bottom-36 right-4 z-40">
+    <button class="w-14 h-14 rounded-full bg-slate-900 shadow-xl shadow-slate-900/20 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all duration-200 cursor-move">
+      <span class="material-symbols-outlined text-[32px]">smart_toy</span>
+    </button>
+  </div>
+
+  <!-- 2.6 Refinement Overlay (Hidden) -->
+  <div class="hidden absolute inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="bg-white w-full rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-slate-900 text-[20px]">sync</span>
+        <h3 class="text-[18px] font-bold text-slate-900">重新生成</h3>
+      </div>
+      
+      <p class="text-sm text-slate-500 mb-4 leading-relaxed">
+        您可以直接重新生成，或输入调整方向让 AI 按您的要求优化。
+      </p>
+
+      <textarea 
+        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all resize-none mb-6"
+        rows="3"
+        maxlength="200"
+        placeholder="例如：语气更委婉一些、更正式一点..."
+      ></textarea>
+
+      <div class="flex justify-end gap-3">
+        <button class="px-4 h-10 rounded-lg text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors">
+          取消
+        </button>
+        <button class="px-5 h-10 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm font-semibold flex items-center gap-2 transition-colors">
+          <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+          生成
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Navigation (Standard) -->
+  <div class="absolute bottom-0 left-0 right-0 h-24 bg-transparent z-20 pointer-events-none">
+    <!-- Tab Bar Background -->
+    <div class="absolute bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-lg border-t border-slate-200 pointer-events-auto flex items-center justify-around px-2">
+      
+      <!-- Nav Item 1 -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <span class="text-[11px] font-medium">首页</span>
+      </button>
+      
+      <!-- Nav Item 2 (Active) -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-900 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-2xl fill-current">smart_toy</span>
+        <span class="text-[11px] font-medium">AI 军师</span>
+      </button>
+
+      <!-- Spacer for Floating Button -->
+      <div class="w-12"></div>
+
+      <!-- Nav Item 3 -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-2xl">chat</span>
+        <span class="text-[11px] font-medium">消息</span>
+      </button>
+
+      <!-- Nav Item 4 -->
+      <button class="flex-1 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-2xl">person</span>
+        <span class="text-[11px] font-medium">我的</span>
+      </button>
+    </div>
+
+    <!-- Floating Action Button (Bottom Nav) -->
+    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 pointer-events-auto">
+      <button class="w-full h-full bg-slate-900 rounded-full shadow-xl shadow-slate-900/20 flex items-center justify-center text-white hover:scale-105 transition-transform active:scale-95">
+        <span class="material-symbols-outlined text-[28px]">add</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+  <script>
+    // 初始化图标库
+    // Material Symbols 使用 CSS，无需初始化
+  </script>
+</body>
+</html>

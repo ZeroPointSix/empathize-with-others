@@ -1,0 +1,42 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :presentation:preBuild UP-TO-DATE
+> Task :presentation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :presentation:preDebugBuild UP-TO-DATE
+> Task :presentation:preDebugUnitTestBuild UP-TO-DATE
+> Task :domain:processResources NO-SOURCE
+> Task :presentation:generateDebugResValues UP-TO-DATE
+> Task :presentation:javaPreCompileDebug UP-TO-DATE
+> Task :presentation:generateDebugResources UP-TO-DATE
+> Task :presentation:packageDebugResources UP-TO-DATE
+> Task :domain:compileKotlin UP-TO-DATE
+> Task :presentation:parseDebugLocalResources UP-TO-DATE
+> Task :domain:compileJava NO-SOURCE
+> Task :domain:classes UP-TO-DATE
+> Task :presentation:generateDebugRFile UP-TO-DATE
+> Task :domain:jar UP-TO-DATE
+> Task :presentation:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :presentation:kaptGenerateStubsDebugKotlin
+w: Kapt currently doesn't support language version 2.0+. Falling back to 1.9.
+e: file:///E:/hushaokang/Data-code/Love/presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/list/ContactListItem.kt:215:2 Expecting '}'
+
+> Task :presentation:kaptGenerateStubsDebugKotlin FAILED
+Kotlin build report is written to file:///E:/hushaokang/Data-code/Love/build/reports/kotlin-build/Give%20Love-build-2025-12-24-18-38-08-0.txt
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':presentation:kaptGenerateStubsDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 48s
+10 actionable tasks: 1 executed, 9 up-to-date
+Configuration cache entry reused.

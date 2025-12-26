@@ -119,3 +119,54 @@ val BrandWarmOrange = Color(0xFFFF9500)
 
 // 琥珀色 - 用于强调和高亮
 val BrandWarmAmber = Color(0xFFFFCC00)
+
+// ============================================================
+// iOS系统色 (iOS System Colors)
+// ============================================================
+
+// 微信风格背景色
+val WeChatBackground = Color(0xFFF7F7F7)
+
+// iOS系统背景色
+val iOSBackground = Color(0xFFF2F2F7)
+
+/** iOS分组背景色 - 用于页面背景 (PRD-00020) */
+val iOSSystemGroupedBackground = Color(0xFFF2F2F7)
+
+/** iOS浅灰背景色 - 用于卡片外背景 (PRD-00020) */
+val iOSLightGrayBackground = Color(0xFFF5F5F7)
+
+// 微信绿色（用于底部导航激活态）
+val WeChatGreen = Color(0xFF07C160)
+
+// iOS系统蓝色
+val iOSBlue = Color(0xFF007AFF)
+
+// iOS系统绿色
+val iOSGreen = Color(0xFF34C759)
+
+// iOS系统红色
+val iOSRed = Color(0xFFFF3B30)
+
+/** iOS系统橙色 - 中风险 (PRD-00020) */
+val iOSOrange = Color(0xFFFF9500)
+
+// 添加按钮红色（微信风格）
+val AddButtonRed = Color(0xFFFA5151)
+
+// iOS系统紫色
+val iOSPurple = Color(0xFF5856D6)
+
+/** iOS系统靛蓝色 - 资料库图标 (PRD-00020) */
+val iOSIndigo = Color(0xFF5856D6)
+
+// iOS文字颜色
+val iOSTextPrimary = Color(0xFF000000)
+val iOSTextSecondary = Color(0xFF8E8E93)
+val iOSTextTertiary = Color(0xFFC7C7CC)
+
+// iOS分隔线和卡片
+val iOSDivider = Color(0xFFC6C6C8)
+val iOSCardBackground = Color(0xFFFFFFFF)
+val iOSPressed = Color(0xFFE5E5EA)
+val iOSSeparator = Color(0xFFE5E5EA)

@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.empathy.ai.domain.model.ViewMode
-import com.empathy.ai.presentation.theme.Dimensions
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.control.SegmentedControl
 
@@ -45,7 +45,7 @@ fun FactStreamTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Dimensions.SpacingMedium),
+            .padding(AppSpacing.md),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

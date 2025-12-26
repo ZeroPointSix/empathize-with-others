@@ -1,7 +1,14 @@
 package com.empathy.ai.presentation.ui.screen.prompt
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,33 +16,55 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.presentation.theme.EmpathyTheme
-import com.empathy.ai.presentation.ui.component.emotion.EmotionalBackground
-import com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard
+import com.empathy.ai.presentation.theme.iOSBackground
+import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.theme.iOSCardBackground
+import com.empathy.ai.presentation.theme.iOSSeparator
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.ui.screen.prompt.component.CharacterCounter
 import com.empathy.ai.presentation.ui.screen.prompt.component.DiscardConfirmDialog
 import com.empathy.ai.presentation.ui.screen.prompt.component.InlineErrorBanner
-import com.empathy.ai.presentation.ui.screen.prompt.component.PromptEditorTopBar
 import com.empathy.ai.presentation.ui.screen.prompt.component.PromptInputField
 import com.empathy.ai.presentation.viewmodel.PromptEditorViewModel
 
 /**
- * 提示词编辑器主界面
+ * 提示词编辑器主界面（iOS风格）
  *
  * @param onNavigateBack 返回导航回调
  * @param viewModel ViewModel实例
@@ -47,7 +76,6 @@ fun PromptEditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // 监听编辑结果
     LaunchedEffect(Unit) {
         viewModel.result.collect { result ->
             when (result) {
@@ -71,98 +99,293 @@ private fun PromptEditorContent(
     uiState: PromptEditorUiState,
     onEvent: (PromptEditorUiEvent) -> Unit
 ) {
-    // 获取标题文本
-    val title = when (val mode = uiState.editMode) {
-        is PromptEditMode.GlobalScene -> stringResource(R.string.prompt_editor_title_global)
-        is PromptEditMode.ContactCustom -> stringResource(
-            R.string.prompt_editor_title_contact,
-            mode.contactName
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
-            .navigationBarsPadding()
-    ) {
-        // 情感化背景（使用中性分数50）
-        EmotionalBackground(relationshipScore = 50)
-
-        // 主内容
-        GlassmorphicCard(
+    Scaffold(
+        containerColor = iOSBackground,
+        topBar = {
+            IOSNavigationBar(
+                canSave = uiState.canSave,
+                isSaving = uiState.isSaving,
+                onCancelClick = { onEvent(PromptEditorUiEvent.CancelEdit) },
+                onSaveClick = { onEvent(PromptEditorUiEvent.SavePrompt) }
+            )
+        }
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(paddingValues)
+                .imePadding()
+                .navigationBarsPadding()
         ) {
             if (uiState.isLoading) {
-                // 加载状态
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = iOSBlue)
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
-                    // 顶部导航栏
-                    PromptEditorTopBar(
-                        title = title,
-                        isSaving = uiState.isSaving,
-                        canSave = uiState.canSave,
-                        onCancelClick = { onEvent(PromptEditorUiEvent.CancelEdit) },
-                        onSaveClick = { onEvent(PromptEditorUiEvent.SavePrompt) }
-                    )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Tab区域 - 白色背景填满整行
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = iOSCardBackground
+                    ) {
+                        PromptSceneTab(
+                            selectedScene = uiState.currentScene,
+                            onSceneSelected = { onEvent(PromptEditorUiEvent.SwitchScene(it)) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
+                    }
 
-                    // 错误提示条
+                    HorizontalDivider(color = iOSSeparator, thickness = 0.5.dp)
+
                     InlineErrorBanner(
                         errorMessage = uiState.errorMessage,
                         onDismiss = { onEvent(PromptEditorUiEvent.ClearError) }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 输入区域（可滚动）
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
                     ) {
-                        PromptInputField(
-                            value = uiState.currentPrompt,
-                            onValueChange = { onEvent(PromptEditorUiEvent.UpdatePrompt(it)) },
-                            placeholder = uiState.placeholderText,
-                            modifier = Modifier.fillMaxWidth()
+                        // 编辑区域卡片（带边框）
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = iOSCardBackground,
+                            border = BorderStroke(1.dp, iOSSeparator)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                            ) {
+                                // 输入区域
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    PromptInputField(
+                                        value = uiState.currentPrompt,
+                                        onValueChange = { onEvent(PromptEditorUiEvent.UpdatePrompt(it)) },
+                                        placeholder = uiState.placeholderText,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
+                                // 分隔线
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(top = 12.dp),
+                                    color = iOSSeparator,
+                                    thickness = 0.5.dp
+                                )
+
+                                // 工具栏：AI优化按钮 + 字数统计
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // AI优化按钮
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            ) {
+                                                // TODO: AI优化功能
+                                            }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AutoAwesome,
+                                            contentDescription = "AI优化",
+                                            tint = iOSBlue,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = "AI优化",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = iOSBlue
+                                        )
+                                    }
+
+                                    // 字数统计
+                                    CharacterCounter(
+                                        charCount = uiState.charCount,
+                                        maxLength = PromptEditorUiState.MAX_PROMPT_LENGTH,
+                                        isOverLimit = uiState.isOverLimit,
+                                        isNearLimit = uiState.isNearLimit
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "提示词将帮助 AI 更好地理解你的需求，请根据场景自定义你的提示词。",
+                            fontSize = 13.sp,
+                            color = iOSTextSecondary,
+                            modifier = Modifier.padding(horizontal = 4.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    BottomButtons(
+                        canSave = uiState.canSave,
+                        isSaving = uiState.isSaving,
+                        onResetClick = { onEvent(PromptEditorUiEvent.ResetToDefault) },
+                        onSaveClick = { onEvent(PromptEditorUiEvent.SavePrompt) }
+                    )
+                }
+            }
 
-                    // 字符计数器
-                    CharacterCounter(
-                        charCount = uiState.charCount,
-                        maxLength = PromptEditorUiState.MAX_PROMPT_LENGTH,
-                        isOverLimit = uiState.isOverLimit,
-                        isNearLimit = uiState.isNearLimit,
-                        modifier = Modifier.align(Alignment.End)
+            if (uiState.showDiscardDialog) {
+                DiscardConfirmDialog(
+                    onConfirm = { onEvent(PromptEditorUiEvent.ConfirmDiscard) },
+                    onDismiss = { onEvent(PromptEditorUiEvent.DismissDiscardDialog) }
+                )
+            }
+        }
+    }
+}
+
+
+/**
+ * iOS风格导航栏
+ */
+@Composable
+private fun IOSNavigationBar(
+    canSave: Boolean,
+    isSaving: Boolean,
+    onCancelClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.White.copy(alpha = 0.95f),
+        shadowElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .height(44.dp)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onCancelClick) {
+                Text(text = "取消", color = iOSBlue, fontSize = 17.sp)
+            }
+
+            Text(
+                text = "编辑提示词",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black
+            )
+
+            TextButton(
+                onClick = onSaveClick,
+                enabled = canSave && !isSaving
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = iOSBlue,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "完成",
+                        color = if (canSave) iOSBlue else iOSTextSecondary,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
         }
+    }
+}
 
-        // 放弃修改对话框
-        if (uiState.showDiscardDialog) {
-            DiscardConfirmDialog(
-                onConfirm = { onEvent(PromptEditorUiEvent.ConfirmDiscard) },
-                onDismiss = { onEvent(PromptEditorUiEvent.DismissDiscardDialog) }
+/**
+ * 底部按钮区域
+ */
+@Composable
+private fun BottomButtons(
+    canSave: Boolean,
+    isSaving: Boolean,
+    onResetClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(iOSBackground)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedButton(
+            onClick = onResetClick,
+            modifier = Modifier
+                .weight(1f)
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, iOSSeparator)
+        ) {
+            Icon(
+                imageVector = Icons.Default.RestartAlt,
+                contentDescription = null,
+                tint = iOSTextSecondary,
+                modifier = Modifier.size(20.dp)
             )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "恢复默认", color = iOSTextSecondary, fontSize = 16.sp)
+        }
+
+        Button(
+            onClick = onSaveClick,
+            modifier = Modifier
+                .weight(1f)
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = iOSBlue,
+                disabledContainerColor = iOSBlue.copy(alpha = 0.5f)
+            ),
+            enabled = canSave && !isSaving
+        ) {
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Save,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "保存", fontSize = 16.sp)
+            }
         }
     }
 }
+
 
 // ========== 预览 ==========
 
@@ -173,6 +396,7 @@ private fun PromptEditorScreenPreview() {
         PromptEditorContent(
             uiState = PromptEditorUiState(
                 editMode = PromptEditMode.GlobalScene(PromptScene.ANALYZE),
+                currentScene = PromptScene.ANALYZE,
                 placeholderText = "例如：请帮我分析她这句话的潜台词..."
             ),
             onEvent = {}
@@ -185,9 +409,7 @@ private fun PromptEditorScreenPreview() {
 private fun PromptEditorScreenLoadingPreview() {
     EmpathyTheme {
         PromptEditorContent(
-            uiState = PromptEditorUiState(
-                isLoading = true
-            ),
+            uiState = PromptEditorUiState(isLoading = true),
             onEvent = {}
         )
     }
@@ -200,6 +422,7 @@ private fun PromptEditorScreenSavingPreview() {
         PromptEditorContent(
             uiState = PromptEditorUiState(
                 currentPrompt = "分析时请特别注意对方的情绪变化",
+                currentScene = PromptScene.ANALYZE,
                 isSaving = true
             ),
             onEvent = {}
@@ -207,59 +430,16 @@ private fun PromptEditorScreenSavingPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "错误状态")
+@Preview(showBackground = true, name = "润色场景")
 @Composable
-private fun PromptEditorScreenErrorPreview() {
+private fun PromptEditorScreenPolishPreview() {
     EmpathyTheme {
         PromptEditorContent(
             uiState = PromptEditorUiState(
-                currentPrompt = "测试内容",
-                errorMessage = "保存失败：网络连接超时"
-            ),
-            onEvent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "接近字数限制")
-@Composable
-private fun PromptEditorScreenNearLimitPreview() {
-    EmpathyTheme {
-        PromptEditorContent(
-            uiState = PromptEditorUiState(
-                currentPrompt = "a".repeat(850),
-                originalPrompt = ""
-            ),
-            onEvent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "超出字数限制")
-@Composable
-private fun PromptEditorScreenOverLimitPreview() {
-    EmpathyTheme {
-        PromptEditorContent(
-            uiState = PromptEditorUiState(
-                currentPrompt = "a".repeat(1050),
-                originalPrompt = ""
-            ),
-            onEvent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "联系人模式")
-@Composable
-private fun PromptEditorScreenContactModePreview() {
-    EmpathyTheme {
-        PromptEditorContent(
-            uiState = PromptEditorUiState(
-                editMode = PromptEditMode.ContactCustom(
-                    contactId = "1",
-                    contactName = "林婉儿"
-                ),
-                placeholderText = "例如：和她聊天时要注意避开前任话题..."
+                editMode = PromptEditMode.GlobalScene(PromptScene.POLISH),
+                currentScene = PromptScene.POLISH,
+                currentPrompt = "润色时保持原意，让表达更加委婉得体",
+                placeholderText = "例如：润色时请保持原意..."
             ),
             onEvent = {}
         )

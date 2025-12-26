@@ -1,18 +1,17 @@
 package com.empathy.ai.presentation.ui.screen.contact.vault
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Folder
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,9 +28,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.DataStatus
-import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSSystemGroupedBackground
+import com.empathy.ai.presentation.theme.iOSTextPrimary
+import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.component.vault.DataSourceGrid
+import com.empathy.ai.presentation.ui.component.vault.DataSourceItem
+import com.empathy.ai.presentation.ui.component.vault.DataSourceTypes
+import com.empathy.ai.presentation.ui.component.vault.DataStatisticsCard
+import com.empathy.ai.presentation.ui.component.vault.DataStatus as VaultDataStatus
 
 /**
  * 数据源信息
@@ -46,18 +52,20 @@ data class DataSourceInfo(
 )
 
 /**
- * 资料库标签页组件
+ * 资料库标签页组件 (iOS风格重写)
  *
  * 网格布局展示所有数据源
  *
- * 职责：
- * - 2列网格布局
- * - 展示各类数据源卡片
- * - 处理数据源点击导航
+ * 技术要点:
+ * - 数据统计卡片（DataStatisticsCard）
+ * - 数据来源网格（DataSourceGrid）
+ * - iOS风格背景和卡片
  *
  * @param dataSources 数据源列表
  * @param onDataSourceClick 数据源点击回调
  * @param modifier Modifier
+ * 
+ * @see TDD-00020 8.4 DataVaultTab资料库页重写
  */
 @Composable
 fun DataVaultTab(
@@ -65,62 +73,88 @@ fun DataVaultTab(
     modifier: Modifier = Modifier,
     onDataSourceClick: ((DataSourceInfo) -> Unit)? = null
 ) {
+    // 计算总数据量
+    val totalCount = dataSources.sumOf { it.count }
+    
+    // 转换为新的数据模型
+    val dataSourceItems = dataSources.map { source ->
+        val config = when (source.id) {
+            "chat" -> DataSourceTypes.CHAT
+            "ai_summary", "summary" -> DataSourceTypes.AI_SUMMARY
+            "image" -> DataSourceTypes.IMAGE
+            "voice" -> DataSourceTypes.VOICE
+            "video" -> DataSourceTypes.VIDEO
+            "file", "note", "folder" -> DataSourceTypes.FILE
+            else -> DataSourceTypes.CHAT
+        }
+        val vaultStatus = when (source.status) {
+            DataStatus.COMPLETED -> VaultDataStatus.COMPLETED
+            DataStatus.PROCESSING -> VaultDataStatus.PROCESSING
+            DataStatus.NOT_AVAILABLE -> VaultDataStatus.NOT_AVAILABLE
+            DataStatus.FAILED -> VaultDataStatus.FAILED
+        }
+        DataSourceItem(config, source.count, vaultStatus)
+    }
+    
     if (dataSources.isEmpty()) {
         EmptyVaultView(modifier = modifier)
     } else {
-        Column(modifier = modifier.fillMaxSize()) {
-            // 标题说明
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(iOSSystemGroupedBackground)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 数据统计卡片
+            DataStatisticsCard(
+                totalCount = totalCount
+            )
+            
+            // 标题
             Text(
                 text = "数据来源",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(
-                    horizontal = Dimensions.SpacingMedium,
-                    vertical = Dimensions.SpacingSmall
-                )
+                fontSize = 20.sp,
+                color = iOSTextPrimary,
+                modifier = Modifier.padding(top = 8.dp)
             )
             
             Text(
                 text = "管理和查看联系人相关的各类数据",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    horizontal = Dimensions.SpacingMedium,
-                    vertical = Dimensions.SpacingSmall
-                )
+                fontSize = 14.sp,
+                color = iOSTextSecondary
             )
             
-            // 网格布局
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(Dimensions.SpacingMedium),
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium),
-                verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium)
-            ) {
-                items(
-                    items = dataSources,
-                    key = { it.id }
-                ) { dataSource ->
-                    DataSourceCard(
-                        title = dataSource.title,
-                        icon = dataSource.icon,
-                        count = dataSource.count,
-                        status = dataSource.status,
-                        onClick = { onDataSourceClick?.invoke(dataSource) }
-                    )
+            // 数据来源网格
+            DataSourceGrid(
+                items = dataSourceItems,
+                onItemClick = { item ->
+                    val originalSource = dataSources.find { 
+                        it.id == item.config.id || 
+                        (it.id == "note" && item.config.id == "file")
+                    }
+                    if (originalSource != null) {
+                        onDataSourceClick?.invoke(originalSource)
+                    }
                 }
-            }
+            )
+            
+            // 底部间距
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
 
 /**
- * 空状态视图
+ * 空状态视图 (iOS风格)
  */
 @Composable
 private fun EmptyVaultView(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(iOSSystemGroupedBackground),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -130,7 +164,7 @@ private fun EmptyVaultView(modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Default.Folder,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                tint = iOSTextSecondary.copy(alpha = 0.5f),
                 modifier = Modifier.size(64.dp)
             )
             
@@ -138,16 +172,16 @@ private fun EmptyVaultView(modifier: Modifier = Modifier) {
             
             Text(
                 text = "暂无数据",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontSize = 17.sp,
+                color = iOSTextPrimary
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = "导入聊天记录或添加备注后，数据将显示在这里",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                fontSize = 14.sp,
+                color = iOSTextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 32.dp)
             )

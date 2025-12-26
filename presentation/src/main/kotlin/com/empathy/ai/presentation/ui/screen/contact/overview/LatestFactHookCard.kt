@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactSource
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard
@@ -62,12 +63,12 @@ fun LatestFactHookCard(
     GlassmorphicCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Dimensions.SpacingMedium),
+            .padding(AppSpacing.md),
         onClick = onViewMore
     ) {
         Row(
-            modifier = Modifier.padding(Dimensions.SpacingMedium),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(AppSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 装饰性图标
@@ -86,7 +87,7 @@ fun LatestFactHookCard(
                     color = MaterialTheme.colorScheme.primary
                 )
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(AppSpacing.xs))
                 
                 // 内容
                 Text(
@@ -95,11 +96,11 @@ fun LatestFactHookCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(AppSpacing.xs))
                 
                 // 时间和来源
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -130,11 +131,11 @@ private fun EmptyLatestFactCard(modifier: Modifier = Modifier) {
     GlassmorphicCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Dimensions.SpacingMedium)
+            .padding(AppSpacing.md)
     ) {
         Row(
-            modifier = Modifier.padding(Dimensions.SpacingMedium),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(AppSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -151,7 +152,7 @@ private fun EmptyLatestFactCard(modifier: Modifier = Modifier) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(AppSpacing.xs))
                 
                 Text(
                     text = "开始聊天，AI会帮你记录重要信息",
