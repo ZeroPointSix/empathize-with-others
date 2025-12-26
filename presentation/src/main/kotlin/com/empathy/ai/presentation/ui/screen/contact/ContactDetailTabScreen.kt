@@ -35,18 +35,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.DataStatus
 import com.empathy.ai.domain.model.EmotionType
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FilterType
 import com.empathy.ai.domain.model.SummaryError
-import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.domain.model.ViewMode
 import com.empathy.ai.presentation.theme.AnimationSpec
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.ui.component.animation.AnimatedViewSwitch
 import com.empathy.ai.presentation.ui.component.emotion.EmotionalBackground
 import com.empathy.ai.presentation.ui.component.state.ErrorView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
@@ -55,7 +54,6 @@ import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.overview.OverviewTab
 import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTab
-import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTabV2
 import com.empathy.ai.presentation.ui.screen.contact.summary.ConflictResolutionDialog
 import com.empathy.ai.presentation.ui.screen.contact.summary.DateRangePickerDialog
 import com.empathy.ai.presentation.ui.screen.contact.summary.ManualSummaryFab
@@ -256,7 +254,12 @@ private fun ContactDetailTabScreenContent(
 }
 
 /**
- * 标签页导航
+ * 标签页导航 (Material Design 3 风格优化)
+ * 
+ * 设计原则:
+ * - 选中指示器使用圆角短棒状（Capsule shape）
+ * - 指示器厚度4dp，符合圆润的设计语言
+ * - 避免尖锐的直角线条
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -279,7 +282,11 @@ private fun TabNavigation(
                 text = {
                     Text(
                         text = tab.toDisplayName(),
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (currentTab == tab) 
+                            androidx.compose.ui.text.font.FontWeight.SemiBold 
+                        else 
+                            androidx.compose.ui.text.font.FontWeight.Normal
                     )
                 }
             )
@@ -298,13 +305,8 @@ private fun TabContent(
     onNavigateToPromptEditor: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    AnimatedContent(
+    AnimatedViewSwitch(
         targetState = uiState.currentTab,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(AnimationSpec.DurationNormal))
-                .togetherWith(fadeOut(animationSpec = tween(AnimationSpec.DurationNormal)))
-        },
-        label = "TabContentTransition",
         modifier = modifier
     ) { tab ->
         when (tab) {
@@ -469,9 +471,9 @@ private fun FactStreamTabContent(
         )
     }
     
-    // 添加事实对话框
+    // 添加事实对话框 - 使用iOS风格底部弹窗
     if (uiState.showAddFactToStreamDialog) {
-        com.empathy.ai.presentation.ui.component.dialog.AddFactToStreamDialog(
+        com.empathy.ai.presentation.ui.component.dialog.IOSAddFactBottomSheet(
             onDismiss = { onEvent(ContactDetailUiEvent.HideAddFactToStreamDialog) },
             onConfirm = { key, value ->
                 onEvent(ContactDetailUiEvent.AddFactToStream(key, value))
@@ -518,115 +520,28 @@ private fun FactStreamTabContent(
 /**
  * 标签画像标签页内容
  * 
- * 根据Feature Flag切换使用PersonaTab或PersonaTabV2
- * - PersonaTab: 旧版本，简单的雷区/策略标签展示
- * - PersonaTabV2: 新版本，支持分类搜索、编辑模式、批量操作
+ * 简化版：直接按Fact.key分类展示所有标签
+ * - 无"全部/已确认"分段控制器
+ * - 无固定的"雷区/策略"分类
+ * - 根据实际Fact数据动态生成分类
  */
 @Composable
 private fun PersonaTabContent(
     uiState: ContactDetailUiState,
     onEvent: (ContactDetailUiEvent) -> Unit
 ) {
-    if (uiState.usePersonaTabV2) {
-        // 使用新版PersonaTabV2
-        // TODO: 从系统设置获取深色模式状态
-        val isDarkMode = false
-        
-        PersonaTabV2(
-            categories = uiState.factCategories,
-            searchState = uiState.personaSearchState,
-            editModeState = uiState.editModeState,
-            availableCategories = uiState.availableCategories,
-            isDarkMode = isDarkMode,
-            onSearchQueryChange = { query ->
-                onEvent(ContactDetailUiEvent.UpdatePersonaSearch(query))
-            },
-            onClearSearch = {
-                onEvent(ContactDetailUiEvent.ClearPersonaSearch)
-            },
-            onToggleCategoryExpand = { categoryKey ->
-                onEvent(ContactDetailUiEvent.ToggleCategoryExpand(categoryKey))
-            },
-            onFactClick = { factId ->
-                // 普通点击：查看详情或编辑
-                val fact = uiState.facts.find { it.id == factId }
-                fact?.let { onEvent(ContactDetailUiEvent.StartEditFact(it)) }
-            },
-            onFactLongClick = { factId ->
-                // 长按：进入编辑模式
-                onEvent(ContactDetailUiEvent.EnterEditMode(factId))
-            },
-            onToggleFactSelection = { factId ->
-                onEvent(ContactDetailUiEvent.ToggleFactSelection(factId))
-            },
-            onExitEditMode = {
-                onEvent(ContactDetailUiEvent.ExitEditMode)
-            },
-            onSelectAll = {
-                onEvent(ContactDetailUiEvent.SelectAllFacts)
-            },
-            onDeselectAll = {
-                onEvent(ContactDetailUiEvent.DeselectAllFacts)
-            },
-            onShowDeleteConfirm = {
-                onEvent(ContactDetailUiEvent.ShowBatchDeleteConfirm)
-            },
-            onHideDeleteConfirm = {
-                onEvent(ContactDetailUiEvent.HideBatchDeleteConfirm)
-            },
-            onConfirmDelete = {
-                onEvent(ContactDetailUiEvent.ConfirmBatchDelete)
-            },
-            onShowMoveDialog = {
-                onEvent(ContactDetailUiEvent.ShowBatchMoveDialog)
-            },
-            onHideMoveDialog = {
-                onEvent(ContactDetailUiEvent.HideBatchMoveDialog)
-            },
-            onConfirmMove = { targetCategory ->
-                onEvent(ContactDetailUiEvent.ConfirmBatchMove(targetCategory))
-            }
-        )
-    } else {
-        // 使用旧版PersonaTab
-        // 将Facts转换为BrainTags用于显示
-        val riskTags = uiState.facts
-            .filter { it.key.contains("雷区") || it.key.contains("禁忌") || it.key.contains("不喜欢") }
-            .mapIndexed { index, fact ->
-                BrainTag(
-                    id = index.toLong(),
-                    contactId = uiState.contact?.id ?: "",
-                    content = fact.value,
-                    type = TagType.RISK_RED,
-                    isConfirmed = fact.source == com.empathy.ai.domain.model.FactSource.MANUAL,
-                    source = fact.source.name
-                )
-            }
-        
-        val strategyTags = uiState.facts
-            .filter { it.key.contains("策略") || it.key.contains("喜欢") || it.key.contains("兴趣") }
-            .mapIndexed { index, fact ->
-                BrainTag(
-                    id = (index + 1000).toLong(),
-                    contactId = uiState.contact?.id ?: "",
-                    content = fact.value,
-                    type = TagType.STRATEGY_GREEN,
-                    isConfirmed = fact.source == com.empathy.ai.domain.model.FactSource.MANUAL,
-                    source = fact.source.name
-                )
-            }
-        
-        PersonaTab(
-            riskTags = riskTags,
-            strategyTags = strategyTags,
-            onConfirmTag = { tag ->
-                onEvent(ContactDetailUiEvent.ConfirmTag(tag.id))
-            },
-            onRejectTag = { tag ->
-                onEvent(ContactDetailUiEvent.RejectTag(tag.id))
-            }
-        )
-    }
+    // 直接使用简化版PersonaTab，传递所有facts
+    PersonaTab(
+        facts = uiState.facts,
+        onFactClick = { fact ->
+            // 点击：编辑事实
+            onEvent(ContactDetailUiEvent.StartEditFact(fact))
+        },
+        onFactLongClick = { fact ->
+            // 长按：删除事实
+            onEvent(ContactDetailUiEvent.DeleteFactById(fact.id))
+        }
+    )
 }
 
 /**

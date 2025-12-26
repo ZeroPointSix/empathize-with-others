@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactSource
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.chip.SolidTagChip
@@ -43,7 +44,7 @@ fun TopTagsSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Dimensions.SpacingMedium)
+            .padding(vertical = AppSpacing.md)
     ) {
         // 标题
         Text(
@@ -51,8 +52,8 @@ fun TopTagsSection(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(
-                horizontal = Dimensions.SpacingMedium,
-                vertical = Dimensions.SpacingSmall
+                horizontal = AppSpacing.md,
+                vertical = AppSpacing.sm
             )
         )
         
@@ -63,12 +64,12 @@ fun TopTagsSection(
                 text = "暂无标签，AI正在学习中...",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Dimensions.SpacingMedium)
+                modifier = Modifier.padding(horizontal = AppSpacing.md)
             )
         } else {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall),
-                contentPadding = PaddingValues(horizontal = Dimensions.SpacingMedium)
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+                contentPadding = PaddingValues(horizontal = AppSpacing.md)
             ) {
                 items(
                     items = tags.take(5),

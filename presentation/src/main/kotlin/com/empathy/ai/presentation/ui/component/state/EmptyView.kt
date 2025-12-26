@@ -21,6 +21,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.graphicsLayer
+import com.empathy.ai.presentation.theme.AnimationSpec
+import com.empathy.ai.presentation.theme.AppSpacing
+import com.empathy.ai.presentation.ui.component.button.PrimaryButton
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -42,10 +53,21 @@ fun EmptyView(
     modifier: Modifier = Modifier,
     emptyType: EmptyType = EmptyType.NoData
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "EmptyBreathing")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "IconScale"
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(32.dp),
+            .padding(AppSpacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -53,11 +75,16 @@ fun EmptyView(
         Icon(
             imageVector = emptyType.icon,
             contentDescription = "空状态图标",
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier
+                .size(80.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppSpacing.lg))
         
         // 空状态标题
         Text(
@@ -67,7 +94,7 @@ fun EmptyView(
             textAlign = TextAlign.Center
         )
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(AppSpacing.sm))
         
         // 空状态消息
         Text(
@@ -79,10 +106,11 @@ fun EmptyView(
         
         // 操作按钮
         if (actionText != null && onAction != null) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onAction) {
-                Text(actionText)
-            }
+            Spacer(modifier = Modifier.height(AppSpacing.xl))
+            PrimaryButton(
+                text = actionText,
+                onClick = onAction
+            )
         }
     }
 }
@@ -98,6 +126,7 @@ sealed class EmptyType(
     data object NoContacts : EmptyType(Icons.Default.Add, "还没有联系人")
     data object NoTags : EmptyType(Icons.Default.Add, "还没有标签")
     data object NoResults : EmptyType(Icons.Default.Search, "没有找到结果")
+    data object NetworkError : EmptyType(Icons.Default.CloudOff, "网络连接异常")
 }
 
 // ============================================================

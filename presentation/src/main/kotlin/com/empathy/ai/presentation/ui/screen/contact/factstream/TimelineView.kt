@@ -35,13 +35,14 @@ import com.empathy.ai.domain.model.KeyEvent
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.domain.util.PerformanceMetrics
-import com.empathy.ai.presentation.theme.Dimensions
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.card.AiSummaryCard
 import com.empathy.ai.presentation.ui.component.card.ConversationCard
 import com.empathy.ai.presentation.ui.component.card.MilestoneCard
 import com.empathy.ai.presentation.ui.component.card.PhotoMomentCard
 import com.empathy.ai.presentation.ui.component.emotion.EmotionalTimelineNode
+import com.empathy.ai.presentation.ui.component.state.EmptyView
 
 /**
  * 时光轴视图组件
@@ -156,10 +157,10 @@ fun TimelineView(
         modifier = modifier.fillMaxSize(),
         state = listState,
         contentPadding = PaddingValues(
-            horizontal = Dimensions.SpacingMedium,
-            vertical = Dimensions.SpacingSmall
+            horizontal = AppSpacing.md,
+            vertical = AppSpacing.sm
         ),
-        verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
     ) {
         items(
             items = displayItems,
@@ -191,7 +192,7 @@ fun TimelineView(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Dimensions.SpacingMedium),
+                        .padding(AppSpacing.md),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -229,7 +230,7 @@ private fun TimelineRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
     ) {
         // 左侧：情绪节点和时间线（降级模式下简化显示）
         if (!isSimplified) {
@@ -240,7 +241,7 @@ private fun TimelineRow(
                 EmotionalTimelineNode(emotionType = item.emotionType)
                 VerticalDivider(
                     modifier = Modifier.weight(1f),
-                    thickness = Dimensions.TimelineLineWidth,
+                    thickness = 2.dp,
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
             }
@@ -294,8 +295,8 @@ private fun UserFactCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(Dimensions.SpacingMedium),
-            verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingSmall)
+            modifier = Modifier.padding(AppSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
             // 标题行
             Row(
@@ -347,27 +348,12 @@ private fun formatTimestamp(timestamp: Long): String {
  */
 @Composable
 private fun EmptyTimelineView(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "📅",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Text(
-            text = "时光轴空空如也",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            text = "开始记录你们的故事吧",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    EmptyView(
+        message = "时光轴空空如也\n开始记录你们的故事吧",
+        actionText = null,
+        onAction = null,
+        modifier = modifier
+    )
 }
 
 // ========== 预览 ==========

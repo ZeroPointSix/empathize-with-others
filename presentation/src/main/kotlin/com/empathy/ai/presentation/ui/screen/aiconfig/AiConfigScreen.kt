@@ -17,11 +17,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.ui.component.card.ProviderCard
 import com.empathy.ai.presentation.ui.component.dialog.ProviderFormDialog
 import com.empathy.ai.presentation.ui.component.state.EmptyView
-import com.empathy.ai.presentation.ui.component.state.ErrorView
+import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
+import com.empathy.ai.presentation.util.UserFriendlyError
+import androidx.compose.material.icons.filled.Warning
 import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
 
 /**
@@ -111,9 +114,13 @@ private fun AiConfigScreenContent(
                     )
                 }
                 uiState.error != null -> {
-                    ErrorView(
-                        message = uiState.error,
-                        onRetry = { onEvent(AiConfigUiEvent.LoadProviders) }
+                    FriendlyErrorCard(
+                        error = UserFriendlyError(
+                            title = "出错了",
+                            message = uiState.error ?: "未知错误",
+                            icon = Icons.Default.Warning
+                        ),
+                        onAction = { onEvent(AiConfigUiEvent.LoadProviders) }
                     )
                 }
                 !uiState.hasProviders -> {
@@ -142,7 +149,7 @@ private fun AiConfigScreenContent(
             // 显示错误 Snackbar
             if (uiState.error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(AppSpacing.lg),
                     action = {
                         TextButton(onClick = { onEvent(AiConfigUiEvent.ClearError) }) {
                             Text("关闭")
@@ -230,8 +237,8 @@ private fun ProviderList(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(AppSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
     ) {
         items(
             items = providers,

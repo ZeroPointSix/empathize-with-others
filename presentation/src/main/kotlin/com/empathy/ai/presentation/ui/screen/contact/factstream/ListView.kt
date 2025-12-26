@@ -23,9 +23,10 @@ import com.empathy.ai.domain.model.FilterType
 import com.empathy.ai.domain.model.KeyEvent
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TimelineItem
-import com.empathy.ai.presentation.theme.Dimensions
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.control.QuickFilterChips
+import com.empathy.ai.presentation.ui.component.state.EmptyView
 
 /**
  * 清单列表视图组件
@@ -58,7 +59,7 @@ fun ListView(
         QuickFilterChips(
             selectedFilters = selectedFilters,
             onFilterToggle = onFilterToggle,
-            modifier = Modifier.padding(vertical = Dimensions.SpacingSmall)
+            modifier = Modifier.padding(vertical = AppSpacing.sm)
         )
         
         // 列表
@@ -68,7 +69,7 @@ fun ListView(
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = Dimensions.SpacingSmall)
+                contentPadding = PaddingValues(vertical = AppSpacing.sm)
             ) {
                 items(
                     items = items,
@@ -88,7 +89,7 @@ fun ListView(
                         } else null
                     )
                     HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = Dimensions.SpacingMedium),
+                        modifier = Modifier.padding(horizontal = AppSpacing.md),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                 }
@@ -102,27 +103,12 @@ fun ListView(
  */
 @Composable
 private fun EmptyListView(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "📭",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Text(
-            text = "暂无记录",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            text = "开始聊天，记录会自动出现在这里",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    EmptyView(
+        message = "暂无记录\n开始聊天，记录会自动出现在这里",
+        actionText = null,
+        onAction = null,
+        modifier = modifier
+    )
 }
 
 // ========== 预览 ==========

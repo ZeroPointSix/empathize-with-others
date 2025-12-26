@@ -1,24 +1,13 @@
 package com.empathy.ai.presentation.ui.screen.contact.overview
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,21 +15,24 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactSource
-import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
-import com.empathy.ai.presentation.ui.component.emotion.EmotionalBackground
+import com.empathy.ai.presentation.theme.iOSSystemGroupedBackground
+import com.empathy.ai.presentation.ui.component.overview.AiPromptSettingsRow
+import com.empathy.ai.presentation.ui.component.overview.HealthScoreCardV2
+import com.empathy.ai.presentation.ui.component.overview.IdentityCard
+import com.empathy.ai.presentation.ui.component.overview.LatestDiscoveryCard
+import com.empathy.ai.presentation.ui.component.overview.PastelTagsCard
 
 /**
- * 概览标签页组件
+ * 概览标签页组件 (iOS风格重写 V2)
  *
- * 联系人详情页的第一个界面，展示关系概况
- *
- * 职责：
- * - 整合动态情感头部、核心标签、最新动态
- * - 提供情感化的背景
- * - 支持滚动和Sticky Header效果
- * - TD-00012: 支持联系人信息编辑
- * - TD-00016: 支持对话主题设置
+ * 设计原则：
+ * 1. 整齐悬浮的白色圆角卡片列表
+ * 2. 身份名片卡：头像居中+白色描边+双层投影
+ * 3. Apple Fitness风格关系健康度圆环
+ * 4. 糖果色标签胶囊
+ * 5. iOS通知风格最新发现卡片
+ * 6. 设置项风格AI指令入口
  *
  * @param contact 联系人信息
  * @param topTags 核心标签列表
@@ -48,9 +40,13 @@ import com.empathy.ai.presentation.ui.component.emotion.EmotionalBackground
  * @param daysSinceFirstMet 相识天数
  * @param onBackClick 返回按钮点击回调
  * @param onViewFactStream 查看事实流回调
- * @param onEditContactInfo 编辑联系人信息回调（TD-00012）
- * @param onTopicClick 主题设置回调（TD-00016）
+ * @param onEditCustomPrompt 编辑专属指令回调
+ * @param onEditContactInfo 编辑联系人信息回调
+ * @param onTopicClick 主题设置回调
+ * @param trendData 趋势数据（最近7天）
  * @param modifier Modifier
+ * 
+ * @see TDD-00020 8.1 OverviewTab概览页重写
  */
 @Composable
 fun OverviewTab(
@@ -63,171 +59,66 @@ fun OverviewTab(
     onViewFactStream: (() -> Unit)? = null,
     onEditCustomPrompt: (() -> Unit)? = null,
     onEditContactInfo: (() -> Unit)? = null,
-    onTopicClick: (() -> Unit)? = null
+    onTopicClick: (() -> Unit)? = null,
+    trendData: List<Float> = emptyList()
 ) {
     val scrollState = rememberLazyListState()
     
-    Box(modifier = modifier.fillMaxSize()) {
-        // 情感化背景
-        EmotionalBackground(relationshipScore = contact.relationshipScore)
-        
-        // 内容
-        Column(modifier = Modifier.fillMaxSize()) {
-            // 动态情感头部（Sticky Header）
-            DynamicEmotionalHeader(
-                contact = contact,
-                scrollState = scrollState,
-                daysSinceFirstMet = daysSinceFirstMet,
-                onBackClick = onBackClick,
-                onEditClick = onEditContactInfo,
-                onTopicClick = onTopicClick
-            )
-            
-            // 可滚动内容
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // 关系分数卡片
-                item {
-                    RelationshipScoreCard(
-                        score = contact.relationshipScore,
-                        modifier = Modifier.padding(Dimensions.SpacingMedium)
-                    )
-                }
-                
-                // 核心标签速览
-                item {
-                    TopTagsSection(tags = topTags)
-                }
-                
-                // 最新动态卡片
-                item {
-                    LatestFactHookCard(
-                        latestFact = latestFact,
-                        onViewMore = onViewFactStream
-                    )
-                }
-                
-                // 专属指令卡片
-                if (onEditCustomPrompt != null) {
-                    item {
-                        CustomPromptCard(
-                            contactName = contact.name,
-                            onEditClick = onEditCustomPrompt,
-                            modifier = Modifier.padding(Dimensions.SpacingMedium)
-                        )
-                    }
-                }
-                
-                // 底部间距
-                item {
-                    Spacer(modifier = Modifier.height(100.dp))
-                }
-            }
-        }
-    }
-}
-
-/**
- * 关系分数卡片
- *
- * 展示当前关系分数和状态描述
- */
-@Composable
-private fun RelationshipScoreCard(
-    score: Int,
-    modifier: Modifier = Modifier
-) {
-    com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard(
+    LazyColumn(
+        state = scrollState,
         modifier = modifier
+            .fillMaxSize()
+            .background(iOSSystemGroupedBackground)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(Dimensions.SpacingMedium)
-        ) {
-            Text(
-                text = "关系健康度",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
+        // 顶部间距
+        item {
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "$score",
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            Text(
-                text = getScoreDescription(score),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        }
+        
+        // 1. 身份名片卡
+        item {
+            IdentityCard(
+                contact = contact,
+                daysSinceFirstMet = daysSinceFirstMet,
+                onEditClick = onEditContactInfo
             )
         }
-    }
-}
-
-/**
- * 根据分数获取描述文本
- */
-private fun getScoreDescription(score: Int): String {
-    return when {
-        score >= 81 -> "关系非常亲密，继续保持！"
-        score >= 61 -> "关系良好，有进一步发展的空间"
-        score >= 31 -> "关系一般，需要更多互动"
-        else -> "关系较冷淡，建议主动联系"
-    }
-}
-
-/**
- * 专属指令卡片
- *
- * 允许用户为特定联系人设置专属的AI指令
- */
-@Composable
-private fun CustomPromptCard(
-    contactName: String,
-    onEditClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard(
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.SpacingMedium),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "专属指令",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = "为 $contactName 设置专属的AI分析指令",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+        
+        // 2. Apple Fitness风格关系健康度卡片
+        item {
+            HealthScoreCardV2(
+                score = contact.relationshipScore,
+                trendData = trendData
+            )
+        }
+        
+        // 3. 糖果色核心标签卡片
+        if (topTags.isNotEmpty()) {
+            item {
+                PastelTagsCard(tags = topTags)
             }
-            
-            TextButton(onClick = onEditClick) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "编辑",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text("编辑")
+        }
+        
+        // 4. iOS通知风格最新发现卡片
+        item {
+            LatestDiscoveryCard(
+                latestFact = latestFact,
+                onViewMore = onViewFactStream
+            )
+        }
+        
+        // 5. AI指令设置行
+        if (onEditCustomPrompt != null) {
+            item {
+                AiPromptSettingsRow(onClick = onEditCustomPrompt)
             }
+        }
+        
+        // 底部间距
+        item {
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
@@ -254,14 +145,14 @@ private fun PreviewOverviewTab() {
                     timestamp = 1L
                 ),
                 Fact(
-                    key = "兴趣爱好",
-                    value = "猫奴",
+                    key = "性格特点",
+                    value = "开朗外向",
                     source = FactSource.MANUAL,
                     timestamp = 2L
                 ),
                 Fact(
-                    key = "性格特征",
-                    value = "工作狂",
+                    key = "工作信息",
+                    value = "程序员",
                     source = FactSource.AI_INFERRED,
                     timestamp = 3L
                 )
@@ -273,7 +164,10 @@ private fun PreviewOverviewTab() {
                 timestamp = System.currentTimeMillis()
             ),
             daysSinceFirstMet = 105,
-            onBackClick = {}
+            onBackClick = {},
+            onEditCustomPrompt = {},
+            onEditContactInfo = {},
+            trendData = listOf(80f, 82f, 78f, 85f, 83f, 86f, 85f)
         )
     }
 }
@@ -293,7 +187,8 @@ private fun PreviewOverviewTabEmpty() {
             topTags = emptyList(),
             latestFact = null,
             daysSinceFirstMet = 1,
-            onBackClick = {}
+            onBackClick = {},
+            trendData = listOf(48f, 50f, 52f, 49f, 51f, 50f, 50f)
         )
     }
 }
@@ -320,7 +215,9 @@ private fun PreviewOverviewTabLowScore() {
             ),
             latestFact = null,
             daysSinceFirstMet = 365,
-            onBackClick = {}
+            onBackClick = {},
+            onEditCustomPrompt = {},
+            trendData = listOf(30f, 28f, 25f, 22f, 24f, 26f, 25f)
         )
     }
 }

@@ -38,10 +38,16 @@ class PromptEditorViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val editMode: PromptEditMode = parseEditMode(savedStateHandle)
+    
+    private val initialScene: PromptScene = when (editMode) {
+        is PromptEditMode.GlobalScene -> editMode.scene
+        is PromptEditMode.ContactCustom -> PromptScene.ANALYZE
+    }
 
     private val _uiState = MutableStateFlow(
         PromptEditorUiState(
             editMode = editMode,
+            currentScene = initialScene,
             placeholderText = getPlaceholderText(editMode)
         )
     )
@@ -84,11 +90,72 @@ class PromptEditorViewModel @Inject constructor(
     fun onEvent(event: PromptEditorUiEvent) {
         when (event) {
             is PromptEditorUiEvent.UpdatePrompt -> handlePromptInput(event.text)
+            is PromptEditorUiEvent.SwitchScene -> handleSwitchScene(event.scene)
             is PromptEditorUiEvent.SavePrompt -> savePrompt()
             is PromptEditorUiEvent.CancelEdit -> handleCancel()
             is PromptEditorUiEvent.ConfirmDiscard -> confirmDiscard()
             is PromptEditorUiEvent.DismissDiscardDialog -> dismissDiscardDialog()
             is PromptEditorUiEvent.ClearError -> clearError()
+            is PromptEditorUiEvent.ResetToDefault -> resetToDefault()
+        }
+    }
+
+    /**
+     * 处理场景切换
+     */
+    private fun handleSwitchScene(scene: PromptScene) {
+        // 更新当前场景
+        _uiState.update { it.copy(currentScene = scene) }
+        
+        // 重新加载该场景的提示词
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            try {
+                val promptResult = promptRepository.getGlobalPrompt(scene)
+                
+                promptResult.fold(
+                    onSuccess = { prompt ->
+                        val actualPrompt = prompt ?: ""
+                        _uiState.update {
+                            it.copy(
+                                editMode = PromptEditMode.GlobalScene(scene),
+                                originalPrompt = actualPrompt,
+                                currentPrompt = actualPrompt,
+                                placeholderText = getPlaceholderText(PromptEditMode.GlobalScene(scene)),
+                                isLoading = false
+                            )
+                        }
+                    },
+                    onFailure = { e ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = "加载失败: ${e.message}"
+                            )
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "加载失败: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 恢复默认提示词
+     */
+    private fun resetToDefault() {
+        _uiState.update {
+            it.copy(
+                currentPrompt = "",
+                errorMessage = null
+            )
         }
     }
 

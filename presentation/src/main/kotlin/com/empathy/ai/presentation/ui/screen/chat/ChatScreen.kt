@@ -22,13 +22,16 @@ import com.empathy.ai.domain.model.ChatMessage
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageSender
 import com.empathy.ai.domain.model.RiskLevel
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.card.AnalysisCard
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.message.MessageBubble
 import com.empathy.ai.presentation.ui.component.state.EmptyView
-import com.empathy.ai.presentation.ui.component.state.ErrorView
+import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicator
+import com.empathy.ai.presentation.util.UserFriendlyError
+import androidx.compose.material.icons.filled.Warning
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.viewmodel.ChatViewModel
 
@@ -119,9 +122,13 @@ private fun ChatScreenContent(
                     )
                 }
                 uiState.error != null -> {
-                    ErrorView(
-                        message = uiState.error,
-                        onRetry = { onEvent(ChatUiEvent.RefreshChat) }
+                    FriendlyErrorCard(
+                        error = UserFriendlyError(
+                            title = "出错了",
+                            message = uiState.error ?: "未知错误",
+                            icon = Icons.Default.Warning
+                        ),
+                        onAction = { onEvent(ChatUiEvent.RefreshChat) }
                     )
                 }
                 else -> {
@@ -199,8 +206,8 @@ private fun MessageList(
         LazyColumn(
             modifier = modifier.fillMaxSize(),
             state = listState,
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(AppSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
         ) {
             items(
                 items = messages,
@@ -233,7 +240,7 @@ private fun SafetyWarningBanner(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(AppSpacing.md),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -269,9 +276,9 @@ private fun MessageInputSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(AppSpacing.sm),
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
             CustomTextField(
                 value = inputText,
@@ -313,7 +320,7 @@ private fun AnalysisResultDialog(
         title = { Text("AI 分析结果") },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
             ) {
                 AnalysisCard(
                     analysisResult = result,

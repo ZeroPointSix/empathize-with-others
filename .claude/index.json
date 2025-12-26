@@ -3,7 +3,7 @@
     "name": "共情AI助手 (Empathy AI Assistant)",
     "path": "e:\\hushaokang\\Data-code\\Love",
     "description": "基于 Android 平台的共情 AI 助手应用，采用 Clean Architecture + MVVM 多模块架构，通过 AI 技术帮助用户在社交场景中提供智能化的沟通辅助",
-    "version": "v1.0.3-dev (MVP)",
+    "version": "v1.0.0 (MVP)",
     "completion": 95,
     "techStack": {
       "gradle": "8.13",
@@ -14,19 +14,14 @@
       "minSdk": 24,
       "targetSdk": 35,
       "compileSdk": 35,
-      "room": "v10"
+      "room": "v11"
     },
     "stats": {
-      "totalFiles": 603,
-      "sourceFiles": 487,
-      "testFiles": 116,
-      "unitTestFiles": 96,
-      "androidTestFiles": 20,
-      "totalLines": 94907,
-      "sourceLines": 68675,
-      "testLines": 26232,
-      "unitTestLines": 19758,
-      "androidTestLines": 6474,
+      "totalKotlinFiles": 368,
+      "domainFiles": 147,
+      "dataFiles": 29,
+      "presentationFiles": 180,
+      "appFiles": 12,
       "testCoverage": "98.6%"
     },
     "modules": {
@@ -35,6 +30,14 @@
         "path": "domain/",
         "description": "纯Kotlin业务层，无Android依赖",
         "dependencies": [],
+        "fileCount": 147,
+        "submodules": {
+          "model": 68,
+          "repository": 12,
+          "usecase": 37,
+          "service": 2,
+          "util": 28
+        },
         "status": "✅ 完成"
       },
       "data": {
@@ -42,6 +45,15 @@
         "path": "data/",
         "description": "数据层实现，Room、Retrofit、Repository实现",
         "dependencies": ["domain"],
+        "fileCount": 29,
+        "submodules": {
+          "local": 15,
+          "remote": 5,
+          "repository": 10,
+          "parser": 4,
+          "di": 6,
+          "util": 3
+        },
         "status": "✅ 完成"
       },
       "presentation": {
@@ -49,6 +61,13 @@
         "path": "presentation/",
         "description": "UI层，Compose、ViewModel、Navigation",
         "dependencies": ["domain"],
+        "fileCount": 180,
+        "submodules": {
+          "ui": 103,
+          "viewmodel": 15,
+          "navigation": 3,
+          "theme": 7
+        },
         "status": "✅ 完成"
       },
       "app": {
@@ -56,26 +75,33 @@
         "path": "app/",
         "description": "应用入口，DI配置，Android服务",
         "dependencies": ["domain", "data", "presentation"],
+        "fileCount": 12,
+        "submodules": {
+          "app": 1,
+          "di": 9,
+          "service": 1,
+          "util": 1
+        },
         "status": "✅ 完成"
       }
     }
   },
   "scanInfo": {
-    "timestamp": "2025-12-24T10:14:16+08:00",
-    "strategy": "自适应初始化：根级简明+模块级详尽",
-    "scannedFiles": 603,
+    "timestamp": "2025-12-25T18:55:00+08:00",
+    "strategy": "文档同步更新：根级简明+模块级详尽",
+    "scannedFiles": 368,
     "coverage": "100%",
     "truncated": false,
     "phases": {
       "phaseA": {
         "name": "全仓清点（轻量）",
         "status": "✅ 完成",
-        "findings": "识别出4个主要Gradle模块，603个Kotlin文件"
+        "findings": "识别出4个主要Gradle模块，368个Kotlin源文件"
       },
       "phaseB": {
         "name": "模块优先扫描（中等）",
         "status": "✅ 完成",
-        "findings": "完成所有模块的关键文件扫描，包括入口文件、接口、数据模型等"
+        "findings": "完成所有模块的关键文件扫描，包括入口文件、接口、数据模型、导航系统等"
       },
       "phaseC": {
         "name": "深度补捞（按需）",
@@ -111,18 +137,20 @@
       "*.mp4",
       "*.zip",
       "*.tar",
-      "*.gz"
+      "*.gz",
+      ".kotlin/**",
+      "历史文档/**",
+      "文档/**"
     ]
   },
   "documentation": {
     "root": "CLAUDE.md",
-    "projectDocs": "文档/项目文档",
-    "mainIndex": "文档/项目文档/README.md",
-    "lastUpdate": "2025-12-24T10:14:16+08:00",
+    "projectDocs": "文档/开发文档",
+    "lastUpdate": "2025-12-25T18:55:00+08:00",
     "architecture": {
       "cleanArchitectureCompliance": "100%合规",
       "violations": 0,
-      "violationDetails": "多模块架构，编译时强制依赖检查",
+      "violationDetails": "多模块架构，编译时强制依赖检查，domain层纯Kotlin无Android依赖",
       "layers": ["domain", "data", "presentation", "app"],
       "dependencyGraph": {
         "domain": [],
@@ -130,7 +158,9 @@
         "presentation": ["domain"],
         "app": ["domain", "data", "presentation"]
       }
-    }
+    },
+    "mermaidDiagramGenerated": true,
+    "navigationBreadcrumbsAdded": 4
   },
   "modules": [
     {
@@ -138,37 +168,48 @@
       "name": "domain",
       "type": "kotlin_library",
       "description": "纯Kotlin业务层，无Android依赖",
+      "fileCount": 147,
+      "status": "✅ 完成",
+      "documented": true,
+      "keyFiles": [
+        "model/ContactProfile.kt",
+        "model/BrainTag.kt",
+        "model/PromptScene.kt",
+        "model/GlobalPromptConfig.kt",
+        "repository/ContactRepository.kt",
+        "repository/AiRepository.kt",
+        "usecase/AnalyzeChatUseCase.kt",
+        "usecase/GenerateReplyUseCase.kt",
+        "usecase/PolishDraftUseCase.kt",
+        "service/PrivacyEngine.kt",
+        "service/SessionContextService.kt",
+        "util/Logger.kt",
+        "util/PromptBuilder.kt"
+      ],
       "submodules": [
         {
           "path": "domain/src/main/kotlin/com/empathy/ai/domain/model",
           "name": "model",
           "type": "entities",
           "description": "业务实体模型，纯Kotlin无Android依赖",
-          "fileCount": 58,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["ContactProfile.kt", "BrainTag.kt", "ChatMessage.kt", "AnalysisResult.kt", "FactCategory.kt", "EditModeState.kt", "PromptScene.kt", "GlobalPromptConfig.kt"],
-          "documentation": "domain/src/main/kotlin/com/empathy/ai/domain/model/CLAUDE.md"
+          "fileCount": 68,
+          "status": "✅ 完成"
         },
         {
           "path": "domain/src/main/kotlin/com/empathy/ai/domain/repository",
           "name": "repository",
           "type": "interfaces",
           "description": "数据仓库接口，定义数据访问契约",
-          "fileCount": 11,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["ContactRepository.kt", "AiRepository.kt", "ConversationRepository.kt", "PrivacyRepository.kt"]
+          "fileCount": 13,
+          "status": "✅ 完成"
         },
         {
           "path": "domain/src/main/kotlin/com/empathy/ai/domain/usecase",
           "name": "usecase",
           "type": "business_logic",
           "description": "业务用例，封装核心业务逻辑",
-          "fileCount": 31,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["AnalyzeChatUseCase.kt", "GenerateReplyUseCase.kt", "PolishDraftUseCase.kt", "SaveProfileUseCase.kt", "BatchDeleteFactsUseCase.kt", "BatchMoveFactsUseCase.kt", "GroupFactsByCategoryUseCase.kt"]
+          "fileCount": 37,
+          "status": "✅ 完成"
         },
         {
           "path": "domain/src/main/kotlin/com/empathy/ai/domain/service",
@@ -176,20 +217,15 @@
           "type": "domain_services",
           "description": "领域服务，处理复杂业务逻辑",
           "fileCount": 4,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["PrivacyEngine.kt", "SessionContextService.kt", "RuleEngine.kt", "FloatingWindowService.kt"]
+          "status": "✅ 完成"
         },
         {
           "path": "domain/src/main/kotlin/com/empathy/ai/domain/util",
           "name": "util",
           "type": "utilities",
           "description": "领域工具类，提供通用功能",
-          "fileCount": 42,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["ErrorHandler.kt", "SystemPrompts.kt", "CategoryColorAssigner.kt", "FactSearchFilter.kt", "DateUtils.kt", "JsonParser.kt"],
-          "androidDependencyCount": 0
+          "fileCount": 28,
+          "status": "✅ 完成"
         }
       ]
     },
@@ -198,88 +234,63 @@
       "name": "data",
       "type": "android_library",
       "description": "数据层 - 数据访问实现",
+      "fileCount": 29,
+      "status": "✅ 完成",
+      "documented": true,
+      "keyFiles": [
+        "local/AppDatabase.kt",
+        "local/PromptFileStorage.kt",
+        "local/ApiKeyStorage.kt",
+        "local/dao/ContactDao.kt",
+        "local/dao/BrainTagDao.kt",
+        "local/entity/ContactProfileEntity.kt",
+        "remote/api/OpenAiApi.kt",
+        "repository/ContactRepositoryImpl.kt",
+        "repository/AiRepositoryImpl.kt",
+        "parser/AiResponseParser.kt",
+        "di/DatabaseModule.kt",
+        "di/RepositoryModule.kt"
+      ],
       "submodules": [
         {
           "path": "data/src/main/kotlin/com/empathy/ai/data/local",
           "name": "local",
           "type": "local_storage",
           "description": "本地数据存储，Room数据库实现",
-          "fileCount": 35,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["AppDatabase.kt", "ContactDao.kt", "BrainTagDao.kt", "PromptFileStorage.kt", "ApiKeyStorage.kt"],
-          "submodules": [
-            {
-              "path": "data/src/main/kotlin/com/empathy/ai/data/local/entity",
-              "name": "entity",
-              "type": "database_entities",
-              "description": "数据库实体，映射到数据库表",
-              "fileCount": 6,
-              "status": "✅ 完成",
-              "documented": true,
-              "keyFiles": ["ContactProfileEntity.kt", "BrainTagEntity.kt", "AiProviderEntity.kt"]
-            },
-            {
-              "path": "data/src/main/kotlin/com/empathy/ai/data/local/dao",
-              "name": "dao",
-              "type": "data_access",
-              "description": "数据访问对象，提供数据库操作接口",
-              "fileCount": 6,
-              "status": "✅ 完成",
-              "documented": true,
-              "keyFiles": ["ContactDao.kt", "BrainTagDao.kt", "AiProviderDao.kt"]
-            },
-            {
-              "path": "data/src/main/kotlin/com/empathy/ai/data/local/converter",
-              "name": "converter",
-              "type": "type_converters",
-              "description": "Room类型转换器，处理复杂数据类型",
-              "fileCount": 2,
-              "status": "✅ 完成",
-              "documented": true,
-              "keyFiles": ["RoomTypeConverters.kt", "FactListConverter.kt"]
-            }
-          ]
+          "fileCount": 15,
+          "status": "✅ 完成"
         },
         {
           "path": "data/src/main/kotlin/com/empathy/ai/data/remote",
           "name": "remote",
           "type": "remote_api",
           "description": "远程数据访问，网络API调用",
-          "fileCount": 8,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["OpenAiApi.kt", "ChatRequestDto.kt", "ChatResponseDto.kt"]
+          "fileCount": 5,
+          "status": "✅ 完成"
         },
         {
           "path": "data/src/main/kotlin/com/empathy/ai/data/repository",
           "name": "repository",
           "type": "implementations",
           "description": "仓库实现，实现domain层定义的接口",
-          "fileCount": 11,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["ContactRepositoryImpl.kt", "AiRepositoryImpl.kt", "ConversationRepositoryImpl.kt"]
+          "fileCount": 10,
+          "status": "✅ 完成"
         },
         {
           "path": "data/src/main/kotlin/com/empathy/ai/data/parser",
           "name": "parser",
           "type": "parsers",
           "description": "AI响应解析器，处理AI返回数据",
-          "fileCount": 6,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["AiResponseParser.kt", "JsonCleaner.kt", "EnhancedJsonCleaner.kt"]
+          "fileCount": 4,
+          "status": "✅ 完成"
         },
         {
           "path": "data/src/main/kotlin/com/empathy/ai/data/di",
           "name": "di",
           "type": "dependency_injection",
           "description": "数据层依赖注入配置",
-          "fileCount": 7,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["DatabaseModule.kt", "NetworkModule.kt", "RepositoryModule.kt", "PromptModule.kt", "MemoryModule.kt"]
+          "fileCount": 6,
+          "status": "✅ 完成"
         }
       ]
     },
@@ -288,48 +299,32 @@
       "name": "presentation",
       "type": "android_library",
       "description": "表现层 - UI和交互，Compose实现",
+      "fileCount": 180,
+      "status": "✅ 完成",
+      "documented": true,
+      "keyFiles": [
+        "ui/screen/ContactListScreen.kt",
+        "ui/screen/ContactDetailTabScreen.kt",
+        "ui/screen/ChatScreen.kt",
+        "ui/screen/SettingsScreen.kt",
+        "ui/component/PrimaryButton.kt",
+        "ui/component/ContactListItem.kt",
+        "ui/floating/FloatingViewV2.kt",
+        "viewmodel/ContactDetailTabViewModel.kt",
+        "viewmodel/ChatViewModel.kt",
+        "navigation/NavGraph.kt",
+        "navigation/NavRoutes.kt",
+        "theme/Theme.kt",
+        "theme/Color.kt"
+      ],
       "submodules": [
         {
           "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/ui",
           "name": "ui",
           "type": "ui_components",
           "description": "UI组件和界面，Jetpack Compose实现",
-          "fileCount": 103,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyScreens": ["ChatScreen.kt", "ContactListScreen.kt", "ContactDetailScreen.kt", "ContactDetailTabScreen.kt", "PersonaTabV2.kt"],
-          "submodules": [
-            {
-              "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen",
-              "name": "screen",
-              "type": "screens",
-              "description": "屏幕组件，页面级UI实现",
-              "fileCount": 58,
-              "status": "✅ 完成",
-              "documented": true,
-              "keyFiles": ["ContactListScreen.kt", "ContactDetailTabScreen.kt", "ChatScreen.kt", "SettingsScreen.kt", "PromptEditorScreen.kt"]
-            },
-            {
-              "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component",
-              "name": "component",
-              "type": "reusable_components",
-              "description": "可复用组件，UI组件库",
-              "fileCount": 45,
-              "status": "✅ 完成",
-              "documented": true,
-              "keyFiles": ["PrimaryButton.kt", "ContactListItem.kt", "AnalysisCard.kt", "MaxHeightScrollView.kt", "PromptSettingsSection.kt"]
-            },
-            {
-              "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/ui/floating",
-              "name": "floating",
-              "type": "floating_window",
-              "description": "悬浮窗组件",
-              "fileCount": 5,
-              "status": "✅ 完成",
-              "documented": true,
-              "keyFiles": ["FloatingViewV2.kt", "FloatingBubbleView.kt", "TabSwitcher.kt", "ResultCard.kt"]
-            }
-          ]
+          "fileCount": 155,
+          "status": "✅ 完成"
         },
         {
           "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel",
@@ -337,9 +332,7 @@
           "type": "viewmodels",
           "description": "MVVM架构的ViewModel层，管理UI状态",
           "fileCount": 15,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["ContactDetailTabViewModel.kt", "ChatViewModel.kt", "BaseViewModel.kt", "SettingsViewModel.kt"]
+          "status": "✅ 完成"
         },
         {
           "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/navigation",
@@ -347,9 +340,7 @@
           "type": "navigation",
           "description": "导航系统，页面跳转管理",
           "fileCount": 3,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["NavGraph.kt", "NavRoutes.kt"]
+          "status": "✅ 完成"
         },
         {
           "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/theme",
@@ -357,9 +348,7 @@
           "type": "theme",
           "description": "Compose主题配置，颜色和字体系统",
           "fileCount": 7,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["Theme.kt", "Color.kt", "Type.kt", "CategoryColorPalette.kt"]
+          "status": "✅ 完成"
         }
       ]
     },
@@ -368,6 +357,18 @@
       "name": "app",
       "type": "application",
       "description": "应用入口和全局初始化模块",
+      "fileCount": 12,
+      "status": "✅ 完成",
+      "documented": true,
+      "keyFiles": [
+        "app/EmpathyApplication.kt",
+        "di/ServiceModule.kt",
+        "di/AppDispatcherModule.kt",
+        "di/DatabaseModule.kt",
+        "di/NetworkModule.kt",
+        "di/FloatingWindowModule.kt",
+        "service/FloatingWindowService.kt"
+      ],
       "submodules": [
         {
           "path": "app/src/main/java/com/empathy/ai/app",
@@ -375,20 +376,23 @@
           "type": "application_entry",
           "description": "应用入口和全局初始化",
           "fileCount": 1,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["EmpathyApplication.kt"],
-          "documentation": "app/src/main/java/com/empathy/ai/app/CLAUDE.md"
+          "status": "✅ 完成"
         },
         {
           "path": "app/src/main/java/com/empathy/ai/di",
           "name": "di",
           "type": "dependency_injection",
           "description": "依赖注入模块，Hilt配置",
-          "fileCount": 12,
-          "status": "✅ 完成",
-          "documented": true,
-          "keyFiles": ["DatabaseModule.kt", "NetworkModule.kt", "ServiceModule.kt", "FloatingWindowModule.kt", "SummaryModule.kt", "EditModule.kt", "TopicModule.kt", "AppDispatcherModule.kt", "LoggerModule.kt"]
+          "fileCount": 9,
+          "status": "✅ 完成"
+        },
+        {
+          "path": "app/src/main/java/com/empathy/ai/service",
+          "name": "service",
+          "type": "android_services",
+          "description": "Android系统服务",
+          "fileCount": 1,
+          "status": "✅ 完成"
         },
         {
           "path": "app/src/main/java/com/empathy/ai/util",
@@ -396,29 +400,7 @@
           "type": "utilities",
           "description": "应用级工具类",
           "fileCount": 1,
-          "status": "✅ 完成",
-          "documented": false,
-          "keyFiles": ["AndroidFloatingWindowManager.kt"]
-        },
-        {
-          "path": "app/src/main/java/com/empathy/ai/notification",
-          "name": "notification",
-          "type": "notification",
-          "description": "通知系统",
-          "fileCount": 1,
-          "status": "✅ 完成",
-          "documented": false,
-          "keyFiles": ["AiResultNotificationManager.kt"]
-        },
-        {
-          "path": "app/src/main/java/com/empathy/ai/domain",
-          "name": "domain_bridge",
-          "type": "domain_bridge",
-          "description": "domain层的Android相关实现",
-          "fileCount": 4,
-          "status": "✅ 完成",
-          "documented": false,
-          "keyFiles": ["service/FloatingWindowService.kt", "util/FloatingView.kt", "util/FloatingViewDebugLogger.kt", "util/ErrorHandler.kt", "util/PerformanceMonitor.kt", "util/FloatingWindowManager.kt"]
+          "status": "✅ 完成"
         }
       ]
     }
@@ -431,6 +413,8 @@
     "✅ 项目AI上下文初始化完成",
     "✅ Clean Architecture多模块改造完成（TD-00017 65/65任务）",
     "✅ 架构合规性达到100%（多模块完全合规）",
+    "✅ 生成完整的Mermaid模块结构图",
+    "✅ 为所有模块添加导航面包屑",
     "建议：保持架构文档与代码同步",
     "建议：定期更新文档以反映最新代码状态"
   ],
@@ -438,16 +422,16 @@
     "totalModules": 4,
     "documentedModules": 4,
     "documentationCoverage": "100%",
-    "scannedFiles": 603,
-    "totalSourceFiles": 487,
+    "scannedFiles": 368,
+    "totalSourceFiles": 368,
     "fileScanCoverage": "100%"
   },
   "summary": {
     "totalTasks": 4,
     "completedTasks": 4,
     "completionRate": "100%",
-    "lastUpdated": "2025-12-24T10:14:16+08:00",
-    "achievement": "🎉 项目AI上下文全面更新完成！Clean Architecture多模块架构已完成（TD-00017 65/65任务），架构合规性达到100%。"
+    "lastUpdated": "2025-12-25T18:44:10+08:00",
+    "achievement": "🎉 项目AI上下文全面初始化完成！Clean Architecture多模块架构已完成（TD-00017 65/65任务），架构合规性达到100%。已生成完整的Mermaid模块结构图和导航面包屑系统。"
   },
   "latestFeatures": {
     "Clean Architecture多模块改造": {
@@ -474,21 +458,6 @@
         "配置版本升级到v3",
         "新增PromptFileStorage实现文件存储",
         "新增PromptSettingsSection组件"
-      ]
-    },
-    "事实流内容编辑功能": {
-      "status": "已完成UI实现",
-      "components": [
-        "BatchDeleteFactsUseCase - 批量删除事实",
-        "BatchMoveFactsUseCase - 批量移动事实分类",
-        "GroupFactsByCategoryUseCase - 按分类分组事实",
-        "EditModeState - 编辑模式状态管理",
-        "FactCategory - 事实分类模型",
-        "PersonaSearchState - 搜索状态管理",
-        "CategoryColorAssigner - 分类颜色分配器",
-        "PersonaTabV2 - 画像标签页V2",
-        "BatchActionBar - 批量操作栏",
-        "DynamicCategoryCard - 动态分类卡片"
       ]
     },
     "悬浮窗功能增强": {

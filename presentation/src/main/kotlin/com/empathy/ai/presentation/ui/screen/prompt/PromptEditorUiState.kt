@@ -8,6 +8,7 @@ import com.empathy.ai.domain.model.PromptScene
  * 提示词编辑器UI状态
  *
  * @property editMode 编辑模式（全局场景/联系人专属）
+ * @property currentScene 当前选中的场景（用于场景Tab切换）
  * @property originalPrompt 原始提示词（用于检测修改）
  * @property currentPrompt 当前编辑的提示词
  * @property placeholderText 动态占位符文案
@@ -18,6 +19,7 @@ import com.empathy.ai.domain.model.PromptScene
  */
 data class PromptEditorUiState(
     val editMode: PromptEditMode = PromptEditMode.GlobalScene(PromptScene.ANALYZE),
+    val currentScene: PromptScene = PromptScene.ANALYZE,
     val originalPrompt: String = "",
     val currentPrompt: String = "",
     val placeholderText: String = "",

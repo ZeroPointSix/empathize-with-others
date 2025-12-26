@@ -56,6 +56,13 @@ object Dimensions {
     val SpacingSmall = 8.dp
     
     /**
+     * 中小间距 (12dp)
+     * 用于列表项间距、表单字段间距、按钮内边距
+     * 填补8dp和16dp之间的间隙
+     */
+    val SpacingMediumSmall = 12.dp
+    
+    /**
      * 中等间距
      */
     val SpacingMedium = 16.dp

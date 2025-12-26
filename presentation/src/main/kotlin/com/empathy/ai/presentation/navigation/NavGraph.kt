@@ -1,6 +1,11 @@
 package com.empathy.ai.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -12,9 +17,16 @@ import com.empathy.ai.presentation.ui.screen.chat.ChatScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailTabScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
+import com.empathy.ai.presentation.ui.screen.contact.CreateContactScreen
 import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.presentation.ui.screen.tag.BrainTagScreen
 import com.empathy.ai.presentation.ui.screen.userprofile.UserProfileScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.empathy.ai.presentation.viewmodel.CreateContactViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.empathy.ai.presentation.theme.AnimationSpec
 
 /**
  * 应用导航图
@@ -32,7 +44,11 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = NavRoutes.CONTACT_LIST,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = { AnimationSpec.PageEnterTransition },
+        exitTransition = { AnimationSpec.PageExitTransition },
+        popEnterTransition = { AnimationSpec.PagePopEnterTransition },
+        popExitTransition = { AnimationSpec.PagePopExitTransition }
     ) {
         // 联系人列表页面
         composable(route = NavRoutes.CONTACT_LIST) {
@@ -42,12 +58,28 @@ fun NavGraph(
                     if (contactId.isNotEmpty()) {
                         navController.navigate(NavRoutes.createContactDetailTabRoute(contactId))
                     } else {
-                        // 新建联系人仍使用旧页面
-                        navController.navigate(NavRoutes.createContactDetailRoute(contactId))
+                        // 新建联系人使用iOS风格新页面
+                        navController.navigate(NavRoutes.CREATE_CONTACT)
                     }
                 },
                 onNavigateToSettings = {
                     navController.navigate(NavRoutes.SETTINGS)
+                },
+                // 修复BUG-00031: 添加底部导航栏的导航回调
+                onNavigate = { route ->
+                    if (route != NavRoutes.CONTACT_LIST) {
+                        navController.navigate(route) {
+                            popUpTo(NavRoutes.CONTACT_LIST) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            // 移除restoreState，避免状态恢复问题
+                        }
+                    }
+                },
+                // 修复: 添加加号按钮点击回调 - 使用iOS风格新页面
+                onAddClick = {
+                    navController.navigate(NavRoutes.CREATE_CONTACT)
                 }
             )
         }
@@ -103,8 +135,39 @@ fun NavGraph(
                 },
                 onNavigateToUserProfile = {
                     navController.navigate(NavRoutes.USER_PROFILE)
+                },
+                // 修复BUG-001: 添加底部导航栏的导航回调
+                onNavigate = { route ->
+                    if (route != NavRoutes.SETTINGS) {
+                        navController.navigate(route) {
+                            popUpTo(NavRoutes.CONTACT_LIST) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            // 移除restoreState，避免状态恢复问题
+                        }
+                    }
+                },
+                // 修复: 添加加号按钮点击回调 - 使用iOS风格新页面
+                onAddClick = {
+                    navController.navigate(NavRoutes.CREATE_CONTACT)
                 }
             )
+        }
+
+        // AI军师页面（占位，后续实现）
+        composable(route = NavRoutes.AI_ADVISOR) {
+            // TODO: 实现AI军师页面
+            // 暂时显示空白页面
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "AI军师",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
         }
 
         // 用户画像页面
@@ -136,6 +199,34 @@ fun NavGraph(
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToPromptEditor = { route ->
                     navController.navigate(route)
+                }
+            )
+        }
+
+        // 新建联系人页面（iOS风格）
+        // TD-00020 T066: 添加CreateContactScreen路由配置
+        // RESEARCH-00054: 修复保存功能和添加事实功能
+        composable(route = NavRoutes.CREATE_CONTACT) {
+            val viewModel: CreateContactViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsState()
+            
+            // 监听保存成功状态，自动返回
+            LaunchedEffect(uiState.saveSuccess) {
+                if (uiState.saveSuccess) {
+                    viewModel.resetSaveSuccess()
+                    navController.navigateUp()
+                }
+            }
+            
+            CreateContactScreen(
+                onCancel = { navController.navigateUp() },
+                onDone = { formData, avatarUri, facts ->
+                    // 调用ViewModel保存联系人
+                    viewModel.saveContact(formData, avatarUri, facts)
+                },
+                onPickAvatar = {
+                    // TODO: 集成图片选择器
+                    // 后续可以使用ActivityResultLauncher实现
                 }
             )
         }

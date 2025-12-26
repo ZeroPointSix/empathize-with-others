@@ -32,6 +32,7 @@ import com.empathy.ai.domain.model.KeyEvent
 import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.presentation.theme.Dimensions
+import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.chip.SolidTagChip
 import com.empathy.ai.presentation.ui.component.chip.SolidTagColors
@@ -86,10 +87,10 @@ fun ListViewRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = Dimensions.SpacingMedium,
-                    vertical = 12.dp
+                    horizontal = AppSpacing.md,
+                    vertical = AppSpacing.sm
                 ),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 左侧：日期
@@ -103,7 +104,7 @@ fun ListViewRow(
             // 中间：图标 + 标题 + 已编辑标识
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(

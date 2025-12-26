@@ -1,144 +1,346 @@
 package com.empathy.ai.presentation.ui.screen.contact.persona
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.BrainTag
+import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.TagType
-import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
-import com.empathy.ai.presentation.ui.component.dialog.TagConfirmationDialog
+import com.empathy.ai.presentation.theme.TagCategory
+import com.empathy.ai.presentation.theme.iOSSystemGroupedBackground
+import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.component.persona.InferredTag
+import com.empathy.ai.presentation.ui.component.persona.ModernFloatingSearchBar
+import com.empathy.ai.presentation.ui.component.state.EmptyType
+import com.empathy.ai.presentation.ui.component.state.EmptyView
 
 /**
- * 标签画像标签页组件
+ * 画像库标签页组件 (简化版 - iOS风格)
  *
- * 整合所有标签分类，提供标签确认/驳回功能
+ * 核心功能：
+ * - 按Fact.key分类展示所有标签
+ * - 支持搜索过滤
+ * - 支持长按删除
+ * - 无"全部/已确认"分段控制器
+ * - 无"雷区/策略"固定分类
  *
- * 职责：
- * - 按类型分组展示标签
- * - 管理标签确认对话框
- * - 性能优化：只在可见区域启用动画
- *
- * @param riskTags 雷区标签列表
- * @param strategyTags 策略标签列表
- * @param onConfirmTag 确认标签回调
- * @param onRejectTag 驳回标签回调
+ * @param facts 所有事实列表（直接使用Fact模型）
+ * @param onFactClick 点击事实回调（用于编辑）
+ * @param onFactLongClick 长按事实回调（用于删除）
  * @param modifier Modifier
  */
 @Composable
 fun PersonaTab(
-    riskTags: List<BrainTag>,
-    strategyTags: List<BrainTag>,
-    onConfirmTag: (BrainTag) -> Unit,
-    onRejectTag: (BrainTag) -> Unit,
+    facts: List<Fact>,
+    onFactClick: (Fact) -> Unit,
+    onFactLongClick: (Fact) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 待确认的标签（用于显示对话框）
-    var pendingTag by remember { mutableStateOf<BrainTag?>(null) }
+    // 搜索关键词
+    var searchQuery by remember { mutableStateOf("") }
     
-    // 列表状态（用于性能优化）
+    // 是否已初始化展开状态
+    var isInitialized by remember { mutableStateOf(false) }
+    
+    // 展开的分类（默认全部展开）
+    var expandedCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
+    
+    // 列表状态
     val listState = rememberLazyListState()
     
-    // 计算可见项索引范围（用于控制动画）
-    val visibleItemsInfo by remember {
-        derivedStateOf {
-            listState.layoutInfo.visibleItemsInfo
-        }
-    }
-    
-    // 检查是否有标签
-    val hasAnyTags = riskTags.isNotEmpty() || strategyTags.isNotEmpty()
-    
-    if (!hasAnyTags) {
-        // 空状态
-        EmptyPersonaView(modifier = modifier)
-    } else {
-        LazyColumn(
-            state = listState,
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(Dimensions.SpacingMedium),
-            verticalArrangement = Arrangement.spacedBy(Dimensions.SpacingMedium)
-        ) {
-            // 雷区标签分类
-            if (riskTags.isNotEmpty()) {
-                item(key = "risk_section") {
-                    CategorySection(
-                        title = "🚫 雷区标签",
-                        tags = riskTags,
-                        onTagClick = { tag ->
-                            if (!tag.isConfirmed) {
-                                pendingTag = tag
-                            }
-                        },
-                        enableAnimation = true  // 可根据可见性优化
-                    )
-                }
-            }
-            
-            // 策略标签分类
-            if (strategyTags.isNotEmpty()) {
-                item(key = "strategy_section") {
-                    CategorySection(
-                        title = "💡 策略标签",
-                        tags = strategyTags,
-                        onTagClick = { tag ->
-                            if (!tag.isConfirmed) {
-                                pendingTag = tag
-                            }
-                        },
-                        enableAnimation = true
-                    )
-                }
-            }
-            
-            // 底部说明
-            item(key = "footer") {
-                PersonaFooter()
+    // 按key分组facts
+    val groupedFacts = remember(facts, searchQuery) {
+        val filtered = if (searchQuery.isBlank()) {
+            facts
+        } else {
+            facts.filter { 
+                it.key.contains(searchQuery, ignoreCase = true) ||
+                it.value.contains(searchQuery, ignoreCase = true)
             }
         }
+        filtered.groupBy { it.key }
     }
     
-    // 标签确认对话框
-    pendingTag?.let { tag ->
-        TagConfirmationDialog(
-            tag = tag,
-            onConfirm = {
-                onConfirmTag(tag)
-                pendingTag = null
-            },
-            onReject = {
-                onRejectTag(tag)
-                pendingTag = null
-            },
-            onDismiss = {
-                pendingTag = null
-            }
+    // 初始化展开状态（仅首次加载时全部展开）
+    if (!isInitialized && groupedFacts.isNotEmpty()) {
+        expandedCategories = groupedFacts.keys.toSet()
+        isInitialized = true
+    }
+    
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(iOSSystemGroupedBackground)
+    ) {
+        // 顶部搜索栏
+        ModernFloatingSearchBar(
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            placeholder = "搜索标签或分类",
+            modifier = Modifier.padding(16.dp)
         )
+        
+        if (facts.isEmpty()) {
+            // 空状态
+            EmptyPersonaView(modifier = Modifier.weight(1f))
+        } else if (groupedFacts.isEmpty()) {
+            // 搜索无结果
+            NoSearchResultView(modifier = Modifier.weight(1f))
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 按分类展示
+                groupedFacts.forEach { (category, categoryFacts) ->
+                    item(key = "category_$category") {
+                        SimpleCategoryCard(
+                            categoryName = category,
+                            facts = categoryFacts,
+                            isExpanded = category in expandedCategories,
+                            onToggle = {
+                                expandedCategories = if (category in expandedCategories) {
+                                    expandedCategories - category
+                                } else {
+                                    expandedCategories + category
+                                }
+                            },
+                            onFactClick = onFactClick,
+                            onFactLongClick = onFactLongClick
+                        )
+                    }
+                }
+                
+                // 底部间距
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 简化版分类卡片
+ * 
+ * iOS风格：白色圆角卡片 + 圆形彩色图标
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SimpleCategoryCard(
+    categoryName: String,
+    facts: List<Fact>,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onFactClick: (Fact) -> Unit,
+    onFactLongClick: (Fact) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 根据分类名生成颜色
+    val categoryColor = getCategoryColor(categoryName)
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // 头部：圆形图标 + 分类名 + 数量 + 展开/折叠
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 圆形彩色图标
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(categoryColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = getCategoryEmoji(categoryName),
+                        fontSize = 18.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                // 分类名
+                Text(
+                    text = categoryName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // 数量
+                Text(
+                    text = "${facts.size}个",
+                    fontSize = 14.sp,
+                    color = iOSTextSecondary
+                )
+                
+                // 展开/折叠按钮
+                IconButton(onClick = onToggle) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "折叠" else "展开",
+                        tint = iOSTextSecondary
+                    )
+                }
+            }
+            
+            // 标签内容（展开时显示）
+            if (isExpanded) {
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    facts.forEach { fact ->
+                        SimpleTagChip(
+                            text = fact.value,
+                            color = categoryColor,
+                            onClick = { onFactClick(fact) },
+                            onLongClick = { onFactLongClick(fact) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 简化版标签胶囊
+ * 
+ * 莫兰迪色系：浅色背景 + 深色文字
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SimpleTagChip(
+    text: String,
+    color: Color,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        shape = RoundedCornerShape(20.dp),
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = color.copy(alpha = 0.9f),
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+        )
+    }
+}
+
+/**
+ * 根据分类名获取颜色
+ */
+private fun getCategoryColor(categoryName: String): Color {
+    return when {
+        categoryName.contains("兴趣") || categoryName.contains("爱好") -> Color(0xFFF97316) // 橙色
+        categoryName.contains("工作") || categoryName.contains("职业") -> Color(0xFF3B82F6) // 蓝色
+        categoryName.contains("性格") || categoryName.contains("特点") -> Color(0xFF8B5CF6) // 紫色
+        categoryName.contains("家庭") || categoryName.contains("亲人") -> Color(0xFFEC4899) // 粉色
+        categoryName.contains("喜欢") || categoryName.contains("偏好") -> Color(0xFF10B981) // 绿色
+        categoryName.contains("不喜欢") || categoryName.contains("禁忌") -> Color(0xFFEF4444) // 红色
+        else -> {
+            // 根据字符串hash生成稳定的颜色
+            val colors = listOf(
+                Color(0xFF3B82F6), // 蓝色
+                Color(0xFF10B981), // 绿色
+                Color(0xFFF97316), // 橙色
+                Color(0xFF8B5CF6), // 紫色
+                Color(0xFFEC4899), // 粉色
+                Color(0xFF06B6D4), // 青色
+                Color(0xFFF59E0B), // 琥珀色
+                Color(0xFF6366F1)  // 靛蓝色
+            )
+            colors[Math.abs(categoryName.hashCode()) % colors.size]
+        }
+    }
+}
+
+/**
+ * 根据分类名获取Emoji
+ */
+private fun getCategoryEmoji(categoryName: String): String {
+    return when {
+        categoryName.contains("兴趣") || categoryName.contains("爱好") -> "🎯"
+        categoryName.contains("工作") || categoryName.contains("职业") -> "💼"
+        categoryName.contains("性格") || categoryName.contains("特点") -> "✨"
+        categoryName.contains("家庭") || categoryName.contains("亲人") -> "👨‍👩‍👧"
+        categoryName.contains("喜欢") || categoryName.contains("偏好") -> "❤️"
+        categoryName.contains("不喜欢") || categoryName.contains("禁忌") -> "⚠️"
+        categoryName.contains("生日") || categoryName.contains("纪念") -> "🎂"
+        categoryName.contains("地址") || categoryName.contains("住址") -> "📍"
+        categoryName.contains("联系") || categoryName.contains("电话") -> "📱"
+        else -> "📋"
     }
 }
 
@@ -147,158 +349,151 @@ fun PersonaTab(
  */
 @Composable
 private fun EmptyPersonaView(modifier: Modifier = Modifier) {
+    EmptyView(
+        message = "暂无标签\n添加事实后会自动显示在这里",
+        actionText = null,
+        onAction = null,
+        modifier = modifier,
+        emptyType = EmptyType.NoTags
+    )
+}
+
+/**
+ * 搜索无结果视图
+ */
+@Composable
+private fun NoSearchResultView(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Psychology,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(64.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "暂无标签",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "与联系人互动后，AI会自动推测标签",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-/**
- * 底部说明
- */
-@Composable
-private fun PersonaFooter() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = Dimensions.SpacingMedium),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
         Text(
-            text = "💡 点击带问号的标签可以确认或驳回",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            text = "没有找到匹配的标签",
+            fontSize = 15.sp,
+            color = iOSTextSecondary,
             textAlign = TextAlign.Center
         )
     }
 }
 
+// ========== 兼容旧版API的重载函数 ==========
+
+/**
+ * 兼容旧版API的PersonaTab
+ * 
+ * 将BrainTag转换为Fact后调用新版PersonaTab
+ */
+@Composable
+fun PersonaTab(
+    riskTags: List<BrainTag>,
+    strategyTags: List<BrainTag>,
+    onConfirmTag: (BrainTag) -> Unit,
+    onRejectTag: (BrainTag) -> Unit,
+    modifier: Modifier = Modifier,
+    interestTags: List<String> = emptyList(),
+    workTags: List<String> = emptyList(),
+    inferredTags: List<InferredTag> = emptyList(),
+    onAcceptInferred: ((InferredTag) -> Unit)? = null,
+    onRejectInferred: ((InferredTag) -> Unit)? = null,
+    onAcceptAllInferred: (() -> Unit)? = null,
+    onAddTag: ((String, TagCategory) -> Unit)? = null
+) {
+    // 将所有标签转换为Fact列表
+    val facts = mutableListOf<Fact>()
+    
+    // 添加兴趣爱好
+    interestTags.forEachIndexed { index, tag ->
+        facts.add(Fact(
+            id = "interest_$index",
+            key = "兴趣爱好",
+            value = tag,
+            timestamp = System.currentTimeMillis(),
+            source = FactSource.MANUAL
+        ))
+    }
+    
+    // 添加工作信息
+    workTags.forEachIndexed { index, tag ->
+        facts.add(Fact(
+            id = "work_$index",
+            key = "工作信息",
+            value = tag,
+            timestamp = System.currentTimeMillis(),
+            source = FactSource.MANUAL
+        ))
+    }
+    
+    // 添加策略标签
+    strategyTags.forEach { tag ->
+        facts.add(Fact(
+            id = "strategy_${tag.id}",
+            key = "沟通策略",
+            value = tag.content,
+            timestamp = System.currentTimeMillis(),
+            source = if (tag.isConfirmed) FactSource.MANUAL else FactSource.AI_INFERRED
+        ))
+    }
+    
+    // 添加雷区标签
+    riskTags.forEach { tag ->
+        facts.add(Fact(
+            id = "risk_${tag.id}",
+            key = "雷区标签",
+            value = tag.content,
+            timestamp = System.currentTimeMillis(),
+            source = if (tag.isConfirmed) FactSource.MANUAL else FactSource.AI_INFERRED
+        ))
+    }
+    
+    PersonaTab(
+        facts = facts,
+        onFactClick = { fact ->
+            // 查找对应的BrainTag并调用确认回调
+            val brainTag = riskTags.find { "risk_${it.id}" == fact.id }
+                ?: strategyTags.find { "strategy_${it.id}" == fact.id }
+            brainTag?.let { onConfirmTag(it) }
+        },
+        onFactLongClick = { fact ->
+            // 查找对应的BrainTag并调用驳回回调
+            val brainTag = riskTags.find { "risk_${it.id}" == fact.id }
+                ?: strategyTags.find { "strategy_${it.id}" == fact.id }
+            brainTag?.let { onRejectTag(it) }
+        },
+        modifier = modifier
+    )
+}
 
 // ========== 预览 ==========
 
-@Preview(name = "完整标签画像", showBackground = true)
+@Preview(name = "画像库 - 有数据", showBackground = true)
 @Composable
-private fun PreviewPersonaTabFull() {
+private fun PreviewPersonaTabWithData() {
     EmpathyTheme {
         PersonaTab(
-            riskTags = listOf(
-                BrainTag(
-                    id = 1,
-                    contactId = "contact_1",
-                    content = "不喜欢被催促",
-                    type = TagType.RISK_RED,
-                    isConfirmed = true,
-                    source = "manual"
-                ),
-                BrainTag(
-                    id = 2,
-                    contactId = "contact_1",
-                    content = "讨厌加班话题",
-                    type = TagType.RISK_RED,
-                    isConfirmed = true,
-                    source = "manual"
-                ),
-                BrainTag(
-                    id = 3,
-                    contactId = "contact_1",
-                    content = "可能不喜欢早起",
-                    type = TagType.RISK_RED,
-                    isConfirmed = false,
-                    source = "ai"
-                )
+            facts = listOf(
+                Fact(id = "1", key = "兴趣爱好", value = "打羽毛球", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "2", key = "兴趣爱好", value = "喜欢爬山", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "3", key = "兴趣爱好", value = "猫奴", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "4", key = "工作信息", value = "大厂员工", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "5", key = "工作信息", value = "产品经理", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "6", key = "性格特点", value = "开朗活泼", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "7", key = "喜欢的食物", value = "川菜", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL),
+                Fact(id = "8", key = "喜欢的食物", value = "火锅", timestamp = System.currentTimeMillis(), source = FactSource.MANUAL)
             ),
-            strategyTags = listOf(
-                BrainTag(
-                    id = 4,
-                    contactId = "contact_1",
-                    content = "喜欢收到早安问候",
-                    type = TagType.STRATEGY_GREEN,
-                    isConfirmed = true,
-                    source = "manual"
-                ),
-                BrainTag(
-                    id = 5,
-                    contactId = "contact_1",
-                    content = "可能喜欢美食话题",
-                    type = TagType.STRATEGY_GREEN,
-                    isConfirmed = false,
-                    source = "ai"
-                ),
-                BrainTag(
-                    id = 6,
-                    contactId = "contact_1",
-                    content = "可能喜欢旅行",
-                    type = TagType.STRATEGY_GREEN,
-                    isConfirmed = false,
-                    source = "ai"
-                )
-            ),
-            onConfirmTag = {},
-            onRejectTag = {}
+            onFactClick = {},
+            onFactLongClick = {}
         )
     }
 }
 
-@Preview(name = "只有雷区标签", showBackground = true)
-@Composable
-private fun PreviewPersonaTabRiskOnly() {
-    EmpathyTheme {
-        PersonaTab(
-            riskTags = listOf(
-                BrainTag(
-                    id = 1,
-                    contactId = "contact_1",
-                    content = "不喜欢被催促",
-                    type = TagType.RISK_RED,
-                    isConfirmed = true,
-                    source = "manual"
-                )
-            ),
-            strategyTags = emptyList(),
-            onConfirmTag = {},
-            onRejectTag = {}
-        )
-    }
-}
-
-@Preview(name = "空状态", showBackground = true)
+@Preview(name = "画像库 - 空状态", showBackground = true)
 @Composable
 private fun PreviewPersonaTabEmpty() {
     EmpathyTheme {
         PersonaTab(
-            riskTags = emptyList(),
-            strategyTags = emptyList(),
-            onConfirmTag = {},
-            onRejectTag = {}
+            facts = emptyList(),
+            onFactClick = {},
+            onFactLongClick = {}
         )
     }
 }
