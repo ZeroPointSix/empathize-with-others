@@ -32,3 +32,11 @@ replay_pid*.log
 /domain/build
 /data/build
 /presentation/build
+
+# APK分析临时目录
+temp_apk_analysis/
+temp_apk_check/
+temp_dex_analysis/
+
+# 临时文件
+nul
