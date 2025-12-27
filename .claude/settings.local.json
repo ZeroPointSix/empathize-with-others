@@ -27,7 +27,8 @@
       "Bash(claude:*)",
       "Bash(ls:*)",
       "Bash(python -m json.tool:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,12 +1,16 @@
 package com.empathy.ai.presentation.ui.screen.aiconfig
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Token
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,26 +21,36 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.presentation.theme.EmpathyTheme
-import com.empathy.ai.presentation.theme.AppSpacing
-import com.empathy.ai.presentation.ui.component.card.ProviderCard
+import com.empathy.ai.presentation.theme.iOSBackground
+import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.ui.component.dialog.ProviderFormDialog
+import com.empathy.ai.presentation.ui.component.ios.IOSLargeTitleBar
+import com.empathy.ai.presentation.ui.component.ios.IOSProviderCard
+import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
+import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.util.UserFriendlyError
-import androidx.compose.material.icons.filled.Warning
 import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
 
 /**
- * AI 配置页面
+ * AI 配置页面 (iOS风格重构)
+ *
+ * TD-00021 Phase 1: AI配置页面优化
  *
  * 功能：
- * - 显示所有 AI 服务商列表
+ * - 显示所有 AI 服务商列表（iOS Inset Grouped风格）
+ * - 搜索过滤服务商
  * - 添加、编辑、删除服务商
  * - 设置默认服务商
  * - 测试连接
+ * - 通用选项和高级设置
  *
  * @param onNavigateBack 返回回调
+ * @param onNavigateToAddProvider 导航到添加服务商页面
+ * @param onNavigateToEditProvider 导航到编辑服务商页面
  * @param viewModel AI 配置 ViewModel
  * @param modifier Modifier
  */
@@ -44,7 +58,9 @@ import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
 fun AiConfigScreen(
     onNavigateBack: () -> Unit,
     viewModel: AiConfigViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToAddProvider: (() -> Unit)? = null,
+    onNavigateToEditProvider: ((String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -59,6 +75,8 @@ fun AiConfigScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onNavigateToAddProvider = onNavigateToAddProvider,
+        onNavigateToEditProvider = onNavigateToEditProvider,
         modifier = modifier
     )
 }
@@ -68,195 +86,224 @@ fun AiConfigScreen(
  *
  * 分离为无状态组件便于 Preview 和测试
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AiConfigScreenContent(
     uiState: AiConfigUiState,
     onEvent: (AiConfigUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToAddProvider: (() -> Unit)?,
+    onNavigateToEditProvider: ((String) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("AI 配置") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
-                        )
-                    }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(iOSBackground)
+    ) {
+        // iOS大标题导航栏
+        IOSLargeTitleBar(
+            title = "AI 配置",
+            onBackClick = onNavigateBack,
+            onAddClick = {
+                if (onNavigateToAddProvider != null) {
+                    onNavigateToAddProvider()
+                } else {
+                    onEvent(AiConfigUiEvent.ShowAddDialog)
                 }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onEvent(AiConfigUiEvent.ShowAddDialog) }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "添加服务商"
+            },
+            searchQuery = uiState.searchQuery,
+            onSearchQueryChange = { onEvent(AiConfigUiEvent.UpdateSearchQuery(it)) },
+            searchPlaceholder = "搜索服务商"
+        )
+
+        // 内容区域
+        when {
+            uiState.isLoading -> {
+                LoadingIndicatorFullScreen(message = "加载服务商...")
+            }
+            uiState.error != null -> {
+                FriendlyErrorCard(
+                    error = UserFriendlyError(
+                        title = "出错了",
+                        message = uiState.error ?: "未知错误",
+                        icon = Icons.Default.Warning
+                    ),
+                    onAction = { onEvent(AiConfigUiEvent.LoadProviders) }
+                )
+            }
+            !uiState.hasProviders -> {
+                EmptyView(
+                    message = "还没有配置 AI 服务商\n点击右上角按钮添加",
+                    actionText = null,
+                    onAction = null
+                )
+            }
+            else -> {
+                ProviderListContent(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onNavigateToEditProvider = onNavigateToEditProvider
                 )
             }
         }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    LoadingIndicatorFullScreen(
-                        message = "加载服务商..."
-                    )
-                }
-                uiState.error != null -> {
-                    FriendlyErrorCard(
-                        error = UserFriendlyError(
-                            title = "出错了",
-                            message = uiState.error ?: "未知错误",
-                            icon = Icons.Default.Warning
-                        ),
-                        onAction = { onEvent(AiConfigUiEvent.LoadProviders) }
-                    )
-                }
-                !uiState.hasProviders -> {
-                    EmptyView(
-                        message = "还没有配置 AI 服务商\n点击右下角按钮添加",
-                        actionText = null,
-                        onAction = null
-                    )
-                }
-                else -> {
-                    ProviderList(
-                        providers = uiState.providers,
-                        onProviderClick = { provider ->
-                            onEvent(AiConfigUiEvent.ShowEditDialog(provider))
-                        },
-                        onDeleteClick = { providerId ->
-                            onEvent(AiConfigUiEvent.ShowDeleteConfirmDialog(providerId))
-                        },
-                        onSetDefaultClick = { providerId ->
-                            onEvent(AiConfigUiEvent.SetDefaultProvider(providerId))
-                        }
-                    )
-                }
-            }
+    }
 
-            // 显示错误 Snackbar
-            if (uiState.error != null) {
-                Snackbar(
-                    modifier = Modifier.padding(AppSpacing.lg),
-                    action = {
-                        TextButton(onClick = { onEvent(AiConfigUiEvent.ClearError) }) {
-                            Text("关闭")
-                        }
-                    }
+    // 表单对话框（兼容旧版）
+    if (uiState.showFormDialog) {
+        ProviderFormDialog(
+            isEditing = uiState.isEditing,
+            formName = uiState.formName,
+            formBaseUrl = uiState.formBaseUrl,
+            formApiKey = uiState.formApiKey,
+            formModels = uiState.formModels,
+            formDefaultModelId = uiState.formDefaultModelId,
+            formNameError = uiState.formNameError,
+            formBaseUrlError = uiState.formBaseUrlError,
+            formApiKeyError = uiState.formApiKeyError,
+            formModelsError = uiState.formModelsError,
+            isSaving = uiState.isSaving,
+            isTestingConnection = uiState.isTestingConnection,
+            testConnectionResult = uiState.testConnectionResult,
+            isFetchingModels = uiState.isFetchingModels,
+            fetchModelsError = uiState.fetchModelsError,
+            onFetchModels = { onEvent(AiConfigUiEvent.FetchModels) },
+            onNameChange = { onEvent(AiConfigUiEvent.UpdateFormName(it)) },
+            onBaseUrlChange = { onEvent(AiConfigUiEvent.UpdateFormBaseUrl(it)) },
+            onApiKeyChange = { onEvent(AiConfigUiEvent.UpdateFormApiKey(it)) },
+            onAddModel = { modelId, displayName ->
+                onEvent(AiConfigUiEvent.AddFormModel(modelId, displayName))
+            },
+            onRemoveModel = { modelId ->
+                onEvent(AiConfigUiEvent.RemoveFormModel(modelId))
+            },
+            onSetDefaultModel = { modelId ->
+                onEvent(AiConfigUiEvent.SetFormDefaultModel(modelId))
+            },
+            onTestConnection = { onEvent(AiConfigUiEvent.TestConnection) },
+            onSave = { onEvent(AiConfigUiEvent.SaveProvider) },
+            onDismiss = { onEvent(AiConfigUiEvent.DismissFormDialog) }
+        )
+    }
+
+    // 删除确认对话框
+    if (uiState.showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) },
+            title = { Text("确认删除") },
+            text = { Text("确定要删除这个服务商吗？此操作无法撤销。") },
+            confirmButton = {
+                TextButton(
+                    onClick = { onEvent(AiConfigUiEvent.ConfirmDeleteProvider) }
                 ) {
-                    Text(uiState.error)
+                    Text("删除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
+                ) {
+                    Text("取消")
                 }
             }
-        }
-
-        // 表单对话框
-        if (uiState.showFormDialog) {
-            ProviderFormDialog(
-                isEditing = uiState.isEditing,
-                formName = uiState.formName,
-                formBaseUrl = uiState.formBaseUrl,
-                formApiKey = uiState.formApiKey,
-                formModels = uiState.formModels,
-                formDefaultModelId = uiState.formDefaultModelId,
-                formNameError = uiState.formNameError,
-                formBaseUrlError = uiState.formBaseUrlError,
-                formApiKeyError = uiState.formApiKeyError,
-                formModelsError = uiState.formModelsError,
-                isSaving = uiState.isSaving,
-                isTestingConnection = uiState.isTestingConnection,
-                testConnectionResult = uiState.testConnectionResult,
-                // SR-00001: 模型列表自动获取
-                isFetchingModels = uiState.isFetchingModels,
-                fetchModelsError = uiState.fetchModelsError,
-                onFetchModels = { onEvent(AiConfigUiEvent.FetchModels) },
-                onNameChange = { onEvent(AiConfigUiEvent.UpdateFormName(it)) },
-                onBaseUrlChange = { onEvent(AiConfigUiEvent.UpdateFormBaseUrl(it)) },
-                onApiKeyChange = { onEvent(AiConfigUiEvent.UpdateFormApiKey(it)) },
-                onAddModel = { modelId, displayName ->
-                    onEvent(AiConfigUiEvent.AddFormModel(modelId, displayName))
-                },
-                onRemoveModel = { modelId ->
-                    onEvent(AiConfigUiEvent.RemoveFormModel(modelId))
-                },
-                onSetDefaultModel = { modelId ->
-                    onEvent(AiConfigUiEvent.SetFormDefaultModel(modelId))
-                },
-                onTestConnection = { onEvent(AiConfigUiEvent.TestConnection) },
-                onSave = { onEvent(AiConfigUiEvent.SaveProvider) },
-                onDismiss = { onEvent(AiConfigUiEvent.DismissFormDialog) }
-            )
-        }
-
-        // 删除确认对话框
-        if (uiState.showDeleteConfirmDialog) {
-            AlertDialog(
-                onDismissRequest = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) },
-                title = { Text("确认删除") },
-                text = { Text("确定要删除这个服务商吗？此操作无法撤销。") },
-                confirmButton = {
-                    TextButton(
-                        onClick = { onEvent(AiConfigUiEvent.ConfirmDeleteProvider) }
-                    ) {
-                        Text("删除", color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
-                    ) {
-                        Text("取消")
-                    }
-                }
-            )
-        }
+        )
     }
 }
 
+
 /**
- * 服务商列表
+ * 服务商列表内容（iOS Inset Grouped风格）
  */
 @Composable
-private fun ProviderList(
-    providers: List<AiProvider>,
-    onProviderClick: (AiProvider) -> Unit,
-    onDeleteClick: (String) -> Unit,
-    onSetDefaultClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+private fun ProviderListContent(
+    uiState: AiConfigUiState,
+    onEvent: (AiConfigUiEvent) -> Unit,
+    onNavigateToEditProvider: ((String) -> Unit)?
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(AppSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 32.dp)
     ) {
-        items(
-            items = providers,
-            key = { it.id }
-        ) { provider ->
-            ProviderCard(
-                provider = provider,
-                onEdit = { onProviderClick(provider) },
-                onDelete = { onDeleteClick(provider.id) },
-                onSetDefault = { onSetDefaultClick(provider.id) }
-            )
+        // 推理引擎分组
+        item {
+            IOSSettingsSection(
+                title = "推理引擎",
+                footer = "向左滑动可编辑或删除服务商，点击切换默认引擎"
+            ) {
+                val providers = uiState.filteredProviders
+                providers.forEachIndexed { index, provider ->
+                    IOSProviderCard(
+                        provider = provider,
+                        isDefault = provider.isDefault,
+                        onClick = { 
+                            // 点击直接设为默认服务商
+                            onEvent(AiConfigUiEvent.SetDefaultProvider(provider.id))
+                        },
+                        onEdit = {
+                            // 滑动编辑 - 导航到编辑页面
+                            if (onNavigateToEditProvider != null) {
+                                onNavigateToEditProvider(provider.id)
+                            } else {
+                                onEvent(AiConfigUiEvent.ShowEditDialog(provider))
+                            }
+                        },
+                        onDelete = {
+                            // 滑动删除
+                            onEvent(AiConfigUiEvent.ShowDeleteConfirmDialog(provider.id))
+                        },
+                        showDivider = index < providers.lastIndex
+                    )
+                }
+            }
+        }
+
+        // 通用选项分组
+        item {
+            IOSSettingsSection(title = "通用选项") {
+                IOSSettingsItem(
+                    icon = Icons.Default.Language,
+                    iconBackgroundColor = iOSBlue,
+                    title = "网络代理",
+                    value = "未设置",
+                    showDivider = true,
+                    onClick = { /* TODO: 实现网络代理设置 */ }
+                )
+                IOSSettingsItem(
+                    icon = Icons.Default.QueryStats,
+                    iconBackgroundColor = iOSPurple,
+                    title = "用量统计",
+                    showDivider = false,
+                    onClick = { /* TODO: 实现用量统计 */ }
+                )
+            }
+        }
+
+        // 高级设置分组
+        item {
+            IOSSettingsSection(title = "高级设置") {
+                IOSSettingsItem(
+                    icon = Icons.Default.Timer,
+                    iconBackgroundColor = iOSPurple,
+                    title = "请求超时",
+                    value = "${uiState.requestTimeout}秒",
+                    showDivider = true,
+                    onClick = { /* TODO: 实现请求超时设置 */ }
+                )
+                IOSSettingsItem(
+                    icon = Icons.Default.Token,
+                    iconBackgroundColor = iOSBlue,
+                    title = "最大Token数",
+                    value = "${uiState.maxTokens}",
+                    showDivider = false,
+                    onClick = { /* TODO: 实现最大Token数设置 */ }
+                )
+            }
         }
     }
 }
 
 // ==================== Previews ====================
 
-@Preview(name = "AI 配置 - 默认", showBackground = true)
+@Preview(name = "AI 配置 - iOS风格", showBackground = true)
 @Composable
 private fun AiConfigScreenPreview() {
     EmpathyTheme {
@@ -289,7 +336,9 @@ private fun AiConfigScreenPreview() {
                 )
             ),
             onEvent = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onNavigateToAddProvider = {},
+            onNavigateToEditProvider = {}
         )
     }
 }
@@ -301,7 +350,9 @@ private fun AiConfigScreenLoadingPreview() {
         AiConfigScreenContent(
             uiState = AiConfigUiState(isLoading = true),
             onEvent = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onNavigateToAddProvider = {},
+            onNavigateToEditProvider = {}
         )
     }
 }
@@ -313,19 +364,38 @@ private fun AiConfigScreenEmptyPreview() {
         AiConfigScreenContent(
             uiState = AiConfigUiState(),
             onEvent = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onNavigateToAddProvider = {},
+            onNavigateToEditProvider = {}
         )
     }
 }
 
-@Preview(name = "AI 配置 - 错误", showBackground = true)
+@Preview(name = "AI 配置 - 搜索", showBackground = true)
 @Composable
-private fun AiConfigScreenErrorPreview() {
+private fun AiConfigScreenSearchPreview() {
     EmpathyTheme {
         AiConfigScreenContent(
-            uiState = AiConfigUiState(error = "加载服务商列表失败"),
+            uiState = AiConfigUiState(
+                searchQuery = "Open",
+                providers = listOf(
+                    AiProvider(
+                        id = "1",
+                        name = "OpenAI",
+                        baseUrl = "https://api.openai.com/v1",
+                        apiKey = "sk-test123",
+                        models = listOf(
+                            AiModel(id = "gpt-4", displayName = "GPT-4")
+                        ),
+                        defaultModelId = "gpt-4",
+                        isDefault = true
+                    )
+                )
+            ),
             onEvent = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onNavigateToAddProvider = {},
+            onNavigateToEditProvider = {}
         )
     }
 }
@@ -355,7 +425,9 @@ private fun AiConfigScreenDarkPreview() {
                 )
             ),
             onEvent = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onNavigateToAddProvider = {},
+            onNavigateToEditProvider = {}
         )
     }
 }
