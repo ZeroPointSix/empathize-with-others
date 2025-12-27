@@ -74,6 +74,19 @@ object NavRoutes {
     const val CREATE_CONTACT = "create_contact"
 
     /**
+     * 添加服务商页面（iOS风格）
+     * TD-00021 T2-04: 添加ADD_PROVIDER路由常量
+     */
+    const val ADD_PROVIDER = "add_provider"
+
+    /**
+     * 编辑服务商页面（iOS风格）
+     * TD-00021 T2-04: 添加EDIT_PROVIDER路由常量
+     */
+    const val EDIT_PROVIDER = "edit_provider/{providerId}"
+    const val EDIT_PROVIDER_ARG_ID = "providerId"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {
@@ -92,5 +105,13 @@ object NavRoutes {
      */
     fun createChatRoute(contactId: String): String {
         return "chat/$contactId"
+    }
+
+    /**
+     * 创建编辑服务商路由
+     * TD-00021 T2-04: 添加editProvider辅助函数
+     */
+    fun editProvider(providerId: String): String {
+        return "edit_provider/$providerId"
     }
 }

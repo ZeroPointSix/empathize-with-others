@@ -108,6 +108,24 @@ sealed interface AiConfigUiEvent {
      */
     data class SetDefaultProvider(val providerId: String) : AiConfigUiEvent
 
+    /**
+     * 导航到编辑服务商页面
+     * @param providerId 服务商 ID
+     */
+    data class NavigateToEditProvider(val providerId: String) : AiConfigUiEvent
+
+    /**
+     * 导航到服务商详情页面（查看和切换模型）
+     * @param providerId 服务商 ID
+     */
+    data class NavigateToProviderDetail(val providerId: String) : AiConfigUiEvent
+
+    /**
+     * 通过ID加载服务商进行编辑
+     * @param providerId 服务商 ID
+     */
+    data class LoadProviderForEdit(val providerId: String) : AiConfigUiEvent
+
     // === 连接测试事件 ===
 
     /**
@@ -147,4 +165,26 @@ sealed interface AiConfigUiEvent {
      * 导航返回
      */
     data object NavigateBack : AiConfigUiEvent
+
+    // === 搜索事件 (TD-00021 T1-04) ===
+
+    /**
+     * 更新搜索关键词
+     * @param query 搜索关键词
+     */
+    data class UpdateSearchQuery(val query: String) : AiConfigUiEvent
+
+    // === 高级设置事件 (TD-00021 T1-04) ===
+
+    /**
+     * 更新请求超时时间
+     * @param timeout 超时时间（秒）
+     */
+    data class UpdateRequestTimeout(val timeout: Int) : AiConfigUiEvent
+
+    /**
+     * 更新最大Token数
+     * @param tokens 最大Token数
+     */
+    data class UpdateMaxTokens(val tokens: Int) : AiConfigUiEvent
 }

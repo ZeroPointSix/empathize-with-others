@@ -78,6 +78,9 @@ class AiConfigViewModel @Inject constructor(
             is AiConfigUiEvent.DismissDeleteConfirmDialog -> dismissDeleteConfirmDialog()
             is AiConfigUiEvent.ConfirmDeleteProvider -> confirmDeleteProvider()
             is AiConfigUiEvent.SetDefaultProvider -> setDefaultProvider(event.providerId)
+            is AiConfigUiEvent.NavigateToEditProvider -> { /* Handled by UI navigation */ }
+            is AiConfigUiEvent.NavigateToProviderDetail -> { /* Handled by UI navigation */ }
+            is AiConfigUiEvent.LoadProviderForEdit -> loadProviderForEdit(event.providerId)
 
             // === 连接测试事件 ===
             is AiConfigUiEvent.TestConnection -> testConnection()
@@ -90,7 +93,41 @@ class AiConfigViewModel @Inject constructor(
             // === 通用事件 ===
             is AiConfigUiEvent.ClearError -> clearError()
             is AiConfigUiEvent.NavigateBack -> navigateBack()
+
+            // === 搜索和高级设置事件 (TD-00021) ===
+            is AiConfigUiEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
+            is AiConfigUiEvent.UpdateRequestTimeout -> updateRequestTimeout(event.timeout)
+            is AiConfigUiEvent.UpdateMaxTokens -> updateMaxTokens(event.tokens)
         }
+    }
+
+    /**
+     * 更新搜索关键词
+     */
+    private fun updateSearchQuery(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+    }
+
+    /**
+     * 更新请求超时时间
+     */
+    private fun updateRequestTimeout(timeout: Int) {
+        _uiState.update { it.copy(requestTimeout = timeout) }
+    }
+
+    /**
+     * 更新最大Token数
+     */
+    private fun updateMaxTokens(tokens: Int) {
+        _uiState.update { it.copy(maxTokens = tokens) }
+    }
+
+    /**
+     * 重置导航状态
+     * 在导航完成后调用，避免重复导航
+     */
+    fun resetNavigationState() {
+        _uiState.update { it.copy(shouldNavigateBack = false) }
     }
 
     /**
@@ -330,7 +367,8 @@ class AiConfigViewModel @Inject constructor(
                     it.copy(
                         showFormDialog = false,
                         editingProvider = null,
-                        isSaving = false
+                        isSaving = false,
+                        shouldNavigateBack = true  // 添加：保存成功后触发导航返回
                     )
                 }
             },
@@ -411,6 +449,67 @@ class AiConfigViewModel @Inject constructor(
             currentProviders.forEach { provider ->
                 val updatedProvider = provider.copy(isDefault = provider.id == providerId)
                 saveProviderUseCase(updatedProvider)
+            }
+        }
+    }
+
+    /**
+     * 通过ID加载服务商进行编辑
+     * 
+     * 从数据库加载服务商数据并填充到表单中
+     */
+    private fun loadProviderForEdit(providerId: String) {
+        android.util.Log.d("AiConfigViewModel", "loadProviderForEdit called with providerId: $providerId")
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            // 直接从数据库加载，不依赖内存列表
+            val result = aiProviderRepository.getProvider(providerId)
+            
+            android.util.Log.d("AiConfigViewModel", "getProvider result: $result")
+            
+            result.onSuccess { loadedProvider ->
+                android.util.Log.d("AiConfigViewModel", "loadedProvider: $loadedProvider")
+                
+                if (loadedProvider != null) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            showFormDialog = false, // 不显示对话框，因为是独立页面
+                            editingProvider = loadedProvider,
+                            formName = loadedProvider.name,
+                            formBaseUrl = loadedProvider.baseUrl,
+                            formApiKey = loadedProvider.apiKey,
+                            formModels = loadedProvider.models.map { model ->
+                                FormModel(id = model.id, displayName = model.displayName ?: "")
+                            },
+                            formDefaultModelId = loadedProvider.defaultModelId,
+                            formNameError = null,
+                            formBaseUrlError = null,
+                            formApiKeyError = null,
+                            formModelsError = null,
+                            testConnectionResult = null
+                        )
+                    }
+                    android.util.Log.d("AiConfigViewModel", "uiState updated with provider data")
+                } else {
+                    android.util.Log.e("AiConfigViewModel", "Provider not found for id: $providerId")
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "未找到服务商: $providerId"
+                        )
+                    }
+                }
+            }.onFailure { error ->
+                android.util.Log.e("AiConfigViewModel", "Failed to load provider: ${error.message}", error)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "加载服务商失败: ${error.message}"
+                    )
+                }
             }
         }
     }

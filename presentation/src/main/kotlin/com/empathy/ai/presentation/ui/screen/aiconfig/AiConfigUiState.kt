@@ -19,6 +19,13 @@ data class AiConfigUiState(
     // 服务商列表
     val providers: List<AiProvider> = emptyList(),
 
+    // 搜索相关 (TD-00021 T1-03)
+    val searchQuery: String = "",
+
+    // 高级设置 (TD-00021 T1-03)
+    val requestTimeout: Int = 30,
+    val maxTokens: Int = 4096,
+
     // 表单对话框状态
     val showFormDialog: Boolean = false,
     val editingProvider: AiProvider? = null,
@@ -60,6 +67,20 @@ data class AiConfigUiState(
      */
     val hasProviders: Boolean
         get() = providers.isNotEmpty()
+
+    /**
+     * 计算属性：过滤后的服务商列表 (TD-00021 T1-03)
+     * 根据搜索关键词过滤服务商
+     */
+    val filteredProviders: List<AiProvider>
+        get() = if (searchQuery.isBlank()) {
+            providers
+        } else {
+            providers.filter { provider ->
+                provider.name.contains(searchQuery, ignoreCase = true) ||
+                provider.baseUrl.contains(searchQuery, ignoreCase = true)
+            }
+        }
 
     /**
      * 计算属性：表单是否有效

@@ -180,6 +180,37 @@ fun NavGraph(
         // AI服务商配置页面
         composable(route = NavRoutes.AI_CONFIG) {
             AiConfigScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToAddProvider = {
+                    navController.navigate(NavRoutes.ADD_PROVIDER)
+                },
+                onNavigateToEditProvider = { providerId ->
+                    navController.navigate(NavRoutes.editProvider(providerId))
+                }
+            )
+        }
+
+        // 添加服务商页面（iOS风格）
+        // TD-00021 T2-04: 添加AddProviderScreen路由配置
+        composable(route = NavRoutes.ADD_PROVIDER) {
+            com.empathy.ai.presentation.ui.screen.aiconfig.AddProviderScreen(
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // 编辑服务商页面（iOS风格）
+        // TD-00021: 添加EditProviderScreen路由配置
+        composable(
+            route = NavRoutes.EDIT_PROVIDER,
+            arguments = listOf(
+                navArgument(NavRoutes.EDIT_PROVIDER_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString(NavRoutes.EDIT_PROVIDER_ARG_ID) ?: ""
+            com.empathy.ai.presentation.ui.screen.aiconfig.EditProviderScreen(
+                providerId = providerId,
                 onNavigateBack = { navController.navigateUp() }
             )
         }
