@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
@@ -264,10 +265,12 @@ private fun ContactDetailContent(
     onEvent: (ContactDetailUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(AppSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(AppSpacing.lg)
+        contentPadding = PaddingValues(dimensions.spacingLarge),
+        verticalArrangement = Arrangement.spacedBy(dimensions.spacingLarge)
     ) {
         // 如果是查看模式，显示ProfileCard
         if (!uiState.isEditMode && uiState.originalProfile != null) {
@@ -390,9 +393,10 @@ private fun ContactDetailContent(
         // 编辑模式下的操作按钮
         if (uiState.isEditMode) {
             item {
+                val dimensions = AdaptiveDimensions.current
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
                 ) {
                     SecondaryButton(
                         text = "取消",

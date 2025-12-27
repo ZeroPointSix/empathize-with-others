@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,20 +21,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
-import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 
 /**
  * 画像完整度卡片
  *
  * 设计规格:
- * - 圆角: 12dp
+ * - 圆角: 响应式
  * - 标题: 13sp, 灰色
  * - 百分比: 28sp, Bold, iOS蓝色
- * - 进度条: 6dp高度, iOS蓝色
+ * - 进度条: 响应式高度, iOS蓝色
  * - 标签数: 11sp, 灰色
  * - 进度动画: 使用animateFloatAsState
  *
@@ -51,6 +50,9 @@ fun ProfileCompletionCard(
     tagCount: Int,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     // 进度动画
     val animatedProgress by animateFloatAsState(
         targetValue = completeness / 100f,
@@ -61,9 +63,9 @@ fun ProfileCompletionCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
             .background(iOSCardBackground)
-            .padding(16.dp)
+            .padding(dimensions.spacingMedium)
     ) {
         // 标题行
         Row(
@@ -83,7 +85,7 @@ fun ProfileCompletionCard(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(dimensions.spacingSmall))
 
         // 百分比
         Text(
@@ -93,21 +95,21 @@ fun ProfileCompletionCard(
             color = iOSBlue
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(dimensions.spacingMediumSmall))
 
         // 进度条
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
+                .height(dimensions.progressBarHeight)
+                .clip(RoundedCornerShape(dimensions.progressBarHeight / 2))
                 .background(iOSTextSecondary.copy(alpha = 0.2f))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(animatedProgress)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                    .height(dimensions.progressBarHeight)
+                    .clip(RoundedCornerShape(dimensions.progressBarHeight / 2))
                     .background(iOSBlue)
             )
         }

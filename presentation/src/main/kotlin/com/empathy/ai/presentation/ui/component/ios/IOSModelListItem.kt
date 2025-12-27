@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSSeparator
@@ -36,11 +37,11 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * iOS风格模型列表项
  *
  * 设计规格:
- * - 高度: 52dp
+ * - 高度: 响应式（约52dp）
  * - 模型名: 17sp
  * - 默认标记: 蓝色背景标签
  * - 拖拽手柄: drag_handle图标, 灰色
- * - 分隔线: 从左侧16dp开始
+ * - 分隔线: 从左侧padding开始
  *
  * @param modelId 模型ID
  * @param displayName 显示名称（可选，为空时使用modelId）
@@ -62,13 +63,19 @@ fun IOSModelListItem(
     showDivider: Boolean = true,
     showDragHandle: Boolean = true
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     val dividerColor = iOSSeparator
-    val dividerStartPadding = 16.dp
+    val dividerStartPadding = dimensions.spacingMedium
+    
+    // 列表项高度 = iOS标准高度 + 小间距
+    val itemHeight = dimensions.iosListItemHeight + dimensions.spacingSmall
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(itemHeight)
             .clickable(onClick = onClick)
             .drawBehind {
                 if (showDivider) {
@@ -81,7 +88,7 @@ fun IOSModelListItem(
                     )
                 }
             }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dimensions.spacingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 模型名称
@@ -100,9 +107,9 @@ fun IOSModelListItem(
                 modifier = Modifier
                     .background(
                         color = iOSBlue,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(dimensions.spacingXSmall)
                     )
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(horizontal = dimensions.spacingSmall, vertical = dimensions.spacingXSmall)
             ) {
                 Text(
                     text = "默认",
@@ -111,7 +118,7 @@ fun IOSModelListItem(
                     color = Color.White
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
         }
 
         // 拖拽手柄
@@ -120,7 +127,7 @@ fun IOSModelListItem(
                 imageVector = Icons.Default.DragHandle,
                 contentDescription = "拖拽排序",
                 tint = iOSTextSecondary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(dimensions.iconSizeLarge - 8.dp)
             )
         }
     }

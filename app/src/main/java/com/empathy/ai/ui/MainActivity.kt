@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.empathy.ai.presentation.navigation.NavGraph
-import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -24,6 +24,9 @@ import dagger.hilt.android.AndroidEntryPoint
  * 注意: 此Activity必须放在app模块（Application模块）中，
  * 因为Hilt的@AndroidEntryPoint注解需要AGP的字节码转换支持，
  * 而字节码转换只在Application模块中生效。
+ * 
+ * 主题说明: 使用app模块本地的AppTheme而非presentation模块的EmpathyTheme，
+ * 以解决多模块架构下ThemeKt类在运行时无法被找到的问题。
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -32,8 +35,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         setContent {
-            // 应用主题
-            EmpathyTheme {
+            // 应用主题 - 使用app模块本地的AppTheme
+            AppTheme {
                 // Surface容器,提供背景色
                 Surface(
                     modifier = Modifier.fillMaxSize(),

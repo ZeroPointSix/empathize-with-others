@@ -165,7 +165,7 @@
 
 ### 单元测试
 - 位置: `presentation/src/test/kotlin/`
-- 测试文件数: 24 个
+- 测试文件数: 22个
 - 测试覆盖:
   - ViewModel 测试
   - UI 组件测试
@@ -173,7 +173,8 @@
   - 导航测试
 
 ### UI 测试
-- 位置: `app/src/androidTest/java/com/empathy/ai/presentation/`
+- 位置: `presentation/src/androidTest/kotlin/`
+- 测试文件数: 5个
 - 框架: Compose UI Test
 - 覆盖范围: 主要用户流程和界面交互
 
@@ -233,4 +234,4 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 **最后更新**: 2025-12-27 | 更新者: Claude
 **模块状态**: ✅ 完成
 **代码质量**: A级（完整注释、Compose 最佳实践）
-**测试覆盖**: 包含24个单元测试文件和多个 UI 测试
+**测试覆盖**: 包含22个单元测试文件和5个UI测试文件

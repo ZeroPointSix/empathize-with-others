@@ -27,8 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSGreen
@@ -39,7 +39,7 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * iOS风格测试连接按钮
  *
  * 设计规格:
- * - 高度: 44dp
+ * - 高度: 响应式（约44dp）
  * - 文字: iOS蓝色, 17sp
  * - 图标: wifi_tethering
  * - 成功状态: iOS绿色 + check_circle
@@ -60,6 +60,9 @@ fun IOSTestConnectionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     // 旋转动画
     val infiniteTransition = rememberInfiniteTransition(label = "rotation")
     val rotation by infiniteTransition.animateFloat(
@@ -75,9 +78,9 @@ fun IOSTestConnectionButton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(dimensions.iosListItemHeight)
             .clickable(enabled = !isLoading, onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dimensions.spacingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 图标
@@ -88,7 +91,7 @@ fun IOSTestConnectionButton(
                     contentDescription = "测试中",
                     tint = iOSBlue,
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(dimensions.iconSizeMedium)
                         .graphicsLayer { rotationZ = rotation }
                 )
             }
@@ -97,7 +100,7 @@ fun IOSTestConnectionButton(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "连接成功",
                     tint = iOSGreen,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(dimensions.iconSizeMedium)
                 )
             }
             isSuccess == false -> {
@@ -105,7 +108,7 @@ fun IOSTestConnectionButton(
                     imageVector = Icons.Default.Cancel,
                     contentDescription = "连接失败",
                     tint = iOSRed,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(dimensions.iconSizeMedium)
                 )
             }
             else -> {
@@ -113,12 +116,12 @@ fun IOSTestConnectionButton(
                     imageVector = Icons.Default.WifiTethering,
                     contentDescription = "测试连接",
                     tint = iOSBlue,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(dimensions.iconSizeMedium)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
 
         // 文字
         Text(

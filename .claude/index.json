@@ -52,7 +52,8 @@
         "dependencies": ["domain"],
         "fileCount": 87,
         "mainFiles": 64,
-        "testFiles": 23,
+        "testFiles": 18,
+        "androidTestFiles": 5,
         "submodules": {
           "local": 30,
           "remote": 6,
@@ -70,7 +71,8 @@
         "dependencies": ["domain"],
         "fileCount": 271,
         "mainFiles": 244,
-        "testFiles": 27,
+        "testFiles": 24,
+        "androidTestFiles": 3,
         "submodules": {
           "ui": 187,
           "viewmodel": 18,
@@ -87,7 +89,9 @@
         "dependencies": ["domain", "data", "presentation"],
         "fileCount": 186,
         "mainFiles": 21,
-        "testFiles": 165,
+        "testFiles": 114,
+        "testDisabledFiles": 5,
+        "androidTestFiles": 25,
         "submodules": {
           "app": 2,
           "di": 11,
@@ -100,8 +104,8 @@
     }
   },
   "scanInfo": {
-    "timestamp": "2025-12-27T14:31:45+08:00",
-    "strategy": "项目文档初始化（自适应版）",
+    "timestamp": "2025-12-27T20:40:49+08:00",
+    "strategy": "项目AI上下文初始化（自适应版）",
     "scannedFiles": 720,
     "coverage": "100%",
     "truncated": false,
@@ -156,7 +160,6 @@
       "文档/**",
       "*.apk",
       "*.jks",
-      "nul",
       "gradle.properties",
       "local.properties",
       "*.xml"
@@ -165,7 +168,7 @@
   "documentation": {
     "root": "CLAUDE.md",
     "projectDocs": "文档/项目文档",
-    "lastUpdate": "2025-12-27T14:31:45+08:00",
+    "lastUpdate": "2025-12-27T20:40:49+08:00",
     "architecture": {
       "cleanArchitectureCompliance": "100%合规",
       "violations": 0,
@@ -273,7 +276,8 @@
       "description": "数据层 - 数据访问实现",
       "fileCount": 87,
       "mainFiles": 64,
-      "testFiles": 23,
+      "testFiles": 18,
+      "androidTestFiles": 5,
       "status": "完成",
       "documented": true,
       "keyFiles": [
@@ -344,7 +348,8 @@
       "description": "表现层 - UI和交互，Compose实现",
       "fileCount": 271,
       "mainFiles": 244,
-      "testFiles": 27,
+      "testFiles": 24,
+      "androidTestFiles": 3,
       "status": "完成",
       "documented": true,
       "keyFiles": [
@@ -419,7 +424,9 @@
       "description": "应用入口和全局初始化模块",
       "fileCount": 186,
       "mainFiles": 21,
-      "testFiles": 165,
+      "testFiles": 114,
+      "testDisabledFiles": 5,
+      "androidTestFiles": 25,
       "status": "完成",
       "documented": true,
       "keyFiles": [
@@ -480,16 +487,26 @@
   ],
   "gaps": {
     "missing": [],
-    "needsAttention": []
+    "needsAttention": [
+      {
+        "module": "app",
+        "issue": "部分测试文件在app模块而非对应模块中",
+        "priority": "低",
+        "impact": "架构可优化，但不影响功能"
+      },
+      {
+        "module": "data",
+        "issue": "5个androidTest文件未在统计中完整显示",
+        "priority": "低",
+        "impact": "统计可完善"
+      }
+    ]
   },
   "nextSteps": [
-    "项目文档初始化完成",
-    "更新文件统计为720个Kotlin文件（477主源码 + 243测试）",
-    "更新测试覆盖率为50.9%（基于实际文件统计）",
-    "所有模块文档已创建完成（100%覆盖率）",
-    "Mermaid架构图已生成",
-    "导航面包屑已添加到所有模块文档",
-    "建议：保持架构文档与代码同步"
+    "项目AI上下文初始化完成",
+    "文档体系已完善，覆盖率100%",
+    "建议：保持架构文档与代码同步",
+    "建议：考虑将app模块中的测试文件迁移到对应模块"
   ],
   "coverageDetails": {
     "totalModules": 4,
@@ -503,8 +520,8 @@
     "totalTasks": 3,
     "completedTasks": 3,
     "completionRate": "100%",
-    "lastUpdated": "2025-12-27T14:31:45+08:00",
-    "achievement": "项目文档初始化完成！识别出4个Gradle模块，720个Kotlin文件。Clean Architecture架构完全合规，domain层纯Kotlin无Android依赖。已生成完整的Mermaid模块结构图和导航系统。所有模块文档已创建，文档覆盖率100%。"
+    "lastUpdated": "2025-12-27T20:40:49+08:00",
+    "achievement": "项目AI上下文初始化完成！识别出4个Gradle模块，720个Kotlin文件（477个主源码 + 243测试）。Clean Architecture架构完全合规，domain层纯Kotlin无Android依赖。已生成完整的Mermaid模块结构图和导航系统。所有模块文档已创建，文档覆盖率100%。"
   },
   "latestFeatures": {
     "Clean Architecture多模块改造": {
@@ -535,10 +552,10 @@
       "totalTests": 243,
       "coverage": "50.9%",
       "distribution": {
-        "domain": 28个测试文件,
-        "data": 23个测试文件,
-        "presentation": 27个测试文件,
-        "app": 165个测试文件
+        "domain": 28个测试文件",
+        "data": 23个测试文件（18单元测试 + 5集成测试）",
+        "presentation": 27个测试文件（24单元测试 + 3UI测试）",
+        "app": 165个测试文件（114单元测试 + 25集成测试 + 5禁用测试）"
       }
     }
   }

@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -83,6 +84,8 @@ private fun AddProviderScreenContent(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -99,7 +102,7 @@ private fun AddProviderScreenContent(
         // 表单内容
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 32.dp)
+            contentPadding = PaddingValues(bottom = dimensions.spacingXLarge)
         ) {
             // 基础信息分组
             item {

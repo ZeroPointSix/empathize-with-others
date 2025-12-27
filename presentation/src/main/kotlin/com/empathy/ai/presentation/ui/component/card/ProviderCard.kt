@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -37,9 +38,11 @@ fun ProviderCard(
     onSetDefault: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = dimensions.cardElevation),
         colors = CardDefaults.cardColors(
             containerColor = if (provider.isDefault) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -51,7 +54,7 @@ fun ProviderCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(dimensions.cardPadding)
         ) {
             // 头部：名称和操作按钮
             Row(
@@ -62,7 +65,7 @@ fun ProviderCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
                     ) {
                         Text(
                             text = provider.name,
@@ -83,7 +86,7 @@ fun ProviderCard(
                                     Icon(
                                         imageVector = Icons.Filled.Star,
                                         contentDescription = "默认",
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(dimensions.iconSizeSmall)
                                     )
                                 }
                             )
@@ -93,7 +96,7 @@ fun ProviderCard(
                 
                 // 操作按钮
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.spacingXSmall)
                 ) {
                     // 设置为默认按钮
                     if (!provider.isDefault) {
@@ -130,7 +133,7 @@ fun ProviderCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingSmall))
             
             // API 端点
             Text(
@@ -142,7 +145,7 @@ fun ProviderCard(
                     MaterialTheme.colorScheme.primary
                 }
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingXSmall))
             Text(
                 text = provider.baseUrl,
                 style = MaterialTheme.typography.bodySmall,
@@ -155,7 +158,7 @@ fun ProviderCard(
                 overflow = TextOverflow.Ellipsis
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingSmall))
             
             // 模型信息
             Row(
@@ -173,7 +176,7 @@ fun ProviderCard(
                             MaterialTheme.colorScheme.primary
                         }
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(dimensions.spacingXSmall))
                     Text(
                         text = "${provider.models.size} 个模型",
                         style = MaterialTheme.typography.bodySmall,
@@ -195,7 +198,7 @@ fun ProviderCard(
                             MaterialTheme.colorScheme.primary
                         }
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(dimensions.spacingXSmall))
                     Text(
                         text = provider.getDefaultModel()?.displayName 
                             ?: provider.defaultModelId,

@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSSeparator
@@ -41,8 +42,8 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * iOS风格表单输入组件
  *
  * 设计规格:
- * - 高度: 44dp
- * - 标签: 固定宽度64dp, 17sp
+ * - 高度: 响应式（约44dp）
+ * - 标签: 响应式宽度, 17sp
  * - 输入框: 右对齐, 17sp
  * - 分隔线: 从标签右侧开始
  * - 密码模式: 支持显示/隐藏切换
@@ -71,14 +72,19 @@ fun IOSFormField(
     keyboardType: KeyboardType = KeyboardType.Text,
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     var passwordVisible by remember { mutableStateOf(false) }
     val dividerColor = iOSSeparator
-    val dividerStartPadding = 80.dp // 标签宽度64dp + 左边距16dp
+    // 标签宽度响应式 + 左边距
+    val labelWidth = (64 * dimensions.fontScale).dp
+    val dividerStartPadding = labelWidth + dimensions.spacingMedium
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(dimensions.iosListItemHeight)
             .drawBehind {
                 if (showDivider) {
                     val startX = dividerStartPadding.toPx()
@@ -90,15 +96,15 @@ fun IOSFormField(
                     )
                 }
             }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dimensions.spacingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 标签（固定宽度64dp）
+        // 标签（响应式宽度）
         Text(
             text = label,
             fontSize = 17.sp,
             color = iOSTextPrimary,
-            modifier = Modifier.width(64.dp)
+            modifier = Modifier.width(labelWidth)
         )
 
         // 输入框
@@ -137,7 +143,7 @@ fun IOSFormField(
         if (isPassword) {
             IconButton(
                 onClick = { passwordVisible = !passwordVisible },
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier.padding(start = dimensions.spacingSmall)
             ) {
                 Icon(
                     imageVector = if (passwordVisible) {

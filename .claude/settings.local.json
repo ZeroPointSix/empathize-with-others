@@ -28,7 +28,8 @@
       "Bash(ls:*)",
       "Bash(python -m json.tool:*)",
       "Bash(findstr:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
@@ -52,8 +53,8 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * 维度卡片（可展开）
  *
  * 设计规格:
- * - 圆角: 12dp
- * - 图标容器: 36x36dp, 圆角10dp
+ * - 圆角: 响应式
+ * - 图标容器: 响应式尺寸
  * - 标题: 17sp, SemiBold
  * - 描述: 13sp, 灰色
  * - 展开图标: expand_less, 旋转动画
@@ -90,6 +91,12 @@ fun DimensionCard(
     onSelectPresetTag: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
+    // 图标容器尺寸
+    val iconContainerSize = (36 * dimensions.fontScale).dp
+    
     // 展开图标旋转动画
     val rotationAngle by animateFloatAsState(
         targetValue = if (isExpanded) 0f else 180f,
@@ -100,7 +107,7 @@ fun DimensionCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
             .background(iOSCardBackground)
     ) {
         // 头部（可点击展开/收起）
@@ -108,16 +115,16 @@ fun DimensionCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggleExpand)
-                .padding(16.dp),
+                .padding(dimensions.spacingMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 图标容器 (36x36dp)
+            // 图标容器 (响应式尺寸)
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(iconContainerSize)
                     .background(
                         color = iconBackgroundColor,
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(dimensions.cornerRadiusSmall + 2.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -125,11 +132,11 @@ fun DimensionCard(
                     imageVector = icon,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(dimensions.iconSizeSmall + 4.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
 
             // 标题和描述
             Column(modifier = Modifier.weight(1f)) {
@@ -152,7 +159,7 @@ fun DimensionCard(
                 contentDescription = if (isExpanded) "收起" else "展开",
                 tint = iOSTextSecondary,
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(dimensions.iconSizeLarge - 8.dp)
                     .graphicsLayer { rotationZ = rotationAngle }
             )
         }
@@ -166,8 +173,8 @@ fun DimensionCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp)
+                    .padding(horizontal = dimensions.spacingMedium)
+                    .padding(bottom = dimensions.spacingMedium)
             ) {
                 // 已添加标签
                 if (tags.isNotEmpty()) {
@@ -175,7 +182,7 @@ fun DimensionCard(
                         text = "已添加",
                         fontSize = 13.sp,
                         color = iOSTextSecondary,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                     )
                     FlowRow(
                         modifier = Modifier.fillMaxWidth()
@@ -184,30 +191,30 @@ fun DimensionCard(
                             EditableTag(
                                 text = tag,
                                 onClick = { onEditTag(tag) },
-                                modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                                modifier = Modifier.padding(end = dimensions.spacingSmall, bottom = dimensions.spacingSmall)
                             )
                         }
                         AddTagButton(
                             onClick = onAddTag,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                         )
                     }
                 } else {
                     // 无标签时只显示添加按钮
                     AddTagButton(
                         onClick = onAddTag,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                     )
                 }
 
                 // 快速选择
                 if (presetTags.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dimensions.spacingSmall))
                     Text(
                         text = "快速选择",
                         fontSize = 13.sp,
                         color = iOSTextSecondary,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                     )
                     QuickSelectTags(
                         tags = presetTags,

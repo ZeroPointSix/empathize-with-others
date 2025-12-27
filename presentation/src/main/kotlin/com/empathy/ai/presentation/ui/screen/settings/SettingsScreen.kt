@@ -26,6 +26,7 @@ import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.util.FloatingWindowManager
 import com.empathy.ai.presentation.navigation.NavRoutes
 import com.empathy.ai.presentation.navigation.PromptEditorRoutes
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -133,6 +134,8 @@ private fun SettingsScreenContent(
             }
         }
     ) { paddingValues ->
+        val dimensions = AdaptiveDimensions.current
+        
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -146,7 +149,7 @@ private fun SettingsScreenContent(
                     fontSize = 34.sp,
                     fontWeight = FontWeight.Bold,
                     color = iOSTextPrimary,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                    modifier = Modifier.padding(start = dimensions.spacingMedium, top = dimensions.spacingMedium, bottom = dimensions.spacingSmall)
                 )
             }
 
@@ -268,7 +271,7 @@ private fun SettingsScreenContent(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item { Spacer(modifier = Modifier.height(dimensions.spacingXLarge)) }
         }
 
         // 对话框

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSSeparator
 
@@ -86,14 +87,16 @@ fun ContactFormCard(
     onFormDataChange: (ContactFormData) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
         colors = CardDefaults.cardColors(containerColor = iOSCardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = dimensions.spacingMedium)
         ) {
             // 姓名（必填）
             FormInputItem(

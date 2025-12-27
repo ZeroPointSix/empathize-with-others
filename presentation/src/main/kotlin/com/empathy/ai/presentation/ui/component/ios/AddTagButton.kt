@@ -16,11 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 
@@ -29,8 +28,8 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  *
  * 设计规格:
  * - 边框: 虚线, #C7C7CC
- * - 圆角: 8dp
- * - 图标: add, 16dp
+ * - 圆角: 响应式
+ * - 图标: add, 响应式尺寸
  * - 文字: 15sp, 灰色
  *
  * @param onClick 点击回调
@@ -43,25 +42,28 @@ fun AddTagButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))
             .border(
                 width = 1.dp,
                 color = iOSTextSecondary.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(dimensions.cornerRadiusSmall)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = dimensions.spacingMediumSmall, vertical = dimensions.spacingSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = "添加",
             tint = iOSTextSecondary,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(dimensions.iconSizeSmall)
         )
-        Spacer(modifier = Modifier.width(4.dp))
+        Spacer(modifier = Modifier.width(dimensions.spacingXSmall))
         Text(
             text = "添加",
             fontSize = 15.sp,

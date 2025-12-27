@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
@@ -35,17 +36,19 @@ fun SolidTagChip(
     backgroundColor: Color = MaterialTheme.colorScheme.primary,
     textColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(dimensions.cornerRadiusLarge),
         color = backgroundColor,
-        shadowElevation = 2.dp
+        shadowElevation = dimensions.cardElevation
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(
-                horizontal = Dimensions.SpacingMedium,
-                vertical = Dimensions.SpacingSmall
+                horizontal = dimensions.spacingMedium,
+                vertical = dimensions.spacingSmall
             ),
             style = MaterialTheme.typography.labelLarge,
             color = textColor

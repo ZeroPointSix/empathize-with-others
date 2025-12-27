@@ -25,13 +25,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSGreen
 
 /**
  * iOS风格开关组件
  *
- * 尺寸: 51dp × 31dp
- * 滑块: 27dp, 白色, 2dp阴影
+ * 尺寸: 响应式（约51dp × 31dp）
+ * 滑块: 响应式（约27dp）, 白色, 2dp阴影
  * 动画: spring动画实现滑块位置和轨道颜色变化
  *
  * @param checked 开关状态
@@ -46,8 +47,19 @@ fun IOSSwitch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    
+    // 响应式尺寸计算
+    val switchWidth = dimensions.iosSwitchWidth
+    val switchHeight = dimensions.iosSwitchHeight
+    val thumbBaseSize = (27 * dimensions.fontScale).dp
+    val thumbPressedSize = (29 * dimensions.fontScale).dp
+    val thumbOffsetOn = (22 * dimensions.fontScale).dp
+    val thumbOffsetOff = (2 * dimensions.fontScale).dp
 
     // 轨道颜色动画
     val trackColor by animateColorAsState(
@@ -62,7 +74,7 @@ fun IOSSwitch(
 
     // 滑块位置动画
     val thumbOffset by animateDpAsState(
-        targetValue = if (checked) 22.dp else 2.dp,
+        targetValue = if (checked) thumbOffsetOn else thumbOffsetOff,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium
@@ -72,15 +84,15 @@ fun IOSSwitch(
 
     // 按压时滑块缩放效果
     val thumbSize by animateDpAsState(
-        targetValue = if (isPressed && enabled) 29.dp else 27.dp,
+        targetValue = if (isPressed && enabled) thumbPressedSize else thumbBaseSize,
         animationSpec = spring(stiffness = Spring.StiffnessHigh),
         label = "thumbSize"
     )
 
     Box(
         modifier = modifier
-            .size(width = 51.dp, height = 31.dp)
-            .clip(RoundedCornerShape(15.5.dp))
+            .size(width = switchWidth, height = switchHeight)
+            .clip(RoundedCornerShape(switchHeight / 2))
             .background(trackColor)
             .semantics { role = Role.Switch }
             .clickable(
@@ -97,7 +109,7 @@ fun IOSSwitch(
                 .offset(x = thumbOffset)
                 .size(thumbSize)
                 .shadow(
-                    elevation = 2.dp,
+                    elevation = dimensions.cardElevation,
                     shape = CircleShape,
                     clip = false
                 )

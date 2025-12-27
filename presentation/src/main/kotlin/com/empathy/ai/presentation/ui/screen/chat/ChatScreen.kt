@@ -16,13 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.ChatMessage
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageSender
 import com.empathy.ai.domain.model.RiskLevel
-import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.card.AnalysisCard
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
@@ -188,6 +188,7 @@ private fun MessageList(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
+    val dimensions = AdaptiveDimensions.current
 
     // 自动滚动到底部
     LaunchedEffect(messages.size) {
@@ -206,8 +207,8 @@ private fun MessageList(
         LazyColumn(
             modifier = modifier.fillMaxSize(),
             state = listState,
-            contentPadding = PaddingValues(AppSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            contentPadding = PaddingValues(dimensions.spacingLarge),
+            verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
         ) {
             items(
                 items = messages,
@@ -233,6 +234,7 @@ private fun SafetyWarningBanner(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.errorContainer
@@ -240,7 +242,7 @@ private fun SafetyWarningBanner(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppSpacing.md),
+                .padding(dimensions.spacingMedium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -268,6 +270,7 @@ private fun MessageInputSection(
     canSend: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -276,9 +279,9 @@ private fun MessageInputSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppSpacing.sm),
+                .padding(dimensions.spacingSmall),
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
         ) {
             CustomTextField(
                 value = inputText,
@@ -315,12 +318,13 @@ private fun AnalysisResultDialog(
     onDismiss: () -> Unit,
     onApplySuggestion: (String) -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("AI 分析结果") },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
             ) {
                 AnalysisCard(
                     analysisResult = result,

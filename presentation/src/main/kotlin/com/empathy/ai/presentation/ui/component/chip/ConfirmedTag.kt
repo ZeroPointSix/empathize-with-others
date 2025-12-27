@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.LocalSemanticColors
@@ -50,6 +51,7 @@ fun ConfirmedTag(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
+    val dimensions = AdaptiveDimensions.current
     val semanticColors = LocalSemanticColors.current
     val backgroundColor = when (tag.type) {
         TagType.RISK_RED -> semanticColors.riskRed
@@ -62,7 +64,7 @@ fun ConfirmedTag(
     Row(
         modifier = modifier
             .semantics { contentDescription = accessibilityDescription }
-            .clip(RoundedCornerShape(Dimensions.CornerRadiusMedium))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
             .background(backgroundColor)
             .then(
                 if (onClick != null) {
@@ -71,8 +73,8 @@ fun ConfirmedTag(
                     Modifier
                 }
             )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = dimensions.spacingMediumSmall, vertical = dimensions.spacingSmall),
+        horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall - 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 对勾图标
@@ -80,7 +82,7 @@ fun ConfirmedTag(
             imageVector = Icons.Default.Check,
             contentDescription = "已确认",
             tint = Color.White,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(dimensions.iconSizeSmall)
         )
         
         // 标签文字

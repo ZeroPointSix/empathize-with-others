@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -47,9 +48,11 @@ fun ProfileCard(
     onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = dimensions.cardElevation * 2),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -57,7 +60,7 @@ fun ProfileCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(dimensions.cardPadding)
         ) {
             // 头部：头像和编辑按钮
             Row(
@@ -67,7 +70,7 @@ fun ProfileCard(
                 // 头像
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(dimensions.avatarSizeMedium + 8.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primaryContainer,
                             shape = CircleShape
@@ -92,7 +95,7 @@ fun ProfileCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingMedium))
             
             // 姓名
             Text(
@@ -101,7 +104,7 @@ fun ProfileCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingSmall))
             
             // 目标
             if (contact.targetGoal.isNotBlank()) {
@@ -110,13 +113,13 @@ fun ProfileCard(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingXSmall))
                 Text(
                     text = contact.targetGoal,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingMediumSmall))
             }
             
             // 上下文深度
@@ -125,7 +128,7 @@ fun ProfileCard(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingXSmall))
             Text(
                 text = "${contact.contextDepth} 条记录",
                 style = MaterialTheme.typography.bodyMedium,
@@ -134,18 +137,18 @@ fun ProfileCard(
             
             // 事实信息
             if (contact.facts.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingMediumSmall))
                 Text(
                     text = "事实信息",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingSmall))
                 
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
                 ) {
                     contact.facts.forEach { (key, value) ->
                         FactItem(key = key, value = value)
@@ -164,13 +167,15 @@ private fun FactItem(
     key: String,
     value: String
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = dimensions.spacingMediumSmall, vertical = dimensions.spacingSmall)
         ) {
             Text(
                 text = key,

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -53,18 +54,24 @@ fun IOSSegmentedControl(
     onTabSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     val tabCount = tabs.size
     if (tabCount == 0) return
+    
+    val controlHeight = dimensions.iosSegmentedControlHeight
+    val innerPadding = (2 * dimensions.fontScale).dp
     
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(32.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .height(controlHeight)
+            .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))
             .background(Color(0x1F767680)) // rgba(118, 118, 128, 0.12)
-            .padding(2.dp)
+            .padding(innerPadding)
     ) {
-        val tabWidth = (maxWidth - 4.dp) / tabCount
+        val tabWidth = (maxWidth - innerPadding * 2) / tabCount
         
         // 滑块位置动画
         val sliderOffset by animateDpAsState(
@@ -83,11 +90,11 @@ fun IOSSegmentedControl(
                 .width(tabWidth)
                 .fillMaxHeight()
                 .shadow(
-                    elevation = 2.dp,
-                    shape = RoundedCornerShape(7.dp),
+                    elevation = dimensions.cardElevation,
+                    shape = RoundedCornerShape(dimensions.cornerRadiusSmall - 1.dp),
                     clip = false
                 )
-                .background(Color.White, RoundedCornerShape(7.dp))
+                .background(Color.White, RoundedCornerShape(dimensions.cornerRadiusSmall - 1.dp))
         )
         
         // 标签文字
