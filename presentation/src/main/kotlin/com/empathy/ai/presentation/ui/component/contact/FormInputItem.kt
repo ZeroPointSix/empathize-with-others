@@ -14,6 +14,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSTextPrimary
@@ -42,10 +43,12 @@ fun FormInputItem(
     placeholder: String = "",
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = dimensions.spacingMediumSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 左侧标签
@@ -53,7 +56,7 @@ fun FormInputItem(
             text = label,
             fontSize = 15.sp,
             color = iOSTextPrimary,
-            modifier = Modifier.width(80.dp)
+            modifier = Modifier.width(dimensions.swipeActionButtonWidth)
         )
         
         // 右侧输入框

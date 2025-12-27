@@ -90,7 +90,7 @@
 
 ### 单元测试
 - 位置: `data/src/test/kotlin/`
-- 测试文件数: 18 个
+- 测试文件数: 19个
 - 测试覆盖:
   - `FloatingWindowPreferencesTest` - 悬浮窗偏好测试
   - `PromptFileStorageTest` - 提示词存储测试

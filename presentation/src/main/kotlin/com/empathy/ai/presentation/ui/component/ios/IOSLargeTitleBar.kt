@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -36,7 +37,7 @@ import com.empathy.ai.presentation.theme.iOSTextPrimary
  * - 返回按钮: iOS蓝色, chevron_left图标
  * - 添加按钮: iOS蓝色, add图标
  * - 背景: iOSBackground (#F2F2F7)
- * - 导航栏高度: 44dp
+ * - 导航栏高度: 响应式（约44dp）
  * - 大标题区域: 自适应高度
  *
  * @param title 大标题文本
@@ -59,23 +60,26 @@ fun IOSLargeTitleBar(
     onSearchQueryChange: ((String) -> Unit)? = null,
     searchPlaceholder: String = "搜索"
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(iOSBackground)
     ) {
-        // 导航栏（44dp高度）
+        // 导航栏（响应式高度）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
-                .padding(horizontal = 8.dp),
+                .height(dimensions.iosNavigationBarHeight)
+                .padding(horizontal = dimensions.spacingSmall),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 返回按钮
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(dimensions.iosNavigationBarHeight)
                     .clickable(onClick = onBackClick),
                 contentAlignment = Alignment.Center
             ) {
@@ -83,7 +87,7 @@ fun IOSLargeTitleBar(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "返回",
                     tint = iOSBlue,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(dimensions.iconSizeLarge - 8.dp)
                 )
             }
 
@@ -93,7 +97,7 @@ fun IOSLargeTitleBar(
             if (onAddClick != null) {
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(dimensions.iosNavigationBarHeight)
                         .clickable(onClick = onAddClick),
                     contentAlignment = Alignment.Center
                 ) {
@@ -101,7 +105,7 @@ fun IOSLargeTitleBar(
                         imageVector = Icons.Default.Add,
                         contentDescription = "添加",
                         tint = iOSBlue,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(dimensions.iconSizeLarge - 8.dp)
                     )
                 }
             }
@@ -113,7 +117,7 @@ fun IOSLargeTitleBar(
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
             color = iOSTextPrimary,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = dimensions.spacingMedium, vertical = dimensions.spacingSmall)
         )
 
         // 搜索栏（可选）
@@ -124,8 +128,8 @@ fun IOSLargeTitleBar(
                 placeholder = searchPlaceholder,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp)
+                    .padding(horizontal = dimensions.spacingMedium)
+                    .padding(bottom = dimensions.spacingSmall)
             )
         }
     }

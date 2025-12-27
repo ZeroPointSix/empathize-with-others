@@ -132,9 +132,10 @@ android {
 
 dependencies {
     // 模块依赖
+    // 使用api暴露presentation模块，确保其类在运行时可见
     implementation(project(":domain"))
     implementation(project(":data"))
-    implementation(project(":presentation"))
+    api(project(":presentation"))
 
     // Desugaring (Java 8+ API support for minSdk=24)
     coreLibraryDesugaring(libs.desugar.jdk.libs)

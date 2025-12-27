@@ -20,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -219,9 +220,11 @@ private fun ProviderListContent(
     onEvent: (AiConfigUiEvent) -> Unit,
     onNavigateToEditProvider: ((String) -> Unit)?
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp)
+        contentPadding = PaddingValues(bottom = dimensions.spacingXLarge)
     ) {
         // 推理引擎分组
         item {

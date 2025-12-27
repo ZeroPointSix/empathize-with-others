@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSTextTertiary
@@ -49,9 +50,12 @@ fun AvatarPicker(
     onPickAvatar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    val avatarSize = dimensions.avatarSizeLarge // 100dp equivalent
+    
     Box(
         modifier = modifier
-            .size(100.dp)
+            .size(avatarSize)
             .clickable(onClick = onPickAvatar),
         contentAlignment = Alignment.Center
     ) {
@@ -61,7 +65,7 @@ fun AvatarPicker(
                 model = avatarUri,
                 contentDescription = "头像",
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(avatarSize)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
@@ -69,7 +73,7 @@ fun AvatarPicker(
             // 编辑图标覆盖层
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(avatarSize)
                     .background(
                         color = Color.Black.copy(alpha = 0.3f),
                         shape = CircleShape
@@ -80,20 +84,20 @@ fun AvatarPicker(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "编辑头像",
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(dimensions.iconSizeLarge - 8.dp)
                 )
             }
         } else {
             // 无头像：显示虚线边框+相机图标
             DashedCircle(
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier.size(avatarSize)
             )
             
             Icon(
                 imageVector = Icons.Default.CameraAlt,
                 contentDescription = "添加头像",
                 tint = iOSBlue,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(dimensions.iconSizeLarge)
             )
         }
     }

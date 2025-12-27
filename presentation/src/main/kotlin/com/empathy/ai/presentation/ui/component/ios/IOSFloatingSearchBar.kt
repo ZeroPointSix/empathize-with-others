@@ -26,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
@@ -54,20 +55,23 @@ fun IOSFloatingSearchBar(
     placeholder: String = "搜索标签或分类",
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(12.dp),
+                elevation = dimensions.cardElevation * 2,
+                shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
                 ambientColor = Color.Black.copy(alpha = 0.04f),
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .background(
                 color = Color.White,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(dimensions.cornerRadiusMedium)
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = dimensions.spacingMedium - 2.dp, vertical = dimensions.spacingMediumSmall),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 搜索图标
@@ -75,10 +79,10 @@ fun IOSFloatingSearchBar(
             imageVector = Icons.Default.Search,
             contentDescription = "搜索",
             tint = iOSTextTertiary,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(dimensions.iconSizeSmall + 4.dp)
         )
         
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(dimensions.spacingSmall + 2.dp))
         
         // 输入框
         Box(modifier = Modifier.weight(1f)) {
@@ -106,13 +110,13 @@ fun IOSFloatingSearchBar(
         if (query.isNotEmpty()) {
             IconButton(
                 onClick = { onQueryChange("") },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(dimensions.iconSizeLarge - 8.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
                     contentDescription = "清除",
                     tint = iOSTextSecondary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(dimensions.iconSizeSmall + 2.dp)
                 )
             }
         }

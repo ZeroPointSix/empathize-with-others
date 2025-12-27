@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
@@ -37,7 +38,7 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * iOS风格Tab切换器
  *
  * 设计规格:
- * - 圆角: 12dp
+ * - 圆角: 响应式
  * - Tab文字: 15sp
  * - 选中态: iOS蓝色, SemiBold
  * - 未选中: 灰色
@@ -58,6 +59,8 @@ fun IOSTabSwitcher(
     onTabSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
     val density = LocalDensity.current
     var tabWidth by remember { mutableIntStateOf(0) }
 
@@ -75,7 +78,7 @@ fun IOSTabSwitcher(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
             .background(iOSCardBackground)
     ) {
         // Tab行
@@ -86,7 +89,7 @@ fun IOSTabSwitcher(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(44.dp)
+                        .height(dimensions.iosListItemHeight)
                         .clickable { onTabSelected(index) }
                         .onGloballyPositioned { coordinates ->
                             tabWidth = coordinates.size.width

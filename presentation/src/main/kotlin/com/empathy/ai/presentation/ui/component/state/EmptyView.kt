@@ -29,6 +29,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.graphicsLayer
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.AnimationSpec
 import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.ui.component.button.PrimaryButton
@@ -53,6 +54,8 @@ fun EmptyView(
     modifier: Modifier = Modifier,
     emptyType: EmptyType = EmptyType.NoData
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     val infiniteTransition = rememberInfiniteTransition(label = "EmptyBreathing")
     val scale by infiniteTransition.animateFloat(
         initialValue = 0.95f,
@@ -67,7 +70,7 @@ fun EmptyView(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(AppSpacing.xxl),
+            .padding(dimensions.spacingXLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -76,7 +79,7 @@ fun EmptyView(
             imageVector = emptyType.icon,
             contentDescription = "空状态图标",
             modifier = Modifier
-                .size(80.dp)
+                .size(dimensions.iconSizeXLarge * 1.67f) // 80dp equivalent
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -84,7 +87,7 @@ fun EmptyView(
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         )
         
-        Spacer(modifier = Modifier.height(AppSpacing.lg))
+        Spacer(modifier = Modifier.height(dimensions.spacingLarge))
         
         // 空状态标题
         Text(
@@ -94,7 +97,7 @@ fun EmptyView(
             textAlign = TextAlign.Center
         )
         
-        Spacer(modifier = Modifier.height(AppSpacing.sm))
+        Spacer(modifier = Modifier.height(dimensions.spacingSmall))
         
         // 空状态消息
         Text(
@@ -106,7 +109,7 @@ fun EmptyView(
         
         // 操作按钮
         if (actionText != null && onAction != null) {
-            Spacer(modifier = Modifier.height(AppSpacing.xl))
+            Spacer(modifier = Modifier.height(dimensions.spacingLarge))
             PrimaryButton(
                 text = actionText,
                 onClick = onAction

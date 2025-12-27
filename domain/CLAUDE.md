@@ -188,7 +188,7 @@
 
 ### 单元测试
 - 位置: `domain/src/test/kotlin/`
-- 测试文件数: 28 个
+- 测试文件数: 28个
 - 测试覆盖:
   - 模型测试（Fact, UserProfile, PromptScene 等）
   - UseCase 测试

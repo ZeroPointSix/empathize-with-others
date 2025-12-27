@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextSecondary
@@ -25,7 +26,7 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * 设计规格:
  * - 横向滚动
  * - 背景: #E5E5EA
- * - 圆角: 8dp
+ * - 圆角: 响应式
  * - 文字: 14sp, 灰色
  * - 点击态: iOS蓝色背景（可选）
  *
@@ -41,9 +42,12 @@ fun QuickSelectTags(
     onTagClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
     ) {
         tags.forEach { tag ->
             QuickSelectTagItem(
@@ -63,15 +67,18 @@ private fun QuickSelectTagItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Text(
         text = text,
         fontSize = 14.sp,
         color = iOSTextSecondary,
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))
             .background(iOSSeparator)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = dimensions.spacingMediumSmall, vertical = 6.dp)
     )
 }
 

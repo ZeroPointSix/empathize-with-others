@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.model.EmotionType
 import com.empathy.ai.domain.model.TimelineItem
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard
@@ -48,11 +49,13 @@ fun ConversationCard(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     GlassmorphicCard(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick ?: onLongClick // 点击时触发编辑
     ) {
-        Column(modifier = Modifier.padding(Dimensions.SpacingMedium)) {
+        Column(modifier = Modifier.padding(dimensions.spacingMedium)) {
             // 时间和状态
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -67,7 +70,7 @@ fun ConversationCard(
                 
                 // 总结状态
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.spacingXSmall),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -77,7 +80,7 @@ fun ConversationCard(
                             Icons.Default.Schedule
                         },
                         contentDescription = if (item.log.isSummarized) "已总结" else "待总结",
-                        modifier = Modifier.size(14.dp),
+                        modifier = Modifier.size(dimensions.iconSizeSmall - 2.dp),
                         tint = if (item.log.isSummarized) {
                             MaterialTheme.colorScheme.primary
                         } else {
@@ -96,7 +99,7 @@ fun ConversationCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingSmall))
             
             // 用户输入
             Text(

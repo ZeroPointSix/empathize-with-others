@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ExportFormat
 import com.empathy.ai.domain.model.UserProfile
@@ -105,13 +106,14 @@ private fun UserProfileScreenContent(
                 contentAlignment = Alignment.Center
             ) { CircularProgressIndicator() }
         } else {
+            val dimensions = AdaptiveDimensions.current
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(dimensions.spacingMedium),
+                verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
             ) {
                 ProfileCompletenessCard(uiState.completeness, uiState.totalTagCount)
 
@@ -192,8 +194,9 @@ private fun UserProfileScreenContent(
 @Composable
 private fun ProfileCompletenessCard(completeness: Int, totalTagCount: Int, modifier: Modifier = Modifier) {
     val animatedProgress by animateFloatAsState(targetValue = completeness / 100f, label = "completeness")
+    val dimensions = AdaptiveDimensions.current
     Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(dimensions.spacingMedium), verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("画像完整度", style = MaterialTheme.typography.titleMedium)
                 Text("$completeness%", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
@@ -206,7 +209,8 @@ private fun ProfileCompletenessCard(completeness: Int, totalTagCount: Int, modif
 
 @Composable
 private fun BaseDimensionsContent(profile: UserProfile, onEvent: (UserProfileUiEvent) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val dimensions = AdaptiveDimensions.current
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)) {
         UserProfileDimension.entries.forEach { dimension ->
             DimensionCard(
                 title = dimension.displayName,
@@ -223,11 +227,12 @@ private fun BaseDimensionsContent(profile: UserProfile, onEvent: (UserProfileUiE
 
 @Composable
 private fun CustomDimensionsContent(profile: UserProfile, canAddDimension: Boolean, onEvent: (UserProfileUiEvent) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val dimensions = AdaptiveDimensions.current
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)) {
         if (canAddDimension) {
             OutlinedButton(onClick = { onEvent(UserProfileUiEvent.ShowAddDimensionDialog) }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(dimensions.spacingSmall))
                 Text("添加自定义维度")
             }
         } else {
@@ -246,9 +251,9 @@ private fun CustomDimensionsContent(profile: UserProfile, canAddDimension: Boole
 
         if (profile.customDimensions.isEmpty()) {
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Category, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.height(8.dp))
+                Column(modifier = Modifier.fillMaxWidth().padding(dimensions.spacingLarge), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.Category, contentDescription = null, modifier = Modifier.size(dimensions.iconSizeXLarge), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(dimensions.spacingSmall))
                     Text("暂无自定义维度", style = MaterialTheme.typography.bodyLarge)
                     Text("点击上方按钮添加您的专属维度", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -266,9 +271,10 @@ private fun DimensionCard(
 ) {
     var expanded by remember { mutableStateOf(true) }
     val rotationAngle by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "rotation")
+    val dimensions = AdaptiveDimensions.current
 
     Card(modifier = modifier.fillMaxWidth().animateContentSize()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(dimensions.spacingMedium)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleMedium)
@@ -287,12 +293,12 @@ private fun DimensionCard(
             }
 
             AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-                Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.padding(top = dimensions.spacingMediumSmall), verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
                     if (tags.isNotEmpty()) TagChipGroup(tags = tags, onTagClick = onEditTag)
-                    AssistChip(onClick = onAddTag, label = { Text("添加标签") }, leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp)) })
+                    AssistChip(onClick = onAddTag, label = { Text("添加标签") }, leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(dimensions.iconSizeSmall + 2.dp)) })
                     if (presetTags.isNotEmpty()) {
                         Text("快速选择", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
                             items(presetTags.filter { it !in tags }) { tag ->
                                 SuggestionChip(onClick = { onSelectPresetTag(tag) }, label = { Text(tag) })
                             }
@@ -307,12 +313,13 @@ private fun DimensionCard(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TagChipGroup(tags: List<String>, onTagClick: (String) -> Unit, modifier: Modifier = Modifier) {
-    FlowRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val dimensions = AdaptiveDimensions.current
+    FlowRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall), verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
         tags.forEach { tag ->
             InputChip(
                 selected = false, onClick = { onTagClick(tag) },
                 label = { Text(tag, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                trailingIcon = { Icon(Icons.Default.Edit, contentDescription = "编辑", modifier = Modifier.size(16.dp)) }
+                trailingIcon = { Icon(Icons.Default.Edit, contentDescription = "编辑", modifier = Modifier.size(dimensions.iconSizeSmall)) }
             )
         }
     }
@@ -430,11 +437,12 @@ private fun DeleteConfirmDialog(title: String, message: String, onConfirm: () ->
 
 @Composable
 private fun ExportDialog(onExport: (ExportFormat) -> Unit, onDismiss: () -> Unit) {
+    val dimensions = AdaptiveDimensions.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("导出画像") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
                 Text("选择导出格式", style = MaterialTheme.typography.bodyMedium)
                 ExportFormat.entries.forEach { format ->
                     OutlinedButton(onClick = { onExport(format); onDismiss() }, modifier = Modifier.fillMaxWidth()) {
@@ -442,7 +450,7 @@ private fun ExportDialog(onExport: (ExportFormat) -> Unit, onDismiss: () -> Unit
                             ExportFormat.JSON -> Icons.Default.Code
                             ExportFormat.PLAIN_TEXT -> Icons.Default.Description
                         }, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(dimensions.spacingSmall))
                         Text(format.displayName)
                     }
                 }

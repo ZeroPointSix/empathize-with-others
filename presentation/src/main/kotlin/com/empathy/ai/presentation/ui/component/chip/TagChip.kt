@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
@@ -39,6 +40,7 @@ fun TagChip(
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
     val colors = getTagColors(tagType)
     
     AssistChip(
@@ -55,7 +57,7 @@ fun TagChip(
                     TagType.RISK_RED -> "雷区"
                     TagType.STRATEGY_GREEN -> "策略"
                 },
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(dimensions.iconSizeSmall),
                 tint = colors.iconColor
             )
         },
@@ -63,12 +65,12 @@ fun TagChip(
             {
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(dimensions.iconSizeSmall + 2.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "删除",
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(dimensions.iconSizeSmall - 2.dp)
                     )
                 }
             }

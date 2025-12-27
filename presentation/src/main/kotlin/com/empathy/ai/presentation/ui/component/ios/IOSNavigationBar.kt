@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSLightGrayBackground
@@ -25,7 +26,7 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * iOS风格导航栏
  * 
  * 实现iOS原生导航栏的视觉效果
- * - 高度52dp
+ * - 高度响应式（约52dp）
  * - 左侧取消按钮（iOSBlue）
  * - 中间标题（17sp, SemiBold）
  * - 右侧完成按钮（iOSBlue，支持isDoneEnabled状态）
@@ -47,12 +48,18 @@ fun IOSNavigationBar(
     isDoneEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
+    // 导航栏高度 = iOS标准高度 + 小间距
+    val navBarHeight = dimensions.iosNavigationBarHeight + dimensions.spacingSmall
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(navBarHeight)
             .background(iOSLightGrayBackground.copy(alpha = 0.95f))
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = dimensions.spacingSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

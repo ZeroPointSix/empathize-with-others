@@ -25,6 +25,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
@@ -34,7 +35,7 @@ import com.empathy.ai.presentation.theme.iOSTextTertiary
  * iOS风格搜索栏
  * 
  * 实现iOS原生搜索栏的视觉效果
- * - 圆角10dp
+ * - 响应式圆角
  * - 背景#F8F8FA
  * - 搜索图标+输入框+清除按钮
  * 
@@ -52,14 +53,17 @@ fun IOSSearchBar(
     placeholder: String = "搜索",
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
                 color = Color(0xFFF8F8FA),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(dimensions.cornerRadiusSmall + 2.dp)
             )
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = dimensions.spacingMediumSmall, vertical = dimensions.spacingSmall + 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 搜索图标
@@ -67,10 +71,10 @@ fun IOSSearchBar(
             imageVector = Icons.Default.Search,
             contentDescription = "搜索",
             tint = iOSTextSecondary,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(dimensions.iconSizeSmall + 4.dp)
         )
         
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(dimensions.spacingSmall))
         
         // 输入框
         Box(modifier = Modifier.weight(1f)) {
@@ -98,13 +102,13 @@ fun IOSSearchBar(
         if (query.isNotEmpty()) {
             IconButton(
                 onClick = { onQueryChange("") },
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(dimensions.iconSizeSmall + 4.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
                     contentDescription = "清除",
                     tint = iOSTextSecondary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(dimensions.iconSizeSmall)
                 )
             }
         }

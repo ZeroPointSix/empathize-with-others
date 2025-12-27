@@ -24,6 +24,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.graphicsLayer
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.AnimationSpec
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
@@ -48,6 +49,7 @@ fun SecondaryButton(
     icon: ImageVector? = null,
     size: ButtonSize = ButtonSize.Medium
 ) {
+    val dimensions = AdaptiveDimensions.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -79,7 +81,7 @@ fun SecondaryButton(
                 contentDescription = null,
                 modifier = Modifier.size(size.iconSize)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(dimensions.spacingSmall))
         }
         
         Text(

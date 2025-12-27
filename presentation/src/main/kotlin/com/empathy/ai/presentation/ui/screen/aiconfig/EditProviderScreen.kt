@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -144,6 +145,7 @@ private fun EditProviderScreenContent(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
     val provider = uiState.editingProvider
 
     Column(
@@ -162,7 +164,7 @@ private fun EditProviderScreenContent(
         // 表单内容
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 32.dp)
+            contentPadding = PaddingValues(bottom = dimensions.spacingXLarge)
         ) {
             // 基础信息分组
             item {
@@ -290,7 +292,7 @@ private fun EditProviderScreenContent(
 
             // 删除服务商按钮
             item {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingLarge))
                 
                 Button(
                     onClick = {
@@ -300,13 +302,13 @@ private fun EditProviderScreenContent(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .height(50.dp),
+                        .padding(horizontal = dimensions.spacingMedium)
+                        .height(dimensions.iosButtonHeight + 6.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = iOSRed
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(dimensions.cornerRadiusMedium)
                 ) {
                     Text(
                         text = "删除服务商",

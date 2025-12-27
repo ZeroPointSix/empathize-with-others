@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
@@ -176,17 +177,19 @@ private fun IOSLargeTitleHeader(
     onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(iOSBackground)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = dimensions.spacingMedium)
     ) {
         // 顶部工具栏（搜索按钮）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp),
+                .height(dimensions.iosNavigationBarHeight),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -195,7 +198,7 @@ private fun IOSLargeTitleHeader(
                 contentDescription = "搜索",
                 tint = iOSBlue,
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(dimensions.iconSizeLarge)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -209,7 +212,7 @@ private fun IOSLargeTitleHeader(
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
             color = iOSTextPrimary,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = dimensions.spacingSmall)
         )
     }
 }
@@ -224,6 +227,8 @@ private fun ContactListWithHeader(
     onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -242,8 +247,8 @@ private fun ContactListWithHeader(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .padding(horizontal = dimensions.spacingMedium),
+                shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
                 color = iOSCardBackground,
                 shadowElevation = 1.dp
             ) {
@@ -261,7 +266,7 @@ private fun ContactListWithHeader(
 
         // 底部间距
         item {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(dimensions.spacingLarge))
         }
     }
 }

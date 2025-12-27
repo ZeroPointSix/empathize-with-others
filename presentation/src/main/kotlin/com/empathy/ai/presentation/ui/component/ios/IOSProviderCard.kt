@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSGreen
@@ -61,12 +62,12 @@ import kotlin.math.roundToInt
  * iOS风格服务商卡片（支持滑动操作）
  *
  * 设计规格:
- * - 图标容器: 40x40dp, 圆角10dp, 带背景色
+ * - 图标容器: 响应式尺寸, 圆角10dp, 带背景色
  * - 标题: 17sp, SemiBold
  * - 描述: 15sp, 灰色
  * - 默认标记: 蓝色勾选图标
- * - 分隔线: 从图标右侧开始(68dp)
- * - 高度: 自适应（约72dp）
+ * - 分隔线: 从图标右侧开始
+ * - 高度: 响应式（约72dp）
  * - 滑动操作: 向左滑动显示编辑/删除按钮
  *
  * @param provider AI服务商数据
@@ -78,8 +79,6 @@ import kotlin.math.roundToInt
  * @param showDivider 是否显示分隔线
  * @param icon 自定义图标（可选）
  * @param iconBackgroundColor 图标背景色
- *
- * @see TDD-00021 3.2节 IOSProviderCard组件规格
  */
 @Composable
 fun IOSProviderCard(
@@ -93,11 +92,22 @@ fun IOSProviderCard(
     icon: ImageVector = Icons.Default.Cloud,
     iconBackgroundColor: Color = getProviderColor(provider.name)
 ) {
-    val dividerColor = iOSSeparator
-    val dividerStartPadding = 68.dp
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    val density = LocalDensity.current
     
-    // Swipe state - 固定显示两个按钮的宽度（160px）
-    val swipeThreshold = 160f // 两个按钮的总宽度
+    val dividerColor = iOSSeparator
+    // 分隔线起始位置 = padding(16) + iconSize(40) + spacing(12)
+    val dividerStartPadding = dimensions.spacingMedium + dimensions.iosIconContainerSize + dimensions.spacingMediumSmall
+    
+    // 滑动阈值 - 使用响应式尺寸
+    val swipeThresholdDp = dimensions.swipeActionTotalWidth
+    val swipeThreshold = with(density) { swipeThresholdDp.toPx() }
+    val buttonWidthDp = dimensions.swipeActionButtonWidth
+    
+    // 列表项高度 - 响应式
+    val itemHeight = dimensions.iosListItemHeight + dimensions.spacingLarge // 约72dp
+    
     var offsetX by remember { mutableFloatStateOf(0f) }
     var isSwipeOpen by remember { mutableStateOf(false) }
     
@@ -110,11 +120,9 @@ fun IOSProviderCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(itemHeight)
     ) {
         // Action buttons (behind the card)
-        // 按钮顺序：从左到右是 删除 -> 编辑
-        // 这样滑动时先露出编辑按钮（最右边），再露出删除按钮
         Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -124,7 +132,7 @@ fun IOSProviderCard(
             if (onDelete != null) {
                 Box(
                     modifier = Modifier
-                        .width(80.dp)
+                        .width(buttonWidthDp)
                         .fillMaxHeight()
                         .background(iOSRed)
                         .clickable {
@@ -139,7 +147,7 @@ fun IOSProviderCard(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "删除",
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(dimensions.iconSizeMedium)
                         )
                         Text(
                             text = "删除",
@@ -154,7 +162,7 @@ fun IOSProviderCard(
             if (onEdit != null) {
                 Box(
                     modifier = Modifier
-                        .width(80.dp)
+                        .width(buttonWidthDp)
                         .fillMaxHeight()
                         .background(iOSOrange)
                         .clickable {
@@ -169,7 +177,7 @@ fun IOSProviderCard(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "编辑",
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(dimensions.iconSizeMedium)
                         )
                         Text(
                             text = "编辑",
@@ -185,13 +193,12 @@ fun IOSProviderCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .height(itemHeight)
                 .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                 .background(Color.White)
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
-                            // Snap to open or closed position
                             if (offsetX < -swipeThreshold / 2) {
                                 isSwipeOpen = true
                             } else {
@@ -205,11 +212,9 @@ fun IOSProviderCard(
                         },
                         onHorizontalDrag = { _, dragAmount ->
                             if (!isSwipeOpen) {
-                                // Only allow left swipe (negative values)
                                 val newOffset = (offsetX + dragAmount).coerceIn(-swipeThreshold, 0f)
                                 offsetX = newOffset
                             } else {
-                                // When open, allow right swipe to close
                                 if (dragAmount > 0) {
                                     isSwipeOpen = false
                                     offsetX = 0f
@@ -237,16 +242,16 @@ fun IOSProviderCard(
                         )
                     }
                 }
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = dimensions.spacingMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 图标容器 (40x40dp)
+            // 图标容器 (响应式尺寸)
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(dimensions.iosIconContainerSize)
                     .background(
                         color = iconBackgroundColor,
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(dimensions.cornerRadiusSmall)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -254,11 +259,11 @@ fun IOSProviderCard(
                     imageVector = icon,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(dimensions.iconSizeMedium)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
 
             // 标题和描述
             Column(
@@ -287,7 +292,7 @@ fun IOSProviderCard(
                     imageVector = Icons.Default.Check,
                     contentDescription = "默认",
                     tint = iOSBlue,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(dimensions.iconSizeMedium)
                 )
             }
         }
@@ -372,31 +377,6 @@ private fun IOSProviderCardNonDefaultPreview() {
             onClick = {},
             onEdit = {},
             onDelete = {}
-        )
-    }
-}
-
-@Preview(name = "服务商卡片 - 无分隔线", showBackground = true)
-@Composable
-private fun IOSProviderCardNoDividerPreview() {
-    EmpathyTheme {
-        IOSProviderCard(
-            provider = AiProvider(
-                id = "3",
-                name = "Claude",
-                baseUrl = "https://api.anthropic.com/v1",
-                apiKey = "sk-xxx",
-                models = listOf(
-                    AiModel(id = "claude-3", displayName = "Claude 3")
-                ),
-                defaultModelId = "claude-3",
-                isDefault = false
-            ),
-            isDefault = false,
-            onClick = {},
-            onEdit = {},
-            onDelete = {},
-            showDivider = false
         )
     }
 }

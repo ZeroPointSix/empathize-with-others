@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
@@ -33,8 +34,8 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
 /**
  * iOS风格设置项组件
  *
- * 高度: 44dp
- * 图标容器: 28dp × 28dp, 6dp圆角
+ * 高度: 响应式（约44dp）
+ * 图标容器: 响应式（约28dp × 28dp）, 6dp圆角
  *
  * @param icon 图标
  * @param iconBackgroundColor 图标背景色
@@ -60,13 +61,22 @@ fun IOSSettingsItem(
     trailing: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     val dividerColor = iOSSeparator
-    val dividerStartPadding = 60.dp
+    // 分隔线起始位置 = padding(16) + iconSize(28) + spacing(12) ≈ 56dp
+    val iconContainerSize = (28 * dimensions.fontScale).dp
+    val dividerStartPadding = dimensions.spacingMedium + iconContainerSize + dimensions.spacingMediumSmall
+    
+    // 列表项高度 - 响应式
+    val itemHeight = dimensions.iosListItemHeight
+    val itemHeightWithSubtitle = dimensions.iosListItemHeight + dimensions.spacingMedium
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (subtitle != null) 60.dp else 44.dp)
+            .height(if (subtitle != null) itemHeightWithSubtitle else itemHeight)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -85,13 +95,13 @@ fun IOSSettingsItem(
                     )
                 }
             }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dimensions.spacingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 图标容器
+        // 图标容器 (响应式尺寸)
         Box(
             modifier = Modifier
-                .size(28.dp)
+                .size(iconContainerSize)
                 .background(
                     color = iconBackgroundColor,
                     shape = RoundedCornerShape(6.dp)
@@ -102,11 +112,11 @@ fun IOSSettingsItem(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(dimensions.iconSizeSmall + 2.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
 
         // 标题和副标题
         Column(
@@ -137,7 +147,7 @@ fun IOSSettingsItem(
                 color = iOSTextSecondary
             )
             if (showArrow) {
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(dimensions.spacingXSmall))
             }
         }
 
@@ -147,7 +157,7 @@ fun IOSSettingsItem(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = iOSTextSecondary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(dimensions.iconSizeSmall + 4.dp)
             )
         }
     }

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.AnimationSpec
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
@@ -166,6 +167,7 @@ fun GuessedTag(
     enableAnimation: Boolean = true,
     isVisible: Boolean = true
 ) {
+    val dimensions = AdaptiveDimensions.current
     val semanticColors = LocalSemanticColors.current
     val baseColor = remember(tag.type, semanticColors) {
         when (tag.type) {
@@ -206,12 +208,12 @@ fun GuessedTag(
         modifier = modifier
             .semantics { contentDescription = accessibilityDescription }
             .graphicsLayer { alpha = displayAlpha }  // 硬件加速
-            .clip(RoundedCornerShape(Dimensions.CornerRadiusMedium))
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
             .background(baseColor.copy(alpha = 0.15f))
             .border(
                 width = 1.dp,
                 color = baseColor.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(Dimensions.CornerRadiusMedium)
+                shape = RoundedCornerShape(dimensions.cornerRadiusMedium)
             )
             .then(
                 if (onClick != null) {
@@ -220,8 +222,8 @@ fun GuessedTag(
                     Modifier
                 }
             )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = dimensions.spacingMediumSmall, vertical = dimensions.spacingSmall),
+        horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall - 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 问号图标
@@ -229,7 +231,7 @@ fun GuessedTag(
             imageVector = Icons.Default.QuestionMark,
             contentDescription = "待确认",
             tint = baseColor,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(dimensions.iconSizeSmall)
         )
         
         // 标签文字
