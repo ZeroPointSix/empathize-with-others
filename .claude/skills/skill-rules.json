@@ -1,0 +1,145 @@
+{
+  "version": "2.0",
+  "skills": [
+    {
+      "name": "code-review",
+      "description": "代码审查技能 - 审查代码质量、架构、安全性并提供改进建议",
+      "category": "quality"
+    },
+    {
+      "name": "architecture-design",
+      "description": "架构设计技能 - 设计分层架构、模块划分、技术选型、数据流设计",
+      "category": "design"
+    },
+    {
+      "name": "test-driven-development",
+      "description": "测试驱动开发 - TDD 实践、测试策略、覆盖率分析、Mock 使用",
+      "category": "testing"
+    },
+    {
+      "name": "debugging",
+      "description": "系统化调试 - 根因分析、问题定位、日志分析、修复验证",
+      "category": "debugging"
+    },
+    {
+      "name": "coding-standards",
+      "description": "编码规范检查 - 命名规范、代码风格、最佳实践、代码异味识别",
+      "category": "standards"
+    },
+    {
+      "name": "refactoring",
+      "description": "代码重构 - 改进代码质量、清理技术债、优化性能、提升可维护性",
+      "category": "quality"
+    },
+    {
+      "name": "git-operations",
+      "description": "Git 操作 - 提交规范、分支管理、代码合并、冲突解决",
+      "category": "workflow"
+    },
+    {
+      "name": "documentation",
+      "description": "文档编写 - API 文档、架构文档、代码注释、README 编写",
+      "category": "documentation"
+    },
+    {
+      "name": "error-tracking",
+      "description": "错误跟踪 - 集成 Sentry、错误捕获、日志记录、性能监控、异常分析",
+      "category": "monitoring"
+    },
+    {
+      "name": "database-operations",
+      "description": "数据库操作 - Prisma ORM、SQL 查询优化、事务处理、连接池管理、数据迁移",
+      "category": "backend"
+    },
+    {
+      "name": "api-design",
+      "description": "API 设计 - RESTful 规范、接口设计、版本管理、错误处理、API 文档",
+      "category": "backend"
+    },
+    {
+      "name": "frontend-development",
+      "description": "前端开发 - React/Vue 组件设计、状态管理、路由、样式、性能优化",
+      "category": "frontend"
+    },
+    {
+      "name": "backend-development",
+      "description": "后端开发 - Node.js/Express、控制器服务仓库模式、中间件、异步处理",
+      "category": "backend"
+    },
+    {
+      "name": "middleware",
+      "description": "中间件开发 - 认证中间件、验证中间件、日志中间件、错误处理、自定义中间件",
+      "category": "backend"
+    },
+    {
+      "name": "performance-optimization",
+      "description": "性能优化 - 代码性能优化、数据库优化、缓存策略、并发处理、资源管理",
+      "category": "optimization"
+    },
+    {
+      "name": "security",
+      "description": "安全最佳实践 - 输入验证、认证授权、数据加密、XSS/SQL注入防护、安全配置",
+      "category": "security"
+    },
+    {
+      "name": "brainstorming",
+      "description": "头脑风暴 - 需求分析、方案设计、创意发散、问题拆解",
+      "category": "planning"
+    },
+    {
+      "name": "planning",
+      "description": "计划编写 - 任务拆解、里程碑规划、资源评估、风险管理",
+      "category": "planning"
+    },
+    {
+      "name": "verification",
+      "description": "完成前验证 - 功能验收、回归测试、部署检查、上线准备",
+      "category": "testing"
+    },
+    {
+      "name": "claude-code-skill-diagnostic",
+      "description": "Claude Code Skill 安装故障诊断与修复 - 自动诊断和修复技能安装问题,包括环境检查、文件搜索、配置验证、权限修复",
+      "category": "debugging"
+    },
+    {
+      "name": "code-analysis-controller",
+      "description": "Code Analysis GoT Controller - 管理代码分析图状态,执行图操作(Generate, Aggregate, Refine, Score),优化分析路径质量。当代码库复杂、需要多维度分析、高质量代码分析时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-architecture-analyzer",
+      "description": "代码架构分析器 - 识别设计模式、评估模块耦合、分析分层结构、检测架构违规。当需要架构层面的深度分析时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-dependency-tracer",
+      "description": "代码依赖追踪器 - 追踪第三方库、内部依赖、循环依赖、版本兼容性。当需要依赖关系图谱或健康度评估时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-pattern-detector",
+      "description": "代码模式检测器 - 识别设计模式使用、检测反模式、发现API设计问题、分析错误处理模式。当需要深度代码模式和最佳实践分析时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-quality-analyzer",
+      "description": "代码质量分析器 - 检测代码复杂度、可维护性、代码异味、命名规范、代码重复。当需要代码质量评估和改进建议时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-question-refiner",
+      "description": "代码问题细化器 - 将原始代码分析问题细化为结构化的深度代码研究任务。通过提问澄清需求,生成符合代码分析标准的结构化提示词。当用户提出代码分析问题、需要帮助定义分析范围、或想要生成结构化代码分析提示词时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-research-executor",
+      "description": "代码研究执行器 - 执行完整的 7 阶段代码深度分析流程。接收结构化代码分析任务,自动部署多个并行分析智能体,生成带完整代码引用的综合分析报告。当用户有结构化的代码分析提示词时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-synthesizer",
+      "description": "代码综合分析器 - 将多个代码分析智能体的发现综合成连贯、结构化的分析报告。解决矛盾、提取共识、创建统一叙述。当多个分析智能体完成分析、需要将发现组合成统一报告、发现之间存在矛盾时使用此技能",
+      "category": "code-analysis"
+    }
+  ]
+}
