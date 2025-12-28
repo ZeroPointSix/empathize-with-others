@@ -1,14 +1,11 @@
 package com.empathy.ai.presentation.ui.screen.userprofile
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -17,21 +14,40 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ExportFormat
 import com.empathy.ai.domain.model.UserProfile
 import com.empathy.ai.domain.model.UserProfileDimension
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSBackground
+import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.theme.iOSCardBackground
+import com.empathy.ai.presentation.theme.iOSGreen
+import com.empathy.ai.presentation.theme.iOSOrange
+import com.empathy.ai.presentation.theme.iOSPurple
+import com.empathy.ai.presentation.theme.iOSRed
+import com.empathy.ai.presentation.theme.iOSTextPrimary
+import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.component.ios.DimensionCard
+import com.empathy.ai.presentation.ui.component.ios.IOSTabSwitcher
+import com.empathy.ai.presentation.ui.component.ios.ProfileCompletionCard
 import com.empathy.ai.presentation.viewmodel.UserProfileViewModel
 
 /**
- * 用户画像界面
+ * 用户画像界面 - iOS风格
+ * 
+ * 基于PRD-00021设计稿实现，使用iOS原生风格组件
+ * 
+ * @see PRD-00021 个人画像页面设计规范
  */
 @Composable
 fun UserProfileScreen(
@@ -56,8 +72,6 @@ fun UserProfileScreen(
     )
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UserProfileScreenContent(
     uiState: UserProfileUiState,
@@ -65,90 +79,127 @@ private fun UserProfileScreenContent(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("个人画像") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { onEvent(UserProfileUiEvent.ShowExportDialog) }) {
-                        Icon(Icons.Default.Share, contentDescription = "导出")
-                    }
-                    IconButton(onClick = { onEvent(UserProfileUiEvent.ShowResetConfirm) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "重置")
-                    }
-                }
+    val dimensions = AdaptiveDimensions.current
+    
+    // 维度展开状态管理
+    var expandedDimensions by remember { mutableStateOf(setOf<String>()) }
+    
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(iOSBackground)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // iOS风格导航栏
+            IOSUserProfileTopBar(
+                onNavigateBack = onNavigateBack,
+                onShare = { onEvent(UserProfileUiEvent.ShowExportDialog) },
+                onRefresh = { onEvent(UserProfileUiEvent.RefreshProfile) }
             )
-        },
-        snackbarHost = {
-            uiState.error?.let { error ->
-                Snackbar(
-                    action = {
-                        TextButton(onClick = { onEvent(UserProfileUiEvent.ClearError) }) {
-                            Text("关闭")
+
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) { 
+                    CircularProgressIndicator(color = iOSBlue) 
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = dimensions.spacingMedium),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)
+                ) {
+                    Spacer(modifier = Modifier.height(dimensions.spacingMedium))
+                    
+                    // 画像完整度卡片
+                    ProfileCompletionCard(
+                        completeness = uiState.completeness,
+                        tagCount = uiState.totalTagCount
+                    )
+
+                    Spacer(modifier = Modifier.height(dimensions.spacingSmall))
+
+                    // Tab切换器
+                    var selectedTab by remember { mutableIntStateOf(uiState.selectedTabIndex) }
+                    IOSTabSwitcher(
+                        tabs = listOf("基础信息", "自定义维度"),
+                        selectedIndex = selectedTab,
+                        onTabSelected = { 
+                            selectedTab = it
+                            onEvent(UserProfileUiEvent.SwitchTab(it)) 
                         }
+                    )
+
+                    Spacer(modifier = Modifier.height(dimensions.spacingSmall))
+
+                    // 内容区域
+                    when (selectedTab) {
+                        0 -> IOSBaseDimensionsContent(
+                            profile = uiState.profile,
+                            expandedDimensions = expandedDimensions,
+                            onToggleExpand = { dimensionKey ->
+                                expandedDimensions = if (dimensionKey in expandedDimensions) {
+                                    expandedDimensions - dimensionKey
+                                } else {
+                                    expandedDimensions + dimensionKey
+                                }
+                            },
+                            onEvent = onEvent
+                        )
+                        1 -> IOSCustomDimensionsContent(
+                            profile = uiState.profile,
+                            canAddDimension = uiState.canAddCustomDimension,
+                            expandedDimensions = expandedDimensions,
+                            onToggleExpand = { dimensionKey ->
+                                expandedDimensions = if (dimensionKey in expandedDimensions) {
+                                    expandedDimensions - dimensionKey
+                                } else {
+                                    expandedDimensions + dimensionKey
+                                }
+                            },
+                            onEvent = onEvent
+                        )
                     }
-                ) { Text(error) }
-            }
-            uiState.successMessage?.let { message ->
-                Snackbar { Text(message) }
+
+                    // 底部间距
+                    Spacer(modifier = Modifier.height(dimensions.spacingXLarge))
+                }
             }
         }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) { CircularProgressIndicator() }
-        } else {
-            val dimensions = AdaptiveDimensions.current
-            Column(
+
+        // 错误/成功提示
+        uiState.error?.let { error ->
+            Snackbar(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
+                    .align(Alignment.BottomCenter)
                     .padding(dimensions.spacingMedium),
-                verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
-            ) {
-                ProfileCompletenessCard(uiState.completeness, uiState.totalTagCount)
-
-                var selectedTab by remember { mutableIntStateOf(uiState.selectedTabIndex) }
-                TabRow(selectedTabIndex = selectedTab) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0; onEvent(UserProfileUiEvent.SwitchTab(0)) },
-                        text = { Text("基础信息") }
-                    )
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1; onEvent(UserProfileUiEvent.SwitchTab(1)) },
-                        text = { Text("自定义维度") }
-                    )
+                action = {
+                    TextButton(onClick = { onEvent(UserProfileUiEvent.ClearError) }) {
+                        Text("关闭", color = iOSBlue)
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                when (selectedTab) {
-                    0 -> BaseDimensionsContent(uiState.profile, onEvent)
-                    1 -> CustomDimensionsContent(uiState.profile, uiState.canAddCustomDimension, onEvent)
-                }
-            }
+            ) { Text(error) }
+        }
+        uiState.successMessage?.let { message ->
+            Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(dimensions.spacingMedium)
+            ) { Text(message) }
         }
 
         // Dialogs
         if (uiState.showAddTagDialog) {
-            AddTagDialog(
+            IOSAddTagDialog(
                 onConfirm = { tag -> onEvent(UserProfileUiEvent.AddTag(uiState.currentEditDimension ?: "", tag)) },
                 onDismiss = { onEvent(UserProfileUiEvent.HideTagDialog) }
             )
         }
         if (uiState.showEditTagDialog) {
-            EditTagDialog(
+            IOSEditTagDialog(
                 currentTag = uiState.currentEditTag ?: "",
                 onConfirm = { newTag ->
                     onEvent(UserProfileUiEvent.EditTag(uiState.currentEditDimension ?: "", uiState.currentEditTag ?: "", newTag))
@@ -158,13 +209,13 @@ private fun UserProfileScreenContent(
             )
         }
         if (uiState.showAddDimensionDialog) {
-            AddDimensionDialog(
+            IOSAddDimensionDialog(
                 onConfirm = { name -> onEvent(UserProfileUiEvent.AddDimension(name)) },
                 onDismiss = { onEvent(UserProfileUiEvent.HideDimensionDialog) }
             )
         }
         if (uiState.showDeleteConfirmDialog) {
-            DeleteConfirmDialog(
+            IOSDeleteConfirmDialog(
                 title = if (uiState.pendingDeleteDimension != null) "删除维度" else "删除标签",
                 message = if (uiState.pendingDeleteDimension != null) "确定要删除维度「${uiState.pendingDeleteDimension}」及其所有标签吗？"
                 else "确定要删除标签「${uiState.pendingDeleteTag}」吗？",
@@ -176,13 +227,13 @@ private fun UserProfileScreenContent(
             )
         }
         if (uiState.showExportDialog) {
-            ExportDialog(
+            IOSExportDialog(
                 onExport = { format -> onEvent(UserProfileUiEvent.ExportProfile(format)) },
                 onDismiss = { onEvent(UserProfileUiEvent.HideExportDialog) }
             )
         }
         if (uiState.showResetConfirmDialog) {
-            ResetConfirmDialog(
+            IOSResetConfirmDialog(
                 onConfirm = { onEvent(UserProfileUiEvent.ConfirmResetProfile) },
                 onDismiss = { onEvent(UserProfileUiEvent.HideResetConfirm) }
             )
@@ -191,32 +242,126 @@ private fun UserProfileScreenContent(
 }
 
 
+// ============================================================
+// iOS风格导航栏
+// ============================================================
+
+/**
+ * iOS风格顶部导航栏
+ * 
+ * 设计规格:
+ * - 背景: 白色/95%透明度 + 模糊效果
+ * - 返回按钮: iOS蓝色 chevron_left
+ * - 标题: 17sp, SemiBold
+ * - 右侧按钮: 分享 + 刷新
+ */
 @Composable
-private fun ProfileCompletenessCard(completeness: Int, totalTagCount: Int, modifier: Modifier = Modifier) {
-    val animatedProgress by animateFloatAsState(targetValue = completeness / 100f, label = "completeness")
+private fun IOSUserProfileTopBar(
+    onNavigateBack: () -> Unit,
+    onShare: () -> Unit,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val dimensions = AdaptiveDimensions.current
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(dimensions.spacingMedium), verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("画像完整度", style = MaterialTheme.typography.titleMedium)
-                Text("$completeness%", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+    
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = iOSCardBackground.copy(alpha = 0.95f),
+        shadowElevation = 0.5.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = dimensions.spacingMedium, vertical = dimensions.spacingMediumSmall),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 左侧: 返回按钮 + 标题
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
+            ) {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.size(dimensions.iconSizeLarge + 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "返回",
+                        tint = iOSBlue,
+                        modifier = Modifier.size(dimensions.iconSizeLarge)
+                    )
+                }
+                Text(
+                    text = "个人画像",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = iOSTextPrimary
+                )
             }
-            LinearProgressIndicator(progress = { animatedProgress }, modifier = Modifier.fillMaxWidth())
-            Text("已添加 $totalTagCount 个标签", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            // 右侧: 分享 + 刷新按钮
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
+            ) {
+                IconButton(onClick = onShare) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "分享",
+                        tint = iOSBlue,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                IconButton(onClick = onRefresh) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "刷新",
+                        tint = iOSBlue,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
         }
     }
 }
 
+// ============================================================
+// 基础维度内容
+// ============================================================
+
+/**
+ * 基础维度内容 - iOS风格
+ * 
+ * 使用DimensionCard组件展示各个维度
+ */
 @Composable
-private fun BaseDimensionsContent(profile: UserProfile, onEvent: (UserProfileUiEvent) -> Unit, modifier: Modifier = Modifier) {
+private fun IOSBaseDimensionsContent(
+    profile: UserProfile,
+    expandedDimensions: Set<String>,
+    onToggleExpand: (String) -> Unit,
+    onEvent: (UserProfileUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val dimensions = AdaptiveDimensions.current
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)) {
+    
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)
+    ) {
         UserProfileDimension.entries.forEach { dimension ->
+            val dimensionIcon = getDimensionIcon(dimension)
+            val dimensionColor = getDimensionColor(dimension)
+            
             DimensionCard(
+                icon = dimensionIcon,
+                iconBackgroundColor = dimensionColor,
                 title = dimension.displayName,
                 description = dimension.description,
                 tags = profile.getTagsForDimension(dimension.name),
-                presetTags = dimension.presetTags,
+                presetTags = dimension.presetTags.filter { it !in profile.getTagsForDimension(dimension.name) },
+                isExpanded = dimension.name in expandedDimensions || expandedDimensions.isEmpty(),
+                onToggleExpand = { onToggleExpand(dimension.name) },
                 onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(dimension.name)) },
                 onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(dimension.name, tag)) },
                 onSelectPresetTag = { tag -> onEvent(UserProfileUiEvent.AddTag(dimension.name, tag)) }
@@ -225,184 +370,361 @@ private fun BaseDimensionsContent(profile: UserProfile, onEvent: (UserProfileUiE
     }
 }
 
+/**
+ * 获取维度图标
+ */
+private fun getDimensionIcon(dimension: UserProfileDimension): ImageVector {
+    return when (dimension) {
+        UserProfileDimension.PERSONALITY_TRAITS -> Icons.Default.Psychology
+        UserProfileDimension.VALUES -> Icons.Default.Diamond
+        UserProfileDimension.INTERESTS -> Icons.Default.Palette
+        UserProfileDimension.COMMUNICATION_STYLE -> Icons.Default.Chat
+        UserProfileDimension.SOCIAL_PREFERENCES -> Icons.Default.Groups
+    }
+}
+
+/**
+ * 获取维度颜色
+ */
+private fun getDimensionColor(dimension: UserProfileDimension): Color {
+    return when (dimension) {
+        UserProfileDimension.PERSONALITY_TRAITS -> iOSPurple
+        UserProfileDimension.VALUES -> iOSBlue
+        UserProfileDimension.INTERESTS -> iOSGreen
+        UserProfileDimension.COMMUNICATION_STYLE -> iOSOrange
+        UserProfileDimension.SOCIAL_PREFERENCES -> iOSRed
+    }
+}
+
+// ============================================================
+// 自定义维度内容
+// ============================================================
+
+/**
+ * 自定义维度内容 - iOS风格
+ */
 @Composable
-private fun CustomDimensionsContent(profile: UserProfile, canAddDimension: Boolean, onEvent: (UserProfileUiEvent) -> Unit, modifier: Modifier = Modifier) {
+private fun IOSCustomDimensionsContent(
+    profile: UserProfile,
+    canAddDimension: Boolean,
+    expandedDimensions: Set<String>,
+    onToggleExpand: (String) -> Unit,
+    onEvent: (UserProfileUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val dimensions = AdaptiveDimensions.current
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)) {
+    
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)
+    ) {
+        // 添加自定义维度按钮
         if (canAddDimension) {
-            OutlinedButton(onClick = { onEvent(UserProfileUiEvent.ShowAddDimensionDialog) }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(dimensions.spacingSmall))
-                Text("添加自定义维度")
-            }
+            IOSAddDimensionButton(
+                onClick = { onEvent(UserProfileUiEvent.ShowAddDimensionDialog) }
+            )
         } else {
-            Text("已达到自定义维度上限（最多10个）", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = "已达到自定义维度上限（最多10个）",
+                fontSize = 13.sp,
+                color = iOSRed,
+                modifier = Modifier.padding(vertical = dimensions.spacingSmall)
+            )
         }
 
+        // 自定义维度列表
         profile.customDimensions.forEach { (name, tags) ->
-            DimensionCard(
-                title = name, description = "自定义维度", tags = tags, presetTags = emptyList(), isCustom = true,
+            IOSCustomDimensionCard(
+                name = name,
+                tags = tags,
+                isExpanded = name in expandedDimensions || expandedDimensions.isEmpty(),
+                onToggleExpand = { onToggleExpand(name) },
                 onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(name)) },
                 onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(name, tag)) },
-                onSelectPresetTag = {},
                 onDeleteDimension = { onEvent(UserProfileUiEvent.ShowDeleteDimensionConfirm(name)) }
             )
         }
 
+        // 空状态
         if (profile.customDimensions.isEmpty()) {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(modifier = Modifier.fillMaxWidth().padding(dimensions.spacingLarge), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Category, contentDescription = null, modifier = Modifier.size(dimensions.iconSizeXLarge), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.height(dimensions.spacingSmall))
-                    Text("暂无自定义维度", style = MaterialTheme.typography.bodyLarge)
-                    Text("点击上方按钮添加您的专属维度", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+            IOSEmptyCustomDimensionCard()
         }
     }
 }
 
-
+/**
+ * iOS风格添加维度按钮
+ */
 @Composable
-private fun DimensionCard(
-    title: String, description: String, tags: List<String>, presetTags: List<String>,
-    isCustom: Boolean = false, onAddTag: () -> Unit, onEditTag: (String) -> Unit,
-    onSelectPresetTag: (String) -> Unit, onDeleteDimension: (() -> Unit)? = null, modifier: Modifier = Modifier
+private fun IOSAddDimensionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(true) }
-    val rotationAngle by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "rotation")
     val dimensions = AdaptiveDimensions.current
-
-    Card(modifier = modifier.fillMaxWidth().animateContentSize()) {
-        Column(modifier = Modifier.padding(dimensions.spacingMedium)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Row {
-                    if (isCustom && onDeleteDimension != null) {
-                        IconButton(onClick = onDeleteDimension) {
-                            Icon(Icons.Default.Delete, contentDescription = "删除维度", tint = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                    IconButton(onClick = { expanded = !expanded }) {
-                        Icon(Icons.Default.ExpandMore, contentDescription = if (expanded) "收起" else "展开", modifier = Modifier.rotate(rotationAngle))
-                    }
-                }
-            }
-
-            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-                Column(modifier = Modifier.padding(top = dimensions.spacingMediumSmall), verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
-                    if (tags.isNotEmpty()) TagChipGroup(tags = tags, onTagClick = onEditTag)
-                    AssistChip(onClick = onAddTag, label = { Text("添加标签") }, leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(dimensions.iconSizeSmall + 2.dp)) })
-                    if (presetTags.isNotEmpty()) {
-                        Text("快速选择", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
-                            items(presetTags.filter { it !in tags }) { tag ->
-                                SuggestionChip(onClick = { onSelectPresetTag(tag) }, label = { Text(tag) })
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
+            .background(iOSCardBackground)
+            .clickable(onClick = onClick)
+            .padding(dimensions.spacingMedium),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            tint = iOSBlue,
+            modifier = Modifier.size(dimensions.iconSizeSmall + 4.dp)
+        )
+        Spacer(modifier = Modifier.width(dimensions.spacingSmall))
+        Text(
+            text = "添加自定义维度",
+            fontSize = 15.sp,
+            color = iOSBlue,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * iOS风格自定义维度卡片
+ */
 @Composable
-private fun TagChipGroup(tags: List<String>, onTagClick: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun IOSCustomDimensionCard(
+    name: String,
+    tags: List<String>,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onAddTag: () -> Unit,
+    onEditTag: (String) -> Unit,
+    onDeleteDimension: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    DimensionCard(
+        icon = Icons.Default.Category,
+        iconBackgroundColor = iOSPurple,
+        title = name,
+        description = "自定义维度",
+        tags = tags,
+        presetTags = emptyList(),
+        isExpanded = isExpanded,
+        onToggleExpand = onToggleExpand,
+        onAddTag = onAddTag,
+        onEditTag = onEditTag,
+        onSelectPresetTag = {},
+        modifier = modifier
+    )
+}
+
+/**
+ * iOS风格空自定义维度卡片
+ */
+@Composable
+private fun IOSEmptyCustomDimensionCard(
+    modifier: Modifier = Modifier
+) {
     val dimensions = AdaptiveDimensions.current
-    FlowRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall), verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
-        tags.forEach { tag ->
-            InputChip(
-                selected = false, onClick = { onTagClick(tag) },
-                label = { Text(tag, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                trailingIcon = { Icon(Icons.Default.Edit, contentDescription = "编辑", modifier = Modifier.size(dimensions.iconSizeSmall)) }
-            )
-        }
+    
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(dimensions.cornerRadiusMedium))
+            .background(iOSCardBackground)
+            .padding(dimensions.spacingLarge),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Category,
+            contentDescription = null,
+            modifier = Modifier.size(dimensions.iconSizeXLarge),
+            tint = iOSTextSecondary
+        )
+        Spacer(modifier = Modifier.height(dimensions.spacingSmall))
+        Text(
+            text = "暂无自定义维度",
+            fontSize = 15.sp,
+            color = iOSTextPrimary
+        )
+        Text(
+            text = "点击上方按钮添加您的专属维度",
+            fontSize = 13.sp,
+            color = iOSTextSecondary
+        )
     }
 }
 
 
-// ==================== Dialogs ====================
+// ============================================================
+// iOS风格对话框
+// ============================================================
 
+/**
+ * iOS风格添加标签对话框
+ */
 @Composable
-private fun AddTagDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
+private fun IOSAddTagDialog(
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
     var tagInput by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加标签") },
+        containerColor = iOSCardBackground,
+        title = { 
+            Text(
+                "添加标签",
+                fontWeight = FontWeight.SemiBold,
+                color = iOSTextPrimary
+            ) 
+        },
         text = {
             OutlinedTextField(
-                value = tagInput, onValueChange = { tagInput = it; isError = false },
-                label = { Text("标签内容") }, placeholder = { Text("请输入标签") },
-                singleLine = true, isError = isError,
-                supportingText = if (isError) { { Text("标签不能为空且长度不超过20字符") } } else null,
-                modifier = Modifier.fillMaxWidth()
+                value = tagInput,
+                onValueChange = { tagInput = it; isError = false },
+                label = { Text("标签内容") },
+                placeholder = { Text("请输入标签") },
+                singleLine = true,
+                isError = isError,
+                supportingText = if (isError) { { Text("标签不能为空且长度不超过20字符", color = iOSRed) } } else null,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = iOSBlue,
+                    cursorColor = iOSBlue
+                )
             )
         },
         confirmButton = {
             TextButton(onClick = {
                 val trimmed = tagInput.trim()
-                if (trimmed.isNotEmpty() && trimmed.length <= 20) { onConfirm(trimmed); onDismiss() }
-                else isError = true
-            }) { Text("添加") }
+                if (trimmed.isNotEmpty() && trimmed.length <= 20) { 
+                    onConfirm(trimmed)
+                    onDismiss() 
+                } else {
+                    isError = true
+                }
+            }) { 
+                Text("添加", color = iOSBlue, fontWeight = FontWeight.SemiBold) 
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("取消", color = iOSBlue) 
+            } 
+        }
     )
 }
 
+/**
+ * iOS风格编辑标签对话框
+ */
 @Composable
-private fun EditTagDialog(currentTag: String, onConfirm: (String) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
+private fun IOSEditTagDialog(
+    currentTag: String,
+    onConfirm: (String) -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit
+) {
     var tagInput by remember { mutableStateOf(currentTag) }
     var isError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("编辑标签") },
+        containerColor = iOSCardBackground,
+        title = { 
+            Text(
+                "编辑标签",
+                fontWeight = FontWeight.SemiBold,
+                color = iOSTextPrimary
+            ) 
+        },
         text = {
             OutlinedTextField(
-                value = tagInput, onValueChange = { tagInput = it; isError = false },
-                label = { Text("标签内容") }, singleLine = true, isError = isError,
-                supportingText = if (isError) { { Text("标签不能为空且长度不超过20字符") } } else null,
-                modifier = Modifier.fillMaxWidth()
+                value = tagInput,
+                onValueChange = { tagInput = it; isError = false },
+                label = { Text("标签内容") },
+                singleLine = true,
+                isError = isError,
+                supportingText = if (isError) { { Text("标签不能为空且长度不超过20字符", color = iOSRed) } } else null,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = iOSBlue,
+                    cursorColor = iOSBlue
+                )
             )
         },
         confirmButton = {
             Row {
-                TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("删除") }
+                TextButton(
+                    onClick = onDelete
+                ) { 
+                    Text("删除", color = iOSRed) 
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = {
                     val trimmed = tagInput.trim()
-                    if (trimmed.isNotEmpty() && trimmed.length <= 20) { onConfirm(trimmed); onDismiss() }
-                    else isError = true
-                }) { Text("保存") }
+                    if (trimmed.isNotEmpty() && trimmed.length <= 20) { 
+                        onConfirm(trimmed)
+                        onDismiss() 
+                    } else {
+                        isError = true
+                    }
+                }) { 
+                    Text("保存", color = iOSBlue, fontWeight = FontWeight.SemiBold) 
+                }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("取消", color = iOSBlue) 
+            } 
+        }
     )
 }
 
+/**
+ * iOS风格添加维度对话框
+ */
 @Composable
-private fun AddDimensionDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
+private fun IOSAddDimensionDialog(
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
     var nameInput by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加自定义维度") },
+        containerColor = iOSCardBackground,
+        title = { 
+            Text(
+                "添加自定义维度",
+                fontWeight = FontWeight.SemiBold,
+                color = iOSTextPrimary
+            ) 
+        },
         text = {
             OutlinedTextField(
-                value = nameInput, onValueChange = { nameInput = it; isError = false },
-                label = { Text("维度名称") }, placeholder = { Text("例如：职业技能、生活习惯") },
-                singleLine = true, isError = isError,
-                supportingText = if (isError) { { Text(errorMessage) } } else { { Text("2-10个字符") } },
-                modifier = Modifier.fillMaxWidth()
+                value = nameInput,
+                onValueChange = { nameInput = it; isError = false },
+                label = { Text("维度名称") },
+                placeholder = { Text("例如：职业技能、生活习惯") },
+                singleLine = true,
+                isError = isError,
+                supportingText = if (isError) { 
+                    { Text(errorMessage, color = iOSRed) } 
+                } else { 
+                    { Text("2-10个字符", color = iOSTextSecondary) } 
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = iOSBlue,
+                    cursorColor = iOSBlue
+                )
             )
         },
         confirmButton = {
@@ -415,68 +737,172 @@ private fun AddDimensionDialog(onConfirm: (String) -> Unit, onDismiss: () -> Uni
                     UserProfileDimension.isBaseDimension(trimmed) -> { isError = true; errorMessage = "不能与基础维度名称重复" }
                     else -> { onConfirm(trimmed); onDismiss() }
                 }
-            }) { Text("添加") }
+            }) { 
+                Text("添加", color = iOSBlue, fontWeight = FontWeight.SemiBold) 
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("取消", color = iOSBlue) 
+            } 
+        }
     )
 }
 
+/**
+ * iOS风格删除确认对话框
+ */
 @Composable
-private fun DeleteConfirmDialog(title: String, message: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun IOSDeleteConfirmDialog(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-        title = { Text(title) },
-        text = { Text(message) },
+        containerColor = iOSCardBackground,
+        icon = { 
+            Icon(
+                Icons.Default.Warning, 
+                contentDescription = null, 
+                tint = iOSRed,
+                modifier = Modifier.size(32.dp)
+            ) 
+        },
+        title = { 
+            Text(
+                title,
+                fontWeight = FontWeight.SemiBold,
+                color = iOSTextPrimary
+            ) 
+        },
+        text = { 
+            Text(message, color = iOSTextSecondary) 
+        },
         confirmButton = {
-            TextButton(onClick = { onConfirm(); onDismiss() }, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("删除") }
+            TextButton(onClick = { onConfirm(); onDismiss() }) { 
+                Text("删除", color = iOSRed, fontWeight = FontWeight.SemiBold) 
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("取消", color = iOSBlue) 
+            } 
+        }
     )
 }
 
+/**
+ * iOS风格导出对话框
+ */
 @Composable
-private fun ExportDialog(onExport: (ExportFormat) -> Unit, onDismiss: () -> Unit) {
+private fun IOSExportDialog(
+    onExport: (ExportFormat) -> Unit,
+    onDismiss: () -> Unit
+) {
     val dimensions = AdaptiveDimensions.current
+    
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("导出画像") },
+        containerColor = iOSCardBackground,
+        title = { 
+            Text(
+                "导出画像",
+                fontWeight = FontWeight.SemiBold,
+                color = iOSTextPrimary
+            ) 
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
-                Text("选择导出格式", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "选择导出格式", 
+                    fontSize = 13.sp,
+                    color = iOSTextSecondary
+                )
                 ExportFormat.entries.forEach { format ->
-                    OutlinedButton(onClick = { onExport(format); onDismiss() }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(imageVector = when (format) {
-                            ExportFormat.JSON -> Icons.Default.Code
-                            ExportFormat.PLAIN_TEXT -> Icons.Default.Description
-                        }, contentDescription = null)
-                        Spacer(modifier = Modifier.width(dimensions.spacingSmall))
-                        Text(format.displayName)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))
+                            .clickable { onExport(format); onDismiss() }
+                            .padding(dimensions.spacingMediumSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = when (format) {
+                                ExportFormat.JSON -> Icons.Default.Code
+                                ExportFormat.PLAIN_TEXT -> Icons.Default.Description
+                            },
+                            contentDescription = null,
+                            tint = iOSBlue
+                        )
+                        Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
+                        Text(
+                            format.displayName,
+                            color = iOSTextPrimary
+                        )
                     }
                 }
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("取消", color = iOSBlue) 
+            } 
+        }
     )
 }
 
+/**
+ * iOS风格重置确认对话框
+ */
 @Composable
-private fun ResetConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun IOSResetConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-        title = { Text("重置画像") },
-        text = { Text("确定要重置所有画像数据吗？此操作不可撤销，所有标签和自定义维度都将被清除。") },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(); onDismiss() }, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("重置") }
+        containerColor = iOSCardBackground,
+        icon = { 
+            Icon(
+                Icons.Default.Warning, 
+                contentDescription = null, 
+                tint = iOSRed,
+                modifier = Modifier.size(32.dp)
+            ) 
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        title = { 
+            Text(
+                "重置画像",
+                fontWeight = FontWeight.SemiBold,
+                color = iOSTextPrimary
+            ) 
+        },
+        text = { 
+            Text(
+                "确定要重置所有画像数据吗？此操作不可撤销，所有标签和自定义维度都将被清除。",
+                color = iOSTextSecondary
+            ) 
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(); onDismiss() }) { 
+                Text("重置", color = iOSRed, fontWeight = FontWeight.SemiBold) 
+            }
+        },
+        dismissButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("取消", color = iOSBlue) 
+            } 
+        }
     )
 }
 
-
-// ==================== Previews ====================
+// ============================================================
+// 预览函数
+// ============================================================
 
 @Preview(showBackground = true)
 @Composable
@@ -492,31 +918,41 @@ private fun UserProfileScreenPreview() {
                 ),
                 isLoading = false
             ),
-            onEvent = {}, onNavigateBack = {}
+            onEvent = {},
+            onNavigateBack = {}
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun ProfileCompletenessCardPreview() {
-    EmpathyTheme { ProfileCompletenessCard(completeness = 65, totalTagCount = 12) }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DimensionCardPreview() {
+private fun IOSUserProfileTopBarPreview() {
     EmpathyTheme {
-        DimensionCard(
-            title = "性格特点", description = "描述你的性格特征",
-            tags = listOf("内向", "理性", "细心"), presetTags = listOf("外向", "感性", "乐观", "谨慎"),
-            onAddTag = {}, onEditTag = {}, onSelectPresetTag = {}
+        IOSUserProfileTopBar(
+            onNavigateBack = {},
+            onShare = {},
+            onRefresh = {}
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun EmptyCustomDimensionsPreview() {
-    EmpathyTheme { CustomDimensionsContent(profile = UserProfile(), canAddDimension = true, onEvent = {}) }
+private fun IOSEmptyCustomDimensionCardPreview() {
+    EmpathyTheme {
+        IOSEmptyCustomDimensionCard(
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun IOSAddDimensionButtonPreview() {
+    EmpathyTheme {
+        IOSAddDimensionButton(
+            onClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
 }

@@ -29,7 +29,8 @@
       "Bash(python -m json.tool:*)",
       "Bash(findstr:*)",
       "Bash(cd:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Skill(code-architecture-analysis)"
     ],
     "deny": [],
     "ask": []
