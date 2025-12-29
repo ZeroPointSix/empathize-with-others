@@ -70,7 +70,8 @@ class SettingsViewModel @Inject constructor(
             is SettingsUiEvent.HideClearDataDialog -> hideClearDataDialog()
             is SettingsUiEvent.ClearAllData -> clearAllData()
             is SettingsUiEvent.ToggleFloatingWindow -> toggleFloatingWindow()
-            is SettingsUiEvent.RequestFloatingWindowPermission -> {}
+            is SettingsUiEvent.RequestFloatingWindowPermission -> requestFloatingWindowPermission()
+            is SettingsUiEvent.PermissionRequestHandled -> clearPendingPermissionRequest()
             is SettingsUiEvent.ShowPermissionDialog -> showPermissionDialog()
             is SettingsUiEvent.HidePermissionDialog -> hidePermissionDialog()
             is SettingsUiEvent.CheckFloatingWindowPermission -> checkFloatingWindowPermission()
@@ -558,5 +559,22 @@ class SettingsViewModel @Inject constructor(
 
     private fun hidePermissionDialog() {
         _uiState.update { it.copy(showPermissionDialog = false) }
+    }
+    
+    /**
+     * 请求悬浮窗权限
+     * 设置pendingPermissionRequest标志，UI层检测到后触发实际的权限请求Intent
+     */
+    private fun requestFloatingWindowPermission() {
+        android.util.Log.d("SettingsViewModel", "触发悬浮窗权限请求")
+        _uiState.update { it.copy(pendingPermissionRequest = true) }
+    }
+    
+    /**
+     * 清除权限请求标志
+     * UI层处理完权限请求后调用
+     */
+    private fun clearPendingPermissionRequest() {
+        _uiState.update { it.copy(pendingPermissionRequest = false) }
     }
 }

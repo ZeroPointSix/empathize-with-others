@@ -42,7 +42,10 @@ data class SettingsUiState(
     // UI 交互状态
     val showProviderDialog: Boolean = false,
     val showClearDataDialog: Boolean = false,
-    val showPermissionDialog: Boolean = false
+    val showPermissionDialog: Boolean = false,
+    
+    // 权限请求标志 - 当为true时，UI层应触发权限请求Intent
+    val pendingPermissionRequest: Boolean = false
 ) {
     /**
      * 是否已配置服务商
