@@ -195,8 +195,36 @@ adb logcat > logcat.txt      # 保存到文件
 
 ## 文档位置
 
+### 快速参考文档（steering目录）
 - 产品概览：`.kiro/steering/product.md`
 - 技术栈：`.kiro/steering/tech.md`
 - 项目结构：`.kiro/steering/structure.md`
 - 设置功能：`.kiro/steering/settings-feature.md`
 - 当前任务：`WORKSPACE.md`
+
+### 📚 长期文档体系（需要分析时自动读取）
+
+项目的长期文档存放在 `文档/项目文档/` 目录下：
+
+```
+文档/项目文档/
+├── README.md              # 项目文档总入口
+├── domain/                # 领域层（业务模型、接口、用例）
+├── data/                  # 数据层（数据库、网络、实现）
+├── presentation/          # 表现层（UI、ViewModel）
+├── app/                   # 应用层文档
+└── di/                    # 依赖注入文档
+```
+
+### 自动读取规则
+
+| 场景 | 应读取的文档路径 |
+|------|-----------------|
+| **理解整体架构** | `文档/项目文档/README.md` |
+| **领域层开发** | `文档/项目文档/domain/` |
+| **数据层开发** | `文档/项目文档/data/` |
+| **UI开发** | `文档/项目文档/presentation/` |
+| **理解业务模型** | `文档/项目文档/domain/model/README.md` |
+| **理解Repository** | `文档/项目文档/domain/repository/README.md` |
+| **理解数据库** | `文档/项目文档/data/local/README.md` |
+| **理解API接口** | `文档/项目文档/data/remote/README.md` |

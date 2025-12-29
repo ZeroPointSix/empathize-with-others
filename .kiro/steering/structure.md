@@ -87,7 +87,7 @@
 
 ```
 domain/src/main/kotlin/com/empathy/ai/domain/
-├── model/                    # ✅ 业务实体（68个模型）
+├── model/                    # ✅ 业务实体（66个模型）
 │   ├── ActionType.kt
 │   ├── AiModel.kt
 │   ├── AiProvider.kt
@@ -100,7 +100,7 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 │   ├── PromptScene.kt        # 提示词场景（已优化为4个核心场景）
 │   ├── GlobalPromptConfig.kt # 全局提示词配置（v3）
 │   └── ...                   # 其他68个模型
-├── repository/               # ✅ 仓库接口（12个）
+├── repository/               # ✅ 仓库接口（13个）
 │   ├── AiProviderRepository.kt
 │   ├── AiRepository.kt
 │   ├── BrainTagRepository.kt
@@ -114,7 +114,7 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 │   ├── SettingsRepository.kt
 │   ├── TopicRepository.kt
 │   └── UserProfileRepository.kt
-├── usecase/                  # ✅ 业务用例（37个）
+├── usecase/                  # ✅ 业务用例（38个）
 │   ├── AnalyzeChatUseCase.kt
 │   ├── PolishDraftUseCase.kt
 │   ├── GenerateReplyUseCase.kt
@@ -123,7 +123,7 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 ├── service/                  # ✅ 领域服务（2个）
 │   ├── PrivacyEngine.kt
 │   └── SessionContextService.kt
-└── util/                     # ✅ 领域工具类（28个）
+└── util/                     # ✅ 领域工具类（29个）
     ├── Logger.kt             # 日志接口（无Android依赖）
     ├── PromptBuilder.kt
     ├── PromptSanitizer.kt
@@ -138,7 +138,7 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 
 ```
 data/src/main/kotlin/com/empathy/ai/data/
-├── di/                       # ✅ DI模块（6个）
+├── di/                       # ✅ DI模块（7个）
 │   ├── DatabaseModule.kt
 │   ├── NetworkModule.kt
 │   ├── RepositoryModule.kt
@@ -181,7 +181,7 @@ data/src/main/kotlin/com/empathy/ai/data/
 │       ├── MessageDto.kt
 │       ├── ModelsResponseDto.kt
 │       └── AiSummaryResponseDto.kt
-├── repository/               # ✅ 仓库实现（10个）
+├── repository/               # ✅ 仓库实现（13个）
 │   ├── AiProviderRepositoryImpl.kt
 │   ├── AiRepositoryImpl.kt
 │   ├── BrainTagRepositoryImpl.kt
@@ -439,26 +439,27 @@ class ChatViewModel @Inject constructor(
 
 ### ✅ 完全实现的模块
 - **:domain模块**: 100%完成
-  - 68个业务模型
-  - 12个Repository接口
-  - 37个UseCase
+  - 66个业务模型
+  - 13个Repository接口
+  - 38个UseCase
   - 2个领域服务
-  - 28个工具类
+  - 29个工具类
   - 无Android依赖
 - **:data模块**: 100%完成
-  - Room数据库v10
-  - 6个DI模块
+  - Room数据库v11
+  - 7个DI模块
   - 7个DAO
   - 7个Entity
-  - 10个Repository实现
-  - 完整的Parser和Util
+  - 13个Repository实现
+  - 6个Parser
+  - 完整的工具类
 - **:presentation模块**: 100%完成
-  - Compose UI组件（180+个文件）
-  - 13个ViewModel
+  - 245个UI组件
+  - 19个ViewModel
   - Navigation系统
   - Theme系统
 - **:app模块**: 100%完成
-  - 9个应用级DI模块
+  - 11个应用级DI模块
   - Android服务
   - 应用入口
 
@@ -466,7 +467,7 @@ class ChatViewModel @Inject constructor(
 - **Clean Architecture**: ⭐⭐⭐⭐⭐ (A级，完全合规)
 - **模块化**: ⭐⭐⭐⭐⭐ (A级，4模块架构)
 - **依赖方向**: ⭐⭐⭐⭐⭐ (A级，严格单向依赖)
-- **测试覆盖**: ⭐⭐⭐⭐⭐ (A级，98.6%覆盖率)
+- **测试覆盖**: ⭐⭐⭐☆☆ (C级，50.9%总覆盖率，243个测试文件)
 
 ---
 

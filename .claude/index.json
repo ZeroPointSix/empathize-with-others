@@ -7,7 +7,7 @@
     "completion": 95,
     "techStack": {
       "gradle": "8.13",
-      "kotlin": "2.0.21",
+      "kotlin": "2.0.21 (K2编译器)",
       "agp": "8.7.3",
       "composeBOM": "2024.12.01",
       "hilt": "2.52",
@@ -17,15 +17,17 @@
       "room": "v11"
     },
     "stats": {
-      "totalKotlinFiles": 720,
-      "mainSourceFiles": 477,
-      "testFiles": 243,
-      "testCoverage": "50.9%",
+      "totalKotlinFiles": 722,
+      "mainSourceFiles": 479,
+      "unitTestFiles": 209,
+      "androidTestFiles": 34,
+      "testCoverage": "33.5%",
       "domainFiles": 176,
       "dataFiles": 87,
-      "presentationFiles": 271,
-      "appFiles": 186,
-      "architectureCompliance": "100%"
+      "presentationFiles": 272,
+      "appFiles": 187,
+      "architectureCompliance": "100%",
+      "maturity": "89.2/100 (A级)"
     },
     "modules": {
       "domain": {
@@ -37,10 +39,10 @@
         "mainFiles": 148,
         "testFiles": 28,
         "submodules": {
-          "model": 76,
+          "model": 66,
           "repository": 13,
           "usecase": 38,
-          "service": 4,
+          "service": 2,
           "util": 29
         },
         "status": "完成"
@@ -52,15 +54,15 @@
         "dependencies": ["domain"],
         "fileCount": 87,
         "mainFiles": 64,
-        "testFiles": 18,
-        "androidTestFiles": 5,
+        "testFiles": 19,
+        "androidTestFiles": 4,
         "submodules": {
           "local": 30,
           "remote": 6,
-          "repository": 14,
+          "repository": 13,
           "parser": 6,
           "di": 7,
-          "util": 4
+          "util": 2
         },
         "status": "完成"
       },
@@ -69,15 +71,15 @@
         "path": "presentation/",
         "description": "UI层，Compose、ViewModel、Navigation",
         "dependencies": ["domain"],
-        "fileCount": 271,
-        "mainFiles": 244,
-        "testFiles": 24,
-        "androidTestFiles": 3,
+        "fileCount": 272,
+        "mainFiles": 245,
+        "testFiles": 22,
+        "androidTestFiles": 5,
         "submodules": {
           "ui": 187,
-          "viewmodel": 18,
+          "viewmodel": 19,
           "navigation": 4,
-          "theme": 7,
+          "theme": 17,
           "util": 3
         },
         "status": "完成"
@@ -87,33 +89,33 @@
         "path": "app/",
         "description": "应用入口，DI配置，Android服务",
         "dependencies": ["domain", "data", "presentation"],
-        "fileCount": 186,
-        "mainFiles": 21,
-        "testFiles": 114,
-        "testDisabledFiles": 5,
+        "fileCount": 187,
+        "mainFiles": 22,
+        "testFiles": 140,
         "androidTestFiles": 25,
         "submodules": {
           "app": 2,
           "di": 11,
           "service": 2,
           "util": 2,
-          "notification": 2
+          "notification": 1,
+          "ui": 2
         },
         "status": "完成"
       }
     }
   },
   "scanInfo": {
-    "timestamp": "2025-12-27T20:40:49+08:00",
+    "timestamp": "2025-12-29T10:08:42+08:00",
     "strategy": "项目AI上下文初始化（自适应版）",
-    "scannedFiles": 720,
+    "scannedFiles": 722,
     "coverage": "100%",
     "truncated": false,
     "phases": {
       "phaseA": {
         "name": "全仓清点（轻量）",
         "status": "完成",
-        "findings": "识别出4个主要Gradle模块，720个Kotlin文件（477个主源码 + 243测试）"
+        "findings": "识别出4个主要Gradle模块，722个Kotlin文件（479个主源码 + 209单元测试 + 34Android测试）"
       },
       "phaseB": {
         "name": "模块优先扫描（中等）",
@@ -162,13 +164,13 @@
       "*.jks",
       "gradle.properties",
       "local.properties",
-      "*.xml"
+      "temp_apk_analysis/**"
     ]
   },
   "documentation": {
     "root": "CLAUDE.md",
     "projectDocs": "文档/项目文档",
-    "lastUpdate": "2025-12-27T20:40:49+08:00",
+    "lastUpdate": "2025-12-29T10:08:42+08:00",
     "architecture": {
       "cleanArchitectureCompliance": "100%合规",
       "violations": 0,
@@ -206,22 +208,16 @@
         "model/ContactProfile.kt",
         "model/BrainTag.kt",
         "model/Fact.kt",
-        "model/FactCategory.kt",
         "model/UserProfile.kt",
         "model/DailySummary.kt",
         "model/ConversationLog.kt",
         "model/PromptScene.kt",
-        "model/GlobalPromptConfig.kt",
         "model/AiProvider.kt",
         "repository/ContactRepository.kt",
-        "repository/BrainTagRepository.kt",
         "repository/AiRepository.kt",
-        "repository/UserProfileRepository.kt",
         "usecase/AnalyzeChatUseCase.kt",
         "usecase/GenerateReplyUseCase.kt",
         "usecase/PolishDraftUseCase.kt",
-        "usecase/SummarizeDailyConversationsUseCase.kt",
-        "usecase/ManualSummaryUseCase.kt",
         "service/PrivacyEngine.kt",
         "util/PromptBuilder.kt",
         "util/Logger.kt"
@@ -232,7 +228,7 @@
           "name": "model",
           "type": "entities",
           "description": "业务实体模型，纯Kotlin无Android依赖",
-          "fileCount": 76,
+          "fileCount": 66,
           "status": "完成"
         },
         {
@@ -256,7 +252,7 @@
           "name": "service",
           "type": "domain_services",
           "description": "领域服务，处理复杂业务逻辑",
-          "fileCount": 4,
+          "fileCount": 2,
           "status": "完成"
         },
         {
@@ -276,8 +272,8 @@
       "description": "数据层 - 数据访问实现",
       "fileCount": 87,
       "mainFiles": 64,
-      "testFiles": 18,
-      "androidTestFiles": 5,
+      "testFiles": 19,
+      "androidTestFiles": 4,
       "status": "完成",
       "documented": true,
       "keyFiles": [
@@ -286,17 +282,11 @@
         "local/ApiKeyStorage.kt",
         "local/FloatingWindowPreferences.kt",
         "local/dao/ContactDao.kt",
-        "local/dao/BrainTagDao.kt",
-        "local/dao/AiProviderDao.kt",
-        "local/entity/ContactProfileEntity.kt",
         "remote/api/OpenAiApi.kt",
         "repository/ContactRepositoryImpl.kt",
         "repository/AiRepositoryImpl.kt",
-        "repository/AiProviderRepositoryImpl.kt",
-        "parser/AiResponseParser.kt",
         "di/DatabaseModule.kt",
-        "di/NetworkModule.kt",
-        "di/RepositoryModule.kt"
+        "di/NetworkModule.kt"
       ],
       "submodules": [
         {
@@ -320,7 +310,7 @@
           "name": "repository",
           "type": "implementations",
           "description": "仓库实现，实现domain层定义的接口",
-          "fileCount": 14,
+          "fileCount": 13,
           "status": "完成"
         },
         {
@@ -346,33 +336,19 @@
       "name": "presentation",
       "type": "android_library",
       "description": "表现层 - UI和交互，Compose实现",
-      "fileCount": 271,
-      "mainFiles": 244,
-      "testFiles": 24,
-      "androidTestFiles": 3,
+      "fileCount": 272,
+      "mainFiles": 245,
+      "testFiles": 22,
+      "androidTestFiles": 5,
       "status": "完成",
       "documented": true,
       "keyFiles": [
         "ui/screen/contact/ContactListScreen.kt",
-        "ui/screen/contact/ContactDetailScreen.kt",
         "ui/screen/chat/ChatScreen.kt",
-        "ui/screen/settings/SettingsScreen.kt",
-        "ui/screen/aiconfig/AiConfigScreen.kt",
-        "ui/screen/userprofile/UserProfileScreen.kt",
-        "ui/component/card/*",
-        "ui/component/chip/*",
-        "ui/component/dialog/*",
         "ui/floating/FloatingViewV2.kt",
-        "ui/floating/FloatingBubbleView.kt",
         "viewmodel/ContactListViewModel.kt",
-        "viewmodel/ContactDetailViewModel.kt",
-        "viewmodel/ChatViewModel.kt",
-        "viewmodel/SettingsViewModel.kt",
-        "viewmodel/AiConfigViewModel.kt",
         "navigation/NavGraph.kt",
-        "navigation/NavRoutes.kt",
-        "theme/Theme.kt",
-        "theme/Color.kt"
+        "theme/Theme.kt"
       ],
       "submodules": [
         {
@@ -388,7 +364,7 @@
           "name": "viewmodel",
           "type": "viewmodels",
           "description": "MVVM架构的ViewModel层，管理UI状态",
-          "fileCount": 18,
+          "fileCount": 19,
           "status": "完成"
         },
         {
@@ -404,15 +380,7 @@
           "name": "theme",
           "type": "theme",
           "description": "Compose主题配置，颜色和字体系统",
-          "fileCount": 7,
-          "status": "完成"
-        },
-        {
-          "path": "presentation/src/main/kotlin/com/empathy/ai/presentation/util",
-          "name": "util",
-          "type": "utilities",
-          "description": "表现层工具类",
-          "fileCount": 3,
+          "fileCount": 17,
           "status": "完成"
         }
       ]
@@ -422,23 +390,18 @@
       "name": "app",
       "type": "application",
       "description": "应用入口和全局初始化模块",
-      "fileCount": 186,
-      "mainFiles": 21,
-      "testFiles": 114,
-      "testDisabledFiles": 5,
+      "fileCount": 187,
+      "mainFiles": 22,
+      "testFiles": 140,
       "androidTestFiles": 25,
       "status": "完成",
       "documented": true,
       "keyFiles": [
         "app/EmpathyApplication.kt",
         "ui/MainActivity.kt",
+        "di/LoggerModule.kt",
         "di/ServiceModule.kt",
-        "di/AppDispatcherModule.kt",
-        "di/DatabaseModule.kt",
-        "di/NetworkModule.kt",
-        "di/FloatingWindowModule.kt",
-        "di/UserProfileModule.kt",
-        "service/FloatingWindowService.kt",
+        "domain/service/FloatingWindowService.kt",
         "util/AndroidFloatingWindowManager.kt"
       ],
       "submodules": [
@@ -479,7 +442,7 @@
           "name": "notification",
           "type": "notification",
           "description": "通知管理",
-          "fileCount": 2,
+          "fileCount": 1,
           "status": "完成"
         }
       ]
@@ -493,70 +456,27 @@
         "issue": "部分测试文件在app模块而非对应模块中",
         "priority": "低",
         "impact": "架构可优化，但不影响功能"
-      },
-      {
-        "module": "data",
-        "issue": "5个androidTest文件未在统计中完整显示",
-        "priority": "低",
-        "impact": "统计可完善"
       }
     ]
   },
   "nextSteps": [
     "项目AI上下文初始化完成",
     "文档体系已完善，覆盖率100%",
-    "建议：保持架构文档与代码同步",
-    "建议：考虑将app模块中的测试文件迁移到对应模块"
+    "建议：保持架构文档与代码同步"
   ],
   "coverageDetails": {
     "totalModules": 4,
     "documentedModules": 4,
     "documentationCoverage": "100%",
-    "scannedFiles": 720,
-    "totalSourceFiles": 720,
+    "scannedFiles": 722,
+    "totalSourceFiles": 722,
     "fileScanCoverage": "100%"
   },
   "summary": {
     "totalTasks": 3,
     "completedTasks": 3,
     "completionRate": "100%",
-    "lastUpdated": "2025-12-27T20:40:49+08:00",
-    "achievement": "项目AI上下文初始化完成！识别出4个Gradle模块，720个Kotlin文件（477个主源码 + 243测试）。Clean Architecture架构完全合规，domain层纯Kotlin无Android依赖。已生成完整的Mermaid模块结构图和导航系统。所有模块文档已创建，文档覆盖率100%。"
-  },
-  "latestFeatures": {
-    "Clean Architecture多模块改造": {
-      "status": "已完成（TD-00017）",
-      "completion": "65/65任务完成，100%",
-      "changes": [
-        "domain模块：148个主源码文件（76模型 + 13Repository + 38UseCase + 4Service + 29Util）",
-        "data模块：64个主源码文件（30本地存储 + 6远程API + 14Repository + 6Parser + 7DI + 4Util）",
-        "presentation模块：244个主源码文件（187UI组件 + 18ViewModel + 4Navigation + 7Theme + 3Util）",
-        "app模块：21个主源码文件（2Application + 11DI + 2Service + 2Util + 2Notification）"
-      ]
-    },
-    "文档体系": {
-      "status": "已完成",
-      "totalModules": 4,
-      "documentedModules": 4,
-      "documentationCoverage": "100%",
-      "files": [
-        "CLAUDE.md (根级文档)",
-        "domain/CLAUDE.md (领域层文档)",
-        "data/CLAUDE.md (数据层文档)",
-        "presentation/CLAUDE.md (表现层文档)",
-        "app/src/main/java/com/empathy/ai/app/CLAUDE.md (应用层文档)"
-      ]
-    },
-    "测试覆盖": {
-      "status": "持续完善",
-      "totalTests": 243,
-      "coverage": "50.9%",
-      "distribution": {
-        "domain": 28个测试文件",
-        "data": 23个测试文件（18单元测试 + 5集成测试）",
-        "presentation": 27个测试文件（24单元测试 + 3UI测试）",
-        "app": 165个测试文件（114单元测试 + 25集成测试 + 5禁用测试）"
-      }
-    }
+    "lastUpdated": "2025-12-29T10:08:42+08:00",
+    "achievement": "项目AI上下文初始化完成！识别出4个Gradle模块，722个Kotlin文件（479个主源码 + 209单元测试 + 34Android测试）。Clean Architecture架构完全合规，domain层纯Kotlin无Android依赖。已生成完整的Mermaid模块结构图和导航系统。所有模块文档已创建，文档覆盖率100%。"
   }
 }
