@@ -140,6 +140,156 @@
       "name": "code-synthesizer",
       "description": "代码综合分析器 - 将多个代码分析智能体的发现综合成连贯、结构化的分析报告。解决矛盾、提取共识、创建统一叙述。当多个分析智能体完成分析、需要将发现组合成统一报告、发现之间存在矛盾时使用此技能",
       "category": "code-analysis"
+    },
+    {
+      "name": "jetpack-compose",
+      "description": "Jetpack Compose - 声明式UI、状态管理、布局组件、动画、Compose最佳实践。在开发 Compose UI 时使用",
+      "category": "frontend"
+    },
+    {
+      "name": "kotlin-java-standards",
+      "description": "Kotlin/Java 编码规范 - 命名规范、代码风格、最佳实践、Kotlin 惯用法。在编写 Android 代码时使用",
+      "category": "standards"
+    },
+    {
+      "name": "产品经理",
+      "description": "协助产品经理生成专业的产品需求文档(PRD)，通过交互式问答收集信息，进行竞品研究，迭代优化各模块内容，最终输出结构化的PRD文档",
+      "category": "planning"
+    },
+    {
+      "name": "Ask",
+      "description": "需求澄清与问题诊断 - 通过主动提问引导用户逐步澄清需求或定位问题",
+      "category": "planning"
+    },
+    {
+      "name": "code-architecture-analysis",
+      "description": "对代码库进行架构层面的深度分析，包括设计模式、模块耦合、分层结构等",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-debt-analysis",
+      "description": "分析代码库的技术债务，包括代码异味、反模式、待改进项等",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-deep-research",
+      "description": "对指定代码库执行完整的深度分析流程，从问题细化到最终分析报告生成",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-optimization-guide",
+      "description": "分析代码库的性能瓶颈和优化机会，生成优化建议和路线图",
+      "category": "optimization"
+    },
+    {
+      "name": "CodeReview",
+      "description": "代码审查 - 全面代码审查，重点检测过度设计和接口一致性",
+      "category": "quality"
+    },
+    {
+      "name": "DocReview",
+      "description": "文档审查 - 审查指定的项目文档，评估文档质量，并自动关联相同编号的前置文档进行一致性检查",
+      "category": "documentation"
+    },
+    {
+      "name": "git",
+      "description": "Git 提交 - 分析变更内容并生成合适的提交信息",
+      "category": "workflow"
+    },
+    {
+      "name": "handoff",
+      "description": "工作交接 - 创建工作交接文档，记录当前会话状态和待办事项",
+      "category": "workflow"
+    },
+    {
+      "name": "OptiomsedDocs",
+      "description": "文档优化 - 根据提示词优化对应的项目文档",
+      "category": "documentation"
+    },
+    {
+      "name": "pickup",
+      "description": "恢复工作 - 从存储在.claude/handoffs中的之前交接会话恢复工作",
+      "category": "workflow"
+    },
+    {
+      "name": "reflash",
+      "description": "刷新文档 - 根据当前代码架构更新项目文档",
+      "category": "documentation"
+    },
+    {
+      "name": "Research",
+      "description": "任务前置调研 - 收集任务所需的前置知识信息，生成RE调研文档",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.analyze",
+      "description": "一致性分析 - 对PRD、TDD和FD进行一致性和质量分析（只读，不修改文件）",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.checklist",
+      "description": "检查清单 - 基于用户需求为当前功能生成自定义检查清单",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.clarify",
+      "description": "需求澄清 - 通过最多5个针对性问题识别并澄清需求文档中的模糊区域",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.constitution",
+      "description": "项目宪法 - 从交互式或提供的原则输入创建或更新项目宪法，确保所有依赖模板保持同步",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.implement",
+      "description": "实施执行 - 执行实施计划，处理并执行FD功能文档中定义的所有任务",
+      "category": "implementation"
+    },
+    {
+      "name": "speckit.plan",
+      "description": "技术设计 - 使用TDD模板执行技术设计工作流，生成设计文档",
+      "category": "design"
+    },
+    {
+      "name": "speckit.specify",
+      "description": "需求定义 - 从自然语言功能描述创建或更新PRD需求文档",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.tasks",
+      "description": "功能文档 - 基于可用的设计文档生成可执行的、依赖有序的FD功能文档",
+      "category": "planning"
+    },
+    {
+      "name": "speckit.taskstoissues",
+      "description": "任务转Issue - 将现有任务转换为可执行的、依赖有序的GitHub Issues",
+      "category": "workflow"
+    },
+    {
+      "name": "zcf:git-cleanBranches",
+      "description": "安全查找并清理已合并或过期的Git分支，支持dry-run模式与自定义基准/保护分支",
+      "category": "workflow"
+    },
+    {
+      "name": "zcf:git-commit",
+      "description": "仅用Git分析改动并自动生成conventional commit信息（可选emoji）；必要时建议拆分提交，默认运行本地Git钩子（可--no-verify跳过）",
+      "category": "workflow"
+    },
+    {
+      "name": "zcf:git-rollback",
+      "description": "交互式回滚Git分支到历史版本；列分支、列版本、二次确认后执行reset/revert",
+      "category": "workflow"
+    },
+    {
+      "name": "zcf:git-worktree",
+      "description": "管理Git worktree，在项目平级的../.zcf/项目名/目录下创建，支持智能默认、IDE集成和内容迁移",
+      "category": "workflow"
+    },
+    {
+      "name": "zcf:init-project",
+      "description": "初始化项目AI上下文，生成/更新根级与模块级CLAUDE.md索引",
+      "category": "workflow"
     }
   ]
 }

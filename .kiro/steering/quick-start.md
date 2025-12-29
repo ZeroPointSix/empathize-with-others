@@ -59,6 +59,41 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 ./gradlew :presentation:assembleDebug  # 构建presentation模块
 ```
 
+## 调试命令
+
+### ADB设备管理
+```bash
+adb devices                      # 查看设备列表
+adb install -r app\build\outputs\apk\debug\app-debug.apk  # 安装APK
+adb shell am start -n com.empathy.ai/.ui.MainActivity     # 启动应用
+adb uninstall com.empathy.ai     # 卸载应用
+```
+
+### Logcat调试脚本（推荐）
+```bash
+# 实时监听日志
+scripts\logcat.bat           # 显示WARN及以上（默认）
+scripts\logcat.bat -e        # 只看ERROR级别
+scripts\logcat.bat -c -e     # 清空日志后只看ERROR
+scripts\logcat.bat -f -e     # ERROR日志保存到文件
+scripts\logcat.bat -crash    # 只看崩溃日志
+scripts\logcat.bat -v        # 显示所有级别
+scripts\logcat.bat -h        # 显示帮助
+
+# 快速查看最近错误（一次性获取）
+scripts\quick-error.bat      # 获取最近的ERROR日志
+scripts\quick-error.bat 100  # 获取更多行
+```
+
+### 原生ADB Logcat命令
+```bash
+adb logcat                   # 查看所有日志
+adb logcat *:E               # 只看ERROR
+adb logcat -s TAG:V          # 按TAG过滤
+adb logcat -c && adb logcat  # 清空后重新开始
+adb logcat > logcat.txt      # 保存到文件
+```
+
 ## 架构规范（必须遵守）
 
 ### 代码分层

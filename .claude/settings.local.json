@@ -30,7 +30,21 @@
       "Bash(findstr:*)",
       "Bash(cd:*)",
       "Bash(xargs:*)",
-      "Skill(code-architecture-analysis)"
+      "Skill(code-architecture-analysis)",
+      "Bash(git rev-parse:*)",
+      "Bash(if [ ! -d \"../.zcf/Love\" ])",
+      "Bash(then mkdir -p \"../.zcf/Love\")",
+      "Bash(fi)",
+      "Bash(if [ -d \"../.zcf/Love/prd23\" ])",
+      "Bash(then echo \"❌ 目录已存在 ../.zcf/Love/prd23\")",
+      "Bash(exit:*)",
+      "Bash(git worktree:*)",
+      "Bash(if [ -f \".env\" ])",
+      "Bash(then cp \".env\" \"../.zcf/Love/prd23/.env\")",
+      "mcp__grok-search__get_config_info",
+      "mcp__grok-search__toggle_builtin_tools",
+      "mcp__grok-search__web_search",
+      "mcp__grok-search__switch_model"
     ],
     "deny": [],
     "ask": []

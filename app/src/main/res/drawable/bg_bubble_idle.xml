@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <!-- 空闲状态背景：白色 -->
-    <solid android:color="#FFFFFF" />
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外层阴影效果 -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#1A000000" />
+        </shape>
+    </item>
+    <!-- 主背景：iOS风格渐变白色 -->
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="135"
+                android:endColor="#F8F8F8"
+                android:startColor="#FFFFFF"
+                android:type="linear" />
+            <!-- iOS风格细边框 -->
+            <stroke
+                android:width="0.5dp"
+                android:color="#E0E0E0" />
+        </shape>
+    </item>
+</layer-list>

@@ -69,9 +69,14 @@ sealed interface SettingsUiEvent {
     data object ToggleFloatingWindow : SettingsUiEvent
     
     /**
-     * 请求悬浮窗权限
+     * 请求悬浮窗权限（触发权限请求流程）
      */
     data object RequestFloatingWindowPermission : SettingsUiEvent
+    
+    /**
+     * 权限请求已处理（UI层调用，清除pending标志）
+     */
+    data object PermissionRequestHandled : SettingsUiEvent
     
     /**
      * 显示权限说明对话框

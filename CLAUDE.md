@@ -171,6 +171,69 @@ graph TD
 
 # 运行Android测试
 ./gradlew connectedAndroidTest
+
+# 快捷脚本（推荐）
+scripts\quick-build.bat          # 快速构建（跳过lint和测试）
+scripts\quick-test.bat           # 运行所有单元测试
+scripts\quick-test.bat XxxTest   # 运行指定测试类
+```
+
+### 调试命令
+```bash
+# 查看设备列表
+adb devices
+
+# 安装APK到设备
+adb install -r app\build\outputs\apk\debug\app-debug.apk
+
+# 启动应用
+adb shell am start -n com.empathy.ai/.ui.MainActivity
+
+# 卸载应用
+adb uninstall com.empathy.ai
+```
+
+### Logcat调试脚本
+项目提供了便捷的日志调试脚本，位于 `scripts/` 目录：
+
+```bash
+# 实时监听日志
+scripts\logcat.bat           # 显示WARN及以上（默认）
+scripts\logcat.bat -e        # 只看ERROR级别
+scripts\logcat.bat -w        # 显示WARN及以上
+scripts\logcat.bat -v        # 显示所有级别（VERBOSE）
+scripts\logcat.bat -c -e     # 清空日志后只看ERROR
+scripts\logcat.bat -f -e     # ERROR日志保存到文件
+scripts\logcat.bat -crash    # 只看崩溃日志
+scripts\logcat.bat -h        # 显示帮助
+
+# 快速查看最近错误（一次性获取）
+scripts\quick-error.bat      # 获取最近的ERROR日志
+scripts\quick-error.bat 100  # 获取更多行
+```
+
+### 原生ADB Logcat命令
+```bash
+# 查看所有日志（实时）
+adb logcat
+
+# 只看应用的日志（按PID过滤）
+adb logcat --pid=$(adb shell pidof com.empathy.ai)
+
+# 按TAG过滤
+adb logcat -s PromptBuilder:V
+
+# 只看Warning及以上级别
+adb logcat *:W
+
+# 清空日志后重新开始
+adb logcat -c && adb logcat
+
+# 保存到文件
+adb logcat > logcat.txt
+
+# 带时间戳格式
+adb logcat -v time
 ```
 
 ### 开发流程

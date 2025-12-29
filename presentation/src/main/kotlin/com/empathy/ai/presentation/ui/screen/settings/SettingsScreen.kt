@@ -1,6 +1,10 @@
 package com.empathy.ai.presentation.ui.screen.settings
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -69,6 +73,33 @@ fun SettingsScreen(
     DisposableEffect(Unit) {
         onDispose { viewModel.checkFloatingWindowPermission() }
     }
+    
+    // 监听权限请求标志，触发实际的权限请求Intent
+    LaunchedEffect(uiState.pendingPermissionRequest) {
+        if (uiState.pendingPermissionRequest) {
+            // 标记已处理
+            viewModel.onEvent(SettingsUiEvent.PermissionRequestHandled)
+            
+            // 触发权限请求
+            (context as? Activity)?.let { activity ->
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${activity.packageName}")
+                        )
+                        activity.startActivityForResult(
+                            intent,
+                            FloatingWindowManager.REQUEST_CODE_OVERLAY_PERMISSION
+                        )
+                        android.util.Log.d("SettingsScreen", "已跳转到悬浮窗权限设置页面")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SettingsScreen", "跳转权限设置失败", e)
+                }
+            }
+        }
+    }
 
     SettingsScreenContent(
         uiState = uiState,
@@ -81,11 +112,6 @@ fun SettingsScreen(
         onAddClick = onAddClick,
         currentRoute = currentRoute,
         promptScenes = viewModel.promptScenesOrdered,
-        onRequestPermission = {
-            (context as? Activity)?.let { activity ->
-                FloatingWindowManager.requestPermission(activity)
-            }
-        },
         modifier = modifier
     )
 }
@@ -106,7 +132,6 @@ private fun SettingsScreenContent(
     onAddClick: () -> Unit,
     currentRoute: String,
     promptScenes: List<PromptScene>,
-    onRequestPermission: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -295,7 +320,8 @@ private fun SettingsScreenContent(
             PermissionRequestDialog(
                 onConfirm = {
                     onEvent(SettingsUiEvent.HidePermissionDialog)
-                    onRequestPermission()
+                    // 触发权限请求流程
+                    onEvent(SettingsUiEvent.RequestFloatingWindowPermission)
                 },
                 onDismiss = { onEvent(SettingsUiEvent.HidePermissionDialog) }
             )
@@ -393,8 +419,7 @@ private fun SettingsScreenPreview() {
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,
-            promptScenes = PromptScene.SETTINGS_SCENE_ORDER,
-            onRequestPermission = {}
+            promptScenes = PromptScene.SETTINGS_SCENE_ORDER
         )
     }
 }
@@ -418,8 +443,7 @@ private fun SettingsScreenConfiguredPreview() {
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,
-            promptScenes = PromptScene.SETTINGS_SCENE_ORDER,
-            onRequestPermission = {}
+            promptScenes = PromptScene.SETTINGS_SCENE_ORDER
         )
     }
 }

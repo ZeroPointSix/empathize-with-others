@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <!-- 错误状态背景：浅红色 -->
-    <solid android:color="#FFEBEE" />
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外层发光效果 -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#30FF3B30" />
+        </shape>
+    </item>
+    <!-- 主背景：iOS红色渐变 -->
+    <item
+        android:bottom="3dp"
+        android:left="3dp"
+        android:right="3dp"
+        android:top="3dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="135"
+                android:endColor="#E8352B"
+                android:startColor="#FF3B30"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

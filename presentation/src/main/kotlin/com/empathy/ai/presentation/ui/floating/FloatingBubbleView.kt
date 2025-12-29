@@ -94,9 +94,17 @@ class FloatingBubbleView(
         val sizePx = (BUBBLE_SIZE_DP * density).toInt()
         val iconSizePx = (ICON_SIZE_DP * density).toInt()
 
-        // 设置背景
+        // 设置背景 - iOS风格
         setBackgroundResource(R.drawable.bg_bubble_idle)
-        elevation = 8 * density
+        // iOS风格阴影效果
+        elevation = 12 * density
+        // 设置圆角裁剪
+        clipToOutline = true
+        outlineProvider = object : android.view.ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: android.graphics.Outline) {
+                outline.setOval(0, 0, view.width, view.height)
+            }
+        }
 
         // 创建图标视图
         iconView = ImageView(context).apply {
@@ -108,13 +116,15 @@ class FloatingBubbleView(
         }
         addView(iconView)
 
-        // 创建进度指示器（默认隐藏）
+        // 创建进度指示器（默认隐藏）- iOS风格白色
         progressView = ProgressBar(context, null, android.R.attr.progressBarStyle).apply {
             val progressParams = LayoutParams(iconSizePx, iconSizePx)
             progressParams.gravity = Gravity.CENTER
             layoutParams = progressParams
             visibility = View.GONE
             isIndeterminate = true
+            // iOS风格：使用蓝色进度条
+            indeterminateTintList = android.content.res.ColorStateList.valueOf(0xFF007AFF.toInt())
         }
         addView(progressView)
 

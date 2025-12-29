@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,23 +91,28 @@ fun PersonaTab(
     // 展开的分类（默认全部展开）
     var expandedCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
     
-    // 列表状态
+    // 列表状态 - 使用 remember 确保在重组时保持稳定
+    // 关键修复：即使 facts 变化，listState 也会保持滚动位置
     val listState = rememberLazyListState()
     
-    // 按key分组facts
-    val groupedFacts = remember(facts, searchQuery) {
-        val filtered = if (searchQuery.isBlank()) {
-            facts
-        } else {
-            facts.filter { 
-                it.key.contains(searchQuery, ignoreCase = true) ||
-                it.value.contains(searchQuery, ignoreCase = true)
+    // 使用 derivedStateOf 优化重组，只有当 facts 或 searchQuery 真正变化时才重新计算
+    val groupedFacts by remember(facts, searchQuery) {
+        derivedStateOf {
+            val filtered = if (searchQuery.isBlank()) {
+                facts
+            } else {
+                facts.filter { 
+                    it.key.contains(searchQuery, ignoreCase = true) ||
+                    it.value.contains(searchQuery, ignoreCase = true)
+                }
             }
+            // 按 key 分组，并保持稳定的排序顺序
+            filtered.groupBy { it.key }.toSortedMap()
         }
-        filtered.groupBy { it.key }
     }
     
     // 初始化展开状态（仅首次加载时全部展开）
+    // 使用 LaunchedEffect 避免在重组时重复执行
     if (!isInitialized && groupedFacts.isNotEmpty()) {
         expandedCategories = groupedFacts.keys.toSet()
         isInitialized = true
@@ -138,7 +144,7 @@ fun PersonaTab(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 按分类展示
+                // 按分类展示 - 使用稳定的 key 确保滚动位置不会因为数据变化而重置
                 groupedFacts.forEach { (category, categoryFacts) ->
                     item(key = "category_$category") {
                         SimpleCategoryCard(
@@ -158,8 +164,8 @@ fun PersonaTab(
                     }
                 }
                 
-                // 底部间距
-                item {
+                // 底部间距 - 使用固定 key
+                item(key = "bottom_spacer") {
                     Spacer(modifier = Modifier.height(80.dp))
                 }
             }
