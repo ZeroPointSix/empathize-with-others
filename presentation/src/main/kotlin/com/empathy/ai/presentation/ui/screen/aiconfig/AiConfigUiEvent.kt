@@ -79,6 +79,16 @@ sealed interface AiConfigUiEvent {
      */
     data class SetFormDefaultModel(val modelId: String) : AiConfigUiEvent
 
+    /**
+     * 重新排序模型列表
+     * 
+     * BUG-00038 P3修复：实现模型列表拖拽排序
+     * 
+     * @param fromIndex 原始位置索引
+     * @param toIndex 目标位置索引
+     */
+    data class ReorderFormModels(val fromIndex: Int, val toIndex: Int) : AiConfigUiEvent
+
     // === 服务商操作事件 ===
 
     /**

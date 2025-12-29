@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -67,6 +68,7 @@ fun IOSLargeTitleBar(
         modifier = modifier
             .fillMaxWidth()
             .background(iOSBackground)
+            .statusBarsPadding()  // BUG-00038 P1修复：添加状态栏padding，确保按钮在可点击区域
     ) {
         // 导航栏（响应式高度）
         Row(

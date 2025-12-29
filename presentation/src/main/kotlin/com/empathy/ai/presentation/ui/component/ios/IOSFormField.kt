@@ -48,12 +48,17 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * - 分隔线: 从标签右侧开始
  * - 密码模式: 支持显示/隐藏切换
  *
+ * BUG-00038 P2修复:
+ * - 新增isUrl参数，URL类型使用更小的标签宽度和左对齐
+ * - URL类型充分利用空间，避免斜杠换行
+ *
  * @param label 标签文本
  * @param value 输入值
  * @param onValueChange 值变化回调
  * @param modifier Modifier
  * @param placeholder 占位符文本
  * @param isPassword 是否为密码模式
+ * @param isUrl 是否为URL类型（BUG-00038 P2修复）
  * @param showDivider 是否显示分隔线
  * @param keyboardType 键盘类型
  * @param trailingIcon 尾部自定义图标
@@ -68,6 +73,7 @@ fun IOSFormField(
     modifier: Modifier = Modifier,
     placeholder: String = "",
     isPassword: Boolean = false,
+    isUrl: Boolean = false,
     showDivider: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
     trailingIcon: @Composable (() -> Unit)? = null
@@ -77,9 +83,17 @@ fun IOSFormField(
     
     var passwordVisible by remember { mutableStateOf(false) }
     val dividerColor = iOSSeparator
-    // 标签宽度响应式 + 左边距
-    val labelWidth = (64 * dimensions.fontScale).dp
+    
+    // BUG-00038 P2修复：URL类型使用更小的标签宽度，给输入框更多空间
+    val labelWidth = if (isUrl) {
+        (48 * dimensions.fontScale).dp
+    } else {
+        (64 * dimensions.fontScale).dp
+    }
     val dividerStartPadding = labelWidth + dimensions.spacingMedium
+    
+    // BUG-00038 P2修复：URL类型使用左对齐，普通类型使用右对齐
+    val textAlignment = if (isUrl) TextAlign.Start else TextAlign.End
 
     Row(
         modifier = modifier
@@ -108,6 +122,7 @@ fun IOSFormField(
         )
 
         // 输入框 - 使用响应式字体
+        // BUG-00038 P2修复：URL类型使用左对齐
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -115,7 +130,7 @@ fun IOSFormField(
             textStyle = TextStyle(
                 fontSize = dimensions.fontSizeTitle,
                 color = iOSTextPrimary,
-                textAlign = TextAlign.End
+                textAlign = textAlignment
             ),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
@@ -131,7 +146,7 @@ fun IOSFormField(
                         text = placeholder,
                         fontSize = dimensions.fontSizeTitle,
                         color = iOSTextSecondary,
-                        textAlign = TextAlign.End,
+                        textAlign = textAlignment,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

@@ -71,6 +71,7 @@ class AiConfigViewModel @Inject constructor(
             is AiConfigUiEvent.AddFormModel -> addFormModel(event.modelId, event.displayName)
             is AiConfigUiEvent.RemoveFormModel -> removeFormModel(event.modelId)
             is AiConfigUiEvent.SetFormDefaultModel -> setFormDefaultModel(event.modelId)
+            is AiConfigUiEvent.ReorderFormModels -> reorderFormModels(event.fromIndex, event.toIndex)
 
             // === 服务商操作事件 ===
             is AiConfigUiEvent.SaveProvider -> saveProvider()
@@ -316,6 +317,31 @@ class AiConfigViewModel @Inject constructor(
      */
     private fun setFormDefaultModel(modelId: String) {
         _uiState.update { it.copy(formDefaultModelId = modelId) }
+    }
+
+    /**
+     * 重新排序模型列表
+     * 
+     * BUG-00038 P3修复：实现模型列表拖拽排序
+     * 
+     * @param fromIndex 原始位置索引
+     * @param toIndex 目标位置索引
+     */
+    private fun reorderFormModels(fromIndex: Int, toIndex: Int) {
+        val currentModels = _uiState.value.formModels.toMutableList()
+        
+        // 边界检查
+        if (fromIndex < 0 || fromIndex >= currentModels.size ||
+            toIndex < 0 || toIndex >= currentModels.size ||
+            fromIndex == toIndex) {
+            return
+        }
+        
+        // 移动元素
+        val item = currentModels.removeAt(fromIndex)
+        currentModels.add(toIndex, item)
+        
+        _uiState.update { it.copy(formModels = currentModels) }
     }
 
     /**

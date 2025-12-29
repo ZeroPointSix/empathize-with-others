@@ -96,6 +96,7 @@ private fun UserProfileScreenContent(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // iOS风格导航栏 - BUG-00037修复：添加重置和保存按钮
+            // BUG-00038 P4修复：移除刷新按钮
             IOSUserProfileTopBar(
                 onNavigateBack = {
                     if (uiState.hasUnsavedChanges) {
@@ -105,7 +106,6 @@ private fun UserProfileScreenContent(
                     }
                 },
                 onShare = { onEvent(UserProfileUiEvent.ShowExportDialog) },
-                onRefresh = { onEvent(UserProfileUiEvent.RefreshProfile) },
                 onReset = { onEvent(UserProfileUiEvent.ShowResetConfirm) },
                 onSave = { onEvent(UserProfileUiEvent.SaveAllChanges) },
                 hasUnsavedChanges = uiState.hasUnsavedChanges
@@ -285,15 +285,15 @@ private fun UserProfileScreenContent(
  * - 背景: 白色/95%透明度 + 模糊效果
  * - 返回按钮: iOS蓝色 chevron_left
  * - 标题: 17sp, SemiBold
- * - 右侧按钮: 重置 + 分享 + 刷新
+ * - 右侧按钮: 重置 + 分享（BUG-00038 P4修复：移除刷新按钮）
  * 
  * BUG-00037 修复: 添加重置按钮和保存按钮（编辑模式）
+ * BUG-00038 P4修复: 移除刷新按钮（本地编辑模式下不需要）
  */
 @Composable
 private fun IOSUserProfileTopBar(
     onNavigateBack: () -> Unit,
     onShare: () -> Unit,
-    onRefresh: () -> Unit,
     onReset: () -> Unit,
     onSave: () -> Unit = {},
     hasUnsavedChanges: Boolean = false,
@@ -362,6 +362,7 @@ private fun IOSUserProfileTopBar(
                             modifier = Modifier.size(22.dp)
                         )
                     }
+                    // 分享按钮
                     IconButton(onClick = onShare) {
                         Icon(
                             imageVector = Icons.Default.Share,
@@ -370,14 +371,7 @@ private fun IOSUserProfileTopBar(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    IconButton(onClick = onRefresh) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "刷新",
-                            tint = iOSBlue,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
+                    // BUG-00038 P4修复：移除刷新按钮（本地编辑模式下不需要）
                 }
             }
         }
@@ -1079,7 +1073,6 @@ private fun IOSUserProfileTopBarPreview() {
         IOSUserProfileTopBar(
             onNavigateBack = {},
             onShare = {},
-            onRefresh = {},
             onReset = {}
         )
     }
