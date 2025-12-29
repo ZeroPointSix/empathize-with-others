@@ -44,7 +44,10 @@
       "mcp__grok-search__get_config_info",
       "mcp__grok-search__toggle_builtin_tools",
       "mcp__grok-search__web_search",
-      "mcp__grok-search__switch_model"
+      "mcp__grok-search__switch_model",
+      "Bash(tasklist:*)",
+      "WebSearch",
+      "mcp__grok-search__web_fetch"
     ],
     "deny": [],
     "ask": []
