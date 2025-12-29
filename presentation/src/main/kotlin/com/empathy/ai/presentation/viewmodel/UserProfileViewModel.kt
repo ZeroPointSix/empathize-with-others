@@ -86,6 +86,15 @@ class UserProfileViewModel @Inject constructor(
             is UserProfileUiEvent.ClearError -> clearError()
             is UserProfileUiEvent.ClearSuccessMessage -> clearSuccessMessage()
             is UserProfileUiEvent.RefreshProfile -> loadUserProfile(forceRefresh = true)
+            
+            // BUG-00037: 编辑模式操作
+            is UserProfileUiEvent.LocalAddTag -> localAddTag(event.dimensionKey, event.tag)
+            is UserProfileUiEvent.LocalEditTag -> localEditTag(event.dimensionKey, event.oldTag, event.newTag)
+            is UserProfileUiEvent.LocalDeleteTag -> localDeleteTag(event.dimensionKey, event.tag)
+            is UserProfileUiEvent.SaveAllChanges -> saveAllChanges()
+            is UserProfileUiEvent.ShowDiscardChangesDialog -> showDiscardChangesDialog()
+            is UserProfileUiEvent.ConfirmDiscardChanges -> confirmDiscardChanges()
+            is UserProfileUiEvent.HideDiscardChangesDialog -> hideDiscardChangesDialog()
         }
     }
     
@@ -439,5 +448,150 @@ class UserProfileViewModel @Inject constructor(
     
     private fun clearSuccessMessage() {
         _uiState.update { it.copy(successMessage = null) }
+    }
+    
+    // ==================== BUG-00037: 编辑模式操作 ====================
+    
+    /**
+     * 本地添加标签（不立即保存到Repository）
+     * 
+     * 只更新pendingChanges，不触发Repository调用，避免列表刷新
+     */
+    private fun localAddTag(dimensionKey: String, tag: String) {
+        val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
+        if (tag !in currentTags) {
+            currentTags.add(tag)
+            val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
+            newPendingChanges[dimensionKey] = currentTags
+            _uiState.update { 
+                it.copy(
+                    pendingChanges = newPendingChanges,
+                    hasUnsavedChanges = true,
+                    showAddTagDialog = false,
+                    currentEditDimension = null
+                )
+            }
+        }
+    }
+    
+    /**
+     * 本地编辑标签（不立即保存到Repository）
+     */
+    private fun localEditTag(dimensionKey: String, oldTag: String, newTag: String) {
+        val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
+        val index = currentTags.indexOf(oldTag)
+        if (index >= 0) {
+            currentTags[index] = newTag
+            val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
+            newPendingChanges[dimensionKey] = currentTags
+            _uiState.update { 
+                it.copy(
+                    pendingChanges = newPendingChanges,
+                    hasUnsavedChanges = true,
+                    showEditTagDialog = false,
+                    currentEditDimension = null,
+                    currentEditTag = null
+                )
+            }
+        }
+    }
+    
+    /**
+     * 本地删除标签（不立即保存到Repository）
+     */
+    private fun localDeleteTag(dimensionKey: String, tag: String) {
+        val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
+        currentTags.remove(tag)
+        val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
+        newPendingChanges[dimensionKey] = currentTags
+        _uiState.update { 
+            it.copy(
+                pendingChanges = newPendingChanges,
+                hasUnsavedChanges = true,
+                showDeleteConfirmDialog = false,
+                currentEditDimension = null,
+                pendingDeleteTag = null
+            )
+        }
+    }
+    
+    /**
+     * 保存所有变更到Repository
+     */
+    private fun saveAllChanges() {
+        if (!_uiState.value.hasUnsavedChanges) return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            try {
+                val pendingChanges = _uiState.value.pendingChanges
+                var currentProfile = _uiState.value.profile
+                
+                // 逐个维度更新
+                for ((dimensionKey, tags) in pendingChanges) {
+                    // 先清除该维度的所有标签
+                    val existingTags = currentProfile.getTagsForDimension(dimensionKey)
+                    for (tag in existingTags) {
+                        removeTagUseCase(dimensionKey, tag).getOrNull()
+                    }
+                    // 再添加新标签
+                    for (tag in tags) {
+                        addTagUseCase(dimensionKey, tag).fold(
+                            onSuccess = { profile -> currentProfile = profile },
+                            onFailure = { e -> Log.e(TAG, "添加标签失败: $tag", e) }
+                        )
+                    }
+                }
+                
+                // 重新加载最新数据
+                loadUserProfile(forceRefresh = true)
+                
+                _uiState.update { 
+                    it.copy(
+                        pendingChanges = emptyMap(),
+                        hasUnsavedChanges = false,
+                        isLoading = false,
+                        successMessage = "保存成功"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "保存变更失败", e)
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        error = "保存失败: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+    
+    /**
+     * 显示放弃编辑确认对话框
+     */
+    private fun showDiscardChangesDialog() {
+        _uiState.update { it.copy(showDiscardChangesDialog = true) }
+    }
+    
+    /**
+     * 确认放弃编辑
+     */
+    private fun confirmDiscardChanges() {
+        _uiState.update { 
+            it.copy(
+                pendingChanges = emptyMap(),
+                pendingCustomDimensions = emptyMap(),
+                hasUnsavedChanges = false,
+                showDiscardChangesDialog = false
+            )
+        }
+    }
+    
+    /**
+     * 隐藏放弃编辑确认对话框
+     */
+    private fun hideDiscardChangesDialog() {
+        _uiState.update { it.copy(showDiscardChangesDialog = false) }
     }
 }

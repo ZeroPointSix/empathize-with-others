@@ -41,10 +41,10 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
 /**
  * iOS风格表单输入组件
  *
- * 设计规格:
+ * 设计规格（BUG-00036 响应式字体适配）:
  * - 高度: 响应式（约44dp）
- * - 标签: 响应式宽度, 17sp
- * - 输入框: 右对齐, 17sp
+ * - 标签: 响应式宽度, 响应式字体（fontSizeTitle）
+ * - 输入框: 右对齐, 响应式字体（fontSizeTitle）
  * - 分隔线: 从标签右侧开始
  * - 密码模式: 支持显示/隐藏切换
  *
@@ -99,21 +99,21 @@ fun IOSFormField(
             .padding(horizontal = dimensions.spacingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 标签（响应式宽度）
+        // 标签（响应式宽度）- 使用响应式字体
         Text(
             text = label,
-            fontSize = 17.sp,
+            fontSize = dimensions.fontSizeTitle,
             color = iOSTextPrimary,
             modifier = Modifier.width(labelWidth)
         )
 
-        // 输入框
+        // 输入框 - 使用响应式字体
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
             textStyle = TextStyle(
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,
                 color = iOSTextPrimary,
                 textAlign = TextAlign.End
             ),
@@ -129,7 +129,7 @@ fun IOSFormField(
                 if (value.isEmpty() && placeholder.isNotEmpty()) {
                     Text(
                         text = placeholder,
-                        fontSize = 17.sp,
+                        fontSize = dimensions.fontSizeTitle,
                         color = iOSTextSecondary,
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth()

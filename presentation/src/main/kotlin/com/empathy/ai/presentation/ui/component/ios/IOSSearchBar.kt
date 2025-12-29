@@ -34,10 +34,11 @@ import com.empathy.ai.presentation.theme.iOSTextTertiary
 /**
  * iOS风格搜索栏
  * 
- * 实现iOS原生搜索栏的视觉效果
+ * 实现iOS原生搜索栏的视觉效果（BUG-00036 响应式字体适配）
  * - 响应式圆角
  * - 背景#F8F8FA
  * - 搜索图标+输入框+清除按钮
+ * - 响应式字体（fontSizeTitle）
  * 
  * @param query 搜索关键词
  * @param onQueryChange 关键词变化回调
@@ -76,12 +77,12 @@ fun IOSSearchBar(
         
         Spacer(modifier = Modifier.width(dimensions.spacingSmall))
         
-        // 输入框
+        // 输入框 - 使用响应式字体
         Box(modifier = Modifier.weight(1f)) {
             if (query.isEmpty()) {
                 Text(
                     text = placeholder,
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,
                     color = iOSTextTertiary
                 )
             }
@@ -89,7 +90,7 @@ fun IOSSearchBar(
                 value = query,
                 onValueChange = onQueryChange,
                 textStyle = TextStyle(
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,
                     color = iOSTextPrimary
                 ),
                 singleLine = true,

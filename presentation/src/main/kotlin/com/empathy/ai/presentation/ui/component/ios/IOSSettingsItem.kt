@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextPrimary
@@ -36,6 +35,8 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  *
  * 高度: 响应式（约44dp）
  * 图标容器: 响应式（约28dp × 28dp）, 6dp圆角
+ * 
+ * BUG-00036 修复：使用响应式字体尺寸，适配不同屏幕密度和系统字体设置
  *
  * @param icon 图标
  * @param iconBackgroundColor 图标背景色
@@ -118,32 +119,32 @@ fun IOSSettingsItem(
 
         Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
 
-        // 标题和副标题
+        // 标题和副标题 - BUG-00036: 使用响应式字体
         Column(
             modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = title,
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,  // 响应式字体
                 fontWeight = FontWeight.Normal,
                 color = iOSTextPrimary
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    fontSize = 13.sp,
+                    fontSize = dimensions.fontSizeCaption,  // 响应式字体
                     color = iOSTextSecondary
                 )
             }
         }
 
-        // 值文本或自定义尾部内容
+        // 值文本或自定义尾部内容 - BUG-00036: 使用响应式字体
         if (trailing != null) {
             trailing()
         } else if (value != null) {
             Text(
                 text = value,
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,  // 响应式字体
                 color = iOSTextSecondary
             )
             if (showArrow) {

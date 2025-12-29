@@ -7,18 +7,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.SummaryError
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 
 /**
- * 总结错误对话框
+ * 总结错误对话框 - iOS风格
  *
  * 显示总结失败时的错误信息和建议操作
  *
@@ -32,24 +32,24 @@ fun SummaryErrorDialog(
     onRetry: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Error,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(48.dp)
-            )
-        },
-        title = { Text("总结生成失败") },
-        text = {
+    IOSInputDialog(
+        title = "总结生成失败",
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // 错误图标
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(48.dp)
+                )
+
                 // 错误信息
                 Text(
                     text = "原因：${error.userMessage}",
@@ -69,17 +69,10 @@ fun SummaryErrorDialog(
                 )
             }
         },
-        confirmButton = {
-            if (error.isRetryable()) {
-                TextButton(onClick = onRetry) {
-                    Text("重试")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(if (error.isRetryable()) "取消" else "确定")
-            }
-        }
+        confirmText = if (error.isRetryable()) "重试" else "确定",
+        dismissText = if (error.isRetryable()) "取消" else "",
+        onConfirm = if (error.isRetryable()) onRetry else onDismiss,
+        onDismiss = onDismiss,
+        showDismissButton = error.isRetryable()
     )
 }

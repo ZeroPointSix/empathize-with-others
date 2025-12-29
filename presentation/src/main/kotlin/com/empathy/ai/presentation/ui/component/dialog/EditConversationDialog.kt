@@ -1,9 +1,11 @@
 package com.empathy.ai.presentation.ui.component.dialog
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -13,19 +15,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.util.ContentValidator
 import com.empathy.ai.domain.util.DateUtils
 import com.empathy.ai.domain.util.IdentityPrefixHelper
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.theme.iOSRed
 
 /**
- * 编辑对话记录对话框
+ * 编辑对话记录对话框 - iOS风格
  *
+ * BUG-00036 修复：迁移到iOS风格对话框
+ * 
  * 功能：
  * - 编辑用户输入的对话内容
  * - 删除对话记录
@@ -56,6 +68,8 @@ fun EditConversationDialog(
     isUserModified: Boolean = false,
     originalUserInput: String? = null
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     // 【PRD-00008】解析身份前缀，记住原始身份
     val parseResult = remember(initialContent) {
         IdentityPrefixHelper.parse(initialContent)
@@ -80,122 +94,196 @@ fun EditConversationDialog(
             onDismiss = { showDeleteConfirm = false }
         )
     } else {
-        AlertDialog(
+        Dialog(
             onDismissRequest = onDismiss,
-            // 【PRD-00008】标题显示身份标签，让用户知道这是谁说的
-            title = { 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.edit_conversation_title) + " (${parseResult.role.displayName})")
-                    IconButton(onClick = { showDeleteConfirm = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.delete),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            },
-            text = {
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false,
+                usePlatformDefaultWidth = false
+            )
+        ) {
+            Card(
+                modifier = modifier
+                    .widthIn(max = 320.dp)
+                    .padding(dimensions.spacingMedium),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White.copy(alpha = 0.98f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // 时间信息
-                    timestamp?.let {
+                    // 标题栏 - 【PRD-00008】显示身份标签
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = dimensions.spacingLarge,
+                                start = dimensions.spacingMedium,
+                                end = dimensions.spacingSmall
+                            ),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = stringResource(R.string.conversation_time_info, DateUtils.formatRelativeTime(it)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = stringResource(R.string.edit_conversation_title) + " (${parseResult.role.displayName})",
+                            fontSize = dimensions.fontSizeTitle,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black
                         )
+                        IconButton(onClick = { showDeleteConfirm = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.delete),
+                                tint = iOSRed
+                            )
+                        }
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedTextField(
-                        value = content,
-                        onValueChange = { content = it },
-                        label = { Text(stringResource(R.string.conversation_content_label)) },
-                        placeholder = { Text("请输入对话内容") },
-                        minLines = 3,
-                        maxLines = 6,
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = !validation.isValid(),
-                        supportingText = {
+                    // 内容区域
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = dimensions.spacingMedium)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
+                    ) {
+                        // 时间信息
+                        timestamp?.let {
+                            Text(
+                                text = stringResource(R.string.conversation_time_info, DateUtils.formatRelativeTime(it)),
+                                fontSize = dimensions.fontSizeCaption,
+                                color = Color.Black.copy(alpha = 0.5f)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(dimensions.spacingSmall))
+                        
+                        OutlinedTextField(
+                            value = content,
+                            onValueChange = { content = it },
+                            label = { Text(stringResource(R.string.conversation_content_label)) },
+                            placeholder = { Text("请输入对话内容") },
+                            minLines = 3,
+                            maxLines = 6,
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = !validation.isValid(),
+                            supportingText = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = validation.getErrorMessage() ?: "",
+                                        color = iOSRed,
+                                        fontSize = dimensions.fontSizeCaption
+                                    )
+                                    Text(
+                                        text = "${content.length}/${ContentValidator.MAX_CONVERSATION_LENGTH}",
+                                        fontSize = dimensions.fontSizeCaption
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = iOSBlue,
+                                cursorColor = iOSBlue
+                            )
+                        )
+
+                        // 查看原始内容（已编辑时显示）
+                        if (isUserModified && originalUserInput != null) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showOriginal = !showOriginal },
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = validation.getErrorMessage() ?: "",
-                                    color = MaterialTheme.colorScheme.error
+                                Icon(
+                                    imageVector = if (showOriginal) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = iOSBlue
                                 )
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "${content.length}/${ContentValidator.MAX_CONVERSATION_LENGTH}",
-                                    style = MaterialTheme.typography.bodySmall
+                                    text = stringResource(R.string.view_original_content),
+                                    fontSize = dimensions.fontSizeCaption,
+                                    color = iOSBlue
+                                )
+                            }
+                            AnimatedVisibility(visible = showOriginal) {
+                                Text(
+                                    text = originalUserInput,
+                                    fontSize = dimensions.fontSizeCaption,
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    modifier = Modifier.padding(top = dimensions.spacingSmall)
                                 )
                             }
                         }
+                        
+                        Spacer(modifier = Modifier.height(dimensions.spacingSmall))
+                    }
+                    
+                    // 分隔线
+                    Divider(
+                        color = Color.Black.copy(alpha = 0.1f),
+                        thickness = 0.5.dp
                     )
-
-                    // 查看原始内容（已编辑时显示）
-                    if (isUserModified && originalUserInput != null) {
-                        Row(
+                    
+                    // 按钮区域 - iOS风格水平排列
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        // 取消按钮
+                        TextButton(
+                            onClick = onDismiss,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showOriginal = !showOriginal },
-                            verticalAlignment = Alignment.CenterVertically
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RectangleShape
                         ) {
-                            Icon(
-                                imageVector = if (showOriginal) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = stringResource(R.string.view_original_content),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
+                                text = stringResource(R.string.cancel),
+                                fontSize = dimensions.fontSizeTitle,
+                                color = iOSBlue
                             )
                         }
-                        AnimatedVisibility(visible = showOriginal) {
+                        
+                        // 垂直分隔线
+                        Box(
+                            modifier = Modifier
+                                .width(0.5.dp)
+                                .height(44.dp)
+                                .background(Color.Black.copy(alpha = 0.1f))
+                        )
+                        
+                        // 保存按钮
+                        TextButton(
+                            onClick = { 
+                                // 【PRD-00008】保存时重新拼接前缀，保留原始身份
+                                val finalContent = IdentityPrefixHelper.rebuildWithPrefix(
+                                    role = parseResult.role,
+                                    newContent = content.trim()
+                                )
+                                onConfirm(finalContent) 
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RectangleShape,
+                            enabled = isValid && hasChanges
+                        ) {
                             Text(
-                                text = originalUserInput,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 8.dp)
+                                text = stringResource(R.string.save),
+                                fontSize = dimensions.fontSizeTitle,
+                                color = if (isValid && hasChanges) iOSBlue else iOSBlue.copy(alpha = 0.4f),
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { 
-                        // 【PRD-00008】保存时重新拼接前缀，保留原始身份
-                        val finalContent = IdentityPrefixHelper.rebuildWithPrefix(
-                            role = parseResult.role,
-                            newContent = content.trim()
-                        )
-                        onConfirm(finalContent) 
-                    },
-                    enabled = isValid && hasChanges
-                ) {
-                    Text(stringResource(R.string.save))
-                }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-            modifier = modifier
-        )
+            }
+        }
     }
 }
 

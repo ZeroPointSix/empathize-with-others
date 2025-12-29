@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -76,11 +77,11 @@ fun EmpathyBottomNavigation(
                 .background(Color(0xFFE5E5E5))
         )
 
-        // 导航栏内容
+        // 导航栏内容 - BUG-00036: 增加高度到56dp，确保字体不被截断
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(56.dp)  // 从50dp增加到56dp，给字体更多空间
                 .align(Alignment.TopStart)  // 修复BUG-00031: 确保Row在Box顶部对齐
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -163,6 +164,11 @@ fun EmpathyBottomNavigation(
 
 /**
  * 底部导航项
+ * 
+ * BUG-00036 修复：
+ * 1. 增加容器高度，确保字体不被截断
+ * 2. 使用 fillMaxHeight 确保内容垂直居中
+ * 3. 减小图标尺寸，增加字体空间
  */
 @Composable
 private fun BottomNavItem(
@@ -177,12 +183,13 @@ private fun BottomNavItem(
 
     Column(
         modifier = modifier
+            .fillMaxHeight()  // 填满父容器高度
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp),  // 适当的垂直padding
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -190,14 +197,16 @@ private fun BottomNavItem(
             imageVector = if (selected) selectedIcon else icon,
             contentDescription = label,
             tint = color,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(20.dp)  // 减小图标尺寸
         )
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = label,
-            fontSize = 10.sp,
+            fontSize = 10.sp,  // 使用较小字体确保不被截断
             fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-            color = color
+            color = color,
+            maxLines = 1,  // 确保单行显示
+            softWrap = false  // 禁止换行
         )
     }
 }

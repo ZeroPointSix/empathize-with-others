@@ -61,10 +61,10 @@ import kotlin.math.roundToInt
 /**
  * iOS风格服务商卡片（支持滑动操作）
  *
- * 设计规格:
+ * 设计规格（BUG-00036 响应式字体适配）:
  * - 图标容器: 响应式尺寸, 圆角10dp, 带背景色
- * - 标题: 17sp, SemiBold
- * - 描述: 15sp, 灰色
+ * - 标题: 响应式字体（fontSizeTitle）, SemiBold
+ * - 描述: 响应式字体（fontSizeBody）, 灰色
  * - 默认标记: 蓝色勾选图标
  * - 分隔线: 从图标右侧开始
  * - 高度: 响应式（约72dp）
@@ -152,7 +152,7 @@ fun IOSProviderCard(
                         Text(
                             text = "删除",
                             color = Color.White,
-                            fontSize = 12.sp
+                            fontSize = dimensions.fontSizeXSmall
                         )
                     }
                 }
@@ -182,7 +182,7 @@ fun IOSProviderCard(
                         Text(
                             text = "编辑",
                             color = Color.White,
-                            fontSize = 12.sp
+                            fontSize = dimensions.fontSizeXSmall
                         )
                     }
                 }
@@ -265,13 +265,13 @@ fun IOSProviderCard(
 
             Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
 
-            // 标题和描述
+            // 标题和描述 - 使用响应式字体
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = provider.name,
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = iOSTextPrimary,
                     maxLines = 1,
@@ -279,7 +279,7 @@ fun IOSProviderCard(
                 )
                 Text(
                     text = getProviderDescription(provider),
-                    fontSize = 15.sp,
+                    fontSize = dimensions.fontSizeBody,
                     color = iOSTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

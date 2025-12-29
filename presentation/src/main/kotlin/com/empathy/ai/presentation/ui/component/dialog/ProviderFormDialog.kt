@@ -491,7 +491,9 @@ private fun ModelItem(
 }
 
 /**
- * 添加模型对话框
+ * iOS 风格添加模型对话框
+ * 
+ * BUG-00036 修复：迁移到 iOS 风格
  */
 @Composable
 private fun AddModelDialog(
@@ -504,10 +506,9 @@ private fun AddModelDialog(
 
     val focusManager = LocalFocusManager.current
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("添加模型") },
-        text = {
+    IOSInputDialog(
+        title = "添加模型",
+        content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -555,24 +556,17 @@ private fun AddModelDialog(
                 )
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (modelId.isBlank()) {
-                        modelIdError = "模型 ID 不能为空"
-                        return@TextButton
-                    }
-                    onConfirm(modelId.trim(), displayName.trim())
-                }
-            ) {
-                Text("添加")
+        confirmText = "添加",
+        dismissText = "取消",
+        onConfirm = {
+            if (modelId.isBlank()) {
+                modelIdError = "模型 ID 不能为空"
+                return@IOSInputDialog
             }
+            onConfirm(modelId.trim(), displayName.trim())
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        }
+        onDismiss = onDismiss,
+        confirmEnabled = modelId.isNotBlank()
     )
 }
 

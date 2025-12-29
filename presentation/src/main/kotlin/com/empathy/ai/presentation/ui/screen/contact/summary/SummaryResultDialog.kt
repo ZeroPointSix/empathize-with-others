@@ -8,20 +8,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.usecase.ManualSummaryUseCase
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 
 /**
- * 总结结果对话框
+ * 总结结果对话框 - iOS风格
  *
  * 显示总结生成成功后的统计信息：
  * - 分析的对话数量
@@ -39,22 +38,22 @@ fun SummaryResultDialog(
     onViewSummary: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp)
-            )
-        },
-        title = { Text("总结生成成功") },
-        text = {
+    IOSInputDialog(
+        title = "总结生成成功",
+        content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // 成功图标
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+
                 // 日期范围
                 Text(
                     text = "已为 ${result.summary.getDisplayDateRange()} 生成总结",
@@ -86,16 +85,10 @@ fun SummaryResultDialog(
                 )
             }
         },
-        confirmButton = {
-            TextButton(onClick = onViewSummary) {
-                Text("查看总结")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("返回")
-            }
-        }
+        confirmText = "查看总结",
+        dismissText = "返回",
+        onConfirm = onViewSummary,
+        onDismiss = onDismiss
     )
 }
 

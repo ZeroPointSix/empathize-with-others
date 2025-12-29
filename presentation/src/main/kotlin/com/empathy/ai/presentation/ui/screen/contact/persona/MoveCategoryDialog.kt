@@ -12,13 +12,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,9 +28,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.R
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 
 /**
- * 移动分类对话框
+ * 移动分类对话框 - iOS风格
  *
  * 允许用户选择现有分类或创建新分类
  *
@@ -65,12 +64,9 @@ fun MoveCategoryDialog(
     // 获取目标分类名称
     val targetCategory = if (isCreateNew) newCategoryName.trim() else selectedCategory
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(text = stringResource(R.string.move_to_category_title, selectedCount))
-        },
-        text = {
+    IOSInputDialog(
+        title = stringResource(R.string.move_to_category_title, selectedCount),
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -166,18 +162,10 @@ fun MoveCategoryDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = { targetCategory?.let { onConfirm(it) } },
-                enabled = canConfirm
-            ) {
-                Text(stringResource(R.string.confirm_move))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
+        confirmText = stringResource(R.string.confirm_move),
+        dismissText = stringResource(R.string.cancel),
+        onConfirm = { targetCategory?.let { onConfirm(it) } },
+        onDismiss = onDismiss,
+        confirmEnabled = canConfirm
     )
 }

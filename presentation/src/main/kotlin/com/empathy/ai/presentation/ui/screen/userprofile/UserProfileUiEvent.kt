@@ -153,4 +153,41 @@ sealed class UserProfileUiEvent {
      * 刷新画像数据
      */
     data object RefreshProfile : UserProfileUiEvent()
+    
+    // ==================== BUG-00037 编辑模式事件 ====================
+    
+    /**
+     * 本地添加标签（不立即保存到Repository）
+     */
+    data class LocalAddTag(val dimensionKey: String, val tag: String) : UserProfileUiEvent()
+    
+    /**
+     * 本地编辑标签（不立即保存到Repository）
+     */
+    data class LocalEditTag(val dimensionKey: String, val oldTag: String, val newTag: String) : UserProfileUiEvent()
+    
+    /**
+     * 本地删除标签（不立即保存到Repository）
+     */
+    data class LocalDeleteTag(val dimensionKey: String, val tag: String) : UserProfileUiEvent()
+    
+    /**
+     * 保存所有变更到Repository
+     */
+    data object SaveAllChanges : UserProfileUiEvent()
+    
+    /**
+     * 显示放弃编辑确认对话框
+     */
+    data object ShowDiscardChangesDialog : UserProfileUiEvent()
+    
+    /**
+     * 确认放弃编辑
+     */
+    data object ConfirmDiscardChanges : UserProfileUiEvent()
+    
+    /**
+     * 隐藏放弃编辑确认对话框
+     */
+    data object HideDiscardChangesDialog : UserProfileUiEvent()
 }

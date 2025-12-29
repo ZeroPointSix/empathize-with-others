@@ -38,7 +38,9 @@ import com.empathy.ai.presentation.theme.iOSGreen
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSRed
 import com.empathy.ai.presentation.theme.iOSTextPrimary
-import com.empathy.ai.presentation.ui.component.dialog.PermissionRequestDialog
+import com.empathy.ai.presentation.ui.component.dialog.IOSAlertDialog
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
+import com.empathy.ai.presentation.ui.component.dialog.IOSPermissionRequestDialog
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
 import com.empathy.ai.presentation.ui.component.ios.IOSSwitch
@@ -167,11 +169,11 @@ private fun SettingsScreenContent(
                 .padding(paddingValues)
                 .background(iOSBackground)
         ) {
-            // iOS大标题
+            // iOS大标题 - 使用响应式字体
             item {
                 Text(
                     text = "设置",
-                    fontSize = 34.sp,
+                    fontSize = dimensions.fontSizeLargeTitle,
                     fontWeight = FontWeight.Bold,
                     color = iOSTextPrimary,
                     modifier = Modifier.padding(start = dimensions.spacingMedium, top = dimensions.spacingMedium, bottom = dimensions.spacingSmall)
@@ -310,14 +312,20 @@ private fun SettingsScreenContent(
         }
 
         if (uiState.showClearDataDialog) {
-            ClearDataDialog(
+            IOSAlertDialog(
+                title = "清除所有设置",
+                message = "确定要清除以下数据吗？\n\n将被清除：\n• AI服务商配置\n• 隐私保护设置\n• 悬浮窗设置\n\n不会清除：\n• 联系人数据\n• 标签数据\n\n此操作不可恢复！",
+                confirmText = "确定清除",
+                dismissText = "取消",
                 onConfirm = { onEvent(SettingsUiEvent.ClearAllData) },
-                onDismiss = { onEvent(SettingsUiEvent.HideClearDataDialog) }
+                onDismiss = { onEvent(SettingsUiEvent.HideClearDataDialog) },
+                isDestructive = true,
+                showDismissButton = true
             )
         }
 
         if (uiState.showPermissionDialog) {
-            PermissionRequestDialog(
+            IOSPermissionRequestDialog(
                 onConfirm = {
                     onEvent(SettingsUiEvent.HidePermissionDialog)
                     // 触发权限请求流程
@@ -337,31 +345,39 @@ private fun ProviderSelectionDialog(
     onProviderSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("选择 AI 服务商") },
-        text = {
+    val dimensions = AdaptiveDimensions.current
+    
+    IOSInputDialog(
+        title = "选择 AI 服务商",
+        content = {
             Column {
                 availableProviders.forEach { provider ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = AppSpacing.sm),
+                            .padding(vertical = dimensions.spacingSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = provider == selectedProvider,
-                            onClick = { onProviderSelected(provider) }
+                            onClick = { onProviderSelected(provider) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = iOSBlue
+                            )
                         )
-                        Spacer(modifier = Modifier.width(AppSpacing.sm))
-                        Text(provider)
+                        Spacer(modifier = Modifier.width(dimensions.spacingSmall))
+                        Text(
+                            text = provider,
+                            fontSize = dimensions.fontSizeBody
+                        )
                     }
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("关闭") }
-        }
+        confirmText = "关闭",
+        onConfirm = onDismiss,
+        onDismiss = onDismiss,
+        showDismissButton = false
     )
 }
 
@@ -370,32 +386,15 @@ private fun ClearDataDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("清除所有设置") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
-                Text("确定要清除以下数据吗？")
-                Text("将被清除：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-                Text("• AI服务商配置", style = MaterialTheme.typography.bodySmall)
-                Text("• 隐私保护设置", style = MaterialTheme.typography.bodySmall)
-                Text("• 悬浮窗设置", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(AppSpacing.xs))
-                Text("不会清除：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
-                Text("• 联系人数据", style = MaterialTheme.typography.bodySmall)
-                Text("• 标签数据", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text("此操作不可恢复！", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("确定清除", color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
-        }
+    // 使用 IOSAlertDialog 替代，已在上方使用
+    IOSAlertDialog(
+        title = "清除所有设置",
+        message = "确定要清除以下数据吗？\n\n将被清除：\n• AI服务商配置\n• 隐私保护设置\n• 悬浮窗设置\n\n不会清除：\n• 联系人数据\n• 标签数据\n\n此操作不可恢复！",
+        confirmText = "确定清除",
+        dismissText = "取消",
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        isDestructive = true
     )
 }
 

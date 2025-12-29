@@ -6,6 +6,8 @@ import com.empathy.ai.domain.model.UserProfile
  * 用户画像界面UI状态
  *
  * 包含界面渲染所需的所有状态数据。
+ * 
+ * BUG-00037 修复：添加编辑模式支持，避免每次操作都刷新列表
  */
 data class UserProfileUiState(
     /** 当前用户画像数据 */
@@ -38,6 +40,9 @@ data class UserProfileUiState(
     /** 是否显示重置确认对话框 */
     val showResetConfirmDialog: Boolean = false,
     
+    /** 是否显示放弃编辑确认对话框 */
+    val showDiscardChangesDialog: Boolean = false,
+    
     /** 当前编辑的维度键名 */
     val currentEditDimension: String? = null,
     
@@ -51,7 +56,21 @@ data class UserProfileUiState(
     val pendingDeleteTag: String? = null,
     
     /** 操作成功提示消息 */
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    
+    // ==================== BUG-00037 编辑模式支持 ====================
+    
+    /** 是否处于编辑模式 */
+    val isEditMode: Boolean = false,
+    
+    /** 待保存的标签变更（维度键 -> 标签列表） */
+    val pendingChanges: Map<String, List<String>> = emptyMap(),
+    
+    /** 待保存的自定义维度变更 */
+    val pendingCustomDimensions: Map<String, List<String>> = emptyMap(),
+    
+    /** 是否有未保存的变更 */
+    val hasUnsavedChanges: Boolean = false
 ) {
     /**
      * 画像完整度百分比
@@ -82,4 +101,28 @@ data class UserProfileUiState(
      */
     val customDimensionCount: Int
         get() = profile.getCustomDimensionCount()
+    
+    /**
+     * 获取维度的当前标签列表（优先返回待保存的变更）
+     * 
+     * BUG-00037: 编辑模式下返回待保存的变更，否则返回原始数据
+     */
+    fun getTagsForDimension(dimensionKey: String): List<String> {
+        return if (hasUnsavedChanges && pendingChanges.containsKey(dimensionKey)) {
+            pendingChanges[dimensionKey] ?: emptyList()
+        } else {
+            profile.getTagsForDimension(dimensionKey)
+        }
+    }
+    
+    /**
+     * 获取自定义维度的当前标签列表（优先返回待保存的变更）
+     */
+    fun getCustomDimensionTags(dimensionName: String): List<String> {
+        return if (hasUnsavedChanges && pendingCustomDimensions.containsKey(dimensionName)) {
+            pendingCustomDimensions[dimensionName] ?: emptyList()
+        } else {
+            profile.customDimensions[dimensionName] ?: emptyList()
+        }
+    }
 }

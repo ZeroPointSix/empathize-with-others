@@ -19,8 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.TagCategory
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -42,11 +42,14 @@ data class TagDetail(
 )
 
 /**
- * 标签详情对话框
+ * iOS 风格标签详情对话框
+ * 
+ * BUG-00036 修复：使用响应式字体尺寸
  * 
  * 技术要点:
  * - 显示标签详情（名称、来源、创建时间）
  * - 编辑/删除按钮
+ * - 响应式字体尺寸
  * 
  * @param tag 标签详情
  * @param onDismiss 关闭对话框回调
@@ -62,24 +65,26 @@ fun TagDetailDialog(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = Color.White
         ) {
             Column(
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier.padding(dimensions.spacingLarge)
             ) {
-                // 标题
+                // 标题 - 使用响应式字体
                 Text(
                     text = "标签详情",
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = iOSTextPrimary,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingLarge))
                 
                 // 标签名称
                 DetailRow(label = "名称", value = tag.name)
@@ -96,7 +101,7 @@ fun TagDetailDialog(
                 // 创建时间
                 DetailRow(label = "创建时间", value = tag.createdAt)
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingXLarge))
                 
                 // 按钮行
                 Row(
@@ -107,7 +112,11 @@ fun TagDetailDialog(
                         onClick = onDelete,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "删除", fontSize = 17.sp, color = iOSRed)
+                        Text(
+                            text = "删除",
+                            fontSize = dimensions.fontSizeTitle,
+                            color = iOSRed
+                        )
                     }
                     
                     TextButton(
@@ -116,7 +125,7 @@ fun TagDetailDialog(
                     ) {
                         Text(
                             text = "编辑",
-                            fontSize = 17.sp,
+                            fontSize = dimensions.fontSizeTitle,
                             fontWeight = FontWeight.SemiBold,
                             color = iOSBlue
                         )
@@ -129,14 +138,24 @@ fun TagDetailDialog(
 
 @Composable
 private fun DetailRow(label: String, value: String) {
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, fontSize = 15.sp, color = iOSTextSecondary)
-        Text(text = value, fontSize = 15.sp, color = iOSTextPrimary)
+        Text(
+            text = label,
+            fontSize = dimensions.fontSizeBody,
+            color = iOSTextSecondary
+        )
+        Text(
+            text = value,
+            fontSize = dimensions.fontSizeBody,
+            color = iOSTextPrimary
+        )
     }
 }
 

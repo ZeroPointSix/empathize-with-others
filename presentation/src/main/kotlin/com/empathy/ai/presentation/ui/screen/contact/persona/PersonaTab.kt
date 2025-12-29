@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,11 +35,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,14 +58,18 @@ import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.TagCategory
+import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSSystemGroupedBackground
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.ui.component.persona.InferredTag
 import com.empathy.ai.presentation.ui.component.persona.ModernFloatingSearchBar
 import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /**
  * 画像库标签页组件 (简化版 - iOS风格)
@@ -67,12 +78,20 @@ import com.empathy.ai.presentation.ui.component.state.EmptyView
  * - 按Fact.key分类展示所有标签
  * - 支持搜索过滤
  * - 支持长按删除
+ * - 支持重置本地状态（搜索、展开、滚动位置）
  * - 无"全部/已确认"分段控制器
  * - 无"雷区/策略"固定分类
+ * 
+ * BUG-00036 修复：
+ * - 使用 rememberSaveable 持久化展开状态和搜索关键词
+ * - 使用 LinkedHashMap 保持分类顺序稳定
+ * - 添加滚动位置保存和恢复机制
+ * - 添加重置功能（T3-05）- 在搜索栏右侧显示重置按钮
  *
  * @param facts 所有事实列表（直接使用Fact模型）
  * @param onFactClick 点击事实回调（用于编辑）
  * @param onFactLongClick 长按事实回调（用于删除）
+ * @param showResetButton 是否显示重置按钮（默认true，当有搜索内容或折叠分类时显示）
  * @param modifier Modifier
  */
 @Composable
@@ -80,20 +99,39 @@ fun PersonaTab(
     facts: List<Fact>,
     onFactClick: (Fact) -> Unit,
     onFactLongClick: (Fact) -> Unit,
+    showResetButton: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    // 搜索关键词
-    var searchQuery by remember { mutableStateOf("") }
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
+    // 🆕 使用 rememberSaveable 持久化搜索关键词（配置变更时保持）
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    
+    // 🆕 使用 rememberSaveable 持久化展开状态
+    var expandedCategories by rememberSaveable { mutableStateOf<Set<String>>(emptySet()) }
     
     // 是否已初始化展开状态
-    var isInitialized by remember { mutableStateOf(false) }
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
     
-    // 展开的分类（默认全部展开）
-    var expandedCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
-    
-    // 列表状态 - 使用 remember 确保在重组时保持稳定
-    // 关键修复：即使 facts 变化，listState 也会保持滚动位置
+    // 列表状态
     val listState = rememberLazyListState()
+    
+    // 🆕 保存滚动位置（用于数据变化后恢复）
+    var savedScrollIndex by rememberSaveable { mutableIntStateOf(0) }
+    var savedScrollOffset by rememberSaveable { mutableIntStateOf(0) }
+    
+    // 🆕 监听滚动位置变化并保存
+    LaunchedEffect(listState) {
+        snapshotFlow { 
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset 
+        }
+        .distinctUntilChanged()
+        .collect { (index, offset) ->
+            savedScrollIndex = index
+            savedScrollOffset = offset
+        }
+    }
     
     // 使用 derivedStateOf 优化重组，只有当 facts 或 searchQuery 真正变化时才重新计算
     val groupedFacts by remember(facts, searchQuery) {
@@ -106,16 +144,59 @@ fun PersonaTab(
                     it.value.contains(searchQuery, ignoreCase = true)
                 }
             }
-            // 按 key 分组，并保持稳定的排序顺序
-            filtered.groupBy { it.key }.toSortedMap()
+            // 🆕 使用 LinkedHashMap 保持插入顺序，避免 toSortedMap() 导致的顺序变化
+            // 按 key 分组，保持稳定的顺序
+            filtered.groupBy { it.key }
+                .entries
+                .sortedBy { it.key }  // 按字母顺序排序，但结果是稳定的
+                .associate { it.key to it.value }
         }
     }
     
     // 初始化展开状态（仅首次加载时全部展开）
-    // 使用 LaunchedEffect 避免在重组时重复执行
-    if (!isInitialized && groupedFacts.isNotEmpty()) {
+    LaunchedEffect(groupedFacts.keys) {
+        if (!isInitialized && groupedFacts.isNotEmpty()) {
+            expandedCategories = groupedFacts.keys.toSet()
+            isInitialized = true
+        }
+        // 🆕 新增分类时自动展开
+        val newCategories = groupedFacts.keys - expandedCategories
+        if (newCategories.isNotEmpty() && isInitialized) {
+            expandedCategories = expandedCategories + newCategories
+        }
+    }
+    
+    // 🆕 数据变化后恢复滚动位置
+    val factsSize = facts.size
+    LaunchedEffect(factsSize) {
+        if (savedScrollIndex > 0 && factsSize > 0) {
+            // 延迟恢复，确保布局完成
+            kotlinx.coroutines.delay(50)
+            val maxIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+            listState.scrollToItem(
+                index = savedScrollIndex.coerceAtMost(maxIndex),
+                scrollOffset = savedScrollOffset
+            )
+        }
+    }
+    
+    // 🆕 BUG-00036 T3-05: 重置功能
+    // 判断是否需要显示重置按钮（有搜索内容或有折叠的分类）
+    val hasCollapsedCategories = groupedFacts.keys.any { it !in expandedCategories }
+    val needsReset = searchQuery.isNotEmpty() || hasCollapsedCategories || savedScrollIndex > 0
+    
+    // 协程作用域用于重置滚动位置
+    val coroutineScope = rememberCoroutineScope()
+    
+    // 重置所有本地状态的函数
+    val resetAllState: () -> Unit = {
+        searchQuery = ""
         expandedCategories = groupedFacts.keys.toSet()
-        isInitialized = true
+        savedScrollIndex = 0
+        savedScrollOffset = 0
+        coroutineScope.launch {
+            listState.animateScrollToItem(0)
+        }
     }
     
     Column(
@@ -123,13 +204,36 @@ fun PersonaTab(
             .fillMaxSize()
             .background(iOSSystemGroupedBackground)
     ) {
-        // 顶部搜索栏
-        ModernFloatingSearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            placeholder = "搜索标签或分类",
-            modifier = Modifier.padding(16.dp)
-        )
+        // 顶部搜索栏 + 重置按钮
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimensions.spacingMedium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ModernFloatingSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholder = "搜索标签或分类",
+                modifier = Modifier.weight(1f)
+            )
+            
+            // BUG-00036 修复：显示重置按钮
+            if (showResetButton && needsReset) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = resetAllState,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "重置",
+                        tint = iOSBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
         
         if (facts.isEmpty()) {
             // 空状态
@@ -141,12 +245,15 @@ fun PersonaTab(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(horizontal = dimensions.spacingMedium, vertical = dimensions.spacingSmall),
+                verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)
             ) {
                 // 按分类展示 - 使用稳定的 key 确保滚动位置不会因为数据变化而重置
                 groupedFacts.forEach { (category, categoryFacts) ->
-                    item(key = "category_$category") {
+                    item(
+                        key = "category_${category.hashCode()}", // 🆕 使用 hashCode 确保 key 稳定
+                        contentType = "category_card"  // 🆕 指定内容类型，优化复用
+                    ) {
                         SimpleCategoryCard(
                             categoryName = category,
                             facts = categoryFacts,
@@ -165,7 +272,7 @@ fun PersonaTab(
                 }
                 
                 // 底部间距 - 使用固定 key
-                item(key = "bottom_spacer") {
+                item(key = "bottom_spacer", contentType = "spacer") {
                     Spacer(modifier = Modifier.height(80.dp))
                 }
             }
@@ -177,6 +284,7 @@ fun PersonaTab(
  * 简化版分类卡片
  * 
  * iOS风格：白色圆角卡片 + 圆形彩色图标
+ * BUG-00036 修复：使用响应式字体尺寸
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -189,52 +297,55 @@ private fun SimpleCategoryCard(
     onFactLongClick: (Fact) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     // 根据分类名生成颜色
     val categoryColor = getCategoryColor(categoryName)
     
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = dimensions.cardElevation)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // 头部：圆形图标 + 分类名 + 数量 + 展开/折叠
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(dimensions.spacingMedium),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 圆形彩色图标
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(dimensions.iosIconContainerSize)
                         .clip(CircleShape)
                         .background(categoryColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = getCategoryEmoji(categoryName),
-                        fontSize = 18.sp
+                        fontSize = dimensions.fontSizeSubtitle
                     )
                 }
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
                 
-                // 分类名
+                // 分类名 - 使用响应式字体
                 Text(
                     text = categoryName,
-                    fontSize = 16.sp,
+                    fontSize = dimensions.fontSizeSubtitle,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black,
                     modifier = Modifier.weight(1f)
                 )
                 
-                // 数量
+                // 数量 - 使用响应式字体
                 Text(
                     text = "${facts.size}个",
-                    fontSize = 14.sp,
+                    fontSize = dimensions.fontSizeBody,
                     color = iOSTextSecondary
                 )
                 
@@ -253,9 +364,9 @@ private fun SimpleCategoryCard(
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(start = dimensions.spacingMedium, end = dimensions.spacingMedium, bottom = dimensions.spacingMedium),
+                    horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
                 ) {
                     facts.forEach { fact ->
                         SimpleTagChip(
@@ -275,6 +386,7 @@ private fun SimpleCategoryCard(
  * 简化版标签胶囊
  * 
  * 莫兰迪色系：浅色背景 + 深色文字
+ * BUG-00036 修复：使用响应式字体尺寸
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -285,6 +397,9 @@ private fun SimpleTagChip(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 使用响应式尺寸
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         modifier = modifier
             .combinedClickable(
@@ -296,10 +411,10 @@ private fun SimpleTagChip(
     ) {
         Text(
             text = text,
-            fontSize = 14.sp,
+            fontSize = dimensions.fontSizeBody,
             color = color.copy(alpha = 0.9f),
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = dimensions.spacingMedium, vertical = dimensions.spacingSmall)
         )
     }
 }
@@ -369,13 +484,15 @@ private fun EmptyPersonaView(modifier: Modifier = Modifier) {
  */
 @Composable
 private fun NoSearchResultView(modifier: Modifier = Modifier) {
+    val dimensions = AdaptiveDimensions.current
+    
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "没有找到匹配的标签",
-            fontSize = 15.sp,
+            fontSize = dimensions.fontSizeBody,
             color = iOSTextSecondary,
             textAlign = TextAlign.Center
         )

@@ -47,7 +47,11 @@
       "mcp__grok-search__switch_model",
       "Bash(tasklist:*)",
       "WebSearch",
-      "mcp__grok-search__web_fetch"
+      "mcp__grok-search__web_fetch",
+      "Bash(then ls -la \"../.zcf/Love/prd23\")",
+      "Bash(else echo \"prd23 worktree 目录不存在或不可访问\")",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": []

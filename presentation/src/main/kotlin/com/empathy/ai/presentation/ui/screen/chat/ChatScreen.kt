@@ -25,6 +25,7 @@ import com.empathy.ai.domain.model.MessageSender
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.card.AnalysisCard
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.message.MessageBubble
 import com.empathy.ai.presentation.ui.component.state.EmptyView
@@ -310,7 +311,7 @@ private fun MessageInputSection(
 }
 
 /**
- * 分析结果对话框
+ * 分析结果对话框 - iOS风格
  */
 @Composable
 private fun AnalysisResultDialog(
@@ -319,10 +320,9 @@ private fun AnalysisResultDialog(
     onApplySuggestion: (String) -> Unit
 ) {
     val dimensions = AdaptiveDimensions.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("AI 分析结果") },
-        text = {
+    IOSInputDialog(
+        title = "AI 分析结果",
+        content = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
             ) {
@@ -332,16 +332,10 @@ private fun AnalysisResultDialog(
                 )
             }
         },
-        confirmButton = {
-            TextButton(onClick = { onApplySuggestion(result.replySuggestion) }) {
-                Text("应用建议")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
-            }
-        }
+        confirmText = "应用建议",
+        dismissText = "关闭",
+        onConfirm = { onApplySuggestion(result.replySuggestion) },
+        onDismiss = onDismiss
     )
 }
 

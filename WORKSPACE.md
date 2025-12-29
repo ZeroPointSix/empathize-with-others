@@ -11,6 +11,7 @@
 | TD-00017 | Clean Architecture模块化改造 | Kiro | ✅ 已完成 (65/65) | 🔴 高 | 2025-12-23 | 2025-12-24 |
 | TD-00015 | 提示词设置优化 | Kiro | ✅ 已完成 (22/25) | 🟡 中 | 2025-12-22 | 2025-12-22 |
 | TD-00010 | 悬浮球状态指示与拖动 | Kiro | 🔄 进行中 (23/26) | 🟡 中 | 2025-12-18 | 2025-12-18 |
+| BUG-00037 | UI交互与适配问题系统性修复 | Kiro | ✅ 已完成 | 🔴 高 | 2025-12-29 | 2025-12-29 |
 | BUG-00014 | 悬浮球状态指示与启动模式修复 | Kiro | ✅ 代码完成，待验证 | 🔴 高 | 2025-12-18 | 2025-12-18 |
 | BUG-00021 | 悬浮窗结果页内容过长导致按钮不可见 | Kiro | ✅ 已修复 | 🔴 高 | 2025-12-19 | 2025-12-19 |
 | BUILD-00001 | 编译APK并清理构建文件 | Roo | 🔄 进行中 | 🔴 高 | 2025-12-19 | 2025-12-19 |
@@ -45,9 +46,9 @@
 - [ ] 实施自动化改进方案第三阶段（长期规划）
 
 ### 已完成任务（最近3条）
+- [x] 2025-12-29 - **BUG-00037 UI交互与适配问题系统性修复完成** - Kiro
 - [x] 2025-12-24 - **TD-00017 Clean Architecture模块化改造全部完成（65/65任务）** - Kiro
 - [x] 2025-12-23 - **TD-00017 Phase 1-4完成（60/65任务）** - Kiro
-- [x] 2025-12-22 - **AUTO-00001自动化改进方案制定完成** - DevOps
 
 ---
 
@@ -267,6 +268,29 @@
 ---
 
 ## 📝 变更日志
+
+### 2025-12-29 - Kiro (BUG-00037修复)
+- **BUG-00037 UI交互与适配问题系统性修复完成**
+- 修复的问题：
+  - P1: 个人画像界面点击标签后列表刷新回到顶部 → 实现编辑模式，标签操作只更新本地状态
+  - P2: 个人画像界面重置按钮无效 → 在导航栏添加重置按钮
+  - P3: 提示词编辑器"恢复默认"文字换行 → 缩短文字为"重置"，添加maxLines=1
+  - P4: AI配置界面保存按钮被遮挡 → 添加navigationBarsPadding()
+- 修改文件：
+  - `presentation/.../UserProfileUiState.kt` - 添加编辑模式字段
+  - `presentation/.../UserProfileUiEvent.kt` - 添加本地操作事件
+  - `presentation/.../UserProfileViewModel.kt` - 实现编辑模式逻辑
+  - `presentation/.../UserProfileScreen.kt` - 更新UI使用编辑模式
+  - `presentation/.../PromptEditorScreen.kt` - 优化按钮文字布局
+  - `presentation/.../AddProviderScreen.kt` - 添加底部安全区域
+- 新增测试文件：
+  - `UserProfileEditModeTest.kt` - 编辑模式测试
+  - `UserProfileResetTest.kt` - 重置功能测试
+  - `PromptEditorButtonLayoutTest.kt` - 按钮布局测试
+  - `AddProviderScreenLayoutTest.kt` - 底部安全区域测试
+- 文档更新：
+  - `文档/开发文档/BUG/BUG-00037-UI交互与适配问题系统性分析.md`
+- 状态：✅ 已完成
 
 ### 2025-12-25 - Claude (项目文档体系同步)
 - **完成项目AI上下文初始化与文档同步**
