@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -15,11 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ConversationTopic
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.viewmodel.TopicUiEvent
 import com.empathy.ai.presentation.viewmodel.TopicUiState
 
 /**
- * 主题设置对话框
+ * 主题设置对话框 - iOS风格
  *
  * 提供主题的创建、编辑和清除功能
  *
@@ -35,16 +35,9 @@ fun TopicSettingDialog(
 ) {
     if (!uiState.showSettingDialog) return
 
-    AlertDialog(
-        onDismissRequest = { onEvent(TopicUiEvent.HideSettingDialog) },
-        modifier = modifier,
-        title = {
-            Text(
-                text = "设置对话主题",
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
+    IOSInputDialog(
+        title = "设置对话主题",
+        content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -82,10 +75,7 @@ fun TopicSettingDialog(
                         onSelect = { onEvent(TopicUiEvent.SelectFromHistory(it)) }
                     )
                 }
-            }
-        },
-        confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                
                 // 清除按钮（仅当有活跃主题时显示）
                 if (uiState.hasActiveTopic) {
                     TextButton(
@@ -95,30 +85,12 @@ fun TopicSettingDialog(
                         Text("清除主题")
                     }
                 }
-
-                // 保存按钮
-                Button(
-                    onClick = { onEvent(TopicUiEvent.SaveTopic) },
-                    enabled = uiState.canSave
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("保存")
-                    }
-                }
             }
         },
-        dismissButton = {
-            TextButton(
-                onClick = { onEvent(TopicUiEvent.HideSettingDialog) },
-                enabled = !uiState.isLoading
-            ) {
-                Text("取消")
-            }
-        }
+        confirmText = if (uiState.isLoading) "保存中..." else "保存",
+        dismissText = "取消",
+        onConfirm = { onEvent(TopicUiEvent.SaveTopic) },
+        onDismiss = { onEvent(TopicUiEvent.HideSettingDialog) },
+        confirmEnabled = uiState.canSave && !uiState.isLoading
     )
 }

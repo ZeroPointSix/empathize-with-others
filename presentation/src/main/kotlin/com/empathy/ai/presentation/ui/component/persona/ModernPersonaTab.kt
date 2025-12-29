@@ -233,14 +233,21 @@ fun ModernFloatingSearchBar(
         }
         
         if (query.isNotEmpty()) {
-            Icon(
-                imageVector = Icons.Filled.Clear,
-                contentDescription = "清除",
-                tint = iOSTextSecondary,
+            // BUG-00036 修复：增大点击区域，确保清除按钮可点击
+            Box(
                 modifier = Modifier
-                    .size(20.dp)
-                    .clickable { onQueryChange("") }
-            )
+                    .size(32.dp)  // 增大点击区域
+                    .clip(CircleShape)
+                    .clickable { onQueryChange("") },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Clear,
+                    contentDescription = "清除",
+                    tint = iOSTextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

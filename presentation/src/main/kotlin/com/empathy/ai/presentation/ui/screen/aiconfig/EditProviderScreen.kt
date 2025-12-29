@@ -14,11 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +38,7 @@ import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSGreen
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSRed
+import com.empathy.ai.presentation.ui.component.dialog.IOSDeleteConfirmDialog
 import com.empathy.ai.presentation.ui.component.ios.IOSFormField
 import com.empathy.ai.presentation.ui.component.ios.IOSModelListItem
 import com.empathy.ai.presentation.ui.component.ios.IOSNavigationBar
@@ -111,26 +110,13 @@ fun EditProviderScreen(
         modifier = modifier
     )
 
-    // 删除确认对话框
+    // 删除确认对话框 - iOS风格
     if (uiState.showDeleteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) },
-            title = { Text("确认删除") },
-            text = { Text("确定要删除这个服务商吗？此操作无法撤销。") },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.onEvent(AiConfigUiEvent.ConfirmDeleteProvider) }
-                ) {
-                    Text("删除", color = iOSRed)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { viewModel.onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
-                ) {
-                    Text("取消")
-                }
-            }
+        IOSDeleteConfirmDialog(
+            title = "确认删除",
+            message = "确定要删除这个服务商吗？此操作无法撤销。",
+            onConfirm = { viewModel.onEvent(AiConfigUiEvent.ConfirmDeleteProvider) },
+            onDismiss = { viewModel.onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
         )
     }
 }

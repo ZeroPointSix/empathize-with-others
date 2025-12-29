@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
- * 添加联系人对话框
+ * 添加联系人对话框 - iOS风格
  *
  * 功能：
  * - 输入联系人姓名（必填）
@@ -39,12 +39,9 @@ fun AddContactDialog(
     
     val focusManager = LocalFocusManager.current
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(text = "添加联系人")
-        },
-        text = {
+    IOSInputDialog(
+        title = "添加联系人",
+        content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -112,28 +109,20 @@ fun AddContactDialog(
                 )
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    // 验证姓名
-                    if (name.isBlank()) {
-                        nameError = "姓名不能为空"
-                        return@TextButton
-                    }
-                    
-                    // 验证通过，执行回调
-                    onConfirm(name.trim(), phone.trim(), targetGoal.trim())
-                }
-            ) {
-                Text("添加")
+        confirmText = "添加",
+        dismissText = "取消",
+        onConfirm = {
+            // 验证姓名
+            if (name.isBlank()) {
+                nameError = "姓名不能为空"
+                return@IOSInputDialog
             }
+            
+            // 验证通过，执行回调
+            onConfirm(name.trim(), phone.trim(), targetGoal.trim())
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        },
-        modifier = modifier
+        onDismiss = onDismiss,
+        confirmEnabled = name.isNotBlank()
     )
 }
 

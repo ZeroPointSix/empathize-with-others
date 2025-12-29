@@ -19,6 +19,8 @@ import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.ui.component.chip.TagChip
+import com.empathy.ai.presentation.ui.component.dialog.IOSAlertDialog
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
 import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
@@ -143,17 +145,15 @@ private fun BrainTagScreenContent(
         )
     }
 
-    // 错误提示
+    // 错误提示 - iOS风格
     uiState.error?.let { error ->
-        AlertDialog(
-            onDismissRequest = { onEvent(BrainTagUiEvent.ClearError) },
-            title = { Text("错误") },
-            text = { Text(error) },
-            confirmButton = {
-                TextButton(onClick = { onEvent(BrainTagUiEvent.ClearError) }) {
-                    Text("确定")
-                }
-            }
+        IOSAlertDialog(
+            title = "错误",
+            message = error,
+            confirmText = "确定",
+            onConfirm = { onEvent(BrainTagUiEvent.ClearError) },
+            onDismiss = { onEvent(BrainTagUiEvent.ClearError) },
+            showDismissButton = false
         )
     }
 }
@@ -237,7 +237,7 @@ private fun TagList(
 }
 
 /**
- * 添加标签对话框
+ * 添加标签对话框 - iOS风格
  */
 @Composable
 private fun AddTagDialog(
@@ -254,10 +254,9 @@ private fun AddTagDialog(
         TagType.STRATEGY_GREEN
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("添加标签") },
-        text = {
+    IOSInputDialog(
+        title = "添加标签",
+        content = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.lg)
             ) {
@@ -293,19 +292,11 @@ private fun AddTagDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = tagContent.isNotBlank()
-            ) {
-                Text("添加")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        }
+        confirmText = "添加",
+        dismissText = "取消",
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        confirmEnabled = tagContent.isNotBlank()
     )
 }
 

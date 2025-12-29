@@ -19,8 +19,10 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
 /**
  * iOS风格设置分组组件
  *
- * 标题: 13sp, 大写, 灰色
- * 卡片: 响应式圆角, 白色背景
+ * 设计规格（BUG-00036 响应式字体适配）:
+ * - 标题: 响应式字体（fontSizeCaption）, 大写, 灰色
+ * - 卡片: 响应式圆角, 白色背景
+ * - 底部说明: 响应式字体（fontSizeCaption）
  *
  * @param title 分组标题（可选）
  * @param footer 分组底部说明（可选）
@@ -42,11 +44,11 @@ fun IOSSettingsSection(
             .fillMaxWidth()
             .padding(horizontal = dimensions.spacingMedium)
     ) {
-        // 分组标题
+        // 分组标题 - 使用响应式字体
         if (title != null) {
             Text(
                 text = title.uppercase(),
-                fontSize = 13.sp,
+                fontSize = dimensions.fontSizeCaption,
                 fontWeight = FontWeight.Normal,
                 color = iOSTextSecondary,
                 modifier = Modifier.padding(
@@ -67,11 +69,11 @@ fun IOSSettingsSection(
             content()
         }
 
-        // 底部说明
+        // 底部说明 - 使用响应式字体
         if (footer != null) {
             Text(
                 text = footer,
-                fontSize = 13.sp,
+                fontSize = dimensions.fontSizeCaption,
                 color = iOSTextSecondary,
                 modifier = Modifier.padding(
                     start = dimensions.spacingMedium,

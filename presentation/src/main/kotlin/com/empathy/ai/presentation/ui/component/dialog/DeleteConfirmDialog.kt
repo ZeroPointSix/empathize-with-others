@@ -26,8 +26,10 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.R
 
 /**
- * 删除确认对话框
+ * 删除确认对话框（iOS风格）
  *
+ * BUG-00036 修复：迁移到 IOSDeleteConfirmDialog
+ * 
  * 显示警告图标、标题和提示消息
  * 删除按钮为红色（error颜色）
  *
@@ -43,45 +45,12 @@ fun DeleteConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-        },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
-        },
-        text = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text(stringResource(R.string.delete))
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
+    // 使用 iOS 风格对话框
+    IOSDeleteConfirmDialog(
+        title = title,
+        message = message,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 

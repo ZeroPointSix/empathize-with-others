@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,9 +20,10 @@ import com.empathy.ai.domain.model.ConflictResolution
 import com.empathy.ai.domain.model.ConflictResult
 import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.GenerationSource
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 
 /**
- * 冲突处理对话框
+ * 冲突处理对话框 - iOS风格
  *
  * 当选定日期范围内存在已有总结时显示，提供三个处理选项：
  * - 覆盖现有总结
@@ -45,10 +44,9 @@ fun ConflictResolutionDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("检测到已有总结") },
-        text = {
+    IOSInputDialog(
+        title = "检测到已有总结",
+        content = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -76,19 +74,11 @@ fun ConflictResolutionDialog(
                 )
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = selectedResolution != null
-            ) {
-                Text("确认")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        }
+        confirmText = "确认",
+        dismissText = "取消",
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        confirmEnabled = selectedResolution != null
     )
 }
 

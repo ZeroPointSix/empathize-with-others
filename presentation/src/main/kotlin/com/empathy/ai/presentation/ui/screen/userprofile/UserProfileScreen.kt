@@ -16,11 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ExportFormat
@@ -37,6 +40,8 @@ import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSRed
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.component.dialog.IOSAlertDialog
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.ui.component.ios.DimensionCard
 import com.empathy.ai.presentation.ui.component.ios.IOSTabSwitcher
 import com.empathy.ai.presentation.ui.component.ios.ProfileCompletionCard
@@ -90,11 +95,20 @@ private fun UserProfileScreenContent(
             .background(iOSBackground)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // iOS风格导航栏
+            // iOS风格导航栏 - BUG-00037修复：添加重置和保存按钮
             IOSUserProfileTopBar(
-                onNavigateBack = onNavigateBack,
+                onNavigateBack = {
+                    if (uiState.hasUnsavedChanges) {
+                        onEvent(UserProfileUiEvent.ShowDiscardChangesDialog)
+                    } else {
+                        onNavigateBack()
+                    }
+                },
                 onShare = { onEvent(UserProfileUiEvent.ShowExportDialog) },
-                onRefresh = { onEvent(UserProfileUiEvent.RefreshProfile) }
+                onRefresh = { onEvent(UserProfileUiEvent.RefreshProfile) },
+                onReset = { onEvent(UserProfileUiEvent.ShowResetConfirm) },
+                onSave = { onEvent(UserProfileUiEvent.SaveAllChanges) },
+                hasUnsavedChanges = uiState.hasUnsavedChanges
             )
 
             if (uiState.isLoading) {
@@ -138,7 +152,7 @@ private fun UserProfileScreenContent(
                     // 内容区域
                     when (selectedTab) {
                         0 -> IOSBaseDimensionsContent(
-                            profile = uiState.profile,
+                            uiState = uiState,
                             expandedDimensions = expandedDimensions,
                             onToggleExpand = { dimensionKey ->
                                 expandedDimensions = if (dimensionKey in expandedDimensions) {
@@ -150,7 +164,7 @@ private fun UserProfileScreenContent(
                             onEvent = onEvent
                         )
                         1 -> IOSCustomDimensionsContent(
-                            profile = uiState.profile,
+                            uiState = uiState,
                             canAddDimension = uiState.canAddCustomDimension,
                             expandedDimensions = expandedDimensions,
                             onToggleExpand = { dimensionKey ->
@@ -192,9 +206,10 @@ private fun UserProfileScreenContent(
         }
 
         // Dialogs
+        // BUG-00037: 使用LocalAddTag等本地操作，避免每次操作都刷新列表
         if (uiState.showAddTagDialog) {
             IOSAddTagDialog(
-                onConfirm = { tag -> onEvent(UserProfileUiEvent.AddTag(uiState.currentEditDimension ?: "", tag)) },
+                onConfirm = { tag -> onEvent(UserProfileUiEvent.LocalAddTag(uiState.currentEditDimension ?: "", tag)) },
                 onDismiss = { onEvent(UserProfileUiEvent.HideTagDialog) }
             )
         }
@@ -202,9 +217,9 @@ private fun UserProfileScreenContent(
             IOSEditTagDialog(
                 currentTag = uiState.currentEditTag ?: "",
                 onConfirm = { newTag ->
-                    onEvent(UserProfileUiEvent.EditTag(uiState.currentEditDimension ?: "", uiState.currentEditTag ?: "", newTag))
+                    onEvent(UserProfileUiEvent.LocalEditTag(uiState.currentEditDimension ?: "", uiState.currentEditTag ?: "", newTag))
                 },
-                onDelete = { onEvent(UserProfileUiEvent.ShowDeleteTagConfirm(uiState.currentEditDimension ?: "", uiState.currentEditTag ?: "")) },
+                onDelete = { onEvent(UserProfileUiEvent.LocalDeleteTag(uiState.currentEditDimension ?: "", uiState.currentEditTag ?: "")) },
                 onDismiss = { onEvent(UserProfileUiEvent.HideTagDialog) }
             )
         }
@@ -238,6 +253,23 @@ private fun UserProfileScreenContent(
                 onDismiss = { onEvent(UserProfileUiEvent.HideResetConfirm) }
             )
         }
+        
+        // BUG-00037: 放弃编辑确认对话框
+        if (uiState.showDiscardChangesDialog) {
+            IOSAlertDialog(
+                title = "放弃编辑",
+                message = "您有未保存的更改，确定要放弃吗？",
+                confirmText = "放弃",
+                dismissText = "继续编辑",
+                onConfirm = { 
+                    onEvent(UserProfileUiEvent.ConfirmDiscardChanges)
+                    onNavigateBack()
+                },
+                onDismiss = { onEvent(UserProfileUiEvent.HideDiscardChangesDialog) },
+                isDestructive = true,
+                showDismissButton = true
+            )
+        }
     }
 }
 
@@ -253,13 +285,18 @@ private fun UserProfileScreenContent(
  * - 背景: 白色/95%透明度 + 模糊效果
  * - 返回按钮: iOS蓝色 chevron_left
  * - 标题: 17sp, SemiBold
- * - 右侧按钮: 分享 + 刷新
+ * - 右侧按钮: 重置 + 分享 + 刷新
+ * 
+ * BUG-00037 修复: 添加重置按钮和保存按钮（编辑模式）
  */
 @Composable
 private fun IOSUserProfileTopBar(
     onNavigateBack: () -> Unit,
     onShare: () -> Unit,
     onRefresh: () -> Unit,
+    onReset: () -> Unit,
+    onSave: () -> Unit = {},
+    hasUnsavedChanges: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val dimensions = AdaptiveDimensions.current
@@ -301,25 +338,46 @@ private fun IOSUserProfileTopBar(
                 )
             }
 
-            // 右侧: 分享 + 刷新按钮
+            // 右侧按钮
             Row(
                 horizontalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
             ) {
-                IconButton(onClick = onShare) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "分享",
-                        tint = iOSBlue,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                IconButton(onClick = onRefresh) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "刷新",
-                        tint = iOSBlue,
-                        modifier = Modifier.size(22.dp)
-                    )
+                // 有未保存变更时显示保存按钮
+                if (hasUnsavedChanges) {
+                    TextButton(onClick = onSave) {
+                        Text(
+                            text = "保存",
+                            color = iOSBlue,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                } else {
+                    // 重置按钮 - BUG-00037 P2修复
+                    IconButton(onClick = onReset) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = "重置",
+                            tint = iOSRed,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    IconButton(onClick = onShare) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "分享",
+                            tint = iOSBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    IconButton(onClick = onRefresh) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "刷新",
+                            tint = iOSBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
         }
@@ -334,10 +392,13 @@ private fun IOSUserProfileTopBar(
  * 基础维度内容 - iOS风格
  * 
  * 使用DimensionCard组件展示各个维度
+ * 
+ * BUG-00037 修复：使用uiState.getTagsForDimension()获取标签（包含待保存的变更）
+ * 使用LocalAddTag等本地操作事件，避免每次操作都刷新列表
  */
 @Composable
 private fun IOSBaseDimensionsContent(
-    profile: UserProfile,
+    uiState: UserProfileUiState,
     expandedDimensions: Set<String>,
     onToggleExpand: (String) -> Unit,
     onEvent: (UserProfileUiEvent) -> Unit,
@@ -352,19 +413,22 @@ private fun IOSBaseDimensionsContent(
         UserProfileDimension.entries.forEach { dimension ->
             val dimensionIcon = getDimensionIcon(dimension)
             val dimensionColor = getDimensionColor(dimension)
+            // BUG-00037: 使用uiState.getTagsForDimension()获取标签（包含待保存的变更）
+            val currentTags = uiState.getTagsForDimension(dimension.name)
             
             DimensionCard(
                 icon = dimensionIcon,
                 iconBackgroundColor = dimensionColor,
                 title = dimension.displayName,
                 description = dimension.description,
-                tags = profile.getTagsForDimension(dimension.name),
-                presetTags = dimension.presetTags.filter { it !in profile.getTagsForDimension(dimension.name) },
+                tags = currentTags,
+                presetTags = dimension.presetTags.filter { it !in currentTags },
                 isExpanded = dimension.name in expandedDimensions || expandedDimensions.isEmpty(),
                 onToggleExpand = { onToggleExpand(dimension.name) },
                 onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(dimension.name)) },
                 onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(dimension.name, tag)) },
-                onSelectPresetTag = { tag -> onEvent(UserProfileUiEvent.AddTag(dimension.name, tag)) }
+                // BUG-00037: 使用LocalAddTag本地操作，避免每次操作都刷新列表
+                onSelectPresetTag = { tag -> onEvent(UserProfileUiEvent.LocalAddTag(dimension.name, tag)) }
             )
         }
     }
@@ -402,10 +466,12 @@ private fun getDimensionColor(dimension: UserProfileDimension): Color {
 
 /**
  * 自定义维度内容 - iOS风格
+ * 
+ * BUG-00037 修复：使用uiState获取自定义维度标签（包含待保存的变更）
  */
 @Composable
 private fun IOSCustomDimensionsContent(
-    profile: UserProfile,
+    uiState: UserProfileUiState,
     canAddDimension: Boolean,
     expandedDimensions: Set<String>,
     onToggleExpand: (String) -> Unit,
@@ -413,6 +479,7 @@ private fun IOSCustomDimensionsContent(
     modifier: Modifier = Modifier
 ) {
     val dimensions = AdaptiveDimensions.current
+    val profile = uiState.profile
     
     Column(
         modifier = modifier,
@@ -433,10 +500,12 @@ private fun IOSCustomDimensionsContent(
         }
 
         // 自定义维度列表
-        profile.customDimensions.forEach { (name, tags) ->
+        // BUG-00037: 使用uiState.getCustomDimensionTags()获取标签（包含待保存的变更）
+        profile.customDimensions.forEach { (name, _) ->
+            val currentTags = uiState.getCustomDimensionTags(name)
             IOSCustomDimensionCard(
                 name = name,
-                tags = tags,
+                tags = currentTags,
                 isExpanded = name in expandedDimensions || expandedDimensions.isEmpty(),
                 onToggleExpand = { onToggleExpand(name) },
                 onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(name)) },
@@ -562,6 +631,8 @@ private fun IOSEmptyCustomDimensionCard(
 
 /**
  * iOS风格添加标签对话框
+ * 
+ * BUG-00036 修复：迁移到真正的iOS风格对话框
  */
 @Composable
 private fun IOSAddTagDialog(
@@ -570,18 +641,11 @@ private fun IOSAddTagDialog(
 ) {
     var tagInput by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
+    val dimensions = AdaptiveDimensions.current
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = iOSCardBackground,
-        title = { 
-            Text(
-                "添加标签",
-                fontWeight = FontWeight.SemiBold,
-                color = iOSTextPrimary
-            ) 
-        },
-        text = {
+    IOSInputDialog(
+        title = "添加标签",
+        content = {
             OutlinedTextField(
                 value = tagInput,
                 onValueChange = { tagInput = it; isError = false },
@@ -589,7 +653,9 @@ private fun IOSAddTagDialog(
                 placeholder = { Text("请输入标签") },
                 singleLine = true,
                 isError = isError,
-                supportingText = if (isError) { { Text("标签不能为空且长度不超过20字符", color = iOSRed) } } else null,
+                supportingText = if (isError) { 
+                    { Text("标签不能为空且长度不超过20字符", color = iOSRed, fontSize = dimensions.fontSizeCaption) } 
+                } else null,
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = iOSBlue,
@@ -597,29 +663,25 @@ private fun IOSAddTagDialog(
                 )
             )
         },
-        confirmButton = {
-            TextButton(onClick = {
-                val trimmed = tagInput.trim()
-                if (trimmed.isNotEmpty() && trimmed.length <= 20) { 
-                    onConfirm(trimmed)
-                    onDismiss() 
-                } else {
-                    isError = true
-                }
-            }) { 
-                Text("添加", color = iOSBlue, fontWeight = FontWeight.SemiBold) 
+        confirmText = "添加",
+        onConfirm = {
+            val trimmed = tagInput.trim()
+            if (trimmed.isNotEmpty() && trimmed.length <= 20) { 
+                onConfirm(trimmed)
+                onDismiss() 
+            } else {
+                isError = true
             }
         },
-        dismissButton = { 
-            TextButton(onClick = onDismiss) { 
-                Text("取消", color = iOSBlue) 
-            } 
-        }
+        onDismiss = onDismiss,
+        confirmEnabled = tagInput.trim().isNotEmpty() && tagInput.trim().length <= 20
     )
 }
 
 /**
  * iOS风格编辑标签对话框
+ * 
+ * BUG-00036 修复：迁移到真正的iOS风格对话框
  */
 @Composable
 private fun IOSEditTagDialog(
@@ -630,63 +692,156 @@ private fun IOSEditTagDialog(
 ) {
     var tagInput by remember { mutableStateOf(currentTag) }
     var isError by remember { mutableStateOf(false) }
+    val dimensions = AdaptiveDimensions.current
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = iOSCardBackground,
-        title = { 
-            Text(
-                "编辑标签",
-                fontWeight = FontWeight.SemiBold,
-                color = iOSTextPrimary
-            ) 
-        },
-        text = {
-            OutlinedTextField(
-                value = tagInput,
-                onValueChange = { tagInput = it; isError = false },
-                label = { Text("标签内容") },
-                singleLine = true,
-                isError = isError,
-                supportingText = if (isError) { { Text("标签不能为空且长度不超过20字符", color = iOSRed) } } else null,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .padding(dimensions.spacingMedium),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White.copy(alpha = 0.98f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = iOSBlue,
-                    cursorColor = iOSBlue
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 标题
+                Text(
+                    text = "编辑标签",
+                    fontSize = dimensions.fontSizeTitle,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(
+                        top = dimensions.spacingLarge,
+                        start = dimensions.spacingMedium,
+                        end = dimensions.spacingMedium
+                    )
                 )
-            )
-        },
-        confirmButton = {
-            Row {
-                TextButton(
-                    onClick = onDelete
-                ) { 
-                    Text("删除", color = iOSRed) 
+                
+                // 输入框
+                Box(
+                    modifier = Modifier.padding(
+                        horizontal = dimensions.spacingMedium,
+                        vertical = dimensions.spacingMedium
+                    )
+                ) {
+                    OutlinedTextField(
+                        value = tagInput,
+                        onValueChange = { tagInput = it; isError = false },
+                        label = { Text("标签内容") },
+                        singleLine = true,
+                        isError = isError,
+                        supportingText = if (isError) { 
+                            { Text("标签不能为空且长度不超过20字符", color = iOSRed, fontSize = dimensions.fontSizeCaption) } 
+                        } else null,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = iOSBlue,
+                            cursorColor = iOSBlue
+                        )
+                    )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = {
-                    val trimmed = tagInput.trim()
-                    if (trimmed.isNotEmpty() && trimmed.length <= 20) { 
-                        onConfirm(trimmed)
-                        onDismiss() 
-                    } else {
-                        isError = true
+                
+                // 分隔线
+                Divider(
+                    color = Color.Black.copy(alpha = 0.1f),
+                    thickness = 0.5.dp
+                )
+                
+                // 三按钮区域：删除 | 取消 | 保存
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // 删除按钮
+                    TextButton(
+                        onClick = onDelete,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RectangleShape
+                    ) {
+                        Text(
+                            text = "删除",
+                            fontSize = dimensions.fontSizeTitle,
+                            color = iOSRed
+                        )
                     }
-                }) { 
-                    Text("保存", color = iOSBlue, fontWeight = FontWeight.SemiBold) 
+                    
+                    // 垂直分隔线
+                    Box(
+                        modifier = Modifier
+                            .width(0.5.dp)
+                            .height(44.dp)
+                            .background(Color.Black.copy(alpha = 0.1f))
+                    )
+                    
+                    // 取消按钮
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RectangleShape
+                    ) {
+                        Text(
+                            text = "取消",
+                            fontSize = dimensions.fontSizeTitle,
+                            color = iOSBlue
+                        )
+                    }
+                    
+                    // 垂直分隔线
+                    Box(
+                        modifier = Modifier
+                            .width(0.5.dp)
+                            .height(44.dp)
+                            .background(Color.Black.copy(alpha = 0.1f))
+                    )
+                    
+                    // 保存按钮
+                    val canSave = tagInput.trim().isNotEmpty() && tagInput.trim().length <= 20
+                    TextButton(
+                        onClick = {
+                            val trimmed = tagInput.trim()
+                            if (trimmed.isNotEmpty() && trimmed.length <= 20) { 
+                                onConfirm(trimmed)
+                                onDismiss() 
+                            } else {
+                                isError = true
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RectangleShape,
+                        enabled = canSave
+                    ) {
+                        Text(
+                            text = "保存",
+                            fontSize = dimensions.fontSizeTitle,
+                            color = if (canSave) iOSBlue else iOSBlue.copy(alpha = 0.4f),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
-        },
-        dismissButton = { 
-            TextButton(onClick = onDismiss) { 
-                Text("取消", color = iOSBlue) 
-            } 
         }
-    )
+    }
 }
 
 /**
  * iOS风格添加维度对话框
+ * 
+ * BUG-00036 修复：迁移到真正的iOS风格对话框
  */
 @Composable
 private fun IOSAddDimensionDialog(
@@ -696,18 +851,11 @@ private fun IOSAddDimensionDialog(
     var nameInput by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    val dimensions = AdaptiveDimensions.current
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = iOSCardBackground,
-        title = { 
-            Text(
-                "添加自定义维度",
-                fontWeight = FontWeight.SemiBold,
-                color = iOSTextPrimary
-            ) 
-        },
-        text = {
+    IOSInputDialog(
+        title = "添加自定义维度",
+        content = {
             OutlinedTextField(
                 value = nameInput,
                 onValueChange = { nameInput = it; isError = false },
@@ -716,9 +864,9 @@ private fun IOSAddDimensionDialog(
                 singleLine = true,
                 isError = isError,
                 supportingText = if (isError) { 
-                    { Text(errorMessage, color = iOSRed) } 
+                    { Text(errorMessage, color = iOSRed, fontSize = dimensions.fontSizeCaption) } 
                 } else { 
-                    { Text("2-10个字符", color = iOSTextSecondary) } 
+                    { Text("2-10个字符", color = iOSTextSecondary, fontSize = dimensions.fontSizeCaption) } 
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -727,30 +875,26 @@ private fun IOSAddDimensionDialog(
                 )
             )
         },
-        confirmButton = {
-            TextButton(onClick = {
-                val trimmed = nameInput.trim()
-                when {
-                    trimmed.isEmpty() -> { isError = true; errorMessage = "维度名称不能为空" }
-                    trimmed.length < 2 -> { isError = true; errorMessage = "维度名称至少2个字符" }
-                    trimmed.length > 10 -> { isError = true; errorMessage = "维度名称不超过10个字符" }
-                    UserProfileDimension.isBaseDimension(trimmed) -> { isError = true; errorMessage = "不能与基础维度名称重复" }
-                    else -> { onConfirm(trimmed); onDismiss() }
-                }
-            }) { 
-                Text("添加", color = iOSBlue, fontWeight = FontWeight.SemiBold) 
+        confirmText = "添加",
+        onConfirm = {
+            val trimmed = nameInput.trim()
+            when {
+                trimmed.isEmpty() -> { isError = true; errorMessage = "维度名称不能为空" }
+                trimmed.length < 2 -> { isError = true; errorMessage = "维度名称至少2个字符" }
+                trimmed.length > 10 -> { isError = true; errorMessage = "维度名称不超过10个字符" }
+                UserProfileDimension.isBaseDimension(trimmed) -> { isError = true; errorMessage = "不能与基础维度名称重复" }
+                else -> { onConfirm(trimmed); onDismiss() }
             }
         },
-        dismissButton = { 
-            TextButton(onClick = onDismiss) { 
-                Text("取消", color = iOSBlue) 
-            } 
-        }
+        onDismiss = onDismiss,
+        confirmEnabled = nameInput.trim().length in 2..10 && !UserProfileDimension.isBaseDimension(nameInput.trim())
     )
 }
 
 /**
  * iOS风格删除确认对话框
+ * 
+ * BUG-00036 修复：迁移到真正的iOS风格对话框
  */
 @Composable
 private fun IOSDeleteConfirmDialog(
@@ -759,42 +903,22 @@ private fun IOSDeleteConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = iOSCardBackground,
-        icon = { 
-            Icon(
-                Icons.Default.Warning, 
-                contentDescription = null, 
-                tint = iOSRed,
-                modifier = Modifier.size(32.dp)
-            ) 
-        },
-        title = { 
-            Text(
-                title,
-                fontWeight = FontWeight.SemiBold,
-                color = iOSTextPrimary
-            ) 
-        },
-        text = { 
-            Text(message, color = iOSTextSecondary) 
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(); onDismiss() }) { 
-                Text("删除", color = iOSRed, fontWeight = FontWeight.SemiBold) 
-            }
-        },
-        dismissButton = { 
-            TextButton(onClick = onDismiss) { 
-                Text("取消", color = iOSBlue) 
-            } 
-        }
+    IOSAlertDialog(
+        title = title,
+        message = message,
+        confirmText = "删除",
+        dismissText = "取消",
+        onConfirm = { onConfirm(); onDismiss() },
+        onDismiss = onDismiss,
+        isDestructive = true,
+        showDismissButton = true
     )
 }
 
 /**
  * iOS风格导出对话框
+ * 
+ * BUG-00036 修复：迁移到真正的iOS风格对话框
  */
 @Composable
 private fun IOSExportDialog(
@@ -803,100 +927,124 @@ private fun IOSExportDialog(
 ) {
     val dimensions = AdaptiveDimensions.current
     
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = iOSCardBackground,
-        title = { 
-            Text(
-                "导出画像",
-                fontWeight = FontWeight.SemiBold,
-                color = iOSTextPrimary
-            ) 
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)) {
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .widthIn(max = 270.dp)
+                .padding(dimensions.spacingMedium),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White.copy(alpha = 0.98f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 标题
                 Text(
-                    "选择导出格式", 
-                    fontSize = 13.sp,
-                    color = iOSTextSecondary
+                    text = "导出画像",
+                    fontSize = dimensions.fontSizeTitle,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(
+                        top = dimensions.spacingLarge,
+                        start = dimensions.spacingMedium,
+                        end = dimensions.spacingMedium
+                    )
                 )
-                ExportFormat.entries.forEach { format ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))
-                            .clickable { onExport(format); onDismiss() }
-                            .padding(dimensions.spacingMediumSmall),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = when (format) {
-                                ExportFormat.JSON -> Icons.Default.Code
-                                ExportFormat.PLAIN_TEXT -> Icons.Default.Description
-                            },
-                            contentDescription = null,
-                            tint = iOSBlue
-                        )
-                        Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
-                        Text(
-                            format.displayName,
-                            color = iOSTextPrimary
-                        )
+                
+                // 选项列表
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = dimensions.spacingMedium,
+                        vertical = dimensions.spacingMedium
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(dimensions.spacingSmall)
+                ) {
+                    Text(
+                        "选择导出格式", 
+                        fontSize = dimensions.fontSizeCaption,
+                        color = Color.Black.copy(alpha = 0.5f)
+                    )
+                    ExportFormat.entries.forEach { format ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))
+                                .clickable { onExport(format); onDismiss() }
+                                .padding(dimensions.spacingMediumSmall),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = when (format) {
+                                    ExportFormat.JSON -> Icons.Default.Code
+                                    ExportFormat.PLAIN_TEXT -> Icons.Default.Description
+                                },
+                                contentDescription = null,
+                                tint = iOSBlue
+                            )
+                            Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
+                            Text(
+                                format.displayName,
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
+                
+                // 分隔线
+                Divider(
+                    color = Color.Black.copy(alpha = 0.1f),
+                    thickness = 0.5.dp
+                )
+                
+                // 取消按钮
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RectangleShape
+                ) {
+                    Text(
+                        text = "取消",
+                        fontSize = dimensions.fontSizeTitle,
+                        color = iOSBlue
+                    )
+                }
             }
-        },
-        confirmButton = {},
-        dismissButton = { 
-            TextButton(onClick = onDismiss) { 
-                Text("取消", color = iOSBlue) 
-            } 
         }
-    )
+    }
 }
 
 /**
  * iOS风格重置确认对话框
+ * 
+ * BUG-00036 修复：迁移到真正的iOS风格对话框
  */
 @Composable
 private fun IOSResetConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = iOSCardBackground,
-        icon = { 
-            Icon(
-                Icons.Default.Warning, 
-                contentDescription = null, 
-                tint = iOSRed,
-                modifier = Modifier.size(32.dp)
-            ) 
-        },
-        title = { 
-            Text(
-                "重置画像",
-                fontWeight = FontWeight.SemiBold,
-                color = iOSTextPrimary
-            ) 
-        },
-        text = { 
-            Text(
-                "确定要重置所有画像数据吗？此操作不可撤销，所有标签和自定义维度都将被清除。",
-                color = iOSTextSecondary
-            ) 
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(); onDismiss() }) { 
-                Text("重置", color = iOSRed, fontWeight = FontWeight.SemiBold) 
-            }
-        },
-        dismissButton = { 
-            TextButton(onClick = onDismiss) { 
-                Text("取消", color = iOSBlue) 
-            } 
-        }
+    IOSAlertDialog(
+        title = "重置画像",
+        message = "确定要重置所有画像数据吗？此操作不可撤销，所有标签和自定义维度都将被清除。",
+        confirmText = "重置",
+        dismissText = "取消",
+        onConfirm = { onConfirm(); onDismiss() },
+        onDismiss = onDismiss,
+        isDestructive = true,
+        showDismissButton = true
     )
 }
 
@@ -931,7 +1079,8 @@ private fun IOSUserProfileTopBarPreview() {
         IOSUserProfileTopBar(
             onNavigateBack = {},
             onShare = {},
-            onRefresh = {}
+            onRefresh = {},
+            onReset = {}
         )
     }
 }

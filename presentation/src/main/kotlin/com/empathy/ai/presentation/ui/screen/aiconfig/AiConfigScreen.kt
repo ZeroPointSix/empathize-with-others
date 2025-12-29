@@ -25,6 +25,7 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSPurple
+import com.empathy.ai.presentation.ui.component.dialog.IOSDeleteConfirmDialog
 import com.empathy.ai.presentation.ui.component.dialog.ProviderFormDialog
 import com.empathy.ai.presentation.ui.component.ios.IOSLargeTitleBar
 import com.empathy.ai.presentation.ui.component.ios.IOSProviderCard
@@ -186,26 +187,13 @@ private fun AiConfigScreenContent(
         )
     }
 
-    // 删除确认对话框
+    // 删除确认对话框 - 使用 iOS 风格
     if (uiState.showDeleteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) },
-            title = { Text("确认删除") },
-            text = { Text("确定要删除这个服务商吗？此操作无法撤销。") },
-            confirmButton = {
-                TextButton(
-                    onClick = { onEvent(AiConfigUiEvent.ConfirmDeleteProvider) }
-                ) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
-                ) {
-                    Text("取消")
-                }
-            }
+        IOSDeleteConfirmDialog(
+            title = "确认删除",
+            message = "确定要删除这个服务商吗？此操作无法撤销。",
+            onConfirm = { onEvent(AiConfigUiEvent.ConfirmDeleteProvider) },
+            onDismiss = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
         )
     }
 }

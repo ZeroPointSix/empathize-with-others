@@ -32,8 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.TagCategory
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -42,12 +42,15 @@ import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 
 /**
- * 添加标签对话框
+ * 添加标签对话框（画像库页）
+ * 
+ * BUG-00036 修复：使用响应式字体尺寸
  * 
  * 技术要点:
  * - iOS风格对话框
  * - 输入框+分类选择器
  * - 取消/确认按钮
+ * - 响应式字体尺寸
  * 
  * @param onDismiss 关闭对话框回调
  * @param onConfirm 确认添加回调，参数为(标签名, 分类)
@@ -61,6 +64,7 @@ fun AddTagDialog(
     onConfirm: (String, TagCategory) -> Unit,
     initialCategory: TagCategory? = null
 ) {
+    val dimensions = AdaptiveDimensions.current
     var tagName by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(initialCategory ?: TagCategory.INTERESTS) }
     var showCategoryDropdown by remember { mutableStateOf(false) }
@@ -71,25 +75,25 @@ fun AddTagDialog(
             color = Color.White
         ) {
             Column(
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier.padding(dimensions.spacingLarge)
             ) {
-                // 标题
+                // 标题 - 使用响应式字体
                 Text(
                     text = "添加标签",
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = iOSTextPrimary,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingLarge))
                 
                 // 标签名输入框
                 OutlinedTextField(
                     value = tagName,
                     onValueChange = { tagName = it },
-                    label = { Text("标签名称") },
-                    placeholder = { Text("请输入标签名称") },
+                    label = { Text("标签名称", fontSize = dimensions.fontSizeCaption) },
+                    placeholder = { Text("请输入标签名称", fontSize = dimensions.fontSizeBody) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -100,14 +104,14 @@ fun AddTagDialog(
                     shape = RoundedCornerShape(10.dp)
                 )
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingMedium))
                 
                 // 分类选择器
                 Text(
                     text = "选择分类",
-                    fontSize = 13.sp,
+                    fontSize = dimensions.fontSizeCaption,
                     color = iOSTextSecondary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                 )
                 
                 Box {
@@ -119,13 +123,13 @@ fun AddTagDialog(
                                 shape = RoundedCornerShape(10.dp)
                             )
                             .clickable { showCategoryDropdown = true }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                            .padding(horizontal = dimensions.spacingMedium, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = selectedCategory.displayName,
-                            fontSize = 15.sp,
+                            fontSize = dimensions.fontSizeBody,
                             color = iOSTextPrimary
                         )
                         Icon(
@@ -141,7 +145,12 @@ fun AddTagDialog(
                     ) {
                         TagCategory.entries.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category.displayName) },
+                                text = { 
+                                    Text(
+                                        text = category.displayName,
+                                        fontSize = dimensions.fontSizeBody
+                                    ) 
+                                },
                                 onClick = {
                                     selectedCategory = category
                                     showCategoryDropdown = false
@@ -151,7 +160,7 @@ fun AddTagDialog(
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(dimensions.spacingXLarge))
                 
                 // 按钮行
                 Row(
@@ -164,7 +173,7 @@ fun AddTagDialog(
                     ) {
                         Text(
                             text = "取消",
-                            fontSize = 17.sp,
+                            fontSize = dimensions.fontSizeTitle,
                             color = iOSBlue
                         )
                     }
@@ -180,7 +189,7 @@ fun AddTagDialog(
                     ) {
                         Text(
                             text = "确认",
-                            fontSize = 17.sp,
+                            fontSize = dimensions.fontSizeTitle,
                             fontWeight = FontWeight.SemiBold,
                             color = if (tagName.isNotBlank()) iOSBlue else iOSTextSecondary
                         )

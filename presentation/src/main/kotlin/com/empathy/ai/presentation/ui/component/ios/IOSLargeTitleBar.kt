@@ -32,8 +32,8 @@ import com.empathy.ai.presentation.theme.iOSTextPrimary
 /**
  * iOS风格大标题导航栏
  *
- * 设计规格:
- * - 大标题: 34sp, Bold, 黑色
+ * 设计规格（BUG-00036 响应式字体适配）:
+ * - 大标题: 响应式字体（fontSizeLargeTitle）, Bold, 黑色
  * - 返回按钮: iOS蓝色, chevron_left图标
  * - 添加按钮: iOS蓝色, add图标
  * - 背景: iOSBackground (#F2F2F7)
@@ -111,10 +111,10 @@ fun IOSLargeTitleBar(
             }
         }
 
-        // 大标题区域
+        // 大标题区域 - 使用响应式字体
         Text(
             text = title,
-            fontSize = 34.sp,
+            fontSize = dimensions.fontSizeLargeTitle,
             fontWeight = FontWeight.Bold,
             color = iOSTextPrimary,
             modifier = Modifier.padding(horizontal = dimensions.spacingMedium, vertical = dimensions.spacingSmall)

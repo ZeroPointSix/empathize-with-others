@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -76,6 +77,8 @@ fun AddProviderScreen(
 
 /**
  * 添加服务商页面内容（无状态）
+ * 
+ * BUG-00037 P4修复：添加底部安全区域处理
  */
 @Composable
 private fun AddProviderScreenContent(
@@ -99,10 +102,12 @@ private fun AddProviderScreenContent(
             isDoneEnabled = uiState.isFormValid && !uiState.isSaving
         )
 
-        // 表单内容
+        // 表单内容 - BUG-00037修复：添加navigationBarsPadding
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = dimensions.spacingXLarge)
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding(),
+            contentPadding = PaddingValues(bottom = dimensions.spacingXLarge + 48.dp)
         ) {
             // 基础信息分组
             item {

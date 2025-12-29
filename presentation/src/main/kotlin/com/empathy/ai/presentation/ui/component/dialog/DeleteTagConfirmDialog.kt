@@ -13,7 +13,9 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.theme.EmpathyTheme
 
 /**
- * 删除标签确认对话框
+ * 删除标签确认对话框（iOS风格）
+ *
+ * BUG-00036 修复：迁移到 IOSDeleteConfirmDialog
  *
  * 功能：
  * - 显示要删除的标签内容
@@ -32,65 +34,12 @@ fun DeleteTagConfirmDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "警告",
-                tint = MaterialTheme.colorScheme.error
-            )
-        },
-        title = {
-            Text(text = "确认删除标签")
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "确定要删除以下标签吗？",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                
-                // 显示标签内容
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = tagContent,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                
-                Text(
-                    text = "此操作将从所有关联的联系人中移除该标签，且无法撤销。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("删除")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        },
-        modifier = modifier
+    // 使用 iOS 风格对话框
+    IOSDeleteConfirmDialog(
+        title = "确认删除标签",
+        message = "确定要删除标签「$tagContent」吗？\n\n此操作将从所有关联的联系人中移除该标签，且无法撤销。",
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 

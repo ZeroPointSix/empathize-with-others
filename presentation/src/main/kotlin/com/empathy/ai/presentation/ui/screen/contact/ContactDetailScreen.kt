@@ -423,20 +423,12 @@ private fun DeleteConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
-        text = { Text("确定要删除这个联系人吗？此操作无法撤销。") },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("删除", color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        }
+    // 使用 iOS 风格对话框
+    com.empathy.ai.presentation.ui.component.dialog.IOSDeleteConfirmDialog(
+        title = "确认删除",
+        message = "确定要删除这个联系人吗？此操作无法撤销。",
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 
@@ -449,25 +441,16 @@ private fun UnsavedChangesDialog(
     onDiscard: () -> Unit,
     onCancel: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text("未保存的更改") },
-        text = { Text("您有未保存的更改，是否保存？") },
-        confirmButton = {
-            TextButton(onClick = onSave) {
-                Text("保存")
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = onDiscard) {
-                    Text("放弃", color = MaterialTheme.colorScheme.error)
-                }
-                TextButton(onClick = onCancel) {
-                    Text("取消")
-                }
-            }
-        }
+    // 使用 iOS 风格对话框
+    com.empathy.ai.presentation.ui.component.dialog.IOSAlertDialog(
+        title = "未保存的更改",
+        message = "您有未保存的更改，是否保存？",
+        confirmText = "保存",
+        dismissText = "放弃",
+        onConfirm = onSave,
+        onDismiss = onDiscard,
+        isDestructive = false,
+        showDismissButton = true
     )
 }
 

@@ -322,6 +322,8 @@ private fun IOSNavigationBar(
 
 /**
  * 底部按钮区域
+ * 
+ * BUG-00037 P3修复：缩短按钮文字，防止换行
  */
 @Composable
 private fun BottomButtons(
@@ -351,8 +353,14 @@ private fun BottomButtons(
                 tint = iOSTextSecondary,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "恢复默认", color = iOSTextSecondary, fontSize = 16.sp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "重置",
+                color = iOSTextSecondary,
+                fontSize = 15.sp,
+                maxLines = 1,
+                softWrap = false
+            )
         }
 
         Button(
@@ -379,8 +387,13 @@ private fun BottomButtons(
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "保存", fontSize = 16.sp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "保存",
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
         }
     }

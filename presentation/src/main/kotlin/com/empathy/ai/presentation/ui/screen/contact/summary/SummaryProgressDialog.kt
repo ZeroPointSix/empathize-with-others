@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -24,9 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.SummaryTask
 import com.empathy.ai.domain.model.SummaryTaskStatus
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 
 /**
- * 总结进度对话框
+ * 总结进度对话框 - iOS风格
  *
  * 显示总结任务的执行进度，包括：
  * - 进度条和百分比
@@ -42,10 +41,9 @@ fun SummaryProgressDialog(
     task: SummaryTask,
     onCancel: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = { /* 不允许点击外部关闭 */ },
-        title = { Text("正在生成总结") },
-        text = {
+    IOSInputDialog(
+        title = "正在生成总结",
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,14 +75,10 @@ fun SummaryProgressDialog(
                 )
             }
         },
-        confirmButton = {},
-        dismissButton = {
-            if (task.status.isCancellable()) {
-                TextButton(onClick = onCancel) {
-                    Text("取消")
-                }
-            }
-        }
+        confirmText = if (task.status.isCancellable()) "取消" else "确定",
+        onConfirm = onCancel,
+        onDismiss = { /* 不允许点击外部关闭 */ },
+        showDismissButton = false
     )
 }
 
