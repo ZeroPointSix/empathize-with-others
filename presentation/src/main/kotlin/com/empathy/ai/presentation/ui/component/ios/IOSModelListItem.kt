@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +45,10 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * - 拖拽手柄: drag_handle图标, 灰色
  * - 分隔线: 从左侧padding开始
  *
+ * BUG-00038 P3修复：添加拖拽排序支持
+ * - 新增onMoveUp/onMoveDown回调用于上下移动
+ * - 新增canMoveUp/canMoveDown参数控制按钮显示
+ *
  * @param modelId 模型ID
  * @param displayName 显示名称（可选，为空时使用modelId）
  * @param isDefault 是否为默认模型
@@ -50,6 +56,10 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
  * @param modifier Modifier
  * @param showDivider 是否显示分隔线
  * @param showDragHandle 是否显示拖拽手柄
+ * @param onMoveUp 上移回调（BUG-00038 P3修复）
+ * @param onMoveDown 下移回调（BUG-00038 P3修复）
+ * @param canMoveUp 是否可以上移（BUG-00038 P3修复）
+ * @param canMoveDown 是否可以下移（BUG-00038 P3修复）
  *
  * @see TDD-00021 3.5节 IOSModelListItem组件规格
  */
@@ -61,7 +71,11 @@ fun IOSModelListItem(
     modifier: Modifier = Modifier,
     displayName: String = "",
     showDivider: Boolean = true,
-    showDragHandle: Boolean = true
+    showDragHandle: Boolean = true,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null,
+    canMoveUp: Boolean = true,
+    canMoveDown: Boolean = true
 ) {
     // 使用响应式尺寸
     val dimensions = AdaptiveDimensions.current
@@ -121,8 +135,32 @@ fun IOSModelListItem(
             Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
         }
 
-        // 拖拽手柄
-        if (showDragHandle) {
+        // BUG-00038 P3修复：拖拽排序按钮
+        if (showDragHandle && (onMoveUp != null || onMoveDown != null)) {
+            // 上移按钮
+            if (onMoveUp != null) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "上移",
+                    tint = if (canMoveUp) iOSBlue else iOSTextSecondary.copy(alpha = 0.3f),
+                    modifier = Modifier
+                        .size(dimensions.iconSizeLarge - 4.dp)
+                        .clickable(enabled = canMoveUp) { onMoveUp() }
+                )
+            }
+            // 下移按钮
+            if (onMoveDown != null) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "下移",
+                    tint = if (canMoveDown) iOSBlue else iOSTextSecondary.copy(alpha = 0.3f),
+                    modifier = Modifier
+                        .size(dimensions.iconSizeLarge - 4.dp)
+                        .clickable(enabled = canMoveDown) { onMoveDown() }
+                )
+            }
+        } else if (showDragHandle) {
+            // 原有的拖拽手柄图标（仅显示，无功能）
             Icon(
                 imageVector = Icons.Default.DragHandle,
                 contentDescription = "拖拽排序",

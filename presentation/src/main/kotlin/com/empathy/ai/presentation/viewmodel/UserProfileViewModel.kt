@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.ExportFormat
+import com.empathy.ai.domain.model.UserProfileDimension
 import com.empathy.ai.domain.repository.UserProfileRepository
 import com.empathy.ai.domain.usecase.AddTagUseCase
 import com.empathy.ai.domain.usecase.ExportUserProfileUseCase
@@ -451,72 +452,148 @@ class UserProfileViewModel @Inject constructor(
     }
     
     // ==================== BUG-00037: 编辑模式操作 ====================
+    // ==================== BUG-00038 P5修复: 区分基础维度和自定义维度 ====================
+    
+    /**
+     * 判断是否为基础维度
+     * 
+     * BUG-00038 P5修复：使用UserProfileDimension.isBaseDimension()判断
+     */
+    private fun isBaseDimension(dimensionKey: String): Boolean {
+        return UserProfileDimension.isBaseDimension(dimensionKey)
+    }
     
     /**
      * 本地添加标签（不立即保存到Repository）
      * 
-     * 只更新pendingChanges，不触发Repository调用，避免列表刷新
+     * BUG-00038 P5修复：区分基础维度和自定义维度
+     * - 基础维度：更新pendingChanges
+     * - 自定义维度：更新pendingCustomDimensions
      */
     private fun localAddTag(dimensionKey: String, tag: String) {
-        val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
-        if (tag !in currentTags) {
-            currentTags.add(tag)
-            val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
-            newPendingChanges[dimensionKey] = currentTags
-            _uiState.update { 
-                it.copy(
-                    pendingChanges = newPendingChanges,
-                    hasUnsavedChanges = true,
-                    showAddTagDialog = false,
-                    currentEditDimension = null
-                )
+        if (isBaseDimension(dimensionKey)) {
+            // 基础维度：更新pendingChanges
+            val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
+            if (tag !in currentTags) {
+                currentTags.add(tag)
+                val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
+                newPendingChanges[dimensionKey] = currentTags
+                _uiState.update { 
+                    it.copy(
+                        pendingChanges = newPendingChanges,
+                        hasUnsavedChanges = true,
+                        showAddTagDialog = false,
+                        currentEditDimension = null
+                    )
+                }
+            }
+        } else {
+            // 自定义维度：更新pendingCustomDimensions
+            val currentTags = _uiState.value.getCustomDimensionTags(dimensionKey).toMutableList()
+            if (tag !in currentTags) {
+                currentTags.add(tag)
+                val newPendingCustomDimensions = _uiState.value.pendingCustomDimensions.toMutableMap()
+                newPendingCustomDimensions[dimensionKey] = currentTags
+                _uiState.update { 
+                    it.copy(
+                        pendingCustomDimensions = newPendingCustomDimensions,
+                        hasUnsavedChanges = true,
+                        showAddTagDialog = false,
+                        currentEditDimension = null
+                    )
+                }
             }
         }
     }
     
     /**
      * 本地编辑标签（不立即保存到Repository）
+     * 
+     * BUG-00038 P5修复：区分基础维度和自定义维度
      */
     private fun localEditTag(dimensionKey: String, oldTag: String, newTag: String) {
-        val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
-        val index = currentTags.indexOf(oldTag)
-        if (index >= 0) {
-            currentTags[index] = newTag
-            val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
-            newPendingChanges[dimensionKey] = currentTags
-            _uiState.update { 
-                it.copy(
-                    pendingChanges = newPendingChanges,
-                    hasUnsavedChanges = true,
-                    showEditTagDialog = false,
-                    currentEditDimension = null,
-                    currentEditTag = null
-                )
+        if (isBaseDimension(dimensionKey)) {
+            // 基础维度
+            val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
+            val index = currentTags.indexOf(oldTag)
+            if (index >= 0) {
+                currentTags[index] = newTag
+                val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
+                newPendingChanges[dimensionKey] = currentTags
+                _uiState.update { 
+                    it.copy(
+                        pendingChanges = newPendingChanges,
+                        hasUnsavedChanges = true,
+                        showEditTagDialog = false,
+                        currentEditDimension = null,
+                        currentEditTag = null
+                    )
+                }
+            }
+        } else {
+            // 自定义维度
+            val currentTags = _uiState.value.getCustomDimensionTags(dimensionKey).toMutableList()
+            val index = currentTags.indexOf(oldTag)
+            if (index >= 0) {
+                currentTags[index] = newTag
+                val newPendingCustomDimensions = _uiState.value.pendingCustomDimensions.toMutableMap()
+                newPendingCustomDimensions[dimensionKey] = currentTags
+                _uiState.update { 
+                    it.copy(
+                        pendingCustomDimensions = newPendingCustomDimensions,
+                        hasUnsavedChanges = true,
+                        showEditTagDialog = false,
+                        currentEditDimension = null,
+                        currentEditTag = null
+                    )
+                }
             }
         }
     }
     
     /**
      * 本地删除标签（不立即保存到Repository）
+     * 
+     * BUG-00038 P5修复：区分基础维度和自定义维度
      */
     private fun localDeleteTag(dimensionKey: String, tag: String) {
-        val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
-        currentTags.remove(tag)
-        val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
-        newPendingChanges[dimensionKey] = currentTags
-        _uiState.update { 
-            it.copy(
-                pendingChanges = newPendingChanges,
-                hasUnsavedChanges = true,
-                showDeleteConfirmDialog = false,
-                currentEditDimension = null,
-                pendingDeleteTag = null
-            )
+        if (isBaseDimension(dimensionKey)) {
+            // 基础维度
+            val currentTags = _uiState.value.getTagsForDimension(dimensionKey).toMutableList()
+            currentTags.remove(tag)
+            val newPendingChanges = _uiState.value.pendingChanges.toMutableMap()
+            newPendingChanges[dimensionKey] = currentTags
+            _uiState.update { 
+                it.copy(
+                    pendingChanges = newPendingChanges,
+                    hasUnsavedChanges = true,
+                    showDeleteConfirmDialog = false,
+                    currentEditDimension = null,
+                    pendingDeleteTag = null
+                )
+            }
+        } else {
+            // 自定义维度
+            val currentTags = _uiState.value.getCustomDimensionTags(dimensionKey).toMutableList()
+            currentTags.remove(tag)
+            val newPendingCustomDimensions = _uiState.value.pendingCustomDimensions.toMutableMap()
+            newPendingCustomDimensions[dimensionKey] = currentTags
+            _uiState.update { 
+                it.copy(
+                    pendingCustomDimensions = newPendingCustomDimensions,
+                    hasUnsavedChanges = true,
+                    showDeleteConfirmDialog = false,
+                    currentEditDimension = null,
+                    pendingDeleteTag = null
+                )
+            }
         }
     }
     
     /**
      * 保存所有变更到Repository
+     * 
+     * BUG-00038 P5修复：同时处理基础维度(pendingChanges)和自定义维度(pendingCustomDimensions)的变更
      */
     private fun saveAllChanges() {
         if (!_uiState.value.hasUnsavedChanges) return
@@ -525,10 +602,10 @@ class UserProfileViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             
             try {
-                val pendingChanges = _uiState.value.pendingChanges
                 var currentProfile = _uiState.value.profile
                 
-                // 逐个维度更新
+                // 1. 保存基础维度变更
+                val pendingChanges = _uiState.value.pendingChanges
                 for ((dimensionKey, tags) in pendingChanges) {
                     // 先清除该维度的所有标签
                     val existingTags = currentProfile.getTagsForDimension(dimensionKey)
@@ -539,7 +616,24 @@ class UserProfileViewModel @Inject constructor(
                     for (tag in tags) {
                         addTagUseCase(dimensionKey, tag).fold(
                             onSuccess = { profile -> currentProfile = profile },
-                            onFailure = { e -> Log.e(TAG, "添加标签失败: $tag", e) }
+                            onFailure = { e -> Log.e(TAG, "添加基础维度标签失败: $tag", e) }
+                        )
+                    }
+                }
+                
+                // 2. 保存自定义维度变更
+                val pendingCustomDimensions = _uiState.value.pendingCustomDimensions
+                for ((dimensionName, tags) in pendingCustomDimensions) {
+                    // 先清除该维度的所有标签
+                    val existingTags = currentProfile.customDimensions[dimensionName] ?: emptyList()
+                    for (tag in existingTags) {
+                        removeTagUseCase(dimensionName, tag).getOrNull()
+                    }
+                    // 再添加新标签
+                    for (tag in tags) {
+                        addTagUseCase(dimensionName, tag).fold(
+                            onSuccess = { profile -> currentProfile = profile },
+                            onFailure = { e -> Log.e(TAG, "添加自定义维度标签失败: $tag", e) }
                         )
                     }
                 }
@@ -550,6 +644,7 @@ class UserProfileViewModel @Inject constructor(
                 _uiState.update { 
                     it.copy(
                         pendingChanges = emptyMap(),
+                        pendingCustomDimensions = emptyMap(),
                         hasUnsavedChanges = false,
                         isLoading = false,
                         successMessage = "保存成功"

@@ -127,6 +127,7 @@ private fun AddProviderScreenContent(
                         value = uiState.formBaseUrl,
                         onValueChange = { onEvent(AiConfigUiEvent.UpdateFormBaseUrl(it)) },
                         placeholder = "https://api.openai.com/v1",
+                        isUrl = true,
                         showDivider = true
                     )
                     IOSFormField(
@@ -184,7 +185,16 @@ private fun AddProviderScreenContent(
                             displayName = model.displayName,
                             isDefault = model.id == uiState.formDefaultModelId,
                             onClick = { onEvent(AiConfigUiEvent.SetFormDefaultModel(model.id)) },
-                            showDivider = index < uiState.formModels.lastIndex
+                            showDivider = index < uiState.formModels.lastIndex,
+                            // BUG-00038 P3修复：添加排序功能
+                            onMoveUp = if (index > 0) {
+                                { onEvent(AiConfigUiEvent.ReorderFormModels(index, index - 1)) }
+                            } else null,
+                            onMoveDown = if (index < uiState.formModels.lastIndex) {
+                                { onEvent(AiConfigUiEvent.ReorderFormModels(index, index + 1)) }
+                            } else null,
+                            canMoveUp = index > 0,
+                            canMoveDown = index < uiState.formModels.lastIndex
                         )
                     }
                 }
