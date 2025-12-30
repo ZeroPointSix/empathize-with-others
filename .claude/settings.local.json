@@ -51,7 +51,9 @@
       "Bash(then ls -la \"../.zcf/Love/prd23\")",
       "Bash(else echo \"prd23 worktree 目录不存在或不可访问\")",
       "Bash(git merge:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Skill(code-deep-research)",
+      "Skill(code-question-refiner)"
     ],
     "deny": [],
     "ask": []

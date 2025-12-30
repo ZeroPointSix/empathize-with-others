@@ -1,0 +1,293 @@
+﻿========================================
+项目测试代码统计报告
+========================================
+统计时间: 2025-12-29 22:11:38
+项目根目录: E:\hushaokang\Data-code\Love
+
+模块测试代码统计:
+  app: 166 个测试文件, 34509 行测试代码
+    单元测试: 141 个文件, 27896 行
+    Android测试: 25 个文件, 6613 行
+  data: 23 个测试文件, 6270 行测试代码
+    单元测试: 19 个文件, 4770 行
+    Android测试: 4 个文件, 1500 行
+  domain: 30 个测试文件, 3776 行测试代码
+    单元测试: 30 个文件, 3776 行
+    Android测试: 0 个文件, 0 行
+  presentation: 33 个测试文件, 5104 行测试代码
+    单元测试: 28 个文件, 4948 行
+    Android测试: 5 个文件, 156 行
+测试代码总计: 252 个文件, 49659 行代码生产代码总计: 471 个文件, 76927 行代码
+测试代码与生产代码比例:
+  文件数比例: 53.5% (测试文件/生产文件)
+  代码行数比例: 64.55% (测试代码/生产代码)
+各模块测试代码与生产代码比例:
+  app: 代码行数比例 393.31%, 文件数比例 754.55%
+  data: 代码行数比例 76.27%, 文件数比例 35.94%
+  domain: 代码行数比例 33.12%, 文件数比例 21.13%
+  presentation: 代码行数比例 10.52%, 文件数比例 13.58%
+
+========================================
+详细测试文件列表:
+========================================
+
+=== app 模块测试代码 ===
+  144 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\data\local\ApiKeyStorageTest.kt
+  738 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\data\local\DatabaseMigrationTest.kt
+  294 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\data\local\FloatingWindowPreferencesTest.kt
+  324 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\data\local\UserProfilePreferencesIntegrationTest.kt
+  217 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\data\repository\AiProviderRepositoryPropertyTest.kt
+  233 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\data\repository\FieldMappingConfigInstrumentedTest.kt
+  267 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\domain\service\FloatingWindowServiceTest.kt
+  232 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\domain\usecase\GenerateReplyUseCaseIntegrationTest.kt
+  196 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\domain\util\FloatingWindowManagerTest.kt
+  269 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\integration\UserProfileAiIntegrationTest.kt
+  148 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\component\EmotionalBackgroundTest.kt
+  194 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\component\GuessedTagTest.kt
+  225 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\component\SegmentedControlTest.kt
+  262 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\floating\FloatingWindowIntegrationTest.kt
+  174 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\floating\TabSwitcherTest.kt
+  205 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\contact\persona\PersonaDialogsTest.kt
+  410 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\contact\persona\PersonaFlowTest.kt
+  379 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\contact\persona\PersonaTabV2Test.kt
+  303 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\ContactDetailScreenIntegrationTest.kt
+  226 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\userprofile\AddTagDialogTest.kt
+  408 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\userprofile\UserProfileFlowTest.kt
+  312 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\userprofile\UserProfileScreenTest.kt
+  231 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\presentation\ui\screen\userprofile\UserProfileScreenTestContent.kt
+  202 行 [Android测试]: app\src\androidTest\java\com\empathy\ai\testutil\TestDataFactory.kt
+  20 行 [Android测试]: app\src\androidTest\java\com\example\givelove\ExampleInstrumentedTest.kt
+  307 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\ApiKeyStorageRetryTest.kt
+  212 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\converter\FactListConverterTest.kt
+  161 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\converter\RoomTypeConvertersTest.kt
+  185 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\FloatingWindowPreferencesBubbleTest.kt
+  83 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\FloatingWindowPreferencesDefaultModeTest.kt
+  311 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\FloatingWindowPreferencesExtTest.kt
+  243 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\FloatingWindowPreferencesMinimizeTest.kt
+  163 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\FloatingWindowPreferencesTest.kt
+  152 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\Migration10To11Test.kt
+  242 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\PromptConfigCompatibilityTest.kt
+  221 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\PromptFileBackupTest.kt
+  403 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\PromptFileStorageTest.kt
+  151 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\PromptMigrationTest.kt
+  218 行 [单元测试]: app\src\test\java\com\empathy\ai\data\local\UserProfilePreferencesTest.kt
+  327 行 [单元测试]: app\src\test\java\com\empathy\ai\data\repository\AiProviderRepositoryFetchModelsTest.kt
+  289 行 [单元测试]: app\src\test\java\com\empathy\ai\data\repository\AiProviderRepositoryThreadingTest.kt
+  300 行 [单元测试]: app\src\test\java\com\empathy\ai\data\repository\AiRepositoryImplExtTest.kt
+  403 行 [单元测试]: app\src\test\java\com\empathy\ai\data\repository\DailySummaryRepositoryImplTest.kt
+  399 行 [单元测试]: app\src\test\java\com\empathy\ai\data\repository\PromptRepositoryImplTest.kt
+  186 行 [单元测试]: app\src\test\java\com\empathy\ai\data\repository\TopicRepositoryImplTest.kt
+  156 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\AiResultTest.kt
+  69 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\ConflictResultTest.kt
+  137 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\ConversationContextConfigTest.kt
+  136 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\ConversationLogTest.kt
+  126 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\ConversationTopicTest.kt
+  118 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\DateRangeTest.kt
+  156 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\EditModeStateTest.kt
+  119 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\EmotionTypeTest.kt
+  173 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\FactCategoryTest.kt
+  220 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\FactTest.kt
+  109 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\FloatingBubblePositionTest.kt
+  51 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\FloatingBubbleStateTest.kt
+  266 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\FloatingWindowUiStateTest.kt
+  36 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\GenerationSourceTest.kt
+  87 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\GlobalPromptConfigTest.kt
+  158 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\MinimizedRequestInfoTest.kt
+  170 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\MinimizeErrorTest.kt
+  116 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\PersonaSearchStateTest.kt
+  91 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\PolishResultTest.kt
+  108 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\PromptErrorTest.kt
+  111 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\PromptSceneSettingsTest.kt
+  73 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\PromptSceneTest.kt
+  91 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\ReplyResultTest.kt
+  103 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\SummaryErrorTest.kt
+  96 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\SummaryTaskStatusTest.kt
+  132 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\SummaryTaskTest.kt
+  28 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\SummaryTypeTest.kt
+  103 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\TimeFlowMarkerTest.kt
+  164 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\TimestampedMessageTest.kt
+  355 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\model\UserProfileTest.kt
+  159 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\FloatingWindowServiceBubbleDuplicateTest.kt
+  245 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\FloatingWindowServiceBubbleExpandTest.kt
+  160 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\FloatingWindowServiceBubbleVisibilityTest.kt
+  190 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\FloatingWindowServicePersistenceTest.kt
+  214 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\PrivacyEngineTest.kt
+  367 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\RuleEngineTest.kt
+  207 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\service\SessionContextServiceTest.kt
+  210 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\AddTagUseCaseTest.kt
+  195 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\BatchDeleteFactsUseCaseTest.kt
+  286 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\BatchMoveFactsUseCaseTest.kt
+  68 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\ClearTopicUseCaseTest.kt
+  103 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\DeleteBrainTagUseCaseTest.kt
+  90 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\DeleteContactUseCaseTest.kt
+  311 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\EditFactUseCaseTest.kt
+  297 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\GenerateReplyUseCaseTest.kt
+  116 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\GetBrainTagsUseCaseTest.kt
+  95 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\GetTopicUseCaseTest.kt
+  214 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\GroupFactsByCategoryUseCaseTest.kt
+  298 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\ManageCustomDimensionUseCaseTest.kt
+  365 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\ManualSummaryUseCaseParseTest.kt
+  303 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\ManualSummaryUseCaseTest.kt
+  359 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\PolishDraftUseCaseTest.kt
+  345 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\RefinementUseCaseTest.kt
+  156 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\RemoveTagUseCaseTest.kt
+  158 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\SaveBrainTagUseCaseTest.kt
+  124 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\usecase\SetTopicUseCaseTest.kt
+  222 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\AiResponseCleanerTest.kt
+  150 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\CleanupConfigTest.kt
+  197 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\DataCleanupManagerTest.kt
+  181 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\DateRangeValidatorTest.kt
+  185 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\DebugLoggerTest.kt
+  255 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\FactSearchFilterTest.kt
+  155 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\FloatingViewUpdateDialogListenersTest.kt
+  270 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\FloatingWindowManagerUnitTest.kt
+  316 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\IdentityPrefixHelperTest.kt
+  136 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\MemoryLoggerTest.kt
+  173 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\PerformanceMetricsTest.kt
+  247 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\PerformanceMonitorTest.kt
+  222 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\PromptSanitizerTest.kt
+  217 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\PromptValidatorTest.kt
+  196 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\PromptVariableResolverTest.kt
+  214 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\SummaryConflictCheckerTest.kt
+  396 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\UserProfileValidatorTest.kt
+  211 行 [单元测试]: app\src\test\java\com\empathy\ai\domain\util\WeChatDetectorTest.kt
+  377 行 [单元测试]: app\src\test\java\com\empathy\ai\integration\ContactPromptIntegrationTest.kt
+  202 行 [单元测试]: app\src\test\java\com\empathy\ai\integration\FloatingWindowPromptIntegrationTest.kt
+  292 行 [单元测试]: app\src\test\java\com\empathy\ai\integration\IdentityPrefixIntegrationTest.kt
+  187 行 [单元测试]: app\src\test\java\com\empathy\ai\integration\PromptSettingsIntegrationTest.kt
+  278 行 [单元测试]: app\src\test\java\com\empathy\ai\integration\TopicIntegrationTest.kt
+  378 行 [单元测试]: app\src\test\java\com\empathy\ai\performance\PromptSettingsPerformanceTest.kt
+  256 行 [单元测试]: app\src\test\java\com\empathy\ai\performance\UserProfilePerformanceTest.kt
+  171 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\component\MaxHeightScrollViewTest.kt
+  235 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\FloatingBubbleViewDuplicateTest.kt
+  146 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\FloatingBubbleViewTest.kt
+  148 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\FloatingViewV2HeightAdjustmentTest.kt
+  88 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\FloatingViewV2MinimizeButtonTest.kt
+  101 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\RefinementOverlayButtonTest.kt
+  154 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\ResultCardAnalysisButtonTest.kt
+  160 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\floating\ResultCardButtonInitTest.kt
+  48 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\ConflictResolutionDialogTest.kt
+  90 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\DateRangePickerDialogTest.kt
+  24 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\ManualSummaryFabTest.kt
+  47 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\MissingSummaryCardTest.kt
+  24 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\QuickDateOptionsTest.kt
+  77 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\SummaryErrorDialogTest.kt
+  84 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\SummaryProgressDialogTest.kt
+  54 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\SummaryResultDialogTest.kt
+  28 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\contact\summary\SummarySourceBadgeTest.kt
+  162 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\prompt\PromptEditorUiStateTest.kt
+  103 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\settings\PromptSettingsSectionTest.kt
+  168 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\ui\screen\userprofile\UserProfileUiStateTest.kt
+  313 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ContactDetailTabViewModelAddFactTest.kt
+  201 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ContactDetailTabViewModelKeyTest.kt
+  485 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ContactDetailTabViewModelPersonaTest.kt
+  150 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ContactDetailViewModelBrainTagDisplayTest.kt
+  238 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ContactDetailViewModelFactTest.kt
+  191 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ContactDetailViewModelNewContactTagTest.kt
+  333 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\ManualSummaryViewModelTest.kt
+  308 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\PromptEditorViewModelTest.kt
+  258 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\SettingsViewModelFloatingWindowTest.kt
+  178 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\SettingsViewModelTest.kt
+  333 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\TopicViewModelTest.kt
+  614 行 [单元测试]: app\src\test\java\com\empathy\ai\presentation\viewmodel\UserProfileViewModelTest.kt
+  189 行 [单元测试]: app\src\test\java\com\empathy\ai\testutil\PromptTestDataFactory.kt
+  301 行 [单元测试]: app\src\test\java\com\empathy\ai\testutil\TestDataFactory.kt
+  14 行 [单元测试]: app\src\test\java\com\example\givelove\ExampleUnitTest.kt
+  507 行 [单元测试]: app\src\test-disabled\java\com\empathy\ai\data\integration\AiResponseParserIntegrationTest.kt
+  173 行 [单元测试]: app\src\test-disabled\java\com\empathy\ai\data\local\dao\BrainTagDaoTest.kt
+  181 行 [单元测试]: app\src\test-disabled\java\com\empathy\ai\data\local\dao\ContactDaoTest.kt
+  238 行 [单元测试]: app\src\test-disabled\java\com\empathy\ai\data\repository\BrainTagRepositoryImplTest.kt
+  217 行 [单元测试]: app\src\test-disabled\java\com\empathy\ai\data\repository\ContactRepositoryImplTest.kt
+
+=== data 模块测试代码 ===
+  144 行 [Android测试]: data\src\androidTest\kotlin\com\empathy\ai\data\local\ApiKeyStorageTest.kt
+  738 行 [Android测试]: data\src\androidTest\kotlin\com\empathy\ai\data\local\DatabaseMigrationTest.kt
+  294 行 [Android测试]: data\src\androidTest\kotlin\com\empathy\ai\data\local\FloatingWindowPreferencesTest.kt
+  324 行 [Android测试]: data\src\androidTest\kotlin\com\empathy\ai\data\local\UserProfilePreferencesIntegrationTest.kt
+  307 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\ApiKeyStorageRetryTest.kt
+  185 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\FloatingWindowPreferencesBubbleTest.kt
+  83 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\FloatingWindowPreferencesDefaultModeTest.kt
+  311 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\FloatingWindowPreferencesExtTest.kt
+  243 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\FloatingWindowPreferencesMinimizeTest.kt
+  163 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\FloatingWindowPreferencesTest.kt
+  152 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\Migration10To11Test.kt
+  242 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\PromptConfigCompatibilityTest.kt
+  221 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\PromptFileBackupTest.kt
+  403 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\PromptFileStorageTest.kt
+  151 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\PromptMigrationTest.kt
+  218 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\local\UserProfilePreferencesTest.kt
+  327 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\repository\AiProviderRepositoryFetchModelsTest.kt
+  289 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\repository\AiProviderRepositoryThreadingTest.kt
+  300 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\repository\AiRepositoryImplExtTest.kt
+  403 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\repository\DailySummaryRepositoryImplTest.kt
+  399 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\repository\PromptRepositoryImplTest.kt
+  186 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\data\repository\TopicRepositoryImplTest.kt
+  187 行 [单元测试]: data\src\test\kotlin\com\empathy\ai\testutil\PromptTestDataFactory.kt
+
+=== domain 模块测试代码 ===
+  110 行 [单元测试]: domain\src\main\kotlin\com\empathy\ai\domain\model\ConnectionTestResult.kt
+  35 行 [单元测试]: domain\src\main\kotlin\com\empathy\ai\domain\usecase\TestConnectionUseCase.kt
+  156 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\AiResultTest.kt
+  69 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\ConflictResultTest.kt
+  137 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\ConversationContextConfigTest.kt
+  136 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\ConversationLogTest.kt
+  126 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\ConversationTopicTest.kt
+  118 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\DateRangeTest.kt
+  112 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\EmotionTypeTest.kt
+  173 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\FactCategoryTest.kt
+  220 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\FactTest.kt
+  109 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\FloatingBubblePositionTest.kt
+  51 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\FloatingBubbleStateTest.kt
+  266 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\FloatingWindowUiStateTest.kt
+  36 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\GenerationSourceTest.kt
+  103 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\GlobalPromptConfigTest.kt
+  170 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\MinimizeErrorTest.kt
+  91 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\PolishResultTest.kt
+  108 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\PromptErrorTest.kt
+  111 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\PromptSceneSettingsTest.kt
+  78 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\PromptSceneTest.kt
+  91 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\ReplyResultTest.kt
+  103 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\SummaryErrorTest.kt
+  96 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\SummaryTaskStatusTest.kt
+  132 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\SummaryTaskTest.kt
+  28 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\SummaryTypeTest.kt
+  103 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\TimeFlowMarkerTest.kt
+  164 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\TimestampedMessageTest.kt
+  355 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\domain\model\UserProfileTest.kt
+  189 行 [单元测试]: domain\src\test\kotlin\com\empathy\ai\testutil\PromptTestDataFactory.kt
+
+=== presentation 模块测试代码 ===
+  32 行 [Android测试]: presentation\src\androidTest\kotlin\com\empathy\ai\presentation\ui\component\animation\AnimatedListItemTest.kt
+  28 行 [Android测试]: presentation\src\androidTest\kotlin\com\empathy\ai\presentation\ui\component\animation\AnimatedViewSwitchTest.kt
+  22 行 [Android测试]: presentation\src\androidTest\kotlin\com\empathy\ai\presentation\ui\component\animation\ClickableScaleTest.kt
+  28 行 [Android测试]: presentation\src\androidTest\kotlin\com\empathy\ai\presentation\ui\component\state\EmptyViewTest.kt
+  46 行 [Android测试]: presentation\src\androidTest\kotlin\com\empathy\ai\presentation\ui\component\state\FriendlyErrorCardTest.kt
+  185 行 [单元测试]: presentation\src\main\kotlin\com\empathy\ai\presentation\ui\component\ios\IOSTestConnectionButton.kt
+  281 行 [单元测试]: presentation\src\main\kotlin\com\empathy\ai\presentation\ui\component\overview\LatestDiscoveryCard.kt
+  238 行 [单元测试]: presentation\src\main\kotlin\com\empathy\ai\presentation\ui\screen\contact\overview\LatestFactHookCard.kt
+  195 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\navigation\ContactDetailNavigationTest.kt
+  310 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\theme\AdaptiveDimensionsTest.kt
+  103 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\theme\AppSpacingTest.kt
+  95 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\theme\AvatarColorsTest.kt
+  187 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\chart\HealthRingChartTest.kt
+  233 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\chart\SparklineChartTest.kt
+  259 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\contact\AvatarPickerTest.kt
+  197 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\dialog\IOSAlertDialogTest.kt
+  192 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\persona\AiInferenceSectionTest.kt
+  146 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\persona\CategoryCardTest.kt
+  172 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\persona\ModernFloatingSearchBarTest.kt
+  163 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\persona\ModernPersonaTabTest.kt
+  115 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\persona\SmartFolderCardTest.kt
+  181 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\tag\MacaronTagChipTest.kt
+  306 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\vault\DataSourceGridTest.kt
+  155 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\component\vault\DataStatisticsCardTest.kt
+  133 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\aiconfig\AddProviderScreenLayoutTest.kt
+  234 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\contact\factstream\FactStreamTabTest.kt
+  184 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\contact\overview\OverviewTabTest.kt
+  236 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\contact\vault\DataVaultTabTest.kt
+  90 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\prompt\PromptEditorButtonLayoutTest.kt
+  69 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\prompt\PromptSceneTabTest.kt
+  145 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\userprofile\UserProfileEditModeTest.kt
+  113 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\ui\screen\userprofile\UserProfileResetTest.kt
+  31 行 [单元测试]: presentation\src\test\kotlin\com\empathy\ai\presentation\util\ErrorMessageMapperTest.kt
+
