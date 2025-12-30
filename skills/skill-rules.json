@@ -17,11 +17,6 @@
       "category": "testing"
     },
     {
-      "name": "debugging",
-      "description": "系统化调试 - 根因分析、问题定位、日志分析、修复验证",
-      "category": "debugging"
-    },
-    {
       "name": "coding-standards",
       "description": "编码规范检查 - 命名规范、代码风格、最佳实践、代码异味识别",
       "category": "standards"
@@ -62,6 +57,11 @@
       "category": "frontend"
     },
     {
+      "name": "frontend-design",
+      "description": "前端设计 - 创建独特的生产级前端界面,包括网页组件、页面、应用程序、React 组件、HTML/CSS 布局,避免通用 AI 美学",
+      "category": "frontend"
+    },
+    {
       "name": "backend-development",
       "description": "后端开发 - Node.js/Express、控制器服务仓库模式、中间件、异步处理",
       "category": "backend"
@@ -97,9 +97,129 @@
       "category": "testing"
     },
     {
+      "name": "agent-identifier",
+      "description": "Agent Development - 创建 Claude Code 插件的 Agent,指导 agent 结构、系统提示词设计、触发条件和最佳实践",
+      "category": "plugin-dev"
+    },
+    {
       "name": "claude-code-skill-diagnostic",
       "description": "Claude Code Skill 安装故障诊断与修复 - 自动诊断和修复技能安装问题,包括环境检查、文件搜索、配置验证、权限修复",
       "category": "debugging"
+    },
+    {
+      "name": "clojure-review",
+      "description": "Clojure 代码审查 - 审查 Clojure/ClojureScript 代码是否符合 Metabase 编码标准和风格规范",
+      "category": "review"
+    },
+    {
+      "name": "code-analysis-controller",
+      "description": "Code Analysis GoT Controller - 管理代码分析图状态,执行图操作(Generate, Aggregate, Refine, Score),优化分析路径质量。当代码库复杂、需要多维度分析、高质量代码分析时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-architecture-analyzer",
+      "description": "代码架构分析器 - 识别设计模式、评估模块耦合、分析分层结构、检测架构违规。当需要架构层面的深度分析时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-dependency-tracer",
+      "description": "代码依赖追踪器 - 追踪第三方库、内部依赖、循环依赖、版本兼容性。当需要依赖关系图谱或健康度评估时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-pattern-detector",
+      "description": "代码模式检测器 - 识别设计模式使用、检测反模式、发现API设计问题、分析错误处理模式。当需要深度代码模式和最佳实践分析时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-quality-analyzer",
+      "description": "代码质量分析器 - 检测代码复杂度、可维护性、代码异味、命名规范、代码重复。当需要代码质量评估和改进建议时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-question-refiner",
+      "description": "代码问题细化器 - 将原始代码分析问题细化为结构化的深度代码研究任务。通过提问澄清需求,生成符合代码分析标准的结构化提示词。当用户提出代码分析问题、需要帮助定义分析范围、或想要生成结构化代码分析提示词时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-research-executor",
+      "description": "代码研究执行器 - 执行完整的 7 阶段代码深度分析流程。接收结构化代码分析任务,自动部署多个并行分析智能体,生成带完整代码引用的综合分析报告。当用户有结构化的代码分析提示词时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "code-synthesizer",
+      "description": "代码综合分析器 - 将多个代码分析智能体的发现综合成连贯、结构化的分析报告。解决矛盾、提取共识、创建统一叙述。当多个分析智能体完成分析、需要将发现组合成统一报告、发现之间存在矛盾时使用此技能",
+      "category": "code-analysis"
+    },
+    {
+      "name": "debugging-strategies",
+      "description": "调试策略 - 系统化调试技术、性能分析工具和根因分析方法,高效追踪各类代码库和技术栈中的 bug",
+      "category": "debugging"
+    },
+    {
+      "name": "docs-review",
+      "description": "文档审查 - 审查文档变更是否符合 Metabase 写作风格指南,检查 PR、文件或 diff 中的 Markdown 文档",
+      "category": "review"
+    },
+    {
+      "name": "github-actions-templates",
+      "description": "GitHub Actions 模板 - 创建用于自动化测试、构建和部署应用程序的生产级 GitHub Actions 工作流",
+      "category": "workflow"
+    },
+    {
+      "name": "hook-development",
+      "description": "Hook 开发 - 为 Claude Code 插件创建和实现 hooks,包括验证操作、强制策略、添加上下文和集成外部工具",
+      "category": "plugin-dev"
+    },
+    {
+      "name": "jetpack-compose",
+      "description": "Jetpack Compose - 声明式 UI、状态管理、布局组件、动画、Compose 最佳实践",
+      "category": "android"
+    },
+    {
+      "name": "kotlin-java-standards",
+      "description": "Kotlin/Java 编码规范 - 命名规范、代码风格、最佳实践、Kotlin 惯用法",
+      "category": "android"
+    },
+    {
+      "name": "mcp-integration",
+      "description": "MCP 集成 - 将 Model Context Protocol 服务器集成到 Claude Code 插件中,实现外部工具和服务集成",
+      "category": "plugin-dev"
+    },
+    {
+      "name": "move-code-quality",
+      "description": "Move 代码质量检查器 - 根据 Move Book 代码质量检查清单分析 Move 语言包,检查 Move 2024 Edition 合规性和最佳实践",
+      "category": "code-analysis"
+    },
+    {
+      "name": "pdf",
+      "description": "PDF 处理 - 提取文本和表格、创建新 PDF、合并/拆分文档、处理表单、PDF 表单填写和程序化处理",
+      "category": "document-processing"
+    },
+    {
+      "name": "reviewing-changes",
+      "description": "变更审查 - Bitwarden Android 特定的代码审查工作流,提供变更类型细化、检查清单加载和参考资料组织",
+      "category": "review"
+    },
+    {
+      "name": "rule-identifier",
+      "description": "Hookify 规则编写 - 创建 hookify 规则、配置 hookify、添加规则和指导规则语法与模式",
+      "category": "plugin-dev"
+    },
+    {
+      "name": "skill-development",
+      "description": "技能开发 - 为 Claude Code 插件创建有效技能,指导技能结构、渐进式披露和技能开发最佳实践",
+      "category": "plugin-dev"
+    },
+    {
+      "name": "webapp-testing",
+      "description": "Web 应用测试 - 使用 Playwright 与本地 web 应用交互和测试,验证前端功能、调试 UI 行为、捕获浏览器截图和查看浏览器日志",
+      "category": "testing"
+    },
+    {
+      "name": "xlsx",
+      "description": "Excel 处理 - 创建/编辑带公式/格式化的电子表格、数据分析、可视化、重新计算公式、零公式错误输出",
+      "category": "document-processing"
     }
   ]
 }
