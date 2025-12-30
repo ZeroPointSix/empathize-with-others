@@ -1,0 +1,201 @@
+---
+name: Multi-Agent Explorer
+description: This skill should be used when the user asks to "create worktree agent", "parallel development", "multi-agent exploration", "git worktree workflow", "sandbox development", "bug exploration", "feature exploration", "code review agent", "test exploration", "architecture review", or needs guidance on multi-worktree parallel development with multiple AI agents. Provides comprehensive framework for running multiple AI agents in separate git worktrees for exploratory, low-risk development tasks.
+version: 1.0.0
+---
+
+# Multi-Agent Explorer - 多智能体并行探索系统
+
+## 概述
+
+Multi-Agent Explorer 是一套基于 Git Worktree 的多智能体并行开发框架。通过在独立的工作树中运行多个 AI 智能体，实现低风险的探索性开发任务，包括 Bug 修复探索、功能开发、代码审查、测试扩展等。
+
+**核心理念**：
+- 辅助性质：所有探索工作树都是辅助性的，不直接影响主分支
+- 沙盒环境：智能体可以自由试错，无需担心破坏主代码
+- 报告驱动：所有探索结果以报告形式输出，供主 Agent 参考
+- 人类审查：最终是否合并由人类决定
+
+## 适用场景
+
+### 1. Bug 修复探索 (bugfix-explorer)
+- 在独立工作树中探索 Bug 修复方案
+- 允许多次试错，记录所有尝试
+- 生成修复报告供主 Agent 参考
+
+### 2. 功能开发探索 (feature-explorer)
+- 根据 PRD 文档进行功能开发
+- 自主规划和实现，无需频繁确认
+- 生成开发报告和代码变更清单
+
+### 3. 自由探索 (free-explorer)
+- 完全自主的创新探索
+- 可以自由提出和实现新功能
+- 记录所有创意和实验结果
+
+### 4. 代码架构审查 (architecture-reviewer)
+- 分析项目架构优缺点
+- 提出改进建议
+- 生成架构审查报告
+
+### 5. 测试扩展 (test-explorer)
+- 扩展测试用例覆盖
+- 探索边界情况和特殊场景
+- 生成测试报告
+
+### 6. 工作树管理 (worktree-manager)
+- 管理所有探索工作树
+- 审查其他智能体的工作
+- 协调合并决策
+
+## 工作流程
+
+### 第一步：创建工作树
+
+```bash
+# 创建探索分支和工作树
+git worktree add ../explore-bugfix-20241230 -b explore/bugfix-20241230
+
+# 进入工作树目录
+cd ../explore-bugfix-20241230
+```
+
+### 第二步：启动智能体
+
+在新工作树中启动对应的智能体：
+
+```bash
+# 使用 slash 命令快速启动
+/explore-bugfix    # Bug 修复探索
+/explore-feature   # 功能开发探索
+/explore-free      # 自由探索
+/explore-arch      # 架构审查
+/explore-test      # 测试扩展
+/explore-manage    # 工作树管理
+```
+
+### 第三步：自主工作
+
+智能体将：
+1. 读取项目规范（CLAUDE.md、steering 文件）
+2. 理解任务目标
+3. 自主规划和执行
+4. 记录所有尝试和结果
+5. 生成探索报告
+
+### 第四步：生成报告
+
+所有探索结果保存到 `文档/开发文档/MA/` 目录：
+
+```
+文档/开发文档/MA/
+├── BUGFIX/           # Bug 修复探索报告
+├── FEATURE/          # 功能开发探索报告
+├── FREE/             # 自由探索报告
+├── ARCH/             # 架构审查报告
+├── TEST/             # 测试探索报告
+└── MANAGE/           # 管理审查报告
+```
+
+### 第五步：人类审查
+
+1. 查看探索报告
+2. 决定是否采纳
+3. 如果采纳，可以：
+   - 直接合并工作树的代码
+   - 让主 Agent 参考报告重新实现
+
+## 智能体列表
+
+| 智能体 | 用途 | Slash 命令 | 报告目录 |
+|--------|------|------------|----------|
+| bugfix-explorer | Bug 修复探索 | /explore-bugfix | MA/BUGFIX/ |
+| feature-explorer | 功能开发探索 | /explore-feature | MA/FEATURE/ |
+| free-explorer | 自由创新探索 | /explore-free | MA/FREE/ |
+| architecture-reviewer | 架构审查 | /explore-arch | MA/ARCH/ |
+| test-explorer | 测试扩展 | /explore-test | MA/TEST/ |
+| worktree-manager | 工作树管理 | /explore-manage | MA/MANAGE/ |
+
+## 核心原则
+
+### 1. 自主性原则
+- 智能体无需频繁询问用户
+- 按照最佳实践自主决策
+- 用户只负责最终审查
+
+### 2. 安全性原则
+- 所有工作在独立工作树中进行
+- 不直接影响主分支
+- 失败的探索可以直接丢弃
+
+### 3. 报告优先原则
+- 即使任务失败也要生成报告
+- 记录所有尝试和错误
+- 为主 Agent 提供参考
+
+### 4. 规范遵循原则
+- 必须遵循项目的 Clean Architecture
+- 必须遵循项目的编码规范
+- 必须遵循项目的测试要求
+
+## 失败处理
+
+当智能体遇到长时间无法解决的问题时：
+
+1. **停止尝试**：不要无限循环尝试
+2. **记录错误**：详细记录错误信息和尝试过程
+3. **生成报告**：生成错误报告，包含：
+   - 问题描述
+   - 尝试的方案
+   - 失败原因分析
+   - 建议的解决方向
+4. **返回报告**：将报告保存到对应目录
+
+## 技能调用
+
+智能体可以调用以下技能：
+
+### 代码分析类
+- `code-architecture-analyzer` - 架构分析
+- `code-quality-analyzer` - 质量分析
+- `code-dependency-tracer` - 依赖追踪
+- `code-pattern-detector` - 模式检测
+
+### 开发类
+- `debugging-strategies` - 调试策略
+- `test-driven-development` - 测试驱动开发
+- `refactoring` - 代码重构
+- `jetpack-compose` - Compose 开发
+
+### 审查类
+- `code-review` - 代码审查
+- `verification` - 完成验证
+
+### 文档类
+- `documentation` - 文档编写
+- `planning` - 计划编写
+
+## 报告模板
+
+详见 `references/report-templates.md`
+
+## 项目规范
+
+详见 `references/project-standards.md`
+
+## 快速开始
+
+1. 创建工作树：`git worktree add ../explore-xxx -b explore/xxx`
+2. 进入工作树：`cd ../explore-xxx`
+3. 启动智能体：使用对应的 slash 命令
+4. 等待完成：智能体自主工作
+5. 查看报告：检查 `文档/开发文档/MA/` 目录
+
+## 注意事项
+
+⚠️ **重要提醒**：
+- 探索工作树使用较低成本的模型
+- 探索结果仅供参考，不保证正确性
+- 最终代码质量由人类审查把关
+- 如果探索失败，报告比代码更重要
+

@@ -1,6 +1,11 @@
 {
-  "version": "2.0",
+  "version": "2.1",
   "skills": [
+    {
+      "name": "multi-agent-explorer",
+      "description": "多智能体并行探索系统 - 基于 Git Worktree 的多智能体并行开发框架,支持 Bug 修复探索、功能开发、自由探索、架构审查、测试扩展等任务",
+      "category": "workflow"
+    },
     {
       "name": "code-review",
       "description": "代码审查技能 - 审查代码质量、架构、安全性并提供改进建议",
