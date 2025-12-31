@@ -15,36 +15,21 @@ description: 启动功能开发探索智能体 - 在独立工作树中根据 PRD
 
 ## 执行流程
 
-### 1. 确认工作环境
-
-首先确认当前是否在探索工作树中：
-
-```bash
-git worktree list
-```
-
-如果不在探索工作树中，建议先创建：
-
-```bash
-git worktree add ../explore-feature-$(date +%Y%m%d) -b explore/feature-$(date +%Y%m%d)
-cd ../explore-feature-$(date +%Y%m%d)
-```
-
-### 2. 读取项目规范
+### 1. 读取项目规范
 
 阅读以下文档了解项目规范：
 - **CLAUDE.md** - 项目主文档
 - **.kiro/steering/** - 项目 steering 文件
 - **skills/multi-agent-explorer/references/project-standards.md** - 项目规范
 
-### 3. 理解需求
+### 2. 理解需求
 
 请提供以下信息：
 - PRD 文档路径或内容
 - 功能描述
 - 验收标准
 
-### 4. 开始探索
+### 3. 开始探索
 
 按照 `skills/multi-agent-explorer/agents/feature-explorer.md` 中定义的工作流程：
 
