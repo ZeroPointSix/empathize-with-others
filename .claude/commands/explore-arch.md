@@ -15,29 +15,21 @@ description: 启动架构审查智能体 - 分析项目代码架构，发现问�
 
 ## 执行流程
 
-### 1. 确认工作环境
-
-架构审查可以在主分支或工作树中进行（只读操作）：
-
-```bash
-git worktree list
-```
-
-### 2. 读取项目规范
+### 1. 读取项目规范
 
 阅读以下文档了解项目规范：
 - **CLAUDE.md** - 项目主文档
 - **.kiro/steering/structure.md** - 项目结构规范
 - **.kiro/steering/tech.md** - 技术栈规范
 
-### 3. 确定审查范围
+### 2. 确定审查范围
 
 请提供以下信息（可选）：
 - 审查范围（全项目/特定模块）
 - 特别关注的维度
 - 已知的问题区域
 
-### 4. 开始审查
+### 3. 开始审查
 
 按照 `skills/multi-agent-explorer/agents/architecture-reviewer.md` 中定义的工作流程：
 

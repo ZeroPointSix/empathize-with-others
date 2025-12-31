@@ -15,36 +15,21 @@ description: 启动测试扩展探索智能体 - 在独立工作树中扩展测�
 
 ## 执行流程
 
-### 1. 确认工作环境
-
-首先确认当前是否在探索工作树中：
-
-```bash
-git worktree list
-```
-
-如果不在探索工作树中，建议先创建：
-
-```bash
-git worktree add ../explore-test-$(date +%Y%m%d) -b explore/test-$(date +%Y%m%d)
-cd ../explore-test-$(date +%Y%m%d)
-```
-
-### 2. 读取项目规范
+### 1. 读取项目规范
 
 阅读以下文档了解项目规范：
 - **CLAUDE.md** - 项目主文档
 - **.kiro/steering/** - 项目 steering 文件
 - **现有测试文件** - 了解测试风格
 
-### 3. 确定测试范围
+### 2. 确定测试范围
 
 请提供以下信息（可选）：
 - 目标模块或文件
 - 特别关注的场景
 - 已知的测试盲区
 
-### 4. 开始探索
+### 3. 开始探索
 
 按照 `skills/multi-agent-explorer/agents/test-explorer.md` 中定义的工作流程：
 
