@@ -22,14 +22,25 @@ description: 启动功能开发探索智能体 - 在独立工作树中根据 PRD
 - **.kiro/steering/** - 项目 steering 文件
 - **skills/multi-agent-explorer/references/project-standards.md** - 项目规范
 
-### 2. 理解需求
+### 2. 创建决策日志
+
+**🔴 重要：在开始任何工作前，必须创建决策日志文件**
+
+```bash
+# 复制决策日志模板
+cp skills/multi-agent-explorer/templates/DECISION_JOURNAL.template.md DECISION_JOURNAL.md
+```
+
+决策日志是你最重要的输出之一。即使无法完成任务，详细的决策日志也是成功，因为它为后续智能体铺平了道路。
+
+### 3. 理解需求
 
 请提供以下信息：
 - PRD 文档路径或内容
 - 功能描述
 - 验收标准
 
-### 3. 开始探索
+### 4. 开始探索
 
 按照 `skills/multi-agent-explorer/agents/feature-explorer.md` 中定义的工作流程：
 
@@ -54,6 +65,16 @@ description: 启动功能开发探索智能体 - 在独立工作树中根据 PRD
 - ✅ **大胆尝试**：这是沙盒环境，可以自由试错
 - ✅ **记录一切**：记录所有设计决策
 - ✅ **报告优先**：即使失败也要生成报告
+- ✅ **🔴 决策日志**：实时更新决策日志，记录每个决策点
+
+## 决策日志要求
+
+**每30分钟至少更新一次决策日志**，记录：
+1. 遇到什么问题？
+2. 考虑了哪些方案？
+3. 为什么选择这个方案？
+4. 放弃的方案为什么不选？
+5. 学到了什么教训？
 
 ## 约束条件
 

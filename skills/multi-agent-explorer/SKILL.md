@@ -77,11 +77,13 @@ cd ../explore-bugfix-20241230
 ### 第三步：自主工作
 
 智能体将：
-1. 读取项目规范（CLAUDE.md、steering 文件）
-2. 理解任务目标
-3. 自主规划和执行
-4. 记录所有尝试和结果
-5. 生成探索报告
+1. 创建决策日志文件 `DECISION_JOURNAL.md`
+2. 读取项目规范（CLAUDE.md、steering 文件）
+3. 理解任务目标
+4. 自主规划和执行
+5. **实时更新决策日志**（每30分钟至少一次）
+6. 记录所有尝试和结果
+7. 生成探索报告
 
 ### 第四步：生成报告
 
@@ -90,11 +92,15 @@ cd ../explore-bugfix-20241230
 ```
 文档/开发文档/MA/
 ├── BUGFIX/           # Bug 修复探索报告
+│   ├── BUGFIX-YYYYMMDD-xxx.md           # 最终报告
+│   └── BUGFIX-YYYYMMDD-xxx-JOURNAL.md   # 决策日志
 ├── FEATURE/          # 功能开发探索报告
 ├── FREE/             # 自由探索报告
 ├── ARCH/             # 架构审查报告
 ├── TEST/             # 测试探索报告
-└── MANAGE/           # 管理审查报告
+├── MANAGE/           # 管理审查报告
+├── TASK/             # 任务永动机报告
+└── LEARNINGS.md      # 跨任务经验积累
 ```
 
 ### 第五步：人类审查
@@ -107,15 +113,15 @@ cd ../explore-bugfix-20241230
 
 ## 智能体列表
 
-| 智能体 | 用途 | Slash 命令 | 报告目录 |
-|--------|------|------------|----------|
-| bugfix-explorer | Bug 修复探索 | /explore-bugfix | MA/BUGFIX/ |
-| feature-explorer | 功能开发探索 | /explore-feature | MA/FEATURE/ |
-| free-explorer | 自由创新探索 | /explore-free | MA/FREE/ |
-| architecture-reviewer | 架构审查 | /explore-arch | MA/ARCH/ |
-| test-explorer | 测试扩展 | /explore-test | MA/TEST/ |
-| worktree-manager | 工作树管理 | /explore-manage | MA/MANAGE/ |
-| **task-runner** | **任务永动机** | **/task-runner** | **MA/TASK/** |
+| 智能体 | 用途 | Slash 命令 | 报告目录 | 决策日志 |
+|--------|------|------------|----------|----------|
+| bugfix-explorer | Bug 修复探索 | /explore-bugfix | MA/BUGFIX/ | ✅ 必须 |
+| feature-explorer | 功能开发探索 | /explore-feature | MA/FEATURE/ | ✅ 必须 |
+| free-explorer | 自由创新探索 | /explore-free | MA/FREE/ | ✅ 必须 |
+| architecture-reviewer | 架构审查 | /explore-arch | MA/ARCH/ | ✅ 必须 |
+| test-explorer | 测试扩展 | /explore-test | MA/TEST/ | ✅ 必须 |
+| worktree-manager | 工作树管理 | /explore-manage | MA/MANAGE/ | 审查他人 |
+| **task-runner** | **任务永动机** | **/task-runner** | **MA/TASK/** | ✅ 必须 |
 
 ## 🆕 任务永动机 (Task Runner)
 
@@ -174,6 +180,24 @@ cd ../explore-bugfix-20241230
 详见 `templates/TASKS.template.md` 获取完整模板。
 
 ## 核心原则
+
+### 0. 🔴 决策日志原则（最重要）
+- **每个智能体必须维护决策日志**
+- 实时记录遇到的问题、考虑的方案、做出的决策
+- 即使任务失败，决策日志也是宝贵的学习资料
+- 详见 `references/decision-journal-guide.md`
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🧠 决策日志的价值                                                            ║
+║                                                                              ║
+║  能力较弱的智能体可能无法完成复杂任务                                          ║
+║  但他们的探索过程、遇到的问题、做出的决策                                      ║
+║  都是后续智能体和人类开发者的宝贵学习资料                                      ║
+║                                                                              ║
+║  失败的任务 + 详细的决策日志 > 成功的任务 + 空白的记录                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
 
 ### 1. 自主性原则
 - 智能体无需频繁询问用户

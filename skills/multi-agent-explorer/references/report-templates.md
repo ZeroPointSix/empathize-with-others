@@ -76,6 +76,14 @@ fun getById(id: String): Contact {
 | 分支 | explore/bugfix-YYYYMMDD-xxx |
 | 状态 | 🔍探索中 / ✅可合并 / 📖仅参考 / ❌已废弃 |
 | 探索者 | bugfix-explorer |
+| 决策日志 | [BUGFIX-YYYYMMDD-xxx-JOURNAL.md](./BUGFIX-YYYYMMDD-xxx-JOURNAL.md) |
+
+---
+
+## 🔗 相关文档
+
+- **决策日志**: 详细的探索过程和决策记录，见 `BUGFIX-YYYYMMDD-xxx-JOURNAL.md`
+- **经验积累**: 如有通用经验，已写入 `文档/开发文档/MA/LEARNINGS.md`
 
 ---
 
