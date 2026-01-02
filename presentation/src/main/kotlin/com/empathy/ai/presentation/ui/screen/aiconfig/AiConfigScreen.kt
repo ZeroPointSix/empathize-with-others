@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -49,10 +48,13 @@ import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
  * - 设置默认服务商
  * - 测试连接
  * - 通用选项和高级设置
+ * - 网络代理配置（TD-00025）
+ * - 用量统计导航（TD-00025）
  *
  * @param onNavigateBack 返回回调
  * @param onNavigateToAddProvider 导航到添加服务商页面
  * @param onNavigateToEditProvider 导航到编辑服务商页面
+ * @param onNavigateToUsageStats 导航到用量统计页面（TD-00025）
  * @param viewModel AI 配置 ViewModel
  * @param modifier Modifier
  */
@@ -62,7 +64,8 @@ fun AiConfigScreen(
     viewModel: AiConfigViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     onNavigateToAddProvider: (() -> Unit)? = null,
-    onNavigateToEditProvider: ((String) -> Unit)? = null
+    onNavigateToEditProvider: ((String) -> Unit)? = null,
+    onNavigateToUsageStats: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -70,6 +73,14 @@ fun AiConfigScreen(
     LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
             onNavigateBack()
+        }
+    }
+
+    // TD-00025: 处理用量统计导航
+    LaunchedEffect(uiState.shouldNavigateToUsageStats) {
+        if (uiState.shouldNavigateToUsageStats) {
+            viewModel.resetUsageStatsNavigationState()
+            onNavigateToUsageStats?.invoke()
         }
     }
 
@@ -196,6 +207,15 @@ private fun AiConfigScreenContent(
             onDismiss = { onEvent(AiConfigUiEvent.DismissDeleteConfirmDialog) }
         )
     }
+
+    // TD-00025: 代理设置对话框
+    if (uiState.showProxyDialog) {
+        ProxySettingsDialog(
+            uiState = uiState,
+            onEvent = onEvent,
+            onDismiss = { onEvent(AiConfigUiEvent.DismissProxyDialog) }
+        )
+    }
 }
 
 
@@ -254,21 +274,26 @@ private fun ProviderListContent(
                     icon = Icons.Default.Language,
                     iconBackgroundColor = iOSBlue,
                     title = "网络代理",
-                    value = "未设置",
+                    value = if (uiState.proxyConfig?.enabled == true) {
+                        "${uiState.proxyConfig?.type?.name ?: "HTTP"} ${uiState.proxyConfig?.host ?: ""}:${uiState.proxyConfig?.port ?: ""}"
+                    } else {
+                        "未设置"
+                    },
                     showDivider = true,
-                    onClick = { /* TODO: 实现网络代理设置 */ }
+                    onClick = { onEvent(AiConfigUiEvent.ShowProxyDialog) }
                 )
                 IOSSettingsItem(
                     icon = Icons.Default.QueryStats,
                     iconBackgroundColor = iOSPurple,
                     title = "用量统计",
                     showDivider = false,
-                    onClick = { /* TODO: 实现用量统计 */ }
+                    onClick = { onEvent(AiConfigUiEvent.NavigateToUsageStats) }
                 )
             }
         }
 
         // 高级设置分组
+        // BUG-00040修复：移除"最大Token数"（这是服务商级别配置，不是全局配置）
         item {
             IOSSettingsSection(title = "高级设置") {
                 IOSSettingsItem(
@@ -276,16 +301,8 @@ private fun ProviderListContent(
                     iconBackgroundColor = iOSPurple,
                     title = "请求超时",
                     value = "${uiState.requestTimeout}秒",
-                    showDivider = true,
-                    onClick = { /* TODO: 实现请求超时设置 */ }
-                )
-                IOSSettingsItem(
-                    icon = Icons.Default.Token,
-                    iconBackgroundColor = iOSBlue,
-                    title = "最大Token数",
-                    value = "${uiState.maxTokens}",
                     showDivider = false,
-                    onClick = { /* TODO: 实现最大Token数设置 */ }
+                    onClick = { /* TODO: 实现请求超时设置 */ }
                 )
             }
         }

@@ -186,6 +186,10 @@ fun NavGraph(
                 },
                 onNavigateToEditProvider = { providerId ->
                     navController.navigate(NavRoutes.editProvider(providerId))
+                },
+                // TD-00025: 添加用量统计导航
+                onNavigateToUsageStats = {
+                    navController.navigate(NavRoutes.USAGE_STATS)
                 }
             )
         }
@@ -200,6 +204,7 @@ fun NavGraph(
 
         // 编辑服务商页面（iOS风格）
         // TD-00021: 添加EditProviderScreen路由配置
+        // BUG-00040修复：复用AddProviderScreen，确保UI一致性
         composable(
             route = NavRoutes.EDIT_PROVIDER,
             arguments = listOf(
@@ -209,8 +214,16 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val providerId = backStackEntry.arguments?.getString(NavRoutes.EDIT_PROVIDER_ARG_ID) ?: ""
-            com.empathy.ai.presentation.ui.screen.aiconfig.EditProviderScreen(
+            com.empathy.ai.presentation.ui.screen.aiconfig.AddProviderScreen(
                 providerId = providerId,
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // 用量统计页面
+        // TD-00025 T6-06: 添加UsageStatsScreen路由配置
+        composable(route = NavRoutes.USAGE_STATS) {
+            com.empathy.ai.presentation.ui.screen.aiconfig.UsageStatsScreen(
                 onNavigateBack = { navController.navigateUp() }
             )
         }

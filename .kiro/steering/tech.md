@@ -206,17 +206,21 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 新增AppDispatcherModule：统一协程调度器管理
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
-  - 数据库版本v10，完整Migration链（1→8）
+  - 数据库版本v12，完整Migration链（1→12）
   - Flow响应式数据流
   - 提示词模板和备份表完整实现
   - 记忆系统表：conversation_logs, daily_summaries, failed_summary_tasks
+  - API用量统计表：api_usage_records（TD-00025新增）
   - Paging 3.3.5分页加载支持
   - PromptFileStorage迁移逻辑优化（TD-00015已完成）
 - **网络通信**: Retrofit + OkHttp + Moshi 完整实现
   - Retrofit 2.11.0动态URL支持
   - OkHttp 4.12.0 + Logging拦截器
+  - OkHttpClientFactory：动态代理切换机制（TD-00025新增）
   - Moshi 1.15.1 Kotlin代码生成
   - 支持多种AI服务商：OpenAI、DeepSeek等
+  - 网络代理支持：HTTP/HTTPS/SOCKS4/SOCKS5（TD-00025新增）
+  - ProxyPreferences：加密存储代理配置（TD-00025新增）
 - **异步编程**: Kotlin Coroutines + Flow 完整实现
   - Coroutines 1.9.0
   - 完整的suspend函数和Flow支持
@@ -353,3 +357,12 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ✅ 新增PromptSettingsSection组件，集成到设置界面
   - ✅ 完整测试覆盖：7个测试文件，61+个测试用例
   - ✅ 状态：22/25任务完成（88%，核心功能100%）
+
+- **AI配置功能完善**: 已完成TD-00025任务
+  - ✅ 高级选项：Temperature滑块（0-2范围，步进0.1）和Token限制输入（快捷选项支持）
+  - ✅ 模型拖拽排序：DraggableModelList组件，支持长按拖拽、放大效果、自动腾出空间动画
+  - ✅ 网络代理配置：ProxySettingsDialog，支持HTTP/HTTPS/SOCKS4/SOCKS5，加密存储
+  - ✅ 用量统计系统：UsageStatsScreen，按服务商/模型分类统计，支持导出和清除
+  - ✅ 数据库迁移：Room v12，新增api_usage_records表
+  - ✅ 统一错误处理：ApiErrorHandler，处理网络、认证、代理、频率限制等错误
+  - ✅ 状态：38/45任务完成（84%，核心功能100%）

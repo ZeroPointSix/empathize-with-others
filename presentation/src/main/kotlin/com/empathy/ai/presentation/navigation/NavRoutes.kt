@@ -87,6 +87,12 @@ object NavRoutes {
     const val EDIT_PROVIDER_ARG_ID = "providerId"
 
     /**
+     * 用量统计页面
+     * TD-00025 T6-06: 添加USAGE_STATS路由常量
+     */
+    const val USAGE_STATS = "usage_stats"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {

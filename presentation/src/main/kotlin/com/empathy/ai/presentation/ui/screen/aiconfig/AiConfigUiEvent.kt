@@ -1,5 +1,7 @@
 package com.empathy.ai.presentation.ui.screen.aiconfig
 
+import com.empathy.ai.domain.model.ProxyType
+
 /**
  * AI 配置界面的用户事件
  *
@@ -197,4 +199,93 @@ sealed interface AiConfigUiEvent {
      * @param tokens 最大Token数
      */
     data class UpdateMaxTokens(val tokens: Int) : AiConfigUiEvent
+
+    // ==================== TD-00025: 高级选项事件 ====================
+
+    /**
+     * 更新表单Temperature值
+     * @param temperature Temperature值 (0.0 - 2.0)
+     */
+    data class UpdateFormTemperature(val temperature: Float) : AiConfigUiEvent
+
+    /**
+     * 更新表单最大Token数
+     * @param maxTokens 最大Token数
+     */
+    data class UpdateFormMaxTokens(val maxTokens: Int) : AiConfigUiEvent
+
+    // ==================== TD-00025: 代理配置事件 ====================
+
+    /**
+     * 显示代理设置对话框
+     */
+    data object ShowProxyDialog : AiConfigUiEvent
+
+    /**
+     * 关闭代理设置对话框
+     */
+    data object DismissProxyDialog : AiConfigUiEvent
+
+    /**
+     * 加载代理配置
+     */
+    data object LoadProxyConfig : AiConfigUiEvent
+
+    /**
+     * 更新代理启用状态
+     * @param enabled 是否启用
+     */
+    data class UpdateProxyEnabled(val enabled: Boolean) : AiConfigUiEvent
+
+    /**
+     * 更新代理类型
+     * @param type 代理类型
+     */
+    data class UpdateProxyType(val type: ProxyType) : AiConfigUiEvent
+
+    /**
+     * 更新代理服务器地址
+     * @param host 服务器地址
+     */
+    data class UpdateProxyHost(val host: String) : AiConfigUiEvent
+
+    /**
+     * 更新代理服务器端口
+     * @param port 端口号
+     */
+    data class UpdateProxyPort(val port: Int) : AiConfigUiEvent
+
+    /**
+     * 更新代理用户名
+     * @param username 用户名
+     */
+    data class UpdateProxyUsername(val username: String) : AiConfigUiEvent
+
+    /**
+     * 更新代理密码
+     * @param password 密码
+     */
+    data class UpdateProxyPassword(val password: String) : AiConfigUiEvent
+
+    /**
+     * 保存代理配置
+     */
+    data object SaveProxyConfig : AiConfigUiEvent
+
+    /**
+     * 测试代理连接
+     */
+    data object TestProxyConnection : AiConfigUiEvent
+
+    /**
+     * 清除代理测试结果
+     */
+    data object ClearProxyTestResult : AiConfigUiEvent
+
+    // ==================== TD-00025: 用量统计导航事件 ====================
+
+    /**
+     * 导航到用量统计页面
+     */
+    data object NavigateToUsageStats : AiConfigUiEvent
 }

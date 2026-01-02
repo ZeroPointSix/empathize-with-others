@@ -1,10 +1,12 @@
 package com.empathy.ai.presentation.ui.screen.aiconfig
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,13 +27,17 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSGreen
-import com.empathy.ai.presentation.theme.iOSPurple
+import com.empathy.ai.presentation.theme.iOSSeparator
+import com.empathy.ai.presentation.ui.component.ios.DraggableModelItem
+import com.empathy.ai.presentation.ui.component.ios.DraggableModelList
 import com.empathy.ai.presentation.ui.component.ios.IOSFormField
 import com.empathy.ai.presentation.ui.component.ios.IOSModelListItem
 import com.empathy.ai.presentation.ui.component.ios.IOSNavigationBar
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
 import com.empathy.ai.presentation.ui.component.ios.IOSTestConnectionButton
+import com.empathy.ai.presentation.ui.component.ios.TemperatureSlider
+import com.empathy.ai.presentation.ui.component.ios.TokenLimitInput
 import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
 
 /**
@@ -59,6 +65,14 @@ fun AddProviderScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // BUG-00040修复：编辑模式时加载服务商数据
+    androidx.compose.runtime.LaunchedEffect(providerId) {
+        if (!providerId.isNullOrEmpty()) {
+            android.util.Log.d("AddProviderScreen", "Loading provider for edit: $providerId")
+            viewModel.onEvent(AiConfigUiEvent.LoadProviderForEdit(providerId))
+        }
+    }
+
     // 监听保存成功状态，自动返回
     androidx.compose.runtime.LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
@@ -71,7 +85,8 @@ fun AddProviderScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
-        modifier = modifier
+        modifier = modifier,
+        isEditMode = !providerId.isNullOrEmpty()
     )
 }
 
@@ -79,13 +94,15 @@ fun AddProviderScreen(
  * 添加服务商页面内容（无状态）
  * 
  * BUG-00037 P4修复：添加底部安全区域处理
+ * BUG-00040修复：支持编辑模式
  */
 @Composable
 private fun AddProviderScreenContent(
     uiState: AiConfigUiState,
     onEvent: (AiConfigUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isEditMode: Boolean = false
 ) {
     val dimensions = AdaptiveDimensions.current
     
@@ -94,9 +111,9 @@ private fun AddProviderScreenContent(
             .fillMaxSize()
             .background(iOSBackground)
     ) {
-        // iOS导航栏
+        // iOS导航栏 - BUG-00040修复：使用isEditMode参数
         IOSNavigationBar(
-            title = if (uiState.isEditing) "编辑服务商" else "添加服务商",
+            title = if (isEditMode) "编辑服务商" else "添加服务商",
             onCancel = onNavigateBack,
             onDone = { onEvent(AiConfigUiEvent.SaveProvider) },
             isDoneEnabled = uiState.isFormValid && !uiState.isSaving
@@ -158,7 +175,7 @@ private fun AddProviderScreenContent(
             item {
                 IOSSettingsSection(
                     title = "模型列表",
-                    footer = "点击模型设为默认，拖拽调整顺序"
+                    footer = "长按模型拖拽调整顺序，点击✓设为默认"
                 ) {
                     // 自动获取按钮
                     IOSSettingsItem(
@@ -178,46 +195,58 @@ private fun AddProviderScreenContent(
                         showDivider = uiState.formModels.isNotEmpty(),
                         onClick = { /* TODO: 显示添加模型对话框 */ }
                     )
-                    // 模型列表
-                    uiState.formModels.forEachIndexed { index, model ->
-                        IOSModelListItem(
-                            modelId = model.id,
-                            displayName = model.displayName,
-                            isDefault = model.id == uiState.formDefaultModelId,
-                            onClick = { onEvent(AiConfigUiEvent.SetFormDefaultModel(model.id)) },
-                            showDivider = index < uiState.formModels.lastIndex,
-                            // BUG-00038 P3修复：添加排序功能
-                            onMoveUp = if (index > 0) {
-                                { onEvent(AiConfigUiEvent.ReorderFormModels(index, index - 1)) }
-                            } else null,
-                            onMoveDown = if (index < uiState.formModels.lastIndex) {
-                                { onEvent(AiConfigUiEvent.ReorderFormModels(index, index + 1)) }
-                            } else null,
-                            canMoveUp = index > 0,
-                            canMoveDown = index < uiState.formModels.lastIndex
+                    // TD-00025 T4-03: 使用DraggableModelList替换原有模型列表
+                    if (uiState.formModels.isNotEmpty()) {
+                        DraggableModelList(
+                            models = uiState.formModels.map { model ->
+                                DraggableModelItem(
+                                    id = model.id,
+                                    displayName = model.displayName,
+                                    isDefault = model.id == uiState.formDefaultModelId
+                                )
+                            },
+                            onReorder = { fromIndex, toIndex ->
+                                onEvent(AiConfigUiEvent.ReorderFormModels(fromIndex, toIndex))
+                            },
+                            onSetDefault = { modelId ->
+                                onEvent(AiConfigUiEvent.SetFormDefaultModel(modelId))
+                            },
+                            onDelete = { modelId ->
+                                onEvent(AiConfigUiEvent.RemoveFormModel(modelId))
+                            },
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
                 }
             }
 
-            // 高级选项分组
+            // 高级选项分组 - TD-00025 T3-04: 集成TemperatureSlider和TokenLimitInput
             item {
-                IOSSettingsSection(title = "高级选项") {
-                    IOSSettingsItem(
-                        icon = Icons.Default.Add,
-                        iconBackgroundColor = iOSPurple,
-                        title = "Temperature",
-                        value = "0.7",
-                        showDivider = true,
-                        onClick = { /* TODO: 实现Temperature设置 */ }
+                IOSSettingsSection(
+                    title = "高级选项",
+                    footer = "这些设置会影响AI的响应行为"
+                ) {
+                    // Temperature滑块
+                    TemperatureSlider(
+                        value = uiState.formTemperature,
+                        onValueChange = { onEvent(AiConfigUiEvent.UpdateFormTemperature(it)) },
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
-                    IOSSettingsItem(
-                        icon = Icons.Default.Add,
-                        iconBackgroundColor = iOSBlue,
-                        title = "最大Token数",
-                        value = "4096",
-                        showDivider = false,
-                        onClick = { /* TODO: 实现最大Token数设置 */ }
+                    
+                    // 分隔线
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(1.dp)
+                            .background(iOSSeparator)
+                    )
+                    
+                    // Token限制输入
+                    TokenLimitInput(
+                        value = uiState.formMaxTokens,
+                        onValueChange = { onEvent(AiConfigUiEvent.UpdateFormMaxTokens(it)) },
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
             }

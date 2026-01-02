@@ -3,13 +3,17 @@ package com.empathy.ai.presentation.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.domain.model.ProxyConfig
+import com.empathy.ai.domain.model.ProxyType
 import com.empathy.ai.domain.usecase.DeleteProviderUseCase
 import com.empathy.ai.domain.usecase.GetProvidersUseCase
 import com.empathy.ai.domain.usecase.SaveProviderUseCase
 import com.empathy.ai.domain.usecase.TestConnectionUseCase
+import com.empathy.ai.domain.usecase.TestProxyConnectionUseCase
 import com.empathy.ai.presentation.ui.screen.aiconfig.AiConfigUiEvent
 import com.empathy.ai.presentation.ui.screen.aiconfig.AiConfigUiState
 import com.empathy.ai.presentation.ui.screen.aiconfig.FormModel
+import com.empathy.ai.presentation.ui.screen.aiconfig.ProxyTestResult
 import com.empathy.ai.presentation.ui.screen.aiconfig.TestConnectionResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +52,8 @@ class AiConfigViewModel @Inject constructor(
     init {
         // 初始化时加载服务商列表
         loadProviders()
+        // TD-00025: 初始化时加载代理配置
+        loadProxyConfig()
     }
 
     /**
@@ -99,6 +105,27 @@ class AiConfigViewModel @Inject constructor(
             is AiConfigUiEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
             is AiConfigUiEvent.UpdateRequestTimeout -> updateRequestTimeout(event.timeout)
             is AiConfigUiEvent.UpdateMaxTokens -> updateMaxTokens(event.tokens)
+
+            // === TD-00025: 高级选项事件 ===
+            is AiConfigUiEvent.UpdateFormTemperature -> updateFormTemperature(event.temperature)
+            is AiConfigUiEvent.UpdateFormMaxTokens -> updateFormMaxTokens(event.maxTokens)
+
+            // === TD-00025: 代理配置事件 ===
+            is AiConfigUiEvent.ShowProxyDialog -> showProxyDialog()
+            is AiConfigUiEvent.DismissProxyDialog -> dismissProxyDialog()
+            is AiConfigUiEvent.LoadProxyConfig -> loadProxyConfig()
+            is AiConfigUiEvent.UpdateProxyEnabled -> updateProxyEnabled(event.enabled)
+            is AiConfigUiEvent.UpdateProxyType -> updateProxyType(event.type)
+            is AiConfigUiEvent.UpdateProxyHost -> updateProxyHost(event.host)
+            is AiConfigUiEvent.UpdateProxyPort -> updateProxyPort(event.port)
+            is AiConfigUiEvent.UpdateProxyUsername -> updateProxyUsername(event.username)
+            is AiConfigUiEvent.UpdateProxyPassword -> updateProxyPassword(event.password)
+            is AiConfigUiEvent.SaveProxyConfig -> saveProxyConfig()
+            is AiConfigUiEvent.TestProxyConnection -> testProxyConnection()
+            is AiConfigUiEvent.ClearProxyTestResult -> clearProxyTestResult()
+
+            // === TD-00025: 用量统计导航事件 ===
+            is AiConfigUiEvent.NavigateToUsageStats -> navigateToUsageStats()
         }
     }
 
@@ -190,6 +217,8 @@ class AiConfigViewModel @Inject constructor(
 
     /**
      * 显示编辑服务商对话框
+     * 
+     * BUG-00040修复：添加高级选项（temperature、maxTokens）的加载
      */
     private fun showEditDialog(provider: AiProvider) {
         _uiState.update {
@@ -203,6 +232,9 @@ class AiConfigViewModel @Inject constructor(
                     FormModel(id = model.id, displayName = model.displayName ?: "")
                 },
                 formDefaultModelId = provider.defaultModelId,
+                // BUG-00040: 加载高级选项
+                formTemperature = provider.temperature,
+                formMaxTokens = provider.maxTokens,
                 formNameError = null,
                 formBaseUrlError = null,
                 formApiKeyError = null,
@@ -369,6 +401,7 @@ class AiConfigViewModel @Inject constructor(
         }
 
         // 构建 AiProvider 对象
+        // BUG-00040修复：添加高级选项（temperature、maxTokens）的保存
         val provider = AiProvider(
             id = currentState.editingProvider?.id ?: UUID.randomUUID().toString(),
             name = currentState.formName.trim(),
@@ -382,6 +415,9 @@ class AiConfigViewModel @Inject constructor(
             },
             defaultModelId = currentState.formDefaultModelId,
             isDefault = currentState.editingProvider?.isDefault ?: false,
+            // BUG-00040: 保存高级选项
+            temperature = currentState.formTemperature,
+            maxTokens = currentState.formMaxTokens,
             createdAt = currentState.editingProvider?.createdAt ?: System.currentTimeMillis()
         )
 
@@ -511,6 +547,9 @@ class AiConfigViewModel @Inject constructor(
                                 FormModel(id = model.id, displayName = model.displayName ?: "")
                             },
                             formDefaultModelId = loadedProvider.defaultModelId,
+                            // BUG-00040: 加载高级选项
+                            formTemperature = loadedProvider.temperature,
+                            formMaxTokens = loadedProvider.maxTokens,
                             formNameError = null,
                             formBaseUrlError = null,
                             formApiKeyError = null,
@@ -752,5 +791,237 @@ class AiConfigViewModel @Inject constructor(
             models.none { it.id == defaultModelId } -> "默认模型不在模型列表中"
             else -> null
         }
+    }
+
+    // ==================== TD-00025: 高级选项方法 ====================
+
+    /**
+     * 更新表单Temperature值
+     */
+    private fun updateFormTemperature(temperature: Float) {
+        val safeTemperature = temperature.coerceIn(0f, 2f)
+        _uiState.update { it.copy(formTemperature = safeTemperature) }
+    }
+
+    /**
+     * 更新表单最大Token数
+     */
+    private fun updateFormMaxTokens(maxTokens: Int) {
+        val safeMaxTokens = maxTokens.coerceIn(1, 128000)
+        _uiState.update { it.copy(formMaxTokens = safeMaxTokens) }
+    }
+
+    // ==================== TD-00025: 代理配置方法 ====================
+
+    /**
+     * 显示代理设置对话框
+     */
+    private fun showProxyDialog() {
+        loadProxyConfig()
+        _uiState.update { it.copy(showProxyDialog = true) }
+    }
+
+    /**
+     * 关闭代理设置对话框
+     */
+    private fun dismissProxyDialog() {
+        _uiState.update {
+            it.copy(
+                showProxyDialog = false,
+                proxyTestResult = null,
+                proxyHostError = null,
+                proxyPortError = null
+            )
+        }
+    }
+
+    /**
+     * 加载代理配置
+     */
+    private fun loadProxyConfig() {
+        viewModelScope.launch {
+            val config = aiProviderRepository.getProxyConfig()
+            _uiState.update {
+                it.copy(
+                    proxyEnabled = config.enabled,
+                    proxyType = config.type,
+                    proxyHost = config.host,
+                    proxyPort = config.port,
+                    proxyUsername = config.username,
+                    proxyPassword = config.password,
+                    // TD-00025: 同时更新proxyConfig用于UI显示
+                    proxyConfig = config
+                )
+            }
+        }
+    }
+
+    /**
+     * 更新代理启用状态
+     */
+    private fun updateProxyEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(proxyEnabled = enabled) }
+    }
+
+    /**
+     * 更新代理类型
+     */
+    private fun updateProxyType(type: ProxyType) {
+        _uiState.update { it.copy(proxyType = type) }
+    }
+
+    /**
+     * 更新代理服务器地址
+     */
+    private fun updateProxyHost(host: String) {
+        val error = if (host.isBlank() && _uiState.value.proxyEnabled) {
+            "服务器地址不能为空"
+        } else {
+            null
+        }
+        _uiState.update { it.copy(proxyHost = host, proxyHostError = error) }
+    }
+
+    /**
+     * 更新代理服务器端口
+     */
+    private fun updateProxyPort(port: Int) {
+        val error = if (port !in 1..65535 && _uiState.value.proxyEnabled) {
+            "端口号必须在 1-65535 之间"
+        } else {
+            null
+        }
+        _uiState.update { it.copy(proxyPort = port, proxyPortError = error) }
+    }
+
+    /**
+     * 更新代理用户名
+     */
+    private fun updateProxyUsername(username: String) {
+        _uiState.update { it.copy(proxyUsername = username) }
+    }
+
+    /**
+     * 更新代理密码
+     */
+    private fun updateProxyPassword(password: String) {
+        _uiState.update { it.copy(proxyPassword = password) }
+    }
+
+    /**
+     * 保存代理配置
+     */
+    private fun saveProxyConfig() {
+        val currentState = _uiState.value
+
+        // 验证配置
+        if (currentState.proxyEnabled) {
+            if (currentState.proxyHost.isBlank()) {
+                _uiState.update { it.copy(proxyHostError = "服务器地址不能为空") }
+                return
+            }
+            if (currentState.proxyPort !in 1..65535) {
+                _uiState.update { it.copy(proxyPortError = "端口号必须在 1-65535 之间") }
+                return
+            }
+        }
+
+        val config = currentState.toProxyConfig()
+
+        viewModelScope.launch {
+            aiProviderRepository.saveProxyConfig(config)
+            _uiState.update {
+                it.copy(
+                    showProxyDialog = false,
+                    proxyTestResult = null,
+                    // TD-00025: 保存后更新proxyConfig用于UI显示
+                    proxyConfig = config
+                )
+            }
+        }
+    }
+
+    /**
+     * 测试代理连接
+     */
+    private fun testProxyConnection() {
+        val currentState = _uiState.value
+
+        // 验证配置
+        if (!currentState.proxyEnabled) {
+            _uiState.update {
+                it.copy(proxyTestResult = ProxyTestResult.Failure("代理未启用"))
+            }
+            return
+        }
+
+        if (currentState.proxyHost.isBlank()) {
+            _uiState.update {
+                it.copy(
+                    proxyHostError = "服务器地址不能为空",
+                    proxyTestResult = ProxyTestResult.Failure("服务器地址不能为空")
+                )
+            }
+            return
+        }
+
+        if (currentState.proxyPort !in 1..65535) {
+            _uiState.update {
+                it.copy(
+                    proxyPortError = "端口号无效",
+                    proxyTestResult = ProxyTestResult.Failure("端口号无效")
+                )
+            }
+            return
+        }
+
+        val config = currentState.toProxyConfig()
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isTestingProxy = true, proxyTestResult = null) }
+
+            val result = aiProviderRepository.testProxyConnection(config)
+
+            result.onSuccess { latencyMs ->
+                _uiState.update {
+                    it.copy(
+                        isTestingProxy = false,
+                        proxyTestResult = ProxyTestResult.Success(latencyMs)
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isTestingProxy = false,
+                        proxyTestResult = ProxyTestResult.Failure(
+                            error.message ?: "连接测试失败"
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 清除代理测试结果
+     */
+    private fun clearProxyTestResult() {
+        _uiState.update { it.copy(proxyTestResult = null) }
+    }
+
+    // ==================== TD-00025: 用量统计导航方法 ====================
+
+    /**
+     * 导航到用量统计页面
+     */
+    private fun navigateToUsageStats() {
+        _uiState.update { it.copy(shouldNavigateToUsageStats = true) }
+    }
+
+    /**
+     * 重置用量统计导航状态
+     */
+    fun resetUsageStatsNavigationState() {
+        _uiState.update { it.copy(shouldNavigateToUsageStats = false) }
     }
 }

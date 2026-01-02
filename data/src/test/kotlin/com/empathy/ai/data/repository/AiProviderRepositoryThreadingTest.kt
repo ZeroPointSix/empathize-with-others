@@ -38,6 +38,7 @@ class AiProviderRepositoryThreadingTest {
 
     private lateinit var dao: AiProviderDao
     private lateinit var apiKeyStorage: ApiKeyStorage
+    private lateinit var proxyPreferences: com.empathy.ai.data.local.ProxyPreferences
     private lateinit var moshi: Moshi
     private lateinit var repository: AiProviderRepositoryImpl
 
@@ -56,11 +57,12 @@ class AiProviderRepositoryThreadingTest {
         
         dao = mockk(relaxed = true)
         apiKeyStorage = mockk(relaxed = true)
+        proxyPreferences = mockk(relaxed = true)
         moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
         
-        repository = AiProviderRepositoryImpl(dao, apiKeyStorage, moshi)
+        repository = AiProviderRepositoryImpl(dao, apiKeyStorage, proxyPreferences, moshi)
     }
 
     @After

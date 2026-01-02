@@ -30,6 +30,8 @@ import androidx.room.PrimaryKey
  * @property defaultModelId 默认模型 ID
  * @property isDefault 是否为默认服务商
  * @property timeoutMs 请求超时时间（毫秒）
+ * @property temperature 生成温度（0.0-2.0）
+ * @property maxTokens 最大Token数
  * @property createdAt 创建时间戳
  *
  * @see com.empathy.ai.domain.model.AiProvider
@@ -64,6 +66,12 @@ data class AiProviderEntity(
 
     @ColumnInfo(name = "timeout_ms")
     val timeoutMs: Long = 30000L,
+
+    @ColumnInfo(name = "temperature")
+    val temperature: Float = 0.7f,
+
+    @ColumnInfo(name = "max_tokens")
+    val maxTokens: Int = 4096,
 
     @ColumnInfo(name = "created_at")
     val createdAt: Long

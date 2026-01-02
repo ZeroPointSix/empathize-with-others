@@ -6,6 +6,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.empathy.ai.data.local.AppDatabase
 import com.empathy.ai.data.local.dao.AiProviderDao
+import com.empathy.ai.data.local.dao.ApiUsageDao
 import com.empathy.ai.data.local.dao.BrainTagDao
 import com.empathy.ai.data.local.dao.ContactDao
 import com.empathy.ai.data.local.dao.ConversationLogDao
@@ -430,6 +431,83 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移: 版本 11 -> 12
+     * TD-00025: AI配置功能完善
+     *
+     * 变更内容：
+     * 1. ai_providers表添加temperature字段（生成温度，默认0.7）
+     * 2. ai_providers表添加max_tokens字段（最大Token数，默认4096）
+     * 3. 新增api_usage_records表（API用量统计）
+     *
+     * api_usage_records表结构：
+     * - id: 记录唯一标识（主键）
+     * - provider_id: 服务商ID
+     * - provider_name: 服务商名称
+     * - model_id: 模型ID
+     * - model_name: 模型名称
+     * - prompt_tokens: 输入Token数
+     * - completion_tokens: 输出Token数
+     * - total_tokens: 总Token数
+     * - request_time_ms: 请求耗时
+     * - is_success: 是否成功
+     * - error_message: 错误信息
+     * - created_at: 创建时间戳
+     *
+     * 索引：
+     * - index_api_usage_records_provider_id: 按服务商查询
+     * - index_api_usage_records_model_id: 按模型查询
+     * - index_api_usage_records_created_at: 按时间查询
+     * - index_api_usage_records_is_success: 按成功状态查询
+     */
+    private val MIGRATION_11_12 = object : Migration(11, 12) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 为ai_providers表添加temperature字段
+            db.execSQL(
+                "ALTER TABLE ai_providers ADD COLUMN temperature REAL NOT NULL DEFAULT 0.7"
+            )
+
+            // 2. 为ai_providers表添加max_tokens字段
+            db.execSQL(
+                "ALTER TABLE ai_providers ADD COLUMN max_tokens INTEGER NOT NULL DEFAULT 4096"
+            )
+
+            // 3. 创建api_usage_records表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS api_usage_records (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    provider_id TEXT NOT NULL,
+                    provider_name TEXT NOT NULL,
+                    model_id TEXT NOT NULL,
+                    model_name TEXT NOT NULL,
+                    prompt_tokens INTEGER NOT NULL DEFAULT 0,
+                    completion_tokens INTEGER NOT NULL DEFAULT 0,
+                    total_tokens INTEGER NOT NULL DEFAULT 0,
+                    request_time_ms INTEGER NOT NULL DEFAULT 0,
+                    is_success INTEGER NOT NULL DEFAULT 1,
+                    error_message TEXT,
+                    created_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+
+            // 4. 创建索引
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_api_usage_records_provider_id ON api_usage_records(provider_id)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_api_usage_records_model_id ON api_usage_records(model_id)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_api_usage_records_created_at ON api_usage_records(created_at)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_api_usage_records_is_success ON api_usage_records(is_success)"
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -448,6 +526,7 @@ object DatabaseModule {
      * - v8→v9: 扩展daily_summaries表支持手动总结
      * - v9→v10: 添加编辑追踪字段支持事实流内容编辑
      * - v10→v11: 添加conversation_topics表（对话主题功能）
+     * - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
      */
     @Provides
     @Singleton
@@ -467,7 +546,8 @@ object DatabaseModule {
                 MIGRATION_7_8,
                 MIGRATION_8_9,
                 MIGRATION_9_10,
-                MIGRATION_10_11
+                MIGRATION_10_11,
+                MIGRATION_11_12
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据
@@ -498,4 +578,8 @@ object DatabaseModule {
     @Provides
     fun provideConversationTopicDao(database: AppDatabase): ConversationTopicDao =
         database.conversationTopicDao()
+
+    @Provides
+    fun provideApiUsageDao(database: AppDatabase): ApiUsageDao =
+        database.apiUsageDao()
 }

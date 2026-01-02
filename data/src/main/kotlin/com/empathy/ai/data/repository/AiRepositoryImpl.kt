@@ -15,6 +15,7 @@ import com.empathy.ai.data.remote.model.ToolChoiceFunction
 import com.empathy.ai.data.remote.model.ToolDefinition
 import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.domain.model.AnalysisResult
+import com.empathy.ai.domain.model.ApiUsageRecord
 import com.empathy.ai.domain.model.ExtractedData
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.PromptScene
@@ -22,6 +23,7 @@ import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.domain.model.SafetyCheckResult
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.SettingsRepository
 import com.empathy.ai.domain.util.SystemPrompts
 import com.empathy.ai.data.util.AiResponseCleaner
@@ -33,14 +35,18 @@ import kotlinx.coroutines.delay
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
+import java.util.UUID
 import javax.inject.Inject
 
 /**
  * AI 服务仓库实现类
+ *
+ * TD-00025: 添加ApiUsageRepository依赖，支持用量记录
  */
 class AiRepositoryImpl @Inject constructor(
     private val api: OpenAiApi,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val apiUsageRepository: ApiUsageRepository? = null  // TD-00025: 可选依赖，支持用量记录
 ) : AiRepository {
 
     private val moshi = Moshi.Builder()
@@ -143,6 +149,64 @@ $COMMON_JSON_RULES""".trim()
 请分析文本内容，然后调用 generate_extracted_data 函数返回结果。"""
     }
 
+    // ==================== TD-00025: 用量记录辅助方法 ====================
+
+    /**
+     * 记录API用量
+     *
+     * @param providerId 服务商ID
+     * @param providerName 服务商名称
+     * @param modelId 模型ID
+     * @param modelName 模型名称
+     * @param promptTokens 输入Token数（估算）
+     * @param completionTokens 输出Token数（估算）
+     * @param requestTimeMs 请求耗时（毫秒）
+     * @param isSuccess 是否成功
+     * @param errorMessage 错误消息（失败时）
+     */
+    private suspend fun recordUsage(
+        providerId: String,
+        providerName: String,
+        modelId: String,
+        modelName: String = modelId,
+        promptTokens: Int,
+        completionTokens: Int,
+        requestTimeMs: Long,
+        isSuccess: Boolean,
+        errorMessage: String? = null
+    ) {
+        try {
+            apiUsageRepository?.recordUsage(
+                ApiUsageRecord(
+                    id = UUID.randomUUID().toString(),
+                    providerId = providerId,
+                    providerName = providerName,
+                    modelId = modelId,
+                    modelName = modelName,
+                    promptTokens = promptTokens,
+                    completionTokens = completionTokens,
+                    totalTokens = promptTokens + completionTokens,
+                    requestTimeMs = requestTimeMs,
+                    isSuccess = isSuccess,
+                    errorMessage = errorMessage,
+                    createdAt = System.currentTimeMillis()
+                )
+            )
+        } catch (e: Exception) {
+            Log.w("AiRepositoryImpl", "记录用量失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 估算Token数量
+     * 简单估算：中文约1.5字符/token，英文约4字符/token
+     */
+    private fun estimateTokens(text: String): Int {
+        val chineseCount = text.count { it.code in 0x4E00..0x9FFF }
+        val otherCount = text.length - chineseCount
+        return (chineseCount / 1.5 + otherCount / 4.0).toInt().coerceAtLeast(1)
+    }
+
     private suspend fun <T> withRetry(block: suspend () -> T): T {
         var lastException: Exception? = null
         repeat(MAX_RETRIES) { attempt ->
@@ -178,13 +242,15 @@ $COMMON_JSON_RULES""".trim()
         promptContext: String,
         systemInstruction: String
     ): Result<AnalysisResult> {
+        val startTime = System.currentTimeMillis()
+        val model = selectModel(provider)
+        
         return try {
             val url = buildChatCompletionsUrl(provider.baseUrl)
             val headers = mapOf(
                 "Authorization" to "Bearer ${provider.apiKey}",
                 "Content-Type" to "application/json"
             )
-            val model = selectModel(provider)
             val strategy = ProviderCompatibility.getStructuredOutputStrategy(provider)
 
             DebugLogger.logApiRequest(
@@ -252,6 +318,29 @@ $COMMON_JSON_RULES""".trim()
             val choice = response.choices.firstOrNull()
                 ?: return Result.failure(Exception("Empty response from AI"))
 
+            val content = if (strategy == ProviderCompatibility.StructuredOutputStrategy.FUNCTION_CALLING) {
+                val toolCall = choice.message?.toolCalls?.firstOrNull()
+                if (toolCall != null && toolCall.function?.arguments != null) {
+                    toolCall.function.arguments
+                } else {
+                    choice.message?.content ?: ""
+                }
+            } else {
+                choice.message?.content ?: ""
+            }
+
+            // TD-00025: 记录成功的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + promptContext),
+                completionTokens = estimateTokens(content),
+                requestTimeMs = requestTimeMs,
+                isSuccess = true
+            )
+
             if (strategy == ProviderCompatibility.StructuredOutputStrategy.FUNCTION_CALLING) {
                 val toolCall = choice.message?.toolCalls?.firstOrNull()
                 if (toolCall != null && toolCall.function?.arguments != null) {
@@ -259,16 +348,41 @@ $COMMON_JSON_RULES""".trim()
                 }
             }
 
-            val content = choice.message?.content
-                ?: return Result.failure(Exception("Empty response from AI"))
+            if (content.isBlank()) {
+                return Result.failure(Exception("Empty response from AI"))
+            }
             parseAnalysisResult(content)
 
         } catch (e: HttpException) {
             val errorBody = try { e.response()?.errorBody()?.string() ?: "No error body" } catch (ex: Exception) { "Failed to read error body" }
             Log.e("AiRepositoryImpl", "HTTP错误 (analyzeChat): ${e.code()} - $errorBody")
+            // TD-00025: 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + promptContext),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = "HTTP ${e.code()}"
+            )
             Result.failure(Exception("HTTP ${e.code()}: $errorBody"))
         } catch (e: Exception) {
             Log.e("AiRepositoryImpl", "分析失败 (analyzeChat)", e)
+            // TD-00025: 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + promptContext),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = e.message
+            )
             Result.failure(e)
         }
     }
@@ -421,13 +535,15 @@ $COMMON_JSON_RULES""".trim()
         draft: String,
         systemInstruction: String
     ): Result<PolishResult> {
+        val startTime = System.currentTimeMillis()
+        val model = selectModel(provider)
+        
         return try {
             val url = buildChatCompletionsUrl(provider.baseUrl)
             val headers = mapOf(
                 "Authorization" to "Bearer ${provider.apiKey}",
                 "Content-Type" to "application/json"
             )
-            val model = selectModel(provider)
             val messages = listOf(
                 MessageDto(role = "system", content = systemInstruction),
                 MessageDto(role = "user", content = draft)
@@ -456,10 +572,35 @@ $COMMON_JSON_RULES""".trim()
             val response = withRetry { api.chatCompletion(url, headers, request) }
             val content = response.choices.firstOrNull()?.message?.content
                 ?: return Result.failure(Exception("Empty response from AI"))
+            
+            // TD-00025: 记录成功的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + draft),
+                completionTokens = estimateTokens(content),
+                requestTimeMs = requestTimeMs,
+                isSuccess = true
+            )
+            
             parsePolishResult(content)
 
         } catch (e: Exception) {
             Log.e("AiRepositoryImpl", "润色失败", e)
+            // TD-00025: 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + draft),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = e.message
+            )
             Result.failure(e)
         }
     }
@@ -469,13 +610,15 @@ $COMMON_JSON_RULES""".trim()
         message: String,
         systemInstruction: String
     ): Result<ReplyResult> {
+        val startTime = System.currentTimeMillis()
+        val model = selectModel(provider)
+        
         return try {
             val url = buildChatCompletionsUrl(provider.baseUrl)
             val headers = mapOf(
                 "Authorization" to "Bearer ${provider.apiKey}",
                 "Content-Type" to "application/json"
             )
-            val model = selectModel(provider)
             val messages = listOf(
                 MessageDto(role = "system", content = systemInstruction),
                 MessageDto(role = "user", content = message)
@@ -504,10 +647,35 @@ $COMMON_JSON_RULES""".trim()
             val response = withRetry { api.chatCompletion(url, headers, request) }
             val content = response.choices.firstOrNull()?.message?.content
                 ?: return Result.failure(Exception("Empty response from AI"))
+            
+            // TD-00025: 记录成功的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + message),
+                completionTokens = estimateTokens(content),
+                requestTimeMs = requestTimeMs,
+                isSuccess = true
+            )
+            
             parseReplyResult(content)
 
         } catch (e: Exception) {
             Log.e("AiRepositoryImpl", "生成回复失败", e)
+            // TD-00025: 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + message),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = e.message
+            )
             Result.failure(e)
         }
     }

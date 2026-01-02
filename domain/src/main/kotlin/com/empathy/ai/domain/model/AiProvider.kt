@@ -13,6 +13,8 @@ package com.empathy.ai.domain.model
  * @property defaultModelId 默认模型 ID
  * @property isDefault 是否为默认服务商
  * @property timeoutMs 请求超时时间（毫秒），不同服务商响应速度不同
+ * @property temperature 生成温度（0.0-2.0），控制输出的随机性
+ * @property maxTokens 最大Token数（1-128000），限制输出长度
  * @property createdAt 创建时间戳
  */
 data class AiProvider(
@@ -24,8 +26,26 @@ data class AiProvider(
     val defaultModelId: String,
     val isDefault: Boolean = false,
     val timeoutMs: Long = 30000L,  // 默认 30 秒
+    val temperature: Float = DEFAULT_TEMPERATURE,
+    val maxTokens: Int = DEFAULT_MAX_TOKENS,
     val createdAt: Long = System.currentTimeMillis()
 ) {
+    companion object {
+        /** Temperature 最小值 */
+        const val TEMPERATURE_MIN = 0.0f
+        /** Temperature 最大值 */
+        const val TEMPERATURE_MAX = 2.0f
+        /** Temperature 默认值 */
+        const val DEFAULT_TEMPERATURE = 0.7f
+        
+        /** MaxTokens 最小值 */
+        const val MAX_TOKENS_MIN = 1
+        /** MaxTokens 最大值 */
+        const val MAX_TOKENS_MAX = 128000
+        /** MaxTokens 默认值 */
+        const val DEFAULT_MAX_TOKENS = 4096
+    }
+
     /**
      * 获取默认模型
      */
@@ -42,5 +62,33 @@ data class AiProvider(
                 apiKey.isNotBlank() &&
                 models.isNotEmpty() &&
                 models.any { it.id == defaultModelId }
+    }
+
+    /**
+     * 验证 Temperature 是否在有效范围内
+     */
+    fun isTemperatureValid(): Boolean {
+        return temperature in TEMPERATURE_MIN..TEMPERATURE_MAX
+    }
+
+    /**
+     * 验证 MaxTokens 是否在有效范围内
+     */
+    fun isMaxTokensValid(): Boolean {
+        return maxTokens in MAX_TOKENS_MIN..MAX_TOKENS_MAX
+    }
+
+    /**
+     * 获取安全的 Temperature 值（边界保护）
+     */
+    fun getSafeTemperature(): Float {
+        return temperature.coerceIn(TEMPERATURE_MIN, TEMPERATURE_MAX)
+    }
+
+    /**
+     * 获取安全的 MaxTokens 值（边界保护）
+     */
+    fun getSafeMaxTokens(): Int {
+        return maxTokens.coerceIn(MAX_TOKENS_MIN, MAX_TOKENS_MAX)
     }
 }
