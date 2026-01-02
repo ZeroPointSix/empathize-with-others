@@ -32,6 +32,7 @@ replay_pid*.log
 /domain/build
 /data/build
 /presentation/build
+/buildSrc/build
 
 # APK分析临时目录
 temp_apk_analysis/
