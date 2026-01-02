@@ -28,7 +28,10 @@ object ErrorMapper {
                 field = "state",
                 reason = error.message ?: "非法状态"
             )
-            else -> AppError.UnknownError(error)
+            else -> AppError.UnknownError(
+                message = error.message ?: "未知错误",
+                cause = error
+            )
         }
     }
     

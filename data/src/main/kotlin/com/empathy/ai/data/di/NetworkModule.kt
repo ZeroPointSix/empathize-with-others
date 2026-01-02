@@ -1,6 +1,7 @@
 package com.empathy.ai.data.di
 
 import android.util.Log
+import com.empathy.ai.data.local.ProxyPreferences
 import com.empathy.ai.data.remote.api.OpenAiApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -33,6 +34,10 @@ import javax.inject.Singleton
  * 3. **Moshi 配置**: 支持 Kotlin 数据类
  *    - 添加 KotlinJsonAdapterFactory 处理 Kotlin 特性
  *    - 如默认值为 null、空集合等
+ *
+ * 4. **代理支持** (TD-00025): 支持HTTP/HTTPS/SOCKS代理
+ *    - 通过OkHttpClientFactory动态配置代理
+ *    - 支持代理认证
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -54,6 +59,22 @@ object NetworkModule {
     }
 
     /**
+     * 提供 OkHttpClientFactory
+     *
+     * TD-00025: 支持动态代理配置
+     *
+     * @param proxyPreferences 代理配置存储
+     * @return OkHttpClientFactory 实例
+     */
+    @Provides
+    @Singleton
+    fun provideOkHttpClientFactory(
+        proxyPreferences: ProxyPreferences
+    ): OkHttpClientFactory {
+        return OkHttpClientFactory(proxyPreferences)
+    }
+
+    /**
      * 提供 OkHttpClient
      *
      * 配置 HTTP 客户端的超时时间和日志拦截器。
@@ -63,29 +84,15 @@ object NetworkModule {
      * - 协程超时作为最后的兜底机制
      * - 这样可以优雅地处理网络超时，而不是强制取消请求
      *
+     * TD-00025: 通过OkHttpClientFactory获取客户端，支持代理配置
+     *
+     * @param factory OkHttpClientFactory 实例
      * @return OkHttpClient 实例
      */
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        val clientBuilder = OkHttpClient.Builder()
-
-        // 超时设置 (LLM 应用需要较长的超时时间)
-        // 注意：这些超时应该比协程超时短，让 HTTP 层先超时
-        clientBuilder
-            .connectTimeout(15, TimeUnit.SECONDS)  // 连接超时:15秒
-            .readTimeout(45, TimeUnit.SECONDS)     // 读取超时:45秒 (比协程超时短5-10秒)
-            .writeTimeout(15, TimeUnit.SECONDS)    // 写入超时:15秒
-
-        // 日志拦截器 - 使用BASIC级别，避免依赖BuildConfig
-        val loggingInterceptor = HttpLoggingInterceptor { message ->
-            Log.d("OkHttp", message)
-        }.apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
-        clientBuilder.addInterceptor(loggingInterceptor)
-
-        return clientBuilder.build()
+    fun provideOkHttpClient(factory: OkHttpClientFactory): OkHttpClient {
+        return factory.getClient()
     }
 
     /**

@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.empathy.ai.data.local.converter.FactListConverter
 import com.empathy.ai.data.local.converter.RoomTypeConverters
 import com.empathy.ai.data.local.dao.AiProviderDao
+import com.empathy.ai.data.local.dao.ApiUsageDao
 import com.empathy.ai.data.local.dao.BrainTagDao
 import com.empathy.ai.data.local.dao.ContactDao
 import com.empathy.ai.data.local.dao.ConversationLogDao
@@ -13,6 +14,7 @@ import com.empathy.ai.data.local.dao.ConversationTopicDao
 import com.empathy.ai.data.local.dao.DailySummaryDao
 import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
 import com.empathy.ai.data.local.entity.AiProviderEntity
+import com.empathy.ai.data.local.entity.ApiUsageEntity
 import com.empathy.ai.data.local.entity.BrainTagEntity
 import com.empathy.ai.data.local.entity.ContactProfileEntity
 import com.empathy.ai.data.local.entity.ConversationLogEntity
@@ -44,6 +46,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  *   - v8→v9: 扩展daily_summaries表支持手动总结（start_date, end_date, summary_type, generation_source, conversation_count, generated_at）
  *   - v9→v10: 添加编辑追踪字段（is_user_modified, last_modified_time, original_* 等）
  *   - v10→v11: 添加conversation_topics表（对话主题功能）
+ *   - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
  *
  * @property entities 数据库包含的实体类列表
  * @property version 数据库版本号
@@ -58,9 +61,10 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         ConversationLogEntity::class,
         DailySummaryEntity::class,
         FailedSummaryTaskEntity::class,
-        ConversationTopicEntity::class
+        ConversationTopicEntity::class,
+        ApiUsageEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)
@@ -100,4 +104,9 @@ abstract class AppDatabase : RoomDatabase() {
      * 获取对话主题DAO
      */
     abstract fun conversationTopicDao(): ConversationTopicDao
+
+    /**
+     * 获取API用量DAO
+     */
+    abstract fun apiUsageDao(): ApiUsageDao
 }

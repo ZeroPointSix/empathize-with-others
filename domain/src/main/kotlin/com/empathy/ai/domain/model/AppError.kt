@@ -4,10 +4,12 @@ package com.empathy.ai.domain.model
  * 统一的应用错误类型
  *
  * 提供类型安全的错误分类和用户友好的错误消息
+ *
+ * TD-00025: 扩展网络和代理相关错误类型
  */
 sealed class AppError(
-    val message: String,
-    val userMessage: String,
+    open val message: String,
+    open val userMessage: String,
     val recoverable: Boolean = true
 ) {
     /**
@@ -75,10 +77,135 @@ sealed class AppError(
      * 未知错误
      */
     data class UnknownError(
-        val cause: Throwable?
+        override val message: String = "Unknown error",
+        val cause: Throwable? = null
     ) : AppError(
-        message = "Unknown error: ${cause?.message}",
+        message = message,
         userMessage = "操作失败，请稍后重试",
         recoverable = true
+    )
+
+    // ==================== TD-00025: 网络相关错误 ====================
+
+    /**
+     * 网络错误
+     */
+    data class NetworkError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = true
+    )
+
+    /**
+     * 认证错误（401）
+     */
+    data class AuthenticationError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = false
+    )
+
+    /**
+     * 授权错误（403）
+     */
+    data class AuthorizationError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = false
+    )
+
+    /**
+     * 资源不存在错误（404）
+     */
+    data class NotFoundError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = false
+    )
+
+    /**
+     * 频率限制错误（429）
+     */
+    data class RateLimitError(
+        override val message: String,
+        val retryAfterSeconds: Int = 60,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = true
+    )
+
+    /**
+     * 服务器错误（5xx）
+     */
+    data class ServerError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = true
+    )
+
+    /**
+     * HTTP错误（其他状态码）
+     */
+    data class HttpError(
+        val code: Int,
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = code in 500..599
+    )
+
+    /**
+     * 代理错误
+     */
+    data class ProxyError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = true
+    )
+
+    /**
+     * 代理认证错误（407）
+     */
+    data class ProxyAuthError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = message,
+        recoverable = false
+    )
+
+    /**
+     * 请求取消错误
+     */
+    data class CancelledError(
+        override val message: String,
+        val cause: Throwable? = null
+    ) : AppError(
+        message = message,
+        userMessage = "请求已取消",
+        recoverable = false
     )
 }

@@ -74,7 +74,7 @@ abstract class BaseViewModel : ViewModel() {
             }
             
             // 所有重试都失败
-            val finalError = lastError ?: AppError.UnknownError(null)
+            val finalError = lastError ?: AppError.UnknownError(message = "Unknown error")
             Log.e(tag, "Operation failed after $retryCount retries: ${finalError.message}")
             onError(finalError.userMessage)
         }

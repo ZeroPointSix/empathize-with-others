@@ -1,12 +1,15 @@
 package com.empathy.ai.data.repository
 
 import com.empathy.ai.data.local.ApiKeyStorage
+import com.empathy.ai.data.local.ProxyPreferences
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.entity.AiProviderEntity
 import com.empathy.ai.data.remote.model.ModelsResponseDto
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.domain.model.ConnectionTestResult
+import com.empathy.ai.domain.model.ProxyConfig
+import com.empathy.ai.domain.model.ProxyType
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -16,9 +19,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import okhttp3.Authenticator
+import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.ConnectException
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -32,6 +39,7 @@ import javax.inject.Inject
 class AiProviderRepositoryImpl @Inject constructor(
     private val dao: AiProviderDao,
     private val apiKeyStorage: ApiKeyStorage,
+    private val proxyPreferences: ProxyPreferences,
     private val moshi: Moshi
 ) : AiProviderRepository {
 
@@ -359,6 +367,8 @@ class AiProviderRepositoryImpl @Inject constructor(
             defaultModelId = entity.defaultModelId,
             isDefault = entity.isDefault,
             timeoutMs = entity.timeoutMs,
+            temperature = entity.temperature,
+            maxTokens = entity.maxTokens,
             createdAt = entity.createdAt
         )
     }
@@ -374,7 +384,80 @@ class AiProviderRepositoryImpl @Inject constructor(
             defaultModelId = provider.defaultModelId,
             isDefault = provider.isDefault,
             timeoutMs = provider.timeoutMs,
+            temperature = provider.temperature,
+            maxTokens = provider.maxTokens,
             createdAt = provider.createdAt
         )
+    }
+
+    // ==================== TD-00025: 代理配置相关方法 ====================
+
+    override suspend fun getProxyConfig(): ProxyConfig {
+        return proxyPreferences.getProxyConfig()
+    }
+
+    override suspend fun saveProxyConfig(config: ProxyConfig) {
+        proxyPreferences.saveProxyConfig(config)
+    }
+
+    override suspend fun testProxyConnection(config: ProxyConfig): Result<Long> {
+        if (!config.isValid()) {
+            return Result.failure(IllegalArgumentException("代理配置无效"))
+        }
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val startTime = System.currentTimeMillis()
+                
+                val proxyType = when (config.type) {
+                    ProxyType.HTTP, ProxyType.HTTPS -> Proxy.Type.HTTP
+                    ProxyType.SOCKS4, ProxyType.SOCKS5 -> Proxy.Type.SOCKS
+                }
+                
+                val proxy = Proxy(proxyType, InetSocketAddress(config.host, config.port))
+                
+                val clientBuilder = OkHttpClient.Builder()
+                    .proxy(proxy)
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                
+                // 添加代理认证
+                if (config.requiresAuth()) {
+                    val proxyAuthenticator = Authenticator { _, response ->
+                        val credential = Credentials.basic(config.username, config.password)
+                        response.request.newBuilder()
+                            .header("Proxy-Authorization", credential)
+                            .build()
+                    }
+                    clientBuilder.proxyAuthenticator(proxyAuthenticator)
+                }
+                
+                val client = clientBuilder.build()
+                
+                // 测试连接到一个可靠的端点
+                val request = Request.Builder()
+                    .url("https://www.google.com/generate_204")
+                    .head()
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                val latencyMs = System.currentTimeMillis() - startTime
+                response.close()
+                
+                if (response.isSuccessful || response.code == 204) {
+                    Result.success(latencyMs)
+                } else {
+                    Result.failure(Exception("代理连接失败: HTTP ${response.code}"))
+                }
+            } catch (e: SocketTimeoutException) {
+                Result.failure(Exception("代理连接超时"))
+            } catch (e: UnknownHostException) {
+                Result.failure(Exception("无法解析代理服务器地址"))
+            } catch (e: ConnectException) {
+                Result.failure(Exception("无法连接到代理服务器"))
+            } catch (e: Exception) {
+                Result.failure(Exception("代理测试失败: ${e.message}"))
+            }
+        }
     }
 }

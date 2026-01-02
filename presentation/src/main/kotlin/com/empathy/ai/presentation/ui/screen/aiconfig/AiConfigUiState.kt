@@ -1,6 +1,8 @@
 package com.empathy.ai.presentation.ui.screen.aiconfig
 
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.domain.model.ProxyConfig
+import com.empathy.ai.domain.model.ProxyType
 
 /**
  * AI 配置界面的 UI 状态
@@ -37,6 +39,10 @@ data class AiConfigUiState(
     val formModels: List<FormModel> = emptyList(),
     val formDefaultModelId: String = "",
 
+    // TD-00025: 高级选项表单字段
+    val formTemperature: Float = 0.7f,
+    val formMaxTokens: Int = 4096,
+
     // 表单验证错误
     val formNameError: String? = null,
     val formBaseUrlError: String? = null,
@@ -60,7 +66,34 @@ data class AiConfigUiState(
     val fetchModelsError: String? = null,
 
     // 导航状态
-    val shouldNavigateBack: Boolean = false
+    val shouldNavigateBack: Boolean = false,
+
+    // ==================== TD-00025: 代理配置状态 ====================
+
+    // 代理设置对话框状态
+    val showProxyDialog: Boolean = false,
+
+    // 代理配置表单字段
+    val proxyEnabled: Boolean = false,
+    val proxyType: ProxyType = ProxyType.HTTP,
+    val proxyHost: String = "",
+    val proxyPort: Int = 0,
+    val proxyUsername: String = "",
+    val proxyPassword: String = "",
+
+    // 代理测试状态
+    val isTestingProxy: Boolean = false,
+    val proxyTestResult: ProxyTestResult? = null,
+
+    // 代理配置验证错误
+    val proxyHostError: String? = null,
+    val proxyPortError: String? = null,
+
+    // TD-00025: 当前代理配置（用于显示）
+    val proxyConfig: ProxyConfig? = null,
+
+    // TD-00025: 用量统计导航状态
+    val shouldNavigateToUsageStats: Boolean = false
 ) {
     /**
      * 计算属性：是否有服务商
@@ -101,6 +134,29 @@ data class AiConfigUiState(
      */
     val isEditing: Boolean
         get() = editingProvider != null
+
+    /**
+     * TD-00025: 计算属性：代理配置是否有效
+     */
+    val isProxyConfigValid: Boolean
+        get() = !proxyEnabled || (
+            proxyHost.isNotBlank() &&
+            proxyPort in 1..65535 &&
+            proxyHostError == null &&
+            proxyPortError == null
+        )
+
+    /**
+     * TD-00025: 获取当前代理配置
+     */
+    fun toProxyConfig(): ProxyConfig = ProxyConfig(
+        enabled = proxyEnabled,
+        type = proxyType,
+        host = proxyHost,
+        port = proxyPort,
+        username = proxyUsername,
+        password = proxyPassword
+    )
 }
 
 /**
@@ -128,4 +184,23 @@ sealed class TestConnectionResult {
      * @param message 错误消息
      */
     data class Failure(val message: String) : TestConnectionResult()
+}
+
+/**
+ * TD-00025: 代理测试结果
+ */
+sealed class ProxyTestResult {
+    /**
+     * 测试成功
+     *
+     * @param latencyMs 响应延迟（毫秒）
+     */
+    data class Success(val latencyMs: Long) : ProxyTestResult()
+
+    /**
+     * 测试失败
+     *
+     * @param message 错误消息
+     */
+    data class Failure(val message: String) : ProxyTestResult()
 }

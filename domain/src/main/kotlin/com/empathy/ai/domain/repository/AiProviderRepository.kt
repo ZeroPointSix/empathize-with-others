@@ -3,6 +3,7 @@ package com.empathy.ai.domain.repository
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.domain.model.ConnectionTestResult
+import com.empathy.ai.domain.model.ProxyConfig
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -82,4 +83,28 @@ interface AiProviderRepository {
      * @see SR-00001 模型列表自动获取与调试日志优化
      */
     suspend fun fetchAvailableModels(provider: AiProvider): Result<List<AiModel>>
+
+    // ==================== TD-00025: 代理配置相关方法 ====================
+
+    /**
+     * 获取代理配置
+     *
+     * @return 当前代理配置
+     */
+    suspend fun getProxyConfig(): ProxyConfig
+
+    /**
+     * 保存代理配置
+     *
+     * @param config 代理配置
+     */
+    suspend fun saveProxyConfig(config: ProxyConfig)
+
+    /**
+     * 测试代理连接
+     *
+     * @param config 要测试的代理配置
+     * @return Result 包含延迟时间（毫秒）或错误信息
+     */
+    suspend fun testProxyConnection(config: ProxyConfig): Result<Long>
 }

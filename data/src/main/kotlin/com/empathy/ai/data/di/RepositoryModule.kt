@@ -5,6 +5,7 @@ import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.data.parser.AiSummaryResponseParserImpl
 import com.empathy.ai.data.repository.AiProviderRepositoryImpl
 import com.empathy.ai.data.repository.AiRepositoryImpl
+import com.empathy.ai.data.repository.ApiUsageRepositoryImpl
 import com.empathy.ai.data.repository.BrainTagRepositoryImpl
 import com.empathy.ai.data.repository.ContactRepositoryImpl
 import com.empathy.ai.data.repository.PrivacyRepositoryImpl
@@ -12,6 +13,7 @@ import com.empathy.ai.data.repository.UserProfileRepositoryImpl
 import com.empathy.ai.data.repository.settings.SettingsRepositoryImpl
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
@@ -72,4 +74,10 @@ abstract class RepositoryModule {
     abstract fun bindCleanupPreferences(
         impl: CleanupPreferencesImpl
     ): CleanupPreferences
+
+    /**
+     * TD-00025: 绑定 API 用量统计仓库
+     */
+    @Binds
+    abstract fun bindApiUsageRepository(impl: ApiUsageRepositoryImpl): ApiUsageRepository
 }
