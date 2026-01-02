@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">共情AI助手</string>
+    <string name="app_name">共情</string>
     
     <!-- 通用 -->
     <string name="btn_confirm">确认</string>

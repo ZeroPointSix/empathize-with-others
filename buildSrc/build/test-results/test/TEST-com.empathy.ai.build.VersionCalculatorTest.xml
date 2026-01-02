@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.empathy.ai.build.VersionCalculatorTest" tests="30" skipped="0" failures="0" errors="0" timestamp="2026-01-02T03:29:42.465Z" hostname="LAPTOP-3M5K1Q82" time="0.03">
+  <properties/>
+  <testcase name="docs does not bump version" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.005"/>
+  <testcase name="generateChangelog includes refactor" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.002"/>
+  <testcase name="generateChangelog includes breaking changes first" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="generateChangelog includes docs" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="determineHighestBump returns MAJOR for breaking" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="generateChangelog includes performance" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="generateChangelog includes features" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="generateChangelog includes fixes" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="generateChangelog includes scope" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="highest bump wins - major over minor" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="generateSummary counts breaking changes" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="generateSummary counts fixes" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="determineHighestBump returns NONE for empty list" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="isBreaking flag triggers major bump" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="breaking change bumps major" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="perf bumps patch" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="generateSummary counts features" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="determineHighestBump returns PATCH for fix" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.002"/>
+  <testcase name="determineHighestBump returns MINOR for feature" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="breaking fix bumps major" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="analyzeCommits returns correct counts" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.003"/>
+  <testcase name="highest bump wins - patch over none" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="highest bump wins - minor over patch" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="feature bumps minor" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="generateSummary for empty commits" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="analyzeCommits extracts scopes" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="empty commits returns same version" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.001"/>
+  <testcase name="generateChangelog for empty commits" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="chore does not bump version" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <testcase name="fix bumps patch" classname="com.empathy.ai.build.VersionCalculatorTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

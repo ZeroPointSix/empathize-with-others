@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.empathy.ai.build.CommitParserTest" tests="28" skipped="0" failures="0" errors="0" timestamp="2026-01-02T03:29:41.657Z" hostname="LAPTOP-3M5K1Q82" time="0.067">
+  <properties/>
+  <testcase name="parse style commit" classname="com.empathy.ai.build.CommitParserTest" time="0.02"/>
+  <testcase name="parse perf commit" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse feat commit" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse deps commit" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse commit without colon returns null" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse docs commit" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse commit with empty scope" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse commit with complex scope" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse commit with scope and breaking" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse breaking fix commit" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse empty message returns null" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse commit with extra spaces" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse breaking change commit with exclamation" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse build commit" classname="com.empathy.ai.build.CommitParserTest" time="0.004"/>
+  <testcase name="toChangelogEntry with scope" classname="com.empathy.ai.build.CommitParserTest" time="0.024"/>
+  <testcase name="toChangelogEntry formats correctly" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse chore commit" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse revert commit" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse ci commit" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse test commit" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse unknown type returns null" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse whitespace only returns null" classname="com.empathy.ai.build.CommitParserTest" time="0.0"/>
+  <testcase name="parse fix commit" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse invalid commit returns null" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse commit with scope" classname="com.empathy.ai.build.CommitParserTest" time="0.002"/>
+  <testcase name="parse refactor commit" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="toChangelogEntry with breaking mark" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <testcase name="parse commit with special characters in subject" classname="com.empathy.ai.build.CommitParserTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

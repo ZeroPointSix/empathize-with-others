@@ -1,0 +1,204 @@
+# 版本号和图标自动更新工作流
+# 
+# 触发条件:
+# - push到main分支时自动执行
+# - 手动触发（支持选择发布阶段）
+#
+# @see TDD-00024 图标和版本号自动更新技术设计
+
+name: Version Update
+
+on:
+  # 推送到main分支时触发
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/version-update.yml'
+  
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: '发布阶段'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - test
+          - beta
+          - production
+      dry_run:
+        description: '预览模式（不实际执行更新）'
+        required: false
+        default: false
+        type: boolean
+      force:
+        description: '强制更新（忽略未提交的更改）'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_VERSION: '8.13'
+
+jobs:
+  version-update:
+    name: 更新版本号和图标
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史，用于分析提交
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 设置JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      - name: 配置Git
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+      
+      - name: 授予Gradle执行权限
+        run: chmod +x ./gradlew
+      
+      - name: 分析Git提交
+        id: analyze
+        run: |
+          echo "📊 分析Git提交..."
+          ./gradlew analyzeCommits --no-daemon
+      
+      - name: 确定发布阶段
+        id: stage
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            STAGE="${{ github.event.inputs.stage }}"
+          else
+            # 自动推送时，根据分支确定阶段
+            if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              STAGE="dev"
+            else
+              STAGE="dev"
+            fi
+          fi
+          echo "stage=$STAGE" >> $GITHUB_OUTPUT
+          echo "📦 发布阶段: $STAGE"
+      
+      - name: 构建参数
+        id: params
+        run: |
+          PARAMS="--stage=${{ steps.stage.outputs.stage }}"
+          
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            PARAMS="$PARAMS --dry-run"
+          fi
+          
+          if [ "${{ github.event.inputs.force }}" == "true" ]; then
+            PARAMS="$PARAMS --force"
+          fi
+          
+          echo "params=$PARAMS" >> $GITHUB_OUTPUT
+          echo "🔧 构建参数: $PARAMS"
+      
+      - name: 更新版本号和图标
+        run: |
+          echo "🚀 开始更新版本号和图标..."
+          ./gradlew updateVersionAndIcon ${{ steps.params.outputs.params }} --no-daemon
+      
+      - name: 显示当前版本
+        run: |
+          echo "📋 当前版本信息:"
+          ./gradlew showCurrentVersion --no-daemon
+      
+      - name: 提交更改
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          # 检查是否有更改
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "没有需要提交的更改"
+            exit 0
+          fi
+          
+          # 获取新版本号
+          VERSION=$(grep "APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2)
+          
+          # 提交更改
+          git add -A
+          git commit -m "chore: 更新版本号到 $VERSION [skip ci]"
+          
+          echo "✅ 已提交版本更新: $VERSION"
+      
+      - name: 推送更改
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git push origin ${{ github.ref_name }}
+          echo "✅ 已推送到远程仓库"
+      
+      - name: 创建版本标签
+        if: github.event.inputs.dry_run != 'true' && steps.stage.outputs.stage == 'production'
+        run: |
+          VERSION=$(grep "APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2)
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+          echo "🏷️ 已创建标签: v$VERSION"
+
+  # 构建验证任务（可选）
+  build-verify:
+    name: 构建验证
+    needs: version-update
+    runs-on: ubuntu-latest
+    if: github.event.inputs.dry_run != 'true'
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      
+      - name: 设置JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+      
+      - name: 授予Gradle执行权限
+        run: chmod +x ./gradlew
+      
+      - name: 构建Debug APK
+        run: |
+          echo "🔨 构建Debug APK..."
+          ./gradlew assembleDebug --no-daemon
+      
+      - name: 验证版本号
+        run: |
+          echo "✅ 验证APK版本号..."
+          # 使用aapt或apkanalyzer验证版本号
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          if [ -f "$APK_PATH" ]; then
+            echo "APK构建成功: $APK_PATH"
+          else
+            echo "❌ APK构建失败"
+            exit 1
+          fi
+      
+      - name: 上传APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7

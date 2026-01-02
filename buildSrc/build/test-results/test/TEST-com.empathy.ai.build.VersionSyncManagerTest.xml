@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.empathy.ai.build.VersionSyncManagerTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-01-02T03:29:42.826Z" hostname="LAPTOP-3M5K1Q82" time="0.419">
+  <properties/>
+  <testcase name="checkVersionConsistency returns consistent when all versions match" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.039"/>
+  <testcase name="discoverModules finds root module" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.014"/>
+  <testcase name="syncVersionsWithStage updates version and stage" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.017"/>
+  <testcase name="syncVersions updates root module" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.013"/>
+  <testcase name="checkVersionConsistency returns consistent when no versions found" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.006"/>
+  <testcase name="discoverModules finds submodules with build_gradle_kts" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.02"/>
+  <testcase name="discoverModules ignores build directories" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.02"/>
+  <testcase name="syncVersionsWithStage updates all modules" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.026"/>
+  <testcase name="VersionConsistencyResult toString formats correctly" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.009"/>
+  <testcase name="getAllVersions returns versions for all modules" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.031"/>
+  <testcase name="syncVersions updates all discovered modules" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.034"/>
+  <testcase name="discoverModules ignores directories without build file" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.017"/>
+  <testcase name="syncVersions updates only specified modules" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.032"/>
+  <testcase name="VersionSyncResult toString formats correctly" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.007"/>
+  <testcase name="syncVersions reports failed modules" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.025"/>
+  <testcase name="VersionSyncResult toString includes failure details" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.009"/>
+  <testcase name="checkVersionConsistency ignores modules without version" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.017"/>
+  <testcase name="discoverModules ignores hidden directories" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.017"/>
+  <testcase name="getAllVersions returns null for modules without version" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.022"/>
+  <testcase name="VersionConsistencyResult toString shows inconsistent modules" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.006"/>
+  <testcase name="checkVersionConsistency returns inconsistent when versions differ" classname="com.empathy.ai.build.VersionSyncManagerTest" time="0.033"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

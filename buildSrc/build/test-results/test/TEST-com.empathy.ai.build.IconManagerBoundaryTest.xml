@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.empathy.ai.build.IconManagerBoundaryTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2026-01-02T03:29:34.813Z" hostname="LAPTOP-3M5K1Q82" time="0.505">
+  <properties/>
+  <testcase name="initIconResources - 多次调用是幂等的" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.142"/>
+  <testcase name="checkIconResources - 配置中不存在的阶段返回配置缺失" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.013"/>
+  <testcase name="loadIconMapping - 配置文件缺少必要字段时使用默认值" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.005"/>
+  <testcase name="InitIconResult - toString格式正确" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.005"/>
+  <testcase name="switchToStage - 处理较大的图标文件" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.071"/>
+  <testcase name="switchToStage - 混合结构（根目录和密度目录）" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.035"/>
+  <testcase name="loadIconMapping - 配置文件为空时返回默认配置" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.004"/>
+  <testcase name="saveIconMapping - 多次保存不会损坏文件" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.005"/>
+  <testcase name="switchToStage - 支持密度子目录结构" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.041"/>
+  <testcase name="switchToStage - 部分图标文件缺失时仍能切换" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.028"/>
+  <testcase name="IconSet - 空文件列表" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.002"/>
+  <testcase name="switchToStage - 更新自适应图标" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.03"/>
+  <testcase name="IconMapping - 创建默认配置包含所有阶段" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.001"/>
+  <testcase name="switchToStage - 配置中不存在的阶段返回失败" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.005"/>
+  <testcase name="loadIconMapping - 配置中包含特殊字符" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.064"/>
+  <testcase name="loadIconMapping - 配置文件格式错误时返回默认配置" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.005"/>
+  <testcase name="switchToStage - 空目录时返回成功但无文件复制" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.019"/>
+  <testcase name="switchToStage - 目标目录自动创建" classname="com.empathy.ai.build.IconManagerBoundaryTest" time="0.026"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
