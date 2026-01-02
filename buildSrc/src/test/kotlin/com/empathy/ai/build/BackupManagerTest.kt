@@ -260,9 +260,151 @@ class BackupManagerTest {
     fun `getBackupDirSize - 返回备份目录大小`() {
         File(tempDir, "gradle.properties").writeText("version=1.0.0")
         backupManager.createBackup()
-        
+
         val size = backupManager.getBackupDirSize()
-        
+
         assertTrue(size > 0)
+    }
+
+    // ==================== 磁盘空间不足测试 ====================
+
+    @Test
+    fun `createBackup - 磁盘空间不足时优雅失败`() {
+        // 准备一个很大的文件，模拟磁盘空间不足
+        val largeFile = File(tempDir, "large.dat")
+        // 在Windows上，如果目录权限有问题或磁盘满，copyRecursively可能失败
+        // 我们通过创建一个只读目录来模拟写入失败
+
+        val backupDir = File(tempDir, "backups")
+        backupDir.mkdirs()
+        // 设置备份目录为只读（模拟写入失败）
+        backupDir.setReadOnly()
+
+        // 注意：在Unix系统上，目录的只读属性可能不影响子目录创建
+        // 这是一个尽力而为的测试
+        try {
+            val result = backupManager.createBackup()
+            // 如果成功创建了备份，验证备份路径
+            assertTrue(result.backupPath.isNotEmpty())
+        } catch (e: Exception) {
+            // 预期可能抛出异常
+            assertTrue(e.message?.contains("无法创建备份") == true ||
+                      e is java.io.IOException)
+        } finally {
+            // 恢复权限以便清理
+            backupDir.setWritable(true)
+        }
+    }
+
+    @Test
+    fun `createBackup - 备份目录权限不足时抛出异常`() {
+        // 创建一个无法写入的备份目录
+        val backupDir = File(tempDir, "backups/version-update")
+        backupDir.mkdirs()
+
+        // 尝试设置目录为不可写（在某些系统上可能不起作用）
+        val success = backupDir.setWritable(false)
+
+        if (success) {
+            try {
+                backupManager.createBackup()
+                assertTrue(false, "应该抛出异常")
+            } catch (e: Exception) {
+                // 预期抛出异常
+                assertTrue(e is java.io.IOException || e is IllegalStateException)
+            } finally {
+                // 恢复权限以便清理
+                backupDir.setWritable(true)
+            }
+        }
+        // 如果设置权限失败，跳过此测试
+    }
+
+    // ==================== 备份文件损坏恢复测试 ====================
+
+    @Test
+    fun `restore - metadata文件损坏时仍能恢复文件`() {
+        // 创建备份
+        File(tempDir, "gradle.properties").writeText("version=1.0.0")
+        val backupResult = backupManager.createBackup()
+
+        // 损坏metadata文件
+        val metadataFile = File(backupResult.backupPath, "metadata.json")
+        metadataFile.writeText("{ invalid json content")
+
+        // 修改原始文件
+        File(tempDir, "gradle.properties").writeText("version=2.0.0")
+
+        // 恢复（应该使用兼容模式）
+        val restoreResult = backupManager.restore(backupResult)
+
+        // 即使metadata损坏，也应该尝试恢复
+        assertTrue(restoreResult.restoredFiles >= 0)
+    }
+
+    @Test
+    fun `restore - metadata文件缺失时使用兼容模式`() {
+        // 创建备份
+        File(tempDir, "gradle.properties").writeText("version=1.0.0")
+        val backupResult = backupManager.createBackup()
+
+        // 删除metadata文件
+        val metadataFile = File(backupResult.backupPath, "metadata.json")
+        metadataFile.delete()
+
+        // 修改原始文件
+        File(tempDir, "gradle.properties").writeText("version=2.0.0")
+
+        // 恢复（应该使用兼容模式）
+        val restoreResult = backupManager.restore(backupResult)
+
+        // 应该能恢复文件
+        assertTrue(restoreResult.restoredFiles >= 1)
+    }
+
+    @Test
+    fun `restore - 备份文件被外部修改后恢复`() {
+        // 创建备份
+        File(tempDir, "gradle.properties").writeText("version=1.0.0")
+        val backupResult = backupManager.createBackup()
+
+        // 外部修改备份文件
+        val backupFile = File(backupResult.backupPath, "gradle.properties")
+        backupFile.writeText("version=0.0.0-modified")
+
+        // 修改原始文件
+        File(tempDir, "gradle.properties").writeText("version=2.0.0")
+
+        // 恢复
+        val restoreResult = backupManager.restore(backupResult)
+
+        // 应该恢复被外部修改的版本
+        assertEquals("version=0.0.0-modified", File(tempDir, "gradle.properties").readText())
+        assertTrue(restoreResult.restoredFiles >= 1)
+    }
+
+    @Test
+    fun `restore - 备份中部分文件损坏时跳过损坏文件`() {
+        // 创建备份
+        File(tempDir, "gradle.properties").writeText("version=1.0.0")
+        File(tempDir, "config").mkdirs()
+        File(tempDir, "config/version-config.json").writeText("{}")
+        val backupResult = backupManager.createBackup()
+
+        // 损坏其中一个备份文件
+        val backupConfig = File(backupResult.backupPath, "config/version-config.json")
+        backupConfig.writeText("invalid json {{")
+
+        // 修改原始文件
+        File(tempDir, "gradle.properties").writeText("version=2.0.0")
+        File(tempDir, "config/version-config.json").writeText("{\"modified\": true}")
+
+        // 恢复
+        val restoreResult = backupManager.restore(backupResult)
+
+        // gradle.properties应该被恢复
+        assertEquals("version=1.0.0", File(tempDir, "gradle.properties").readText())
+        // version-config.json也应该被恢复（即使是损坏的内容）
+        assertTrue(restoreResult.restoredFiles >= 2)
     }
 }

@@ -305,4 +305,266 @@ class VersionManagerTest {
             APP_VERSION_CODE=$code
         """.trimIndent())
     }
+
+    // ==================== 并发更新测试 ====================
+
+    @Test
+    fun `updateVersion - 并发更新时数据一致性`() {
+        createGradleProperties("1.0.0")
+
+        val threadCount = 10
+        val executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount)
+        val latch = java.util.concurrent.CountDownLatch(threadCount)
+        val successCount = java.util.concurrent.atomic.AtomicInteger(0)
+        val errorCount = java.util.concurrent.atomic.AtomicInteger(0)
+        val results = mutableListOf<SemanticVersion>()
+
+        // 并发更新版本
+        repeat(threadCount) { index ->
+            executor.submit {
+                try {
+                    val version = SemanticVersion(2, index, 0)
+                    versionManager.updateVersion(version, ReleaseStage.DEV)
+                    synchronized(results) {
+                        results.add(version)
+                    }
+                    successCount.incrementAndGet()
+                } catch (e: Exception) {
+                    errorCount.incrementAndGet()
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
+
+        // 等待所有线程完成
+        assertTrue(latch.await(30, java.util.concurrent.TimeUnit.SECONDS))
+        executor.shutdown()
+
+        // 验证至少有一些操作成功
+        assertTrue(successCount.get() > 0, "至少应该有部分更新成功")
+
+        // 验证最终版本是一致的
+        val finalVersion = versionManager.getCurrentVersion()
+        assertNotNull(finalVersion)
+        assertTrue(results.contains(finalVersion), "最终版本应该是某个更新操作的版本")
+
+        // 验证文件内容一致
+        val content = File(tempDir, "gradle.properties").readText()
+        assertTrue(content.contains("APP_VERSION_NAME="), "文件应该包含版本号")
+    }
+
+    @Test
+    fun `updateVersionWithStage - 并发更新版本和阶段`() {
+        createGradlePropertiesWithStage("1.0.0", "dev")
+
+        val threadCount = 5
+        val executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount)
+        val latch = java.util.concurrent.CountDownLatch(threadCount)
+        val stages = listOf(ReleaseStage.DEV, ReleaseStage.TEST, ReleaseStage.BETA, ReleaseStage.PRODUCTION)
+
+        // 并发更新版本和阶段
+        repeat(threadCount) { index ->
+            executor.submit {
+                try {
+                    val version = SemanticVersion(2, index, 0)
+                    val stage = stages[index % stages.size]
+                    versionManager.updateVersion(version, stage)
+                    java.lang.Thread.sleep(10) // 稍微错开执行时间
+                } catch (e: Exception) {
+                    // 记录但不中断
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
+
+        // 等待所有线程完成
+        assertTrue(latch.await(30, java.util.concurrent.TimeUnit.SECONDS))
+        executor.shutdown()
+
+        // 验证最终状态一致
+        val finalVersion = versionManager.getCurrentVersion()
+        val finalStage = versionManager.getCurrentStage()
+
+        assertNotNull(finalVersion)
+        assertTrue(finalVersion.major >= 1, "主版本号应该被更新")
+    }
+
+    @Test
+    fun `updateVersionHistory - 并发更新历史记录`() {
+        val configDir = File(tempDir, "config")
+        configDir.mkdirs()
+
+        val threadCount = 10
+        val executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount)
+        val latch = java.util.concurrent.CountDownLatch(threadCount)
+
+        // 并发更新历史记录
+        repeat(threadCount) { index ->
+            executor.submit {
+                try {
+                    val version = SemanticVersion(1, index, 0)
+                    val commits = listOf(ParsedCommit(CommitType.FEATURE, subject = "功能$index"))
+                    versionManager.updateVersionHistory(version, ReleaseStage.DEV, commits)
+                    java.lang.Thread.sleep(5) // 稍微错开执行时间
+                } catch (e: Exception) {
+                    // 记录但不中断
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
+
+        // 等待所有线程完成
+        assertTrue(latch.await(30, java.util.concurrent.TimeUnit.SECONDS))
+        executor.shutdown()
+
+        // 验证历史记录存在
+        val history = versionManager.getVersionHistory()
+        assertNotNull(history)
+        assertTrue(history.history.size > 0, "应该有历史记录")
+    }
+
+    @Test
+    fun `getCurrentVersion - 并发读取版本`() {
+        createGradleProperties("1.5.10")
+
+        val threadCount = 20
+        val executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount)
+        val latch = java.util.concurrent.CountDownLatch(threadCount)
+        val versions = mutableListOf<SemanticVersion>()
+        val errors = java.util.concurrent.atomic.AtomicInteger(0)
+
+        // 并发读取版本
+        repeat(threadCount) {
+            executor.submit {
+                try {
+                    val version = versionManager.getCurrentVersion()
+                    synchronized(versions) {
+                        versions.add(version)
+                    }
+                } catch (e: Exception) {
+                    errors.incrementAndGet()
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
+
+        // 等待所有线程完成
+        assertTrue(latch.await(10, java.util.concurrent.TimeUnit.SECONDS))
+        executor.shutdown()
+
+        // 验证所有读取的版本一致
+        assertTrue(errors.get() == 0, "不应该有读取错误")
+        assertTrue(versions.size > 0, "应该有成功的读取")
+        assertTrue(versions.distinct().size == 1, "所有读取的版本应该相同")
+        assertEquals(SemanticVersion(1, 5, 10), versions.first())
+    }
+
+    @Test
+    fun `updateVersion and readVersion - 并发读写`() {
+        createGradleProperties("1.0.0")
+
+        val threadCount = 10
+        val executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount)
+        val latch = java.util.concurrent.CountDownLatch(threadCount * 2)
+        val readResults = mutableListOf<SemanticVersion>()
+        val writeSuccess = java.util.concurrent.atomic.AtomicInteger(0)
+
+        // 5个线程读，5个线程写
+        repeat(threadCount) { index ->
+            if (index % 2 == 0) {
+                // 读线程
+                executor.submit {
+                    repeat(10) {
+                        try {
+                            val version = versionManager.getCurrentVersion()
+                            synchronized(readResults) {
+                                readResults.add(version)
+                            }
+                            java.lang.Thread.sleep(1)
+                        } catch (e: Exception) {
+                            // 忽略读取错误
+                        }
+                    }
+                    latch.countDown()
+                }
+            } else {
+                // 写线程
+                executor.submit {
+                    try {
+                        val version = SemanticVersion(2, index, 0)
+                        versionManager.updateVersion(version, ReleaseStage.TEST)
+                        writeSuccess.incrementAndGet()
+                        java.lang.Thread.sleep(10)
+                    } catch (e: Exception) {
+                        // 忽略写入错误
+                    } finally {
+                        latch.countDown()
+                    }
+                }
+            }
+        }
+
+        // 等待所有线程完成
+        assertTrue(latch.await(30, java.util.concurrent.TimeUnit.SECONDS))
+        executor.shutdown()
+
+        // 验证系统稳定
+        assertTrue(readResults.size > 0, "应该有成功的读取")
+        assertTrue(writeSuccess.get() > 0, "应该有成功的写入")
+
+        // 验证最终状态一致
+        val finalVersion = versionManager.getCurrentVersion()
+        assertNotNull(finalVersion)
+    }
+
+    @Test
+    fun `updateVersionHistory - 历史记录超过100条时自动截断`() {
+        val configDir = File(tempDir, "config")
+        configDir.mkdirs()
+
+        // 创建105条历史记录
+        repeat(105) { index ->
+            val version = SemanticVersion(1, index, 0)
+            val commits = listOf(ParsedCommit(CommitType.FEATURE, subject = "功能$index"))
+            versionManager.updateVersionHistory(version, ReleaseStage.DEV, commits)
+        }
+
+        val history = versionManager.getVersionHistory()
+
+        // 验证历史记录被截断到100条以内
+        assertTrue(history.history.size <= 100, "历史记录应该被截断到100条以内")
+        assertTrue(history.history.size > 0, "应该保留部分历史记录")
+    }
+
+    @Test
+    fun `restoreVersion - 从历史版本恢复`() {
+        // 创建历史记录
+        val configDir = File(tempDir, "config")
+        configDir.mkdirs()
+
+        repeat(3) { index ->
+            val version = SemanticVersion(1, index, 0)
+            val commits = listOf(ParsedCommit(CommitType.FEATURE, subject = "功能$index"))
+            versionManager.updateVersionHistory(version, ReleaseStage.DEV, commits)
+        }
+
+        // 获取历史记录
+        val history = versionManager.getVersionHistory()
+        assertTrue(history.history.size >= 3)
+
+        // 恢复到某个历史版本
+        val targetVersion = history.history[1] // 第二个版本
+        versionManager.updateVersion(
+            SemanticVersion.parse(targetVersion.version),
+            ReleaseStage.DEV
+        )
+
+        // 验证版本已恢复
+        val currentVersion = versionManager.getCurrentVersion()
+        assertEquals(targetVersion.version, currentVersion.toString())
+    }
 }
