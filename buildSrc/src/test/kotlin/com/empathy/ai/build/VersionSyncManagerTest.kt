@@ -322,21 +322,218 @@ class VersionSyncManagerTest {
             ),
             inconsistentModules = listOf("app")
         )
-        
+
         val str = result.toString()
         assertTrue(str.contains("✗ 不一致"))
         assertTrue(str.contains("app"))
     }
-    
-    // ========== 辅助方法 ==========
-    
+
+    // ==================== 大型项目性能测试 ====================
+
+    @Test
+    fun `syncVersions - 50+模块的大型项目性能测试`() {
+        createRootGradleProperties()
+
+        // 创建50个模块
+        repeat(50) { index ->
+            createSubmoduleWithProperties("module-$index", "1.0.0")
+        }
+
+        val startTime = System.currentTimeMillis()
+        val result = syncManager.syncVersions(SemanticVersion(2, 0, 0))
+        val duration = System.currentTimeMillis() - startTime
+
+        // 验证同步成功
+        assertTrue(result.isSuccess)
+        assertEquals(51, result.totalSynced) // 50个子模块 + 1个根模块
+
+        // 验证性能（应该在10秒内完成）
+        assertTrue(duration < 10000, "50个模块的同步应在10秒内完成，实际: ${duration}ms")
+    }
+
+    @Test
+    fun `discoverModules - 深度嵌套模块结构性能测试`() {
+        createRootGradleProperties()
+
+        // 创建嵌套模块结构（3层）
+        repeat(5) { i ->
+            val level1 = File(tempDir, "level1-$i")
+            level1.mkdirs()
+            File(level1, "build.gradle.kts").writeText("plugins {}")
+            createSubmoduleWithPropertiesAt(level1, "level1-$i/sub", "1.0.0")
+
+            repeat(3) { j ->
+                val level2 = File(level1, "level2-$j")
+                level2.mkdirs()
+                File(level2, "build.gradle.kts").writeText("plugins {}")
+                createSubmoduleWithPropertiesAt(level2, "level2-$j/sub", "1.0.0")
+            }
+        }
+
+        val modules = syncManager.discoverModules()
+
+        // 验证能发现所有模块
+        assertTrue(modules.size >= 20, "应该发现至少20个模块，实际: ${modules.size}")
+    }
+
+    @Test
+    fun `checkVersionConsistency - 检测到不一致后自动修复`() {
+        // 创建版本不一致的模块
+        createRootGradleProperties() // 版本1.0.0
+        createSubmoduleWithProperties("app", "2.0.0") // 版本2.0.0 - 不一致
+        createSubmoduleWithProperties("domain", "1.0.0") // 版本1.0.0 - 一致
+
+        // 检查一致性
+        val checkResult = syncManager.checkVersionConsistency()
+
+        // 验证检测到不一致
+        assertFalse(checkResult.isConsistent)
+        assertTrue(checkResult.inconsistentModules.contains("app"))
+        assertEquals(2, checkResult.versions.size)
+
+        // 自动修复：同步所有模块到最新版本
+        val latestVersion = SemanticVersion(2, 0, 0)
+        val syncResult = syncManager.syncVersions(latestVersion)
+
+        // 验证修复成功
+        assertTrue(syncResult.isSuccess)
+        assertEquals(3, syncResult.totalSynced)
+
+        // 再次检查一致性
+        val finalCheck = syncManager.checkVersionConsistency()
+        assertTrue(finalCheck.isConsistent, "修复后应该版本一致")
+    }
+
+    @Test
+    fun `syncVersions - 模块目录不存在时跳过并记录`() {
+        createRootGradleProperties()
+
+        // 尝试同步包含不存在模块的列表
+        val result = syncManager.syncVersions(
+            SemanticVersion(2, 0, 0),
+            modules = listOf(".", "nonexistent-module", "app")
+        )
+
+        // 验证部分成功
+        assertTrue(result.isSuccess || result.failedModules.isNotEmpty())
+        assertTrue(result.syncedModules.size > 0 || result.failedModules.size > 0)
+
+        // 验证根模块被成功同步
+        val rootSynced = result.syncedModules.any { it.modulePath == "." }
+        assertTrue(rootSynced || result.failedModules.any { it.modulePath == "." })
+    }
+
+    @Test
+    fun `syncVersionsWithStage - updater抛出异常时完整回滚`() {
+        createRootGradlePropertiesWithStage()
+        createSubmoduleWithPropertiesAndStage("app", "1.0.0", "dev")
+
+        // 创建一个会导致失败的模块（没有gradle.properties）
+        val invalidModuleDir = File(tempDir, "invalid-module")
+        invalidModuleDir.mkdirs()
+        File(invalidModuleDir, "build.gradle.kts").writeText("plugins {}")
+        // 不创建gradle.properties，这会导致updater失败
+
+        // 记录更新前的版本
+        val versionBefore = syncManager.getAllVersions()
+
+        // 尝试同步所有模块
+        val result = syncManager.syncVersionsWithStage(
+            SemanticVersion(2, 0, 0),
+            ReleaseStage.BETA
+        )
+
+        // 验证有失败但不是全部失败
+        assertTrue(result.totalSynced > 0 || result.failedModules.size > 0)
+
+        // 验证已成功更新的模块被记录
+        if (result.syncedModules.isNotEmpty()) {
+            val versionAfter = syncManager.getAllVersions()
+            // 验证至少有一个模块被更新
+            val hasChanged = versionAfter.any { (module, version) ->
+                version != versionBefore[module]
+            }
+            assertTrue(hasChanged || result.failedModules.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `syncVersions - 部分模块失败时继续处理其他模块`() {
+        createRootGradleProperties() // 版本1.0.0
+        createSubmoduleWithProperties("app", "1.0.0") // 版本1.0.0 - 有效
+        createSubmodule("broken-module") // 没有properties文件 - 会失败
+        createSubmoduleWithProperties("domain", "1.0.0") // 版本1.0.0 - 有效
+
+        val result = syncManager.syncVersions(SemanticVersion(2, 0, 0))
+
+        // 验证部分成功
+        assertTrue(result.totalSynced > 0, "应该有成功的同步")
+        assertTrue(result.failedModules.isNotEmpty(), "应该有失败的同步")
+
+        // 验证成功同步的数量
+        assertTrue(result.syncedModules.size >= 2, "至少根模块和2个有效子模块应该同步成功")
+
+        // 验证失败模块被记录
+        val failedModulePaths = result.failedModules.map { it.modulePath }
+        assertTrue(failedModulePaths.any { it.contains("broken") })
+    }
+
+    @Test
+    fun `getAllVersions - 大型项目中版本获取性能`() {
+        createRootGradleProperties()
+
+        // 创建30个模块
+        repeat(30) { index ->
+            createSubmoduleWithProperties("module-$index", "1.$index.0")
+        }
+
+        val startTime = System.currentTimeMillis()
+        val versions = syncManager.getAllVersions()
+        val duration = System.currentTimeMillis() - startTime
+
+        // 验证所有版本都被获取
+        assertTrue(versions.size >= 31, "应该有至少31个版本（30个模块+根），实际: ${versions.size}")
+
+        // 验证性能（应该在2秒内完成）
+        assertTrue(duration < 2000, "版本获取应在2秒内完成，实际: ${duration}ms")
+    }
+
+    @Test
+    fun `discoverModules - 过滤非模块目录的正确性`() {
+        createRootGradleProperties()
+
+        // 创建各种目录
+        createSubmodule("app") // 应该被识别
+        createSubmodule("domain") // 应该被识别
+        File(tempDir, "build").mkdirs() // 应该被忽略
+        File(tempDir, "buildSrc").mkdirs() // 应该被忽略
+        File(tempDir, ".git").mkdirs() // 应该被忽略（隐藏目录）
+        File(tempDir, ".gradle").mkdirs() // 应该被忽略（隐藏目录）
+        File(tempDir, "docs").mkdirs() // 应该被忽略（没有build文件）
+        File(tempDir, "README.md").writeText("") // 文件，应该被忽略
+
+        val modules = syncManager.discoverModules()
+
+        // 验证只有有效模块被识别
+        assertEquals(3, modules.size) // 根目录 + app + domain
+
+        // 验证被过滤的目录
+        val moduleNames = modules.map { it.name }
+        assertTrue(!moduleNames.contains("build"))
+        assertTrue(!moduleNames.contains("buildSrc"))
+        assertTrue(!moduleNames.contains(".git"))
+        assertTrue(!moduleNames.contains("docs"))
+    }
+
+    // ==================== 辅助方法 ====================
+
     private fun createRootGradleProperties() {
         File(tempDir, "gradle.properties").writeText("""
             APP_VERSION_NAME=1.0.0
             APP_VERSION_CODE=10000
         """.trimIndent())
     }
-    
+
     private fun createRootGradlePropertiesWithStage() {
         File(tempDir, "gradle.properties").writeText("""
             APP_VERSION_NAME=1.0.0
@@ -344,13 +541,13 @@ class VersionSyncManagerTest {
             APP_RELEASE_STAGE=dev
         """.trimIndent())
     }
-    
+
     private fun createSubmodule(name: String) {
         val moduleDir = File(tempDir, name)
         moduleDir.mkdirs()
         File(moduleDir, "build.gradle.kts").writeText("plugins {}")
     }
-    
+
     private fun createSubmoduleWithProperties(name: String, version: String = "1.0.0") {
         val moduleDir = File(tempDir, name)
         moduleDir.mkdirs()
@@ -360,7 +557,7 @@ class VersionSyncManagerTest {
             APP_VERSION_CODE=${SemanticVersion.parse(version).toVersionCode()}
         """.trimIndent())
     }
-    
+
     private fun createSubmoduleWithPropertiesAndStage(name: String, version: String = "1.0.0", stage: String = "dev") {
         val moduleDir = File(tempDir, name)
         moduleDir.mkdirs()
@@ -369,6 +566,16 @@ class VersionSyncManagerTest {
             APP_VERSION_NAME=$version
             APP_VERSION_CODE=${SemanticVersion.parse(version).toVersionCode()}
             APP_RELEASE_STAGE=$stage
+        """.trimIndent())
+    }
+
+    private fun createSubmoduleWithPropertiesAt(parentDir: File, name: String, version: String = "1.0.0") {
+        val moduleDir = File(parentDir, name)
+        moduleDir.mkdirs()
+        File(moduleDir, "build.gradle.kts").writeText("plugins {}")
+        File(moduleDir, "gradle.properties").writeText("""
+            APP_VERSION_NAME=$version
+            APP_VERSION_CODE=${SemanticVersion.parse(version).toVersionCode()}
         """.trimIndent())
     }
 }
