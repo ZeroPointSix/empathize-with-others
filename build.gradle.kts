@@ -46,3 +46,15 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ksp) apply false
 }
+
+// 应用版本更新插件
+apply<com.empathy.ai.build.VersionUpdatePlugin>()
+
+// 配置版本更新扩展
+configure<com.empathy.ai.build.VersionUpdateExtension> {
+    defaultStage = "dev"
+    autoBackup = true
+    maxBackups = 50
+    backupRetentionDays = 30
+    enableVersionHistory = true
+}

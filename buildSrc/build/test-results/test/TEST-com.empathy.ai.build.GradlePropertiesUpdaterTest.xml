@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.empathy.ai.build.GradlePropertiesUpdaterTest" tests="28" skipped="0" failures="0" errors="0" timestamp="2026-01-02T03:29:41.756Z" hostname="LAPTOP-3M5K1Q82" time="0.365">
+  <properties/>
+  <testcase name="readVersion reads VERSION when APP_VERSION_NAME missing" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.021"/>
+  <testcase name="readVersion returns null for invalid version format" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.011"/>
+  <testcase name="readVersion returns null when no version keys found" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.011"/>
+  <testcase name="updateVersion handles version with build metadata" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.031"/>
+  <testcase name="supports returns false for other files" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.012"/>
+  <testcase name="updateVersion handles empty file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.012"/>
+  <testcase name="updateVersion returns false for unsupported file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.008"/>
+  <testcase name="readStage handles case insensitive stage names" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.012"/>
+  <testcase name="readVersion returns null for unsupported file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.009"/>
+  <testcase name="updateVersion updates VERSION key" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.017"/>
+  <testcase name="readStage reads correct stage" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.01"/>
+  <testcase name="updateVersion updates APP_VERSION_CODE" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.013"/>
+  <testcase name="updateVersion updates APP_VERSION_NAME" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.014"/>
+  <testcase name="readStage returns default when key missing" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.011"/>
+  <testcase name="readVersion reads APP_VERSION_NAME" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.01"/>
+  <testcase name="updateVersion updates LIB_VERSION key" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.016"/>
+  <testcase name="updateVersion preserves other properties" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.013"/>
+  <testcase name="updateVersion returns false when no version keys found" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.007"/>
+  <testcase name="updateVersion handles version with prerelease" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.014"/>
+  <testcase name="updateVersionWithStage returns false for unsupported file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.009"/>
+  <testcase name="updateVersion updates multiple version keys" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.015"/>
+  <testcase name="supports returns true for gradle_properties file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.009"/>
+  <testcase name="readStage returns default for unsupported file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.01"/>
+  <testcase name="updateVersionWithStage updates stage to beta" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.015"/>
+  <testcase name="readVersion reads LIB_VERSION when others missing" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.011"/>
+  <testcase name="updateVersionWithStage updates all fields" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.014"/>
+  <testcase name="supports returns false for non-existent file" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.009"/>
+  <testcase name="updateVersion handles file with comments" classname="com.empathy.ai.build.GradlePropertiesUpdaterTest" time="0.013"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

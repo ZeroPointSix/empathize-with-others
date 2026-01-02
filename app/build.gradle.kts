@@ -24,8 +24,12 @@ android {
         applicationId = "com.empathy.ai"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        
+        // 从gradle.properties读取版本号 (TD-00024)
+        val appVersionName = project.findProperty("APP_VERSION_NAME") as? String ?: "1.0.0"
+        val appVersionCode = (project.findProperty("APP_VERSION_CODE") as? String)?.toIntOrNull() ?: 10000
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

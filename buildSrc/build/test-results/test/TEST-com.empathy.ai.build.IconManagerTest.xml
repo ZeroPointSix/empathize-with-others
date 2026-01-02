@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.empathy.ai.build.IconManagerTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-01-02T03:29:35.321Z" hostname="LAPTOP-3M5K1Q82" time="0.766">
+  <properties/>
+  <testcase name="initIconResources - 创建目录结构" classname="com.empathy.ai.build.IconManagerTest" time="0.032"/>
+  <testcase name="checkIconResources - 文件缺失时返回缺失列表" classname="com.empathy.ai.build.IconManagerTest" time="0.014"/>
+  <testcase name="getCurrentIconStage - 正确识别当前阶段" classname="com.empathy.ai.build.IconManagerTest" time="0.059"/>
+  <testcase name="initIconResources - 创建配置文件" classname="com.empathy.ai.build.IconManagerTest" time="0.062"/>
+  <testcase name="checkIconResources - 目录不存在时返回错误" classname="com.empathy.ai.build.IconManagerTest" time="0.003"/>
+  <testcase name="switchToStage - 源目录不存在时返回失败" classname="com.empathy.ai.build.IconManagerTest" time="0.005"/>
+  <testcase name="loadIconMapping - 正确加载已存在的配置文件" classname="com.empathy.ai.build.IconManagerTest" time="0.01"/>
+  <testcase name="saveIconMapping - 正确保存配置文件" classname="com.empathy.ai.build.IconManagerTest" time="0.005"/>
+  <testcase name="loadIconMapping - 配置文件不存在时返回默认配置" classname="com.empathy.ai.build.IconManagerTest" time="0.002"/>
+  <testcase name="initIconResources - 不覆盖已存在的文件" classname="com.empathy.ai.build.IconManagerTest" time="0.09"/>
+  <testcase name="switchToStage - 成功切换图标" classname="com.empathy.ai.build.IconManagerTest" time="0.083"/>
+  <testcase name="checkAllIconResources - 检查所有阶段" classname="com.empathy.ai.build.IconManagerTest" time="0.023"/>
+  <testcase name="initIconResources - 生成占位图标" classname="com.empathy.ai.build.IconManagerTest" time="0.099"/>
+  <testcase name="switchToStage - 切换到不同阶段" classname="com.empathy.ai.build.IconManagerTest" time="0.227"/>
+  <testcase name="checkIconResources - 资源完整时返回空列表" classname="com.empathy.ai.build.IconManagerTest" time="0.041"/>
+  <testcase name="getCurrentIconStage - 无图标时返回null" classname="com.empathy.ai.build.IconManagerTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
