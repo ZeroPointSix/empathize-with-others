@@ -90,7 +90,7 @@
 
 ### 单元测试
 - 位置: `data/src/test/kotlin/`
-- 测试文件数: 19个
+- 测试文件数: 70个
 - 测试覆盖:
   - `FloatingWindowPreferencesTest` - 悬浮窗偏好测试
   - `PromptFileStorageTest` - 提示词存储测试
@@ -162,7 +162,7 @@ A: 使用 `EncryptedSharedPreferences` 通过 `ApiKeyStorage` 类进行硬件级
 
 ---
 
-**最后更新**: 2025-12-27 | 更新者: Claude
-**模块状态**: ✅ 完成
+**最后更新**: 2026-01-03 | 更新者: Claude
+**模块状态**: 完成
 **代码质量**: A级（完整注释、错误处理）
-**测试覆盖**: 包含单元测试和集成测试
+**测试覆盖**: 包含70个单元测试和20个Android测试

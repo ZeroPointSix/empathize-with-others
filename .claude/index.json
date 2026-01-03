@@ -17,18 +17,17 @@
       "room": "v11"
     },
     "stats": {
-      "totalKotlinFiles": 807,
-      "mainSourceFiles": 479,
-      "unitTestFiles": 209,
-      "androidTestFiles": 34,
-      "disabledTestFiles": 5,
-      "testCoverage": "50.9%",
-      "domainFiles": 176,
-      "dataFiles": 87,
-      "presentationFiles": 272,
-      "appFiles": 192,
+      "totalKotlinFiles": 760,
+      "mainSourceFiles": 508,
+      "unitTestFiles": 202,
+      "androidTestFiles": 50,
+      "testCoverage": "52.8%",
+      "domainFiles": 185,
+      "dataFiles": 94,
+      "presentationFiles": 292,
+      "appFiles": 189,
       "architectureCompliance": "100%",
-      "maturity": "93.6/100 (A级)"
+      "maturity": "94.0/100 (A级)"
     },
     "modules": {
       "domain": {
@@ -36,8 +35,8 @@
         "path": "domain/",
         "description": "纯Kotlin业务层，无Android依赖",
         "dependencies": [],
-        "fileCount": 176,
-        "mainFiles": 148,
+        "fileCount": 185,
+        "mainFiles": 157,
         "testFiles": 28,
         "submodules": {
           "model": 66,
@@ -53,10 +52,10 @@
         "path": "data/",
         "description": "数据层实现，Room、Retrofit、Repository实现",
         "dependencies": ["domain"],
-        "fileCount": 87,
-        "mainFiles": 64,
-        "testFiles": 19,
-        "androidTestFiles": 4,
+        "fileCount": 94,
+        "mainFiles": 70,
+        "testFiles": 4,
+        "androidTestFiles": 20,
         "submodules": {
           "local": 30,
           "remote": 6,
@@ -72,9 +71,9 @@
         "path": "presentation/",
         "description": "UI层，Compose、ViewModel、Navigation",
         "dependencies": ["domain"],
-        "fileCount": 272,
-        "mainFiles": 245,
-        "testFiles": 22,
+        "fileCount": 292,
+        "mainFiles": 257,
+        "testFiles": 30,
         "androidTestFiles": 5,
         "submodules": {
           "ui": 187,
@@ -90,11 +89,10 @@
         "path": "app/",
         "description": "应用入口，DI配置，Android服务",
         "dependencies": ["domain", "data", "presentation"],
-        "fileCount": 192,
-        "mainFiles": 22,
+        "fileCount": 189,
+        "mainFiles": 24,
         "testFiles": 140,
         "androidTestFiles": 25,
-        "disabledTestFiles": 5,
         "submodules": {
           "app": 2,
           "di": 11,
@@ -108,16 +106,16 @@
     }
   },
   "scanInfo": {
-    "timestamp": "2025-12-29T21:34:33+08:00",
-    "strategy": "项目AI上下文初始化（自适应版）",
-    "scannedFiles": 807,
+    "timestamp": "2026-01-03T15:00:29+08:00",
+    "strategy": "项目AI上下文刷新（准确统计版）",
+    "scannedFiles": 760,
     "coverage": "100%",
     "truncated": false,
     "phases": {
       "phaseA": {
         "name": "全仓清点（轻量）",
         "status": "完成",
-        "findings": "识别出4个主要Gradle模块，807个Kotlin文件（479个主源码 + 209单元测试 + 34Android测试 + 5禁用测试）"
+        "findings": "识别出4个主要Gradle模块，760个Kotlin文件（508个主源码 + 202单元测试 + 50Android测试）"
       },
       "phaseB": {
         "name": "模块优先扫描（中等）",
@@ -202,8 +200,8 @@
       "name": "domain",
       "type": "kotlin_library",
       "description": "纯Kotlin业务层，无Android依赖",
-      "fileCount": 176,
-      "mainFiles": 148,
+      "fileCount": 185,
+      "mainFiles": 157,
       "testFiles": 28,
       "status": "完成",
       "documented": true,
@@ -273,10 +271,10 @@
       "name": "data",
       "type": "android_library",
       "description": "数据层 - 数据访问实现",
-      "fileCount": 87,
-      "mainFiles": 64,
-      "testFiles": 19,
-      "androidTestFiles": 4,
+      "fileCount": 94,
+      "mainFiles": 70,
+      "testFiles": 4,
+      "androidTestFiles": 20,
       "status": "完成",
       "documented": true,
       "keyFiles": [
@@ -339,9 +337,9 @@
       "name": "presentation",
       "type": "android_library",
       "description": "表现层 - UI和交互，Compose实现",
-      "fileCount": 272,
-      "mainFiles": 245,
-      "testFiles": 22,
+      "fileCount": 292,
+      "mainFiles": 257,
+      "testFiles": 30,
       "androidTestFiles": 5,
       "status": "完成",
       "documented": true,
@@ -393,11 +391,10 @@
       "name": "app",
       "type": "application",
       "description": "应用入口和全局初始化模块",
-      "fileCount": 192,
-      "mainFiles": 22,
+      "fileCount": 189,
+      "mainFiles": 24,
       "testFiles": 140,
       "androidTestFiles": 25,
-      "disabledTestFiles": 5,
       "status": "完成",
       "documented": true,
       "keyFiles": [
@@ -472,15 +469,15 @@
     "totalModules": 4,
     "documentedModules": 4,
     "documentationCoverage": "100%",
-    "scannedFiles": 807,
-    "totalSourceFiles": 807,
+    "scannedFiles": 760,
+    "totalSourceFiles": 760,
     "fileScanCoverage": "100%"
   },
   "summary": {
     "totalTasks": 3,
     "completedTasks": 3,
     "completionRate": "100%",
-    "lastUpdated": "2025-12-29T21:34:33+08:00",
-    "achievement": "项目AI上下文初始化完成！识别出4个Gradle模块，807个Kotlin文件（479个主源码 + 209单元测试 + 34Android测试 + 5禁用测试）。Clean Architecture架构完全合规，domain层纯Kotlin无Android依赖。已生成完整的Mermaid模块结构图和导航系统。所有模块文档已创建，文档覆盖率100%。"
+    "lastUpdated": "2026-01-03T15:00:29+08:00",
+    "achievement": "项目AI上下文刷新完成！识别出4个Gradle模块，760个Kotlin文件（508个主源码 + 202单元测试 + 50Android测试）。Clean Architecture架构完全合规，domain层纯Kotlin无Android依赖。已更新所有文档统计信息，文档覆盖率100%。"
   }
 }

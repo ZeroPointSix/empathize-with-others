@@ -35,11 +35,13 @@
 - `app/src/main/res/values/colors.xml`
 - `app/src/main/res/values/strings.xml`
 
-### 3. 高级功能模块归档（方案 A）✅
+### 3. 高级功能模块归档（方案 A）✅ 已清理
 **问题**：大量高级功能模块存在编译错误（约 300+ 错误）
 
 **解决方案**：
-创建 `archived-advanced-features/` 目录并移动以下模块：
+创建 `历史文档/archived-advanced-features/` 目录并移动以下模块：
+
+**当前状态**: ✅ 2026-01-03 已删除整个归档目录
 
 1. **learning/** - 学习引擎
    - AdaptiveMappingStrategy.kt
@@ -103,7 +105,7 @@
     - AlertRuleEngine.kt
     - NotificationService.kt
 
-**归档位置**：`archived-advanced-features/`
+**归档位置**：~~`历史文档/archived-advanced-features/`~~ ✅ 已删除
 
 ### 4. 代码修复✅
 **问题**：`FallbackHandler.kt` 中的属性命名冲突
@@ -237,30 +239,22 @@
    - 更新文档
 
 ### 长期计划（1 个月+）
-1. **完整功能恢复**
-   - 恢复所有归档的高级功能
-   - 确保所有功能正常工作
+1. ~~**完整功能恢复**~~ - 已删除归档，无需恢复
+2. **性能优化** - 如需相关功能，考虑重新设计实现
+3. **可观测性增强** - 如需相关功能，考虑重新设计实现
 
-2. **性能优化**
-   - 恢复性能监控功能
-   - 优化关键路径
-
-3. **可观测性增强**
-   - 恢复日志和诊断功能
-   - 添加更多监控指标
-
-## 归档文件管理
+## 归档文件管理 ✅ 已清理
 
 ### 归档位置
-`archived-advanced-features/`
+~~`历史文档/archived-advanced-features/`~~ ✅
 
 ### 归档内容
-- 11 个功能模块
-- 约 50+ 个文件
-- 详细的 README.md 说明
+- ~~11 个功能模块~~ ✅
+- ~~约 46 个 Kotlin 文件~~ ✅
+- ~~详细的 README.md~~ ✅
 
-### 恢复指南
-参见：`archived-advanced-features/README.md`
+### 当前状态
+所有归档的高级功能模块已于 2026-01-03 删除。如未来需要相关功能，建议根据当前项目架构重新设计和实现，而不是恢复旧代码。
 
 ## 文档更新
 
