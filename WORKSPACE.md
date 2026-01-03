@@ -1,6 +1,6 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-02 | 更新者: Kiro (TD-00025 AI配置功能完善)
+> 最后更新: 2026-01-03 | 更新者: Kiro (BUG-00042修复 + AI调试脚本)
 
 ## 📋 当前工作状态
 
@@ -10,9 +10,9 @@
 | - | 无进行中任务 | - | - | - | - | - |
 
 ### 已完成任务（最近3条）
+- [x] 2026-01-03 - **BUG-00042 新建AI服务商未自动设为默认** - Kiro - 相关文档: [BUG-00042](文档/开发文档/BUG/BUG-00042-新建AI服务商未自动设为默认.md)
+- [x] 2026-01-03 - **BUG-00041 悬浮窗发送AI请求时应用崩溃** - Kiro - 通知图标问题修复
 - [x] 2026-01-02 - **TD-00025 AI配置功能完善** - Kiro - 相关文档: [TD-00025](文档/开发文档/TD/TD-00025-AI配置功能完善任务清单.md) - 38/45任务完成（84%）
-- [x] 2026-01-01 - **FEAT-00025 Multi-Agent Explorer 决策日志机制升级** - Roo - 相关文档: [SKILL.md](skills/multi-agent-explorer/SKILL.md)
-- [x] 2025-12-31 - **DOC-00024 生成TDD-00024审查报告** - Roo - 相关文档: [DR-00024](文档/开发文档/DR/DR-00024-TDD00024图标和版本号自动更新技术设计审查报告.md)
 
 ### 待办任务队列
 
@@ -32,6 +32,28 @@
 - [x] ~~**编写悬浮窗功能的集成测试**~~ ✅ 已完成 (2025-12-15)
 - [ ] 配置Java环境运行完整测试套件
 - [ ] 修复ContactListViewModelTest.kt编译错误（技术债务）
+
+---
+
+## 🛠️ 调试工具
+
+### AI调试脚本（推荐）
+```bash
+# AI请求日志过滤（显示Temperature、MaxTokens等关键参数）
+scripts\ai-debug.bat              # 实时监听AI日志
+scripts\ai-debug.bat -h           # 获取最近100条AI日志
+scripts\ai-debug.bat -h -n 200    # 获取最近200条AI日志
+scripts\ai-debug.bat -d 127.0.0.1:7555  # 指定MuMu模拟器
+
+# 完整AI日志（包含提示词内容）
+scripts\ai-debug-full.bat         # 获取完整AI请求日志
+```
+
+### 通用调试脚本
+```bash
+scripts\logcat.bat -e             # 只看ERROR级别
+scripts\quick-error.bat           # 获取最近的ERROR日志
+```
 
 ---
 

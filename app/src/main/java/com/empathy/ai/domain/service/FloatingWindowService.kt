@@ -1772,9 +1772,10 @@ class FloatingWindowService : Service() {
      */
     private fun resolveNotificationIcon(): Int {
         return try {
-            // 首选图标
-            if (resources.getResourceEntryName(R.drawable.ic_launcher_foreground) != null) {
-                R.drawable.ic_launcher_foreground
+            // BUG-00041修复：使用单色通知图标，避免 BadForegroundServiceNotificationException
+            // Android 状态栏图标必须是单色（仅 alpha 通道），不能包含彩色填充
+            if (resources.getResourceEntryName(R.drawable.ic_notification) != null) {
+                R.drawable.ic_notification
             } else {
                 // 备选图标
                 android.R.drawable.ic_dialog_info
@@ -1991,7 +1992,8 @@ class FloatingWindowService : Service() {
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.CENTER
+            // 悬浮窗固定在屏幕顶部
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
         }
 
         windowManager.addView(floatingViewV2, params)

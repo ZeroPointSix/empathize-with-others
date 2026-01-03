@@ -28,6 +28,9 @@ data class ChatRequestDto(
     @Json(name = "temperature")
     val temperature: Double = 0.7,
 
+    @Json(name = "max_tokens")
+    val maxTokens: Int? = null,
+
     @Json(name = "stream")
     val stream: Boolean = false,
     
