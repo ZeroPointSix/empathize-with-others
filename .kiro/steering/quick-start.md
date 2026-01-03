@@ -177,23 +177,17 @@ adb logcat > logcat.txt      # 保存到文件
 
 ### 🆕 多模块Clean Architecture (TD-00017已完成)
 - **:domain模块**：纯Kotlin，无Android依赖，包含Model、Repository接口、UseCase、Service、Util
-  - 68个业务模型
-  - 12个Repository接口
-  - 37个UseCase
-  - 2个领域服务
-  - 28个工具类
+  - 业务模型、Repository接口、UseCase、领域服务、工具类
+  - 无Android依赖，可独立测试
 - **:data模块**：Android Library，包含Room、Retrofit、Repository实现、DI模块
-  - 6个DI模块
-  - 7个DAO
-  - 7个Entity
-  - 10个Repository实现
+  - Room数据库、Retrofit网络层、Repository实现
+  - DI模块配置
 - **:presentation模块**：Android Library，包含Compose UI、ViewModel、Navigation
-  - 180+个UI组件文件
-  - 13个ViewModel
+  - UI组件、ViewModel、Navigation系统
+  - Theme配置
 - **:app模块**：Application，包含应用入口、Android服务、应用级DI模块
-  - 9个应用级DI模块
-  - FloatingWindowService
-  - EmpathyApplication
+  - 应用入口、Android服务
+  - DI聚合模块
 
 ### DI模块分布
 - **:data模块**：DatabaseModule、NetworkModule、RepositoryModule、MemoryModule、PromptModule、DispatcherModule

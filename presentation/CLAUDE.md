@@ -165,7 +165,7 @@
 
 ### 单元测试
 - 位置: `presentation/src/test/kotlin/`
-- 测试文件数: 22个
+- 测试文件数: 30个
 - 测试覆盖:
   - ViewModel 测试
   - UI 组件测试
@@ -231,7 +231,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 
 ---
 
-**最后更新**: 2025-12-27 | 更新者: Claude
-**模块状态**: ✅ 完成
+**最后更新**: 2026-01-03 | 更新者: Claude
+**模块状态**: 完成
 **代码质量**: A级（完整注释、Compose 最佳实践）
-**测试覆盖**: 包含22个单元测试文件和5个UI测试文件
+**测试覆盖**: 包含30个单元测试文件和5个Android测试文件
