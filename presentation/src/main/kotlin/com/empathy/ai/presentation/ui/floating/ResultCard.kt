@@ -15,7 +15,6 @@ import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.presentation.ui.component.MaxHeightScrollView
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 
 /**
@@ -43,8 +42,8 @@ class ResultCard @JvmOverloads constructor(
     private var riskWarningContainer: LinearLayout? = null
     private var riskWarningText: TextView? = null
     private var strategyNote: TextView? = null
-    private var btnCopy: MaterialButton? = null
-    private var btnRegenerate: MaterialButton? = null
+    private var btnCopy: com.google.android.material.button.MaterialButton? = null
+    private var btnRegenerate: com.google.android.material.button.MaterialButton? = null
 
     private var currentResult: AiResult? = null
     private var onCopyClickListener: ((String) -> Unit)? = null

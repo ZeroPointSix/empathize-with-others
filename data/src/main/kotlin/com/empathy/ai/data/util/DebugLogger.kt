@@ -86,16 +86,26 @@ object DebugLogger {
         providerName: String,
         promptContext: String,
         systemInstruction: String? = null,
-        additionalInfo: Map<String, Any>? = null
+        additionalInfo: Map<String, Any>? = null,
+        temperature: Float? = null,
+        maxTokens: Int? = null
     ) {
-        Log.d(tag, "=== API请求详情 ($method) ===")
-        Log.d(tag, "URL: $url")
-        Log.d(tag, "Model: $model")
-        Log.d(tag, "Provider: $providerName")
+        Log.d(tag, "╔══════════════════════════════════════════════════════════════")
+        Log.d(tag, "║ 🚀 API请求详情 ($method)")
+        Log.d(tag, "╠══════════════════════════════════════════════════════════════")
+        Log.d(tag, "║ 📍 URL: $url")
+        Log.d(tag, "║ 🤖 Model: $model")
+        Log.d(tag, "║ 🏢 Provider: $providerName")
+        Log.d(tag, "╠══════════════════════════════════════════════════════════════")
+        Log.d(tag, "║ ⚙️ 高级参数配置:")
+        Log.d(tag, "║    🌡️ Temperature: ${temperature ?: "默认(0.7)"}")
+        Log.d(tag, "║    📊 MaxTokens: ${maxTokens ?: "未设置(无限制)"}")
+        Log.d(tag, "╠══════════════════════════════════════════════════════════════")
         additionalInfo?.forEach { (key, value) ->
-            Log.d(tag, "$key: $value")
+            Log.d(tag, "║ 📌 $key: $value")
         }
-        Log.d(tag, "PromptContext长度: ${promptContext.length} 字符")
+        Log.d(tag, "║ 📝 PromptContext长度: ${promptContext.length} 字符")
+        Log.d(tag, "╚══════════════════════════════════════════════════════════════")
         logFullPrompt(tag, "PromptContext", promptContext, true)
         systemInstruction?.let {
             Log.d(tag, "SystemInstruction长度: ${it.length} 字符")

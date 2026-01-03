@@ -244,6 +244,9 @@ $COMMON_JSON_RULES""".trim()
     ): Result<AnalysisResult> {
         val startTime = System.currentTimeMillis()
         val model = selectModel(provider)
+        // TD-00025: 使用服务商配置的 temperature 和 maxTokens
+        val effectiveTemperature = provider.temperature.toDouble()
+        val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
         
         return try {
             val url = buildChatCompletionsUrl(provider.baseUrl)
@@ -260,7 +263,9 @@ $COMMON_JSON_RULES""".trim()
                 model = model,
                 providerName = provider.name,
                 promptContext = promptContext,
-                additionalInfo = mapOf("Strategy" to strategy)
+                additionalInfo = mapOf("Strategy" to strategy),
+                temperature = provider.temperature,
+                maxTokens = effectiveMaxTokens
             )
 
             val request = when (strategy) {
@@ -274,7 +279,8 @@ $COMMON_JSON_RULES""".trim()
                             MessageDto(role = "system", content = effectiveSystemInstruction),
                             MessageDto(role = "user", content = promptContext)
                         ),
-                        temperature = 0.7,
+                        temperature = effectiveTemperature,
+                        maxTokens = effectiveMaxTokens,
                         stream = false,
                         tools = listOf(TOOL_ANALYZE_CHAT),
                         toolChoice = ToolChoice(type = "function", function = ToolChoiceFunction(name = "generate_analysis_result"))
@@ -295,7 +301,8 @@ $COMMON_JSON_RULES""".trim()
                     ChatRequestDto(
                         model = model,
                         messages = adaptedMessages,
-                        temperature = 0.7,
+                        temperature = effectiveTemperature,
+                        maxTokens = effectiveMaxTokens,
                         stream = false,
                         responseFormat = ResponseFormat(type = "json_object")
                     )
@@ -308,7 +315,8 @@ $COMMON_JSON_RULES""".trim()
                             MessageDto(role = "system", content = effectiveSystemInstruction),
                             MessageDto(role = "user", content = promptContext)
                         ),
-                        temperature = 0.7,
+                        temperature = effectiveTemperature,
+                        maxTokens = effectiveMaxTokens,
                         stream = false
                     )
                 }
@@ -550,10 +558,15 @@ $COMMON_JSON_RULES""".trim()
             )
 
             val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
+            // TD-00025: 使用服务商配置的 temperature 和 maxTokens
+            val effectiveTemperature = provider.temperature.toDouble()
+            val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
+            
             val request = ChatRequestDto(
                 model = model,
                 messages = messages,
-                temperature = 0.7,
+                temperature = effectiveTemperature,
+                maxTokens = effectiveMaxTokens,
                 stream = false,
                 responseFormat = if (useResponseFormat) ResponseFormat(type = "json_object") else null
             )
@@ -566,7 +579,9 @@ $COMMON_JSON_RULES""".trim()
                 providerName = provider.name,
                 promptContext = draft,
                 systemInstruction = systemInstruction,
-                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat)
+                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat),
+                temperature = provider.temperature,
+                maxTokens = effectiveMaxTokens
             )
 
             val response = withRetry { api.chatCompletion(url, headers, request) }
@@ -625,10 +640,15 @@ $COMMON_JSON_RULES""".trim()
             )
 
             val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
+            // TD-00025: 使用服务商配置的 temperature 和 maxTokens
+            val effectiveTemperature = provider.temperature.toDouble()
+            val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
+            
             val request = ChatRequestDto(
                 model = model,
                 messages = messages,
-                temperature = 0.7,
+                temperature = effectiveTemperature,
+                maxTokens = effectiveMaxTokens,
                 stream = false,
                 responseFormat = if (useResponseFormat) ResponseFormat(type = "json_object") else null
             )
@@ -641,7 +661,9 @@ $COMMON_JSON_RULES""".trim()
                 providerName = provider.name,
                 promptContext = message,
                 systemInstruction = systemInstruction,
-                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat)
+                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat),
+                temperature = provider.temperature,
+                maxTokens = effectiveMaxTokens
             )
 
             val response = withRetry { api.chatCompletion(url, headers, request) }

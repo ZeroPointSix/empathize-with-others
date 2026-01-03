@@ -150,6 +150,21 @@
 ./gradlew lint
 ```
 
+### 🆕 AI调试脚本
+
+```bash
+# AI请求日志过滤（显示Temperature、MaxTokens等关键参数）
+scripts\ai-debug.bat              # 实时监听AI日志
+scripts\ai-debug.bat -h           # 获取最近100条AI日志
+scripts\ai-debug.bat -h -n 200    # 获取最近200条AI日志
+scripts\ai-debug.bat -d 127.0.0.1:7555  # 指定MuMu模拟器
+scripts\ai-debug.bat -f ai_log.txt     # 输出到文件
+
+# 完整AI日志（包含提示词内容）
+scripts\ai-debug-full.bat         # 获取完整AI请求日志
+```
+```
+
 ### Gradle 同步
 
 ```bash

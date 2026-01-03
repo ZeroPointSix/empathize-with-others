@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- iOS风格主按钮背景 - 蓝色填充，圆角10dp -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 按下状态 -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#0062CC" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+    <!-- 默认状态 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#007AFF" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+</selector>

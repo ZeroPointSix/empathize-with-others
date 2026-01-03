@@ -70,33 +70,42 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- 按钮栏（BUG-00017修复：简化为两个按钮） -->
+            <!-- 按钮栏（iOS风格：水平排列，取消+生成） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="end"
+                android:gravity="end|center_vertical"
                 android:layout_marginTop="20dp">
 
-                <!-- 取消按钮 -->
-                <com.google.android.material.button.MaterialButton
+                <!-- 取消按钮（iOS风格：文字按钮，iOS蓝色） -->
+                <TextView
                     android:id="@+id/btn_cancel"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="44dp"
+                    android:gravity="center"
                     android:text="取消"
-                    android:textSize="14sp"
-                    app:cornerRadius="8dp"
-                    style="@style/Widget.Material3.Button.TextButton" />
+                    android:textSize="17sp"
+                    android:textColor="#007AFF"
+                    android:paddingHorizontal="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
 
-                <!-- 生成按钮（合并原来的两个按钮：有输入则按方向生成，无输入则直接生成） -->
-                <com.google.android.material.button.MaterialButton
+                <!-- 生成按钮（iOS风格：填充按钮，iOS蓝色背景） -->
+                <TextView
                     android:id="@+id/btn_regenerate"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="44dp"
+                    android:gravity="center"
                     android:text="生成"
-                    android:textSize="14sp"
-                    app:cornerRadius="8dp"
-                    style="@style/Widget.Material3.Button.TonalButton" />
+                    android:textSize="17sp"
+                    android:textColor="@android:color/white"
+                    android:paddingHorizontal="24dp"
+                    android:background="@drawable/bg_ios_button_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_marginStart="12dp" />
 
             </LinearLayout>
 

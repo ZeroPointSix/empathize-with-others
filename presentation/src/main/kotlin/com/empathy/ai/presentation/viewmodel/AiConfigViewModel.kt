@@ -400,6 +400,16 @@ class AiConfigViewModel @Inject constructor(
             return
         }
 
+        // BUG-00042修复：新建服务商时，如果是第一个服务商，自动设置为默认
+        // 判断是否为新建模式（editingProvider 为 null）
+        val isNewProvider = currentState.editingProvider == null
+        // 如果是新建且当前没有任何服务商，则自动设为默认
+        val shouldBeDefault = if (isNewProvider) {
+            currentState.providers.isEmpty()
+        } else {
+            currentState.editingProvider?.isDefault ?: false
+        }
+
         // 构建 AiProvider 对象
         // BUG-00040修复：添加高级选项（temperature、maxTokens）的保存
         val provider = AiProvider(
@@ -414,7 +424,7 @@ class AiConfigViewModel @Inject constructor(
                 )
             },
             defaultModelId = currentState.formDefaultModelId,
-            isDefault = currentState.editingProvider?.isDefault ?: false,
+            isDefault = shouldBeDefault,  // BUG-00042: 使用计算后的默认值
             // BUG-00040: 保存高级选项
             temperature = currentState.formTemperature,
             maxTokens = currentState.formMaxTokens,

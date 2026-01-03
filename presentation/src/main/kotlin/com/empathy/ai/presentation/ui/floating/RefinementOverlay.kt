@@ -7,8 +7,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.TextView
 import com.empathy.ai.presentation.R
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -35,9 +35,9 @@ class RefinementOverlay(
     private var refinementCard: MaterialCardView? = null
     private var refinementInputLayout: TextInputLayout? = null
     private var refinementInput: TextInputEditText? = null
-    private var btnCancel: MaterialButton? = null
-    // BUG-00017修复：合并为单一生成按钮
-    private var btnRegenerate: MaterialButton? = null
+    private var btnCancel: TextView? = null
+    // BUG-00017修复：合并为单一生成按钮（iOS风格TextView）
+    private var btnRegenerate: TextView? = null
 
     private var isShowing = false
 
