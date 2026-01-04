@@ -8,6 +8,16 @@ import javax.inject.Inject
  *
  * 负责清除联系人当前的对话主题（设置为非活跃状态）。
  * 主题数据不会被删除，会保留在历史记录中。
+ *
+ * 业务背景:
+ *   - PRD-00016: 对话主题功能需求
+ *   - 场景: 用户完成当前话题讨论后，清除活跃主题
+ *
+ * 设计决策:
+ *   - 软清除: 设置 isActive = false，不删除主题数据
+ *   - 保留历史: 便于用户回顾历史主题记录
+ *
+ * @see TopicRepository.clearTopic 仓库清除方法
  */
 class ClearTopicUseCase @Inject constructor(
     private val topicRepository: TopicRepository

@@ -44,16 +44,41 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
- * 联系人详情标签页ViewModel
+ * 联系人详情标签页 ViewModel
  *
- * 专门用于新的四标签页UI（概览、事实流、标签画像、资料库）
+ * ## 业务职责
+ * 管理联系人详情页中各个标签页的独立状态：
+ * - OverviewTab: 概览页面（关系分数、里程碑、照片时刻）
+ * - PersonaTab: 人设页面（基本信息、用户画像）
+ * - SummaryTab: 总结页面（AI总结、历史总结）
+ * - VaultTab: 数据保险库（敏感信息管理）
+ * - FactStreamTab: 事实流页面（按时间线展示Facts）
  *
- * 职责：
- * - 管理四个标签页的数据状态
- * - 处理标签页切换
- * - 构建时间线数据
- * - 处理标签确认/驳回
- * - 处理编辑功能（TD-00012）
+ * ## 关联文档
+ * - PRD-00003: 联系人画像记忆系统需求
+ *
+ * ## 核心数据流
+ * ```
+ * TabSelection → LoadTabData → [Milestone | PhotoMoment | AISummary | Fact]
+ *                                   ↓
+ *                            ComposeUiState → UI
+ * ```
+ *
+ * ## 设计决策
+ * - **懒加载**: 仅在Tab被选中时才加载对应数据，节省资源
+ * - **状态隔离**: 每个Tab维护独立的UiState，避免状态污染
+ * - **共享数据**: 基础信息（ContactId、ContactName）从父级传入
+ * - **时间线构建**: 整合对话记录、AI总结和用户事实，统一时间排序
+ *
+ * ## 标签页说明
+ * - **Overview**: 首屏展示，突出关系状态和互动里程碑
+ * - **Persona**: 深度画像，包含用户对联系人的主观描述
+ * - **Summary**: AI生成的智能总结，按时间维度聚合
+ * - **Vault**: 隐私数据管理，高敏感信息二次验证
+ * - **FactStream**: 时间线视图，便于追溯关系发展
+ *
+ * @see com.empathy.ai.presentation.ui.screen.contactDetail.overview
+ * @see com.empathy.ai.presentation.ui.screen.contactDetail.persona
  */
 @HiltViewModel
 class ContactDetailTabViewModel @Inject constructor(

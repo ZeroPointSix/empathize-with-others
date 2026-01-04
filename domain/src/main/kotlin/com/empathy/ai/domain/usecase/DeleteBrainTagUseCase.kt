@@ -6,10 +6,18 @@ import javax.inject.Inject
 /**
  * 删除标签用例
  *
- * 职责：
- * 1. 根据标签ID删除标签
- * 2. 验证输入参数
- * 3. 统一错误处理
+ * 职责:
+ *   1. 根据标签ID删除标签
+ *   2. 验证输入参数
+ *   3. 统一错误处理
+ *
+ * 业务背景:
+ *   - PRD-00003: 联系人画像记忆系统需求
+ *   - 场景: 用户删除不需要的雷区/策略标签
+ *
+ * 参数验证:
+ *   - tagId <= 0 视为无效参数
+ *   - 使用 IllegalArgumentException 返回明确错误
  */
 class DeleteBrainTagUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository

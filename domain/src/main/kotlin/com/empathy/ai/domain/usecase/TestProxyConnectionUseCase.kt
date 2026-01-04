@@ -7,9 +7,26 @@ import javax.inject.Inject
 /**
  * 测试代理连接用例
  *
- * 验证代理配置是否有效，并返回连接延迟
+ * 验证代理配置是否有效，并返回连接延迟。
  *
- * TD-00025: AI配置功能完善 - 网络代理功能
+ * 业务背景:
+ *   - TD-00025: AI配置功能完善 - 网络代理功能
+ *   - 场景: 用户配置代理后，测试代理连接是否正常
+ *
+ * 核心功能:
+ *   1. 测试代理连接: invoke(config) 执行实际连接测试
+ *   2. 验证配置格式: validateConfig(config) 仅验证不连接
+ *   3. 返回延迟等级: LatencyLevel 评估连接质量
+ *
+ * 延迟等级评估:
+ *   - EXCELLENT (<100ms): 优秀，适合实时对话
+ *   - GOOD (100-300ms): 良好，可能有轻微延迟
+ *   - FAIR (300-1000ms): 一般，勉强可用
+ *   - POOR (>1000ms): 较差，影响体验
+ *   - FAILED: 连接失败
+ *
+ * @see ProxyConfig 代理配置模型
+ * @see ProxyTestResult 代理测试结果
  */
 class TestProxyConnectionUseCase @Inject constructor(
     private val aiProviderRepository: AiProviderRepository

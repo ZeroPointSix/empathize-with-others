@@ -17,11 +17,21 @@ import javax.inject.Singleton
  * - 整合所有BrainTag标签
  * - 构建结构化的分析Prompt
  *
- * 筛选策略（分层优先级）：
- * 1. 手动添加的Facts（最高优先级）
- * 2. 最近7天的AI推断Facts
- * 3. 最近30天的AI推断Facts
- * 4. 更早的Facts（按时间倒序）
+ * 业务背景 (PRD-00003):
+ * - 联系人画像包含大量Facts（用户属性、聊天记录推断等）
+ * - 受限于AI Token消耗，不能将所有Facts发送给AI
+ * - 需要智能筛选最相关、最新的Facts
+ *
+ * 筛选策略（分层优先级）:
+ * 1. 手动添加的Facts（最高优先级）- 用户主动维护，更可靠
+ * 2. 最近7天的AI推断Facts - 新鲜信息，最具参考价值
+ * 3. 最近30天的AI推断Facts - 较新，但可能需要验证
+ * 4. 更早的Facts（按时间倒序）- 补充背景信息
+ *
+ * 设计权衡 (TDD-00003):
+ * - 限制20条Facts：平衡信息量和Token消耗
+ * - 时间分层：确保新鲜信息优先
+ * - 手动优先：用户维护的信息更可靠
  */
 @Singleton
 class ContextBuilder @Inject constructor(
@@ -34,11 +44,16 @@ class ContextBuilder @Inject constructor(
     /**
      * 筛选相关Facts
      *
-     * 使用分层筛选策略，确保最重要的Facts被优先选中
+     * 使用分层筛选策略，确保最重要的Facts被优先选中。
+     *
+     * 算法说明:
+     * 1. 如果Facts数量<=maxCount，全部返回（无需筛选）
+     * 2. 按优先级分层筛选，每层不超过剩余配额
+     * 3. 手动Facts优先 → 最近7天AI → 最近30天AI → 更早AI
      *
      * @param allFacts 所有Facts列表
      * @param maxCount 最大返回数量，默认20
-     * @return 筛选后的Facts列表
+     * @return 筛选后的Facts列表（已按时间倒序排列）
      */
     fun selectRelevantFacts(
         allFacts: List<Fact>,
@@ -101,6 +116,16 @@ class ContextBuilder @Inject constructor(
     /**
      * 构建完整的分析上下文
      *
+     * 将联系人画像、标签、对话历史整合为结构化的Prompt文本。
+     *
+     * 上下文结构:
+     * 1. 【联系人信息】- 姓名、关系等级、关系分数、最后互动
+     * 2. 【攻略目标】- 用户设定的沟通目标
+     * 3. 【已知信息】- 筛选后的Facts（标注来源）
+     * 4. 【雷区警告】- RISK_RED标签（AI推断/手动）
+     * 5. 【策略建议】- STRATEGY_GREEN标签（AI推断/手动）
+     * 6. 【聊天记录】- 用户提供的对话内容
+     *
      * @param profile 联系人画像
      * @param brainTags 标签列表
      * @param conversationHistory 对话历史
@@ -123,7 +148,7 @@ class ContextBuilder @Inject constructor(
         logger.d(TAG, "雷区标签数量: ${redTags.size}")
         logger.d(TAG, "策略标签数量: ${greenTags.size}")
         logger.d(TAG, "对话历史数量: ${conversationHistory.size}")
-        
+
         // 详细记录Facts内容
         if (relevantFacts.isNotEmpty()) {
             logger.d(TAG, "--- Facts详情 ---")
@@ -131,7 +156,7 @@ class ContextBuilder @Inject constructor(
                 logger.d(TAG, "  [$index] ${fact.key}: ${fact.value} (来源: ${fact.source})")
             }
         }
-        
+
         // 详细记录标签内容
         if (redTags.isNotEmpty()) {
             logger.d(TAG, "--- 雷区标签详情 ---")
@@ -209,6 +234,8 @@ class ContextBuilder @Inject constructor(
 
     /**
      * 构建每日总结的Prompt
+     *
+     * 用于AI总结每日对话，提取关键信息。
      *
      * @param profile 联系人画像
      * @param conversations 当日对话列表

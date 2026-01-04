@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    应用启动器图标背景 - Android 12+ 自适应图标规范
+
+    设计决策:
+    - 108dp x 108dp 画布，符合 Android 自适应图标规范
+    - 绿色渐变背景 (#3DDC84)，象征生命力和共情
+    - 网格线设计作为前景图形的遮罩区域
+    - 配合 ic_launcher_foreground 使用组成完整图标
+
+    Android 规范:
+    - 中心 66dp 区域为安全显示区域
+    - 圆角矩形遮罩由系统应用
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"

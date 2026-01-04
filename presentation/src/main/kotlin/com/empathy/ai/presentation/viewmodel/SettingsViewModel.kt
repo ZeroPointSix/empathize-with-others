@@ -20,15 +20,42 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 设置页面的 ViewModel
+ * 应用设置页面 ViewModel
  *
- * 职责：
- * 1. 管理设置页面的 UI 状态
- * 2. 处理用户交互事件
- * 3. 调用 Repository 保存和读取设置
- * 4. 管理 API Key 的安全存储
- * 5. 管理悬浮窗权限和服务
- * 6. 提供提示词场景列表（TD-00015）
+ * ## 业务职责
+ * 管理应用的全局配置项：
+ * - API服务商配置（API Key、Base URL、模型选择）
+ * - 外观设置（主题、语言）
+ * - 数据掩码和本地优先模式
+ * - 历史对话数量配置
+ * - 悬浮窗权限和服务管理
+ * - 数据清除和安全设置
+ *
+ * ## 核心数据流
+ * ```
+ * LoadSettings → Modify → Validate → Save → ApplyToApp
+ * ```
+ *
+ * ## 关键业务概念
+ * - **AiProvider**: AI服务商配置（支持多服务商切换）
+ * - **DataMasking**: 数据脱敏设置，保护敏感信息
+ * - **LocalFirstMode**: 本地优先模式，减少API调用
+ * - **FloatingWindowPermission**: 悬浮窗系统权限管理
+ *
+ * ## 设计决策
+ * - **配置持久化**: 使用DataStore而非SharedPreferences（类型安全）
+ * - **敏感信息加密**: API Key使用EncryptedSharedPreferences
+ * - **权限检查**: 启动时检查悬浮窗权限，异常状态自动恢复
+ * - **热更新**: 部分设置无需重启即可生效
+ * - **防抖处理**: 悬浮窗切换和权限检查使用标志防止重复操作
+ *
+ * ## 关键设置项
+ * - AI Provider: 支持多服务商切换（OpenAI/Claude/DeepSeek等）
+ * - Model Selection: 不同场景可选择不同模型
+ * - Theme: 浅色/深色/跟随系统
+ * - History Count: 历史对话发送条数（0/5/10/自定义）
+ *
+ * @see com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(

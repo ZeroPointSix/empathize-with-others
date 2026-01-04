@@ -4,11 +4,19 @@ import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.SummaryType
 
 /**
- * 每日总结仓库接口
+ * 每日总结仓储接口
  *
- * 定义每日总结的数据访问接口
+ * 业务背景 (PRD-00003):
+ * - 每日总结是三层记忆架构的中层（中期记忆）
+ * - AI生成的每日互动摘要，提炼关键事件和发现
+ * - 用于更新长期记忆(Facts、标签、关系分数)
  *
- * v9新增方法：
+ * 设计决策:
+ * - 日期唯一性：每个联系人每天最多一条总结
+ * - 类型区分：AI自动生成(AUTO) vs 用户手动生成(MANUAL)
+ * - 范围查询：v9新增支持日期范围查询，便于回顾分析
+ *
+ * v9新增方法:
  * - getSummariesInRange: 获取指定日期范围内的总结
  * - getSummarizedDatesInRange: 获取已有总结的日期列表
  * - deleteSummariesInRange: 删除指定范围内的总结
@@ -19,6 +27,11 @@ interface DailySummaryRepository {
 
     /**
      * 保存每日总结
+     *
+     * 业务规则:
+     * - 如果该日期已存在总结，则覆盖
+     * - 总结包含：summary、keyEvents、newFacts、updatedTags、relationshipScoreChange
+     * - 自动记录创建时间
      *
      * @param summary 每日总结对象
      * @return 保存的总结ID
@@ -37,13 +50,15 @@ interface DailySummaryRepository {
      * 获取指定日期的总结
      *
      * @param contactId 联系人ID
-     * @param date 日期字符串
+     * @param date 日期字符串（格式：yyyy-MM-dd）
      * @return 总结对象，不存在则返回null
      */
     suspend fun getSummaryByDate(contactId: String, date: String): Result<DailySummary?>
 
     /**
      * 检查指定日期是否已有总结
+     *
+     * 用途: 避免重复生成每日总结
      *
      * @param contactId 联系人ID
      * @param date 日期字符串
@@ -61,6 +76,10 @@ interface DailySummaryRepository {
 
     /**
      * 清理过期的总结
+     *
+     * 业务规则:
+     * - 总结永久保留（数据量小，无需清理）
+     * - 此方法为未来扩展预留
      *
      * @param beforeTimestamp 此时间之前的总结将被删除
      * @return 删除的记录数
@@ -167,7 +186,11 @@ interface DailySummaryRepository {
     suspend fun getById(summaryId: Long): DailySummary?
 
     /**
-     * 更新总结内容（编辑）
+     * 更新总结内容（编辑追踪）
+     *
+     * 业务规则:
+     * - 仅首次编辑时保存原始内容
+     * - 记录修改时间，用于编辑历史追踪
      *
      * @param summaryId 总结ID
      * @param newContent 新的总结内容

@@ -17,19 +17,30 @@ import javax.inject.Singleton
 /**
  * 每日自动总结用例
  *
- * 负责在新一天首次打开App时自动触发对话总结：
- * - 查询所有有未总结对话的联系人
- * - 调用AI生成每日总结
- * - 更新联系人的Facts、BrainTag和关系分数
- * - 处理失败任务的恢复
+ * 负责在新一天首次打开App时自动触发对话总结。
  *
- * 触发时机：新一天首次打开App时
+ * 业务背景:
+ *   - PRD-00011: 手动触发AI总结功能产品需求文档
+ *   - 场景: 新一天首次打开App时，自动总结昨日对话
  *
- * 重构说明：
- * - AI总结逻辑委托给AiSummaryProcessor
- * - 本地降级逻辑委托给LocalSummaryProcessor
- * - 失败任务恢复委托给FailedTaskRecovery
- * - 使用SettingsRepository替代MemoryPreferences（Clean Architecture合规）
+ * 核心功能:
+ *   1. 查询所有有未总结对话的联系人
+ *   2. 调用AI生成每日总结
+ *   3. 更新联系人的Facts、BrainTag和关系分数
+ *   4. 处理失败任务的恢复
+ *
+ * 触发时机:
+ *   - 新一天首次打开App时（通过 lastSummaryDate 判断）
+ *
+ * 重构设计（Clean Architecture合规）:
+ *   - AI总结逻辑委托给 AiSummaryProcessor
+ *   - 本地降级逻辑委托给 LocalSummaryProcessor
+ *   - 失败任务恢复委托给 FailedTaskRecovery
+ *   - 使用 SettingsRepository 替代 MemoryPreferences
+ *
+ * @see AiSummaryProcessor AI总结处理器
+ * @see LocalSummaryProcessor 本地降级处理器
+ * @see FailedTaskRecovery 失败任务恢复器
  */
 @Singleton
 class SummarizeDailyConversationsUseCase @Inject constructor(

@@ -19,9 +19,28 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 提示词仓库实现
+ * PromptRepositoryImpl 实现了提示词配置的数据访问层
  *
- * 实现PromptRepository接口，集成验证、安全检查和存储功能
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00005)提示词管理系统
+ *   - 全局提示词：适用于所有联系人的默认配置
+ *   - 联系人级提示词：针对特定联系人的个性化配置
+ *   - 提示词历史：支持回滚到历史版本
+ *
+ * 【设计决策】(TDD-00005)
+ *   - Mutex.withLock保证并发写入的原子性
+ *   - PromptValidator验证提示词格式和长度
+ *   - PromptSanitizer安全检查，检测潜在风险内容
+ *
+ * 【关键逻辑】
+ *   - updateSceneConfig：使用锁保证并发安全
+ *   - saveGlobalPrompt：验证+安全检查后写入
+ *   - 继承策略：联系人无自定义提示词时继承全局配置
+ *
+ * 【任务追踪】
+ *   - FD-00005/Task-001: 提示词CRUD基础功能
+ *   - FD-00005/Task-002: 提示词验证和安全检查
+ *   - FD-00005/Task-003: 提示词历史记录管理
  */
 @Singleton
 class PromptRepositoryImpl @Inject constructor(
@@ -36,6 +55,20 @@ class PromptRepositoryImpl @Inject constructor(
 
     private val mutex = Mutex()
 
+    /**
+     * updateSceneConfig 更新场景配置（线程安全）
+     *
+     * 【并发策略】使用Mutex.withLock保证并发写入的原子性
+     * 原因：提示词配置涉及读写文件，多线程并发可能导致数据竞争
+     * 设计权衡：锁粒度最小化，只锁住配置更新操作
+     *
+     * 【操作步骤】
+     *   1. 读取当前全局配置（文件）
+     *   2. 调用configUpdater更新场景配置
+     *   3. 写回全局配置（文件）
+     *
+     * 【错误处理】文件读取失败时返回PromptError.StorageError
+     */
     private suspend fun updateSceneConfig(
         scene: PromptScene,
         configUpdater: (ScenePromptConfig?) -> ScenePromptConfig

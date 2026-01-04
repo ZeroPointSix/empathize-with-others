@@ -1,38 +1,22 @@
 package com.empathy.ai.data.repository
 
-import com.empathy.ai.data.remote.api.OpenAiApi
-import com.empathy.ai.data.remote.model.ChatRequestDto
-import com.empathy.ai.data.remote.model.ChatResponseDto
-import com.empathy.ai.data.remote.model.ChoiceDto
-import com.empathy.ai.data.remote.model.ResponseMessageDto
-import com.empathy.ai.domain.model.AiModel
-import com.empathy.ai.domain.model.AiProvider
-import com.empathy.ai.domain.model.PolishResult
-import com.empathy.ai.domain.model.ReplyResult
-import com.empathy.ai.domain.repository.SettingsRepository
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.slot
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-
 /**
  * AiRepositoryImpl扩展方法单元测试
  *
- * TD-00009 T040: 测试新增的polishDraft、generateReply和refine方法
+ * 测试覆盖 (TDD-00026/4.5.1):
+ * - polishDraft() - 润色草稿功能，验证AI调用和JSON解析
+ * - generateReply() - 生成回复功能，验证策略说明解析
+ * - refineAnalysis() - 精炼分析功能，验证提示词构建
+ * - refinePolish() - 精炼润色功能，验证提示词构建
+ * - refineReply() - 精炼回复功能，验证提示词构建
+ * - Fallback机制 - JSON解析失败时的降级处理
  *
- * 测试覆盖：
- * - polishDraft()正确调用AI并解析结果
- * - generateReply()正确调用AI并解析结果
- * - refineAnalysis()正确构建提示词
- * - refinePolish()正确构建提示词
- * - refineReply()正确构建提示词
- * - JSON解析失败时使用Fallback
+ * 业务规则 (PRD-00026/3.3.1):
+ * - AI军师需支持多种分析场景的提示词定制
+ * - JSON解析失败时不应崩溃，应有Fallback机制
+ *
+ * 任务追踪:
+ * - TD-00009 T040 - 测试新增的polishDraft、generateReply和refine方法
  */
 class AiRepositoryImplExtTest {
 

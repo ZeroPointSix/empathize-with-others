@@ -32,9 +32,28 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
- * AI 服务商仓库实现类
+ * AiProviderRepositoryImpl 实现了AI服务商的数据访问层
  *
- * 这是连接 Domain 层（纯 Kotlin）和 Data 层（Android/SQL）的桥梁。
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00025)AI配置功能完善
+ *   - 多服务商支持：OpenAI、DeepSeek、智谱、Claude等
+ *   - API密钥管理：使用ApiKeyStorage加密存储
+ *   - 代理配置：支持HTTP/SOCKS代理配置
+ *
+ * 【设计决策】(TDD-00025)
+ *   - ApiKeyStorage硬件级加密，密钥永不以明文形式持久化
+ *   - ProxyPreferences管理代理配置，支持认证
+ *   - Flow响应式查询，服务商变更时自动通知UI
+ *
+ * 【关键逻辑】
+ *   - testConnection：多级超时测试（DNS→连接→读取）
+ *   - fetchModels：动态获取服务商支持的模型列表
+ *   - distinctUntilChanged：避免重复通知相同数据
+ *
+ * 【任务追踪】
+ *   - FD-00025/Task-001: 多服务商基础管理
+ *   - FD-00025/Task-002: API密钥加密存储
+ *   - FD-00025/Task-003: 连接测试和模型列表获取
  */
 class AiProviderRepositoryImpl @Inject constructor(
     private val dao: AiProviderDao,

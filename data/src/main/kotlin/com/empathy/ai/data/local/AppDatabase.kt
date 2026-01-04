@@ -1,3 +1,19 @@
+/**
+ * Package com.empathy.ai.data.local 实现了应用数据持久化层
+ *
+ * 业务背景 (PRD-00003):
+ *   - 联系人画像记忆系统需要持久化存储对话记录、每日总结、标签等数据
+ *   - 三层记忆架构：对话记录(短期) → 每日总结(中期) → 联系人画像(长期)
+ *
+ * 设计决策 (TDD-00003):
+ *   - 选择 Room 而非 SQLite，因其编译时检查和迁移支持更完善
+ *   - 使用 TypeConverter 处理复杂类型（List、Enum、Map）
+ *   - 迁移策略：完整 Migration 脚本链，确保用户数据零丢失
+ *
+ * 任务追踪:
+ *   - FD-00003 - 联系人画像记忆系统设计
+ *   - TD-00026 - AI军师对话功能（新增 AiAdvisor 会话实体）
+ */
 package com.empathy.ai.data.local
 
 import androidx.room.Database
@@ -78,46 +94,93 @@ abstract class AppDatabase : RoomDatabase() {
 
     /**
      * 获取联系人DAO
+     *
+     * 【Flow订阅】返回的Flow是"数据监听通道"：
+     * - 首次订阅：立即推送当前联系人列表
+     * - 数据变动：自动推送新数据
+     * - 取消订阅：自动释放资源
+     *
+     * 这是联系人列表能实时刷新的根本动力。
      */
     abstract fun contactDao(): ContactDao
 
     /**
      * 获取标签DAO
+     *
+     * 【实时感知】标签数据通过Flow实时推送：
+     * - 用户在"数据喂养"页面添加标签时
+     * - 聊天页面的分析卡片立即感知变化
+     * - 实现跨页面的数据联动
      */
     abstract fun brainTagDao(): BrainTagDao
 
     /**
      * 获取AI服务商DAO
+     *
+     * 【配置管理】存储和管理AI服务商的API配置：
+     * - 支持多服务商切换（DeepSeek、OpenAI等）
+     * - API密钥加密存储（通过ApiKeyStorage）
+     * - 模型列表动态获取
      */
     abstract fun aiProviderDao(): AiProviderDao
 
     /**
      * 获取对话记录DAO
+     *
+     * 【短期记忆】对话记录是最细粒度的数据：
+     * - 按联系人和日期查询
+     * - 支持分页加载（Paging 3）
+     * - 定期归档到每日总结
      */
     abstract fun conversationLogDao(): ConversationLogDao
 
     /**
      * 获取每日总结DAO
+     *
+     * 【中期记忆】每日总结是对话的聚合：
+     * - 支持日期范围查询（v9新增）
+     * - 区分自动生成和手动触发
+     * - 提供AI分析的上下文输入
      */
     abstract fun dailySummaryDao(): DailySummaryDao
 
     /**
      * 获取失败任务DAO
+     *
+     * 【容错机制】失败任务用于重试队列：
+     * - 最多重试3次
+     * - 7天后自动清理
+     * - 避免AI服务暂时不可用导致数据丢失
      */
     abstract fun failedSummaryTaskDao(): FailedSummaryTaskDao
 
     /**
      * 获取对话主题DAO
+     *
+     * 【主题管理】用户可为每个联系人设置对话主题：
+     * - 支持主题历史和活跃状态
+     * - 级联删除：联系人删除时自动删除主题
+     * - 复合索引优化查询性能
      */
     abstract fun conversationTopicDao(): ConversationTopicDao
 
     /**
      * 获取API用量DAO
+     *
+     * 【用量统计】追踪API调用消耗：
+     * - 按服务商分组统计
+     * - 支持日期范围查询
+     * - 便于成本控制和配额管理
      */
     abstract fun apiUsageDao(): ApiUsageDao
 
     /**
      * 获取AI军师DAO
+     *
+     * 【TD-00026】AI军师是独立对话模块：
+     * - 支持会话历史管理
+     * - 会话与联系人关联
+     * - 提供智能对话建议
      */
     abstract fun aiAdvisorDao(): AiAdvisorDao
 }

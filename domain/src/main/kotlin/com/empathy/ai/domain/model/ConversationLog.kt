@@ -5,14 +5,28 @@ import com.empathy.ai.domain.util.DateUtils
 /**
  * 对话记录领域模型（扩展版）
  *
- * 表示一次用户与AI的对话
- * 支持编辑追踪功能
+ * 表示一次用户与AI的对话。
+ * 这是AI军师分析功能的核心数据源，提供完整的对话历史。
+ *
+ * 业务背景 (PRD-00008/PRD-00026):
+ * - conversation_logs表是AI军师的主要数据来源（PRD-00026/3.2.1）
+ * - 按时间正序排列，构建完整对话流
+ * - 识别并标记对话中的发送者身份
+ * - 从对话中提取关键关系事件和情感变化
+ *
+ * 设计决策 (TDD-00008):
+ * - 使用Long自增ID，保证插入顺序
+ * - aiResponse可为null，支持实时分析场景
+ * - 支持编辑追踪，保留原始内容用于审计
+ * - isSummarized标记避免重复总结处理
+ *
+ * 任务追踪: FD-00008/对话历史存储
  *
  * @property id 对话记录ID
- * @property contactId 联系人ID
+ * @property contactId 联系人ID，关联ContactProfile
  * @property userInput 用户输入的聊天记录
  * @property aiResponse AI的分析回复（可能为空）
- * @property timestamp 记录时间（毫秒）
+ * @property timestamp 记录时间（毫秒），用于时间线排序
  * @property isSummarized 是否已被总结处理
  * @property isUserModified 是否被用户修改过
  * @property lastModifiedTime 最后修改时间

@@ -6,16 +6,30 @@ import com.empathy.ai.domain.model.UsageStatsPeriod
 import kotlinx.coroutines.flow.Flow
 
 /**
- * API 用量统计仓库接口
+ * API用量统计仓储接口
  *
- * 定义用量记录的存储和查询操作
+ * 业务背景:
+ * - 追踪AI API调用次数和消耗，帮助用户了解使用情况
+ * - 支持按日/周/月统计，以及自定义时间段查询
+ * - 记录每次调用的token消耗和成本估算
  *
- * TD-00025: AI配置功能完善 - 用量统计功能
+ * 设计决策:
+ * - 轻量级记录：每次API调用后异步记录，不阻塞主流程
+ * - Flow响应式：支持实时观察用量变化
+ * - 自动清理：定期清理过期记录，控制存储空间
+ *
+ * 任务追踪:
+ * - TD-00025: AI配置功能完善 - 用量统计功能
  */
 interface ApiUsageRepository {
 
     /**
-     * 记录 API 调用用量
+     * 记录API调用用量
+     *
+     * 业务规则:
+     * - 每次AI调用完成后异步记录
+     * - 包含时间戳、服务商、模型、token数、成本估算
+     * - 记录失败不影响主流程，使用try-catch包裹
      *
      * @param record 用量记录
      */
@@ -65,6 +79,8 @@ interface ApiUsageRepository {
 
     /**
      * 清除所有记录
+     *
+     * 业务规则: 用户手动清除用量统计，谨慎使用
      */
     suspend fun clearAllRecords()
 

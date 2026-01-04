@@ -7,32 +7,23 @@ import androidx.room.PrimaryKey
 /**
  * 联系人画像实体 - 对应数据库 profiles 表（扩展版）
  *
- * 表结构规范:
- * - 表名: profiles (复数形式,snake_case)
- * - 主键: id (String类型,不自增)
- * - 列名: snake_case风格
- * - Kotlin属性: camelCase风格
+ * 【表结构规范】
+ * - 表名：profiles（复数形式，snake_case）
+ * - 主键：id（String类型，不自增，支持外部加密ID）
+ * - 列名：snake_case风格
+ * - Kotlin属性：camelCase风格
  *
- * 特殊字段处理:
- * - facts字段在Domain层是List<Fact>,在DB层存储为JSON字符串
- * - 使用Moshi在TypeConverter中进行序列化/反序列化
+ * 【JSON序列化策略】
+ * SQLite只支持基本类型，List<Fact>需要序列化为JSON字符串存储
+ * 使用Moshi在TypeConverter中进行序列化/反序列化
  *
- * v10新增字段（编辑追踪）:
- * - is_name_user_modified: 姓名是否被用户修改过
- * - is_goal_user_modified: 目标是否被用户修改过
- * - name_last_modified_time: 姓名最后修改时间
- * - goal_last_modified_time: 目标最后修改时间
- * - original_name: 原始姓名
- * - original_goal: 原始目标
+ * 【v10编辑追踪的设计意图】
+ * 记录用户对姓名/目标的修改历史：
+ * - is_name_user_modified：姓名是否被用户修改过
+ * - original_name：原始姓名（用于撤销回溯）
+ * - name_last_modified_time：修改时间（用于时间线展示）
  *
- * @property id 联系人唯一标识(UUID或外部加密ID)
- * @property name 显示名称(e.g., "王总", "李铁柱")
- * @property targetGoal 核心攻略目标(e.g., "拿下合同", "修复父子关系")
- * @property contextDepth 上下文读取深度(默认10)
- * @property factsJson 核心事实槽(JSON字符串格式,存储List<Fact>)
- * @property relationshipScore 关系分数(0-100,默认50)
- * @property lastInteractionDate 最后互动日期(格式: "yyyy-MM-dd")
- *
+ * @property factsJson 核心事实槽（JSON字符串，存储List<Fact>）
  * @see com.empathy.ai.domain.model.ContactProfile
  * @see com.empathy.ai.data.local.converter.FactListConverter
  */

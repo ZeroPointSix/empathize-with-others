@@ -12,7 +12,23 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * CreateAdvisorSessionUseCase单元测试
+ * CreateAdvisorSessionUseCase 单元测试
+ *
+ * 业务背景 (PRD-00026):
+ *   AI军师会话创建功能测试，验证为联系人建立独立对话空间
+ *
+ * 功能验证:
+ *   - 默认会话标题"新对话"的生成
+ *   - 自定义会话标题的支持
+ *   - 唯一会话ID的自动生成
+ *   - 数据库创建失败时的错误传递
+ *
+ * 设计决策 (TDD-00026):
+ *   - 会话创建时自动设置createdAt和updatedAt为相同时间戳
+ *   - messageCount初始化为0，isActive默认true
+ *   - 标题支持默认值覆盖，提供灵活性
+ *
+ * 任务追踪: FD-00026/阶段2-领域层实现
  */
 class CreateAdvisorSessionUseCaseTest {
 

@@ -6,10 +6,20 @@ import javax.inject.Inject
 /**
  * 删除联系人用例
  *
- * 职责：
- * 1. 根据联系人ID删除联系人
- * 2. 验证输入参数
- * 3. 统一错误处理
+ * 职责:
+ *   1. 根据联系人ID删除联系人
+ *   2. 验证输入参数
+ *   3. 统一错误处理
+ *
+ * 业务背景:
+ *   - PRD-00003: 联系人画像记忆系统需求
+ *   - 场景: 用户删除不再需要的联系人
+ *
+ * 级联删除:
+ *   - 联系人的 facts、tags、对话记录等通过外键约束自动删除
+ *   - AI军师会话和对话通过数据库外键 CASCADE 策略删除
+ *
+ * @see ContactRepository.deleteProfile 仓库删除方法
  */
 class DeleteContactUseCase @Inject constructor(
     private val contactRepository: ContactRepository

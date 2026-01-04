@@ -23,9 +23,42 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 用户画像ViewModel
+ * 用户画像编辑 ViewModel
  *
- * 管理用户画像界面的状态和业务逻辑。
+ * ## 业务职责
+ * 管理用户对联系人主观画像的编辑：
+ * - 目标关系设定（追到/维护/挽回等）
+ * - 关系阶段评估
+ * - 主观印象标签
+ * - 互动策略规划
+ * - 画像导出功能
+ *
+ * ## 关联文档
+ * - PRD-00003: 联系人画像记忆系统需求
+ *
+ * ## 核心数据流
+ * ```
+ * LoadProfile → Edit → Validate → Save → UpdateRelationshipScore
+ * ```
+ *
+ * ## 关键业务概念
+ * - **UserProfileDimension**: 画像维度（基本信息、性格特点、兴趣爱好等）
+ * - **BaseDimension**: 基础维度（系统预设，不可删除）
+ * - **CustomDimension**: 自定义维度（用户创建，自由定义）
+ * - **ExportFormat**: 导出格式（JSON/TEXT/MARKDOWN）
+ *
+ * ## 设计决策
+ * - **乐观更新**: UI先更新，失败回滚
+ * - **脏检查**: 未修改时不触发保存
+ * - **字段级验证**: 每字段独立验证，错误信息定位精准
+ * - **编辑模式(BUG-00037)**: 本地编辑+批量保存，避免频繁API调用
+ * - **维度区分(BUG-00038)**: 基础维度与自定义维度分离处理
+ *
+ * ## 画像维度
+ * - 基础维度: 性格特点、兴趣爱好、注意事项、约会建议等
+ * - 自定义维度: 用户可自由添加的维度类型
+ *
+ * @see com.empathy.ai.presentation.ui.screen.userprofile.UserProfileScreen
  */
 @HiltViewModel
 class UserProfileViewModel @Inject constructor(

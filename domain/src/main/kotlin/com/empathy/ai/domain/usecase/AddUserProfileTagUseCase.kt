@@ -8,6 +8,12 @@ import javax.inject.Inject
  * 添加用户画像标签用例
  *
  * 验证并添加标签到指定维度。
+ *
+ * 与 AddTagUseCase 的区别:
+ *   - AddTagUseCase: 添加到用户画像(UserProfile)的指定维度
+ *   - AddUserProfileTagUseCase: 功能相同，可能是历史命名或冗余实现
+ *
+ * 建议: 考虑合并这两个UseCase，避免职责重叠
  */
 class AddUserProfileTagUseCase @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,

@@ -5,9 +5,24 @@ import com.empathy.ai.domain.util.DateUtils
 /**
  * 每日总结领域模型（扩展版）
  *
- * 表示某个联系人某一天或某段时间的互动总结
- * 支持单日总结（DAILY）和自定义范围总结（CUSTOM_RANGE）
- * 支持编辑追踪功能
+ * 表示某个联系人某一天或某段时间的互动总结。
+ * 提供关系发展的高层次概览，作为AI军师分析的辅助数据源。
+ *
+ * 业务背景 (PRD-00006):
+ * - 自动或手动生成每日/周/月总结
+ * - 总结包含关键事件、新发现事实、标签更新
+ * - 量化关系分数变化（-10到+10）
+ * - 提供关系趋势判断（上升/稳定/下降）
+ * - AI军师可引用总结内容进行分析（PRD-00026/3.2.2）
+ *
+ * 设计决策 (TDD-00006):
+ * - 支持两种总结类型：DAILY（单日）和CUSTOM_RANGE（范围）
+ * - 支持两种生成来源：AUTO（自动）和MANUAL（手动）
+ * - keyEvents/newFacts/updatedTags聚合展示总结要点
+ * - relationshipScoreChange量化每日关系变化
+ * - 支持编辑追踪，保留原始内容用于审计
+ *
+ * 任务追踪: FD-00006/每日总结功能设计
  *
  * @property id 总结ID
  * @property contactId 联系人ID

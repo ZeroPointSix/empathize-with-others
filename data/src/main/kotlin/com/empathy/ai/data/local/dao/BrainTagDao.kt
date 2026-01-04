@@ -10,16 +10,17 @@ import kotlinx.coroutines.flow.Flow
 /**
  * 策略标签数据访问对象 (DAO)
  *
- * 设计原则:
- * - 查询要响应式: 返回Flow,实现"数据喂养页面添加标签 → 聊天页面分析卡片立即感知"
- * - 写入要挂起: Insert/Delete使用suspend函数
+ * 【设计原则】
+ * - 查询响应式：返回Flow，实现"数据喂养页面添加标签 → 聊天页面分析卡片立即感知"
+ * - 写入挂起：Insert/Delete使用suspend函数，确保协程安全
  *
- * 核心操作:
- * 1. 查询某人的所有标签(getTagsByContactId) - 返回Flow<List>,实时监听
- * 2. 保存标签(insertTag) - 冲突时替换
- * 3. 删除标签(deleteTag) - 物理删除
+ * 【标签类型】BrainTag是沟通策略的精华：
+ * - RISK_RED（雷区）：必须避免的话题或行为
+ * - STRATEGY_GREEN（策略）：推荐的沟通策略
+ * - 标签来源：用户手动添加 + AI分析推断
  *
  * @see BrainTagEntity
+ * @see com.empathy.ai.domain.model.TagType
  */
 @Dao
 interface BrainTagDao {
@@ -27,8 +28,10 @@ interface BrainTagDao {
     /**
      * 查询某联系人的所有标签
      *
-     * 同样使用Flow实现响应式查询。当你在"数据喂养"页面添加一个标签时,
-     * 聊天页面的分析卡片应该能立即感知到数据变化并更新。
+     * 【Flow的联动效应】当你在"数据喂养"页面添加一个标签时：
+     * - 聊天页面的分析卡片应该能立即感知到数据变化并更新
+     * - 这种跨页面的实时联动是Flow的核心价值
+     * - 无需手动刷新或轮询
      *
      * @param contactId 联系人ID
      * @return 标签实体列表的Flow
@@ -39,8 +42,12 @@ interface BrainTagDao {
     /**
      * 获取全库的雷区标签
      *
-     * 用于全局风控检测或无特定联系人时的通用检测。
-     * 这是一个一次性查询,返回List而非Flow。
+     * 【全局风控】用于以下场景：
+     * - 无特定联系人时的通用检测
+     * - 新建联系人时的初始风险评估
+     * - 全局敏感话题过滤
+     *
+     * 这是一次性查询（返回List而非Flow），因为雷区标签变更不频繁。
      *
      * @return 所有雷区标签列表
      */
@@ -50,8 +57,11 @@ interface BrainTagDao {
     /**
      * 保存标签
      *
-     * 使用REPLACE策略,如果ID冲突则覆盖更新。
-     * 返回插入的标签ID(对新插入的标签有用)。
+     * 【Upsert设计】使用REPLACE策略：
+     * - 如果ID冲突则覆盖更新（更新内容）
+     * - 如果ID不存在则插入新记录
+     *
+     * 返回插入的标签ID，用于新创建标签后的后续操作。
      *
      * @param entity 标签实体
      * @return 插入的标签ID
@@ -62,7 +72,9 @@ interface BrainTagDao {
     /**
      * 根据ID删除标签
      *
-     * 物理删除,操作简单直接。
+     * 【物理删除】标签一旦删除不可恢复：
+     * - 用于用户主动移除错误的标签
+     * - 确认来源：AI推断的标签删除时需二次确认
      *
      * @param id 要删除的标签ID
      */
@@ -72,7 +84,9 @@ interface BrainTagDao {
     /**
      * 根据联系人ID删除所有标签
      *
-     * 删除联系人时使用,级联删除其所有标签。
+     * 【级联删除】删除联系人时使用：
+     * - 联系人删除时自动删除其所有标签
+     * - 避免 orphaned 数据（无主的标签）
      *
      * @param contactId 联系人ID
      */

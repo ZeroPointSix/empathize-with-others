@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    悬浮窗主按钮图标 - AI助手聊天气泡
+
+    业务背景 (PRD-00001/AC-003):
+    - 悬浮窗的核心视觉标识，用户触发的入口
+    - 聊天气泡 + 三个点 = AI对话与思考的视觉隐喻
+    - 48dp显示尺寸 (实际24dp图标 + padding)
+
+    设计决策 (TDD-00001/悬浮按钮设计):
+    - iOS风格聊天气泡，契合国内用户习惯
+    - 三个点表示AI正在思考/生成中
+    - 蓝色 (#007AFF) 与 floating_primary 保持一致
+    - VectorDrawable 支持深色模式动态着色
+
+    任务: FD-00001/T001
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

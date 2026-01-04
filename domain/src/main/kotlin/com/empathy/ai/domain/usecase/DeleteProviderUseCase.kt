@@ -6,7 +6,18 @@ import javax.inject.Inject
 /**
  * 删除服务商用例
  *
- * 删除指定的 AI 服务商配置
+ * 删除指定的 AI 服务商配置。
+ *
+ * 业务背景:
+ *   - TD-00025: AI配置功能完善
+ *   - 场景: 用户删除不再使用的AI服务商配置
+ *
+ * 注意事项:
+ *   - 删除服务商前需确保无联系人正在使用
+ *   - 默认服务商不能删除（需要在UI层面限制）
+ *   - 删除后相关配置不可恢复
+ *
+ * @see AiProviderRepository.deleteProvider 仓库删除方法
  */
 class DeleteProviderUseCase @Inject constructor(
     private val repository: AiProviderRepository

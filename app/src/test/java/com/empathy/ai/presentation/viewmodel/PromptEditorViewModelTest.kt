@@ -30,7 +30,22 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * PromptEditorViewModel单元测试
+ * PromptEditorViewModel 提示词编辑功能测试
+ *
+ * 测试范围：
+ * - 全局/联系人提示词初始化加载
+ * - 提示词输入与长度限制（最大1000字符）
+ * - 保存/取消/Discard对话框流程
+ * - 占位符文本生成
+ *
+ * 业务背景 (PRD-00005):
+ * - 提示词从硬编码中抽离，支持用户自定义
+ * - 支持变量插值 {{contact_name}}, {{risk_tags}} 等
+ * - 单个场景提示词最大1000字符限制
+ * - 全局提示词和联系人单独提示词两套配置
+ *
+ * 任务追踪:
+ * - FD-00005 提示词管理系统功能设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PromptEditorViewModelTest {

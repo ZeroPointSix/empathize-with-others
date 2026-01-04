@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     自定义View属性定义
-    
-    @see BUG-00018 分析模式复制/重新生成按钮不可见问题
+
+    业务背景:
+    - 悬浮窗输入对话框需要限制最大高度 (PRD-00001/AC-005)
+    - 避免对话框遮挡整个屏幕，影响用户体验
+
+    设计决策 (TDD-00001):
+    - MaxHeightScrollView 自定义属性支持动态高度限制
+    - BUG-00018 修复：解决分析模式复制/重新生成按钮不可见问题
+
+    任务: FD-00001/T002 (输入对话框实现)
 -->
 <resources>
 
     <!-- MaxHeightScrollView自定义属性 -->
     <declare-styleable name="MaxHeightScrollView">
-        <!-- 最大高度限制 -->
+        <!-- 最大高度限制 (PRD-00001/AC-005: 限制500dp) -->
         <attr name="maxHeight" format="dimension" />
     </declare-styleable>
 

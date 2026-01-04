@@ -17,9 +17,27 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * API 用量统计仓库实现
+ * ApiUsageRepositoryImpl 实现了API用量统计的数据访问层
  *
- * TD-00025: AI配置功能完善 - 用量统计功能
+ * 【架构位置】Clean Architecture Data层 (TD-00025新增)
+ * 【业务背景】(PRD-00025)AI配置功能完善 - 用量统计
+ *   - 记录每次API调用的Token消耗和耗时
+ *   - 按时间段统计用量，支持日/周/月视图
+ *   - 自动清理旧记录，防止数据库无限增长
+ *
+ * 【设计决策】(TDD-00025)
+ *   - MAX_RECORDS = 10000：最大保留1万条记录
+ *   - CLEANUP_DAYS = 90：自动清理90天前的旧记录
+ *   - 自动清理触发：记录数超过上限时触发
+ *
+ * 【关键逻辑】
+ *   - recordUsage：记录API用量，自动触发清理检查
+ *   - getUsageStats：按服务商/模型聚合统计
+ *   - getTimeRange：根据UsageStatsPeriod计算时间范围
+ *
+ * 【任务追踪】
+ *   - FD-00025/Task-002: API用量记录功能
+ *   - FD-00025/Task-003: 用量统计和图表展示
  */
 @Singleton
 class ApiUsageRepositoryImpl @Inject constructor(

@@ -30,14 +30,28 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * 新建联系人添加标签功能测试
+ * ContactDetailViewModel 新建联系人添加标签功能测试
  *
- * 测试场景：
- * 1. 新建联系人时生成临时 contactId
+ * 测试范围：
+ * 1. 新建联系人时生成临时 contactId（UUID格式）
  * 2. 新建联系人时启动标签 Flow 监听
  * 3. 新建联系人添加标签后 UI 正确更新
+ * 4. 多次新建应生成不同的 contactId
+ * 5. 添加标签时使用正确的 contactId
  *
- * 相关 BUG：BUG-00007
+ * 问题背景 (BUG-00007):
+ *   新建联系人场景需要临时ID来关联标签数据，
+ *   在保存联系人前无法获得真实ID，需要使用UUID临时标识
+ *
+ * 业务规则 (PRD-00004):
+ *   - 新建联系人时自动进入编辑模式
+ *   - 标签与联系人关联，支持多种类型（风险/策略/普通）
+ *   - 标签数据通过Flow实时响应式更新
+ *
+ * 设计权衡:
+ *   - 使用UUID生成临时contactId，避免ID冲突
+ *   - 标签保存时立即更新本地状态，无需等待数据库
+ *   - getBrainTagsUseCase在新建联系人时同样启动监听
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactDetailViewModelNewContactTagTest {

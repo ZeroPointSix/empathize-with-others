@@ -32,14 +32,39 @@ import java.util.UUID
 import javax.inject.Inject
 
 /**
- * 联系人详情界面的ViewModel
+ * 联系人详情页面 ViewModel
  *
- * 职责：
- * 1. 管理联系人详情的 UI 状态
- * 2. 处理用户交互事件
- * 3. 调用 UseCase 执行业务逻辑
- * 4. 表单验证和数据管理
- * 5. 标签管理和操作
+ * ## 业务职责
+ * 管理联系人画像的完整展示和编辑功能：
+ * - 联系人基本信息和关系状态管理
+ * - BrainTag标签管理（RISK雷区/STRATEGY策略）
+ * - Fact事实数据的管理（增删改查）
+ * - 对话历史和时间线展示
+ * - 关系分数计算和趋势分析
+ *
+ * ## 关联文档
+ * - PRD-00003: 联系人画像记忆系统需求
+ *
+ * ## 核心数据流
+ * ```
+ * ContactId → LoadContact → [Profile + Tags + Facts + History]
+ *                            ↓
+ *                     ComposeUiState → UI
+ * ```
+ *
+ * ## 关键业务概念
+ * - **RelationshipScore (0-100)**: 关系亲密程度量化指标
+ * - **RelationshipStage**: 关系阶段（陌生期→暧昧期→稳定期→...）
+ * - **BrainTag**: 标签系统，红色为雷区（避免话题），绿色为策略（推荐方法）
+ * - **Fact**: 用户记录的具体事实信息（生日、爱好等）
+ *
+ * ## 设计决策
+ * - 使用Paging加载对话历史，避免大数据量卡顿
+ * - 标签按类型分组展示，UI层面做语义区分
+ * - 关系趋势使用箭头图标展示变化方向
+ * - 支持新建联系人临时ID，便于标签添加
+ *
+ * @see com.empathy.ai.presentation.ui.screen.ContactDetailScreen
  */
 @HiltViewModel
 class ContactDetailViewModel @Inject constructor(

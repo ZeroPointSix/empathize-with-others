@@ -1,43 +1,27 @@
 package com.empathy.ai.data.repository
 
-import com.empathy.ai.data.local.PromptFileStorage
-import com.empathy.ai.data.local.dao.ContactDao
-import com.empathy.ai.domain.model.GlobalPromptConfig
-import com.empathy.ai.domain.model.PromptError
-import com.empathy.ai.domain.model.PromptHistoryItem
-import com.empathy.ai.domain.model.PromptScene
-import com.empathy.ai.domain.model.PromptValidationResult
-import com.empathy.ai.domain.model.ScenePromptConfig
-import com.empathy.ai.domain.util.PromptSanitizer
-import com.empathy.ai.domain.util.PromptValidator
-import com.empathy.ai.domain.util.PromptVariableResolver
-import com.empathy.ai.testutil.PromptTestDataFactory
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-
 /**
  * PromptRepositoryImpl单元测试
  *
- * 测试覆盖：
- * - 全局提示词CRUD
- * - 联系人提示词CRUD
- * - 历史记录管理
- * - 验证失败处理
- * - 安全检查
- * - 恢复默认值
+ * 测试提示词管理系统 (PRD-00005/PRD-00006):
+ * - 全局提示词CRUD - getGlobalConfig、saveGlobalPrompt
+ * - 场景提示词获取 - getGlobalPrompt(scene)
+ * - 联系人提示词 - getContactPrompt、saveContactPrompt
+ * - 历史记录管理 - saveGlobalPrompt时记录history、limit为3
+ * - 验证失败处理 - 空提示词、超长提示词
+ * - 安全检查 - 检测注入攻击等危险内容
+ * - 恢复功能 - restoreDefault、restoreFromHistory
+ *
+ * 设计权衡 (TDD-00005/00006):
+ * - 提示词历史限制3条，平衡用户回滚需求和存储空间
+ * - 安全警告不影响保存，只记录警告信息
+ * - 使用MockK模拟PromptSanitizer避免真实安全检测
+ *
+ * 任务追踪:
+ * - PRD-00005 - 提示词管理系统需求
+ * - PRD-00006 - 提示词编辑界面需求
+ * - TDD-00005 - 提示词管理系统技术设计
+ * - TDD-00006 - 提示词编辑界面技术设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PromptRepositoryImplTest {

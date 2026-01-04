@@ -8,7 +8,18 @@ import javax.inject.Singleton
 /**
  * 批量删除Fact用例
  *
- * 从联系人的facts列表中批量删除指定ID的Fact
+ * 从联系人的facts列表中批量删除指定ID的Fact。
+ *
+ * 业务背景:
+ *   - PRD-00012: 事实流内容编辑功能需求
+ *   - 场景: 用户批量删除不需要的事实记录
+ *
+ * 设计决策:
+ *   - 软删除策略: 使用 filter 过滤保留项，而非直接删除
+ *   - 效率优化: 转换为 Set 进行 membership 检查（O(1) vs O(n)）
+ *   - 幂等设计: 重复删除同一ID返回0，不报错
+ *
+ * @see ContactRepository.updateFacts 更新事实列表方法
  */
 @Singleton
 class BatchDeleteFactsUseCase @Inject constructor(

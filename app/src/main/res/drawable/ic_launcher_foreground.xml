@@ -1,3 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    应用启动器图标前景 - Android 12+ 自适应图标规范
+
+    业务背景:
+    - 共情AI助手品牌标识
+    - 聊天气泡 + 心形 = 社交沟通 + 共情理解
+
+    设计决策:
+    - 108dp x 108dp 画布，符合 Android 自适应图标规范
+    - 聊天气泡形状代表社交沟通
+    - 两个圆点代表对话/倾听
+    - 渐变阴影增加立体感
+    - 白色填充确保在彩色背景上的可见性
+
+    Android 规范:
+    - 前景图层独立于背景，支持系统级遮罩
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"

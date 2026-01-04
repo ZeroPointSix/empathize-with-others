@@ -13,17 +13,42 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * ContactDetailTabViewModel key 唯一性测试
+ * ContactDetailTabViewModel 时间线Key唯一性测试
  *
- * 验证 BUG-00025/BUG-00026 修复：LazyColumn key 重复导致闪退问题
+ * 问题背景 (BUG-00025/BUG-00026):
+ *   LazyColumn key 重复导致Android系统回收组件时发生ArrayIndexOutOfBoundsException
+ *   严重程度：P0 - 导致应用闪退
  *
  * 问题根因：
- * 1. buildTimelineItems() 中 UserFact 的 ID 生成方式可能产生重复 key
+ * 1. buildTimelineItems() 中 UserFact 的 ID 生成方式依赖 timestamp + key 的组合
+ *    - 相同timestamp和key产生相同ID
+ *    - hashCode碰撞导致ID重复（如"Aa"和"BB"）
  * 2. TopTagsSection 直接使用 timestamp 作为 key
  *
- * 修复方案：为 Fact 模型添加唯一 id 字段（UUID）
- * - Fact 创建时自动生成唯一 UUID
- * - 所有使用 Fact 的地方直接使用 fact.id 作为 key
+ * 修复方案 (TDD-00014):
+ *   为 Fact 模型添加唯一 id 字段（UUID）
+ *   - Fact 创建时自动生成唯一 UUID
+ *   - TimelineItem ID 统一使用 "type_uuid" 格式
+ *   - Conversation: "conv_${log.id}"
+ *   - Summary: "summary_${summary.id}"
+ *   - UserFact: "fact_${fact.id}"
+ *
+ * 测试策略:
+ * 1. 验证相同timestamp和key的facts生成不同ID
+ * 2. 验证不同类型项目ID有正确前缀
+ * 3. 验证大量facts（100个）无ID重复
+ * 4. 验证hashCode碰撞不导致ID重复
+ * 5. 验证Fact默认构造生成唯一ID
+ *
+ * 设计权衡:
+ *   - 使用UUID替代timestamp+key组合，确保全局唯一
+ *   - ID前缀区分数据类型，便于调试
+ *   - 测试直接模拟buildTimelineItems逻辑，避免ViewModel依赖
+ *
+ * 任务追踪:
+ *   - BUG-00025 LazyColumn key 重复导致闪退（时间线）
+ *   - BUG-00026 LazyColumn key 重复导致闪退（TopTagsSection）
+ *   - TD-00014 标签画像V2功能
  */
 class ContactDetailTabViewModelKeyTest {
 

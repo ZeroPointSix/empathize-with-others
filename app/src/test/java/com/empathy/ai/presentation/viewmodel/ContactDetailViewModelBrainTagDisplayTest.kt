@@ -31,10 +31,20 @@ import org.junit.Test
 /**
  * BUG-00017 测试：新建联系人时连续添加多个标签应该全部显示
  *
- * 测试场景：
- * 1. 新建联系人时添加单个标签
- * 2. 新建联系人时连续添加多个标签
- * 3. 标签应该通过Flow响应式更新到UI
+ * 问题背景 (BUG-00017):
+ *   新建联系人场景下，通过Flow响应式更新标签时，
+ *   连续添加多个标签可能因状态更新不及时导致部分标签丢失
+ *
+ * 测试策略:
+ *   使用 MutableStateFlow 模拟数据库返回，验证:
+ *   1. 单个标签添加后UI正确更新
+ *   2. 连续添加多个标签时所有标签都应该显示
+ *   3. displayTags计算属性正确返回标签列表
+ *
+ * 设计权衡:
+ *   - 使用MutableStateFlow模拟真实Flow行为
+ *   - 在saveBrainTagUseCase mock中手动更新Flow值
+ *   - 模拟数据库保存后返回新ID的场景
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactDetailViewModelBrainTagDisplayTest {

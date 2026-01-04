@@ -1,15 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    安全检查功能图标 - 盾牌+对勾
+
+    业务背景 (PRD-00001/US-002):
+    - "帮我检查"功能的视觉标识
+    - 盾牌象征保护和安全检查
+    - 对勾表示验证通过/安全状态
+
+    设计决策:
+    - 盾牌形状采用 Material Design 安全图标规范
+    - 绿色 (#4CAF50) 与 check_color 保持一致
+    - 对勾使用白色，与绿色形成对比
+
+    任务: FD-00001/T001
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    
+
     <!-- 检查图标：盾牌 -->
     <path
         android:fillColor="#4CAF50"
         android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12c5.16,-1.26 9,-6.45 9,-12V5L12,1z" />
-    
+
     <!-- 对勾 -->
     <path
         android:fillColor="#FFFFFF"

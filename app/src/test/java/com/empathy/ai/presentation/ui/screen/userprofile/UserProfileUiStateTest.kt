@@ -8,6 +8,20 @@ import org.junit.Test
 
 /**
  * UserProfileUiState 单元测试
+ *
+ * 用户画像UI状态测试用例集
+ *
+ * 业务规则:
+ * - completeness根据5个核心维度计算，每个维度20分
+ * - customDimensions上限10个
+ * - 画像完整度用于UI展示和用户引导
+ *
+ * 设计权衡:
+ * - 5维度设计覆盖80%用户画像场景，保持简单
+ * - 20分/维度便于用户理解进度
+ *
+ * @see PRD-00003 用户画像与标签系统需求
+ * @see TDD-00003 用户画像与标签系统技术设计
  */
 class UserProfileUiStateTest {
     

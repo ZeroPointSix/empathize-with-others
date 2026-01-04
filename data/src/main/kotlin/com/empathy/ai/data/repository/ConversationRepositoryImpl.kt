@@ -13,9 +13,27 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 对话记录仓库实现类
+ * ConversationRepositoryImpl 实现了对话记录的数据访问层
  *
- * 负责对话记录的数据访问
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00003)联系人画像记忆系统的短期记忆层
+ *   - 存储原始对话日志，作为AI分析的素材来源
+ *   - 支持标记已总结状态，避免重复处理
+ *   - 响应式Flow查询，UI自动更新
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 使用Room数据库 + Flow实现响应式查询
+ *   - 自动清理已总结的历史日志，释放存储空间
+ *   - 支持追踪用户修改：originalUserInput记录原始输入
+ *
+ * 【关键逻辑】
+ *   - cleanupOldSummarizedLogs：惰性删除已总结的旧日志
+ *   - getConversationsByContactFlow：联系人对话变更时自动通知UI
+ *   - updateUserInputWithTracking：修改追踪，防止无限循环更新
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-001: 对话记录自动存储
+ *   - FD-00011/Task-002: 手动触发AI总结功能
  */
 @Singleton
 class ConversationRepositoryImpl @Inject constructor(
@@ -99,6 +117,16 @@ class ConversationRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * cleanupOldSummarizedLogs 清理历史已总结对话记录
+     *
+     * 【策略】采用惰性删除策略，不使用定时任务
+     * 权衡(TDD-00003)：牺牲少量读取性能，换取数据库写入压力的降低
+     *
+     * 【业务规则】(PRD-00011/US-002)
+     *   - 只清理已总结的对话记录，保留未总结的供后续处理
+     *   - 防止数据库无限增长，同时不影响AI总结功能的数据完整性
+     */
     override suspend fun cleanupOldSummarizedLogs(
         beforeTimestamp: Long
     ): Result<Int> = withContext(Dispatchers.IO) {

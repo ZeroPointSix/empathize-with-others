@@ -7,6 +7,25 @@ import org.junit.Test
 
 /**
  * UserProfile 领域模型单元测试
+ *
+ * 业务背景 (PRD-00013):
+ *   用户画像记录自己的性格特点、价值观、兴趣爱好等
+ *   用于AI军师分析时提供"我"的视角（PRD-00026/2.2客观分析立场）
+ *
+ * 核心维度:
+ *   - personalityTraits (性格特点): 内向、敏感等
+ *   - values (价值观): 诚实、正直等
+ *   - interests (兴趣爱好): 阅读、音乐等
+ *   - communicationStyle (沟通风格): 直接、含蓄等
+ *   - socialPreferences (社交偏好): 小圈子、社交达人等
+ *   - customDimensions (自定义维度): 用户自定义的标签维度
+ *
+ * 设计决策:
+ *   - 完整度计算：每有一个基础维度有标签，得20分，满分100
+ *   - 自定义维度不影响完整度计算
+ *   - 每个维度最多20个标签，最多10个自定义维度
+ *
+ * 任务追踪: FD-00013/自己画像界面功能设计
  */
 class UserProfileTest {
     

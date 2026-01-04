@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    悬浮窗主视图布局 - 按钮模式与菜单模式切换
+
+    业务背景 (PRD-00001/AC-003):
+    - 悬浮按钮是用户触发AI功能的唯一入口
+    - 点击展开功能菜单：帮我分析/帮我检查 (US-001, US-002)
+    - 支持拖动定位，满足不同用户的使用习惯
+
+    设计决策 (TDD-00001/组件设计):
+    - 两种模式：按钮模式(默认) vs 菜单展开模式
+    - 使用 FrameLayout 作为根容器，支持子视图叠加
+    - FloatingActionButton 使用 Material Design 规范 (56dp)
+    - 菜单项使用 TextButton 保持视觉一致性
+
+    任务: FD-00001/T001 (悬浮窗UI实现)
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"

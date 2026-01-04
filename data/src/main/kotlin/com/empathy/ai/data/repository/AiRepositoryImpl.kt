@@ -1,3 +1,20 @@
+/**
+ * Package com.empathy.ai.data.repository 实现了AI服务访问层
+ *
+ * 业务背景 (PRD-00025):
+ *   - 支持多AI服务商（OpenAI、DeepSeek、魔搭、Claude等）
+ *   - 统一的接口抽象，屏蔽服务商差异
+ *   - API用量统计与监控（TD-00025新增）
+ *
+ * 设计决策 (TDD-00025):
+ *   - 使用 ProviderCompatibility 封装服务商差异判断
+ *   - 多策略结构化输出：Function Calling > Response Format > Prompt Only
+ *   - 指数退避重试机制：平衡用户体验与系统稳定性
+ *   - Token估算算法：基于字符集分组的经验公式
+ *
+ * 任务追踪:
+ *   - TD-00025 - AI配置功能完善
+ */
 package com.empathy.ai.data.repository
 
 import android.util.Log
@@ -41,7 +58,17 @@ import javax.inject.Inject
 /**
  * AI 服务仓库实现类
  *
- * TD-00025: 添加ApiUsageRepository依赖，支持用量记录
+ * 核心职责:
+ *   - AI API 请求封装与响应解析
+ *   - 多服务商兼容适配
+ *   - API 用量统计与错误处理
+ *
+ * 设计权衡 (TDD-00025):
+ *   - 选择 Optional 依赖 apiUsageRepository：兼容旧版本不崩溃
+ *   - 降级策略：加密存储失败时使用明文存储（日志警告）
+ *
+ * 任务追踪:
+ *   - TD-00025 - AI配置功能完善（用量统计）
  */
 class AiRepositoryImpl @Inject constructor(
     private val api: OpenAiApi,
@@ -198,8 +225,18 @@ $COMMON_JSON_RULES""".trim()
     }
 
     /**
-     * 估算Token数量
-     * 简单估算：中文约1.5字符/token，英文约4字符/token
+     * estimateTokens 估算Token数量
+     *
+     * [Token Estimation] 简化的Token估算算法
+     * 权衡：准确估算需要加载 tokenizer 模型，开销过大
+     * 采用经验公式：
+     *   - 中文字符：约 1.5 字符/token（汉字信息密度高）
+     *   - 英文字符：约 4 字符/token
+     *   - 至少返回 1，确保统计正确性
+     *
+     * 设计权衡 (TDD-00025):
+     *   - 选择字符集分组估算：比固定比率更准确，比加载模型更轻量
+     *   - coerceAtLeast(1)：避免除零导致的异常
      */
     private fun estimateTokens(text: String): Int {
         val chineseCount = text.count { it.code in 0x4E00..0x9FFF }
@@ -207,6 +244,20 @@ $COMMON_JSON_RULES""".trim()
         return (chineseCount / 1.5 + otherCount / 4.0).toInt().coerceAtLeast(1)
     }
 
+    /**
+     * withRetry 实现指数退避重试策略
+     *
+     * [Retry Strategy] 指数退避重试机制
+     * 场景区分：
+     *   - SocketTimeoutException：可重试（服务端繁忙）
+     *   - IOException（含Canceled）：不可重试（用户主动取消）
+     *   - 其他Exception：立即失败（业务逻辑错误）
+     *
+     * 设计权衡 (TDD-00025):
+     *   - 选择指数退避而非固定间隔：减少服务器压力
+     *   - 最大重试3次：平衡用户体验与系统稳定性
+     *   - 延迟公式：INITIAL_DELAY_MS * 2^attempt
+     */
     private suspend fun <T> withRetry(block: suspend () -> T): T {
         var lastException: Exception? = null
         repeat(MAX_RETRIES) { attempt ->
@@ -720,6 +771,18 @@ $COMMON_JSON_RULES""".trim()
 
     // ==================== 辅助方法 ====================
 
+    /**
+     * selectModel 根据服务商配置选择最优模型
+     *
+     * 业务规则 (PRD-00025):
+     *   - 优先使用用户配置的 defaultModelId
+     *   - 未配置时根据服务商名称推断默认模型
+     *   - DeepSeek 专用 deepseek-chat，OpenAI 专用 gpt-3.5-turbo
+     *
+     * 设计权衡 (TDD-00025):
+     *   - 选择名称推断而非硬编码，因为新兴服务商不断出现
+     *   - 保留 gpt-3.5-turbo 作为兜底，兼容性最佳
+     */
     private fun selectModel(provider: AiProvider): String {
         return if (provider.defaultModelId.isNotBlank()) {
             provider.defaultModelId
@@ -732,6 +795,20 @@ $COMMON_JSON_RULES""".trim()
         }
     }
 
+    /**
+     * buildChatCompletionsUrl 构建标准化的 API URL
+     *
+     * [URL Normalization] 兼容多种 API URL 格式
+     * 支持的格式：
+     *   - https://api.example.com/v1/chat/completions（标准）
+     *   - https://api.example.com/chat/completions（无版本号）
+     *   - https://api.example.com/v1（仅版本号）
+     *   - https://api.example.com（基础URL）
+     *
+     * 设计权衡：
+     *   - 自动补全版本号路径，提升用户体验
+     *   - trimEnd('/') 避免拼接时的双斜杠问题
+     */
     private fun buildChatCompletionsUrl(baseUrl: String): String {
         val trimmedUrl = baseUrl.trimEnd('/')
         return when {

@@ -9,7 +9,24 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * PromptEditorUiState单元测试
+ * PromptEditorUiState 单元测试
+ *
+ * 提示词编辑器UI状态测试用例集
+ *
+ * 业务规则 (PRD-00006):
+ * - 字符上限1000字，超出后canSave=false
+ * - 800字开始显示警告颜色
+ * - 保存时需同时满足：未超限、未加载、未保存中
+ *
+ * 设计决策 (TDD-00006):
+ * - 使用computed properties避免手动同步状态
+ * - 800/1000阈值在UI和AI成本间取得平衡
+ *
+ * 任务追踪: FD-00006/T003-T005
+ *
+ * @see PRD-00006 提示词编辑界面需求
+ * @see TDD-00006 提示词编辑界面技术设计
+ * @see FD-00006 提示词编辑界面功能设计
  */
 class PromptEditorUiStateTest {
 

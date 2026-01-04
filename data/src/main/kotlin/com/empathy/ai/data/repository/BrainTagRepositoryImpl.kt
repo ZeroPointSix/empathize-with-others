@@ -10,9 +10,24 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
- * 策略标签仓库实现类
+ * BrainTagRepositoryImpl 实现了策略标签的数据访问层
  *
- * 连接Domain层和Data层的桥梁
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00003)联系人画像记忆系统的标签系统
+ *   - 红标签(RISK_RED)：雷区标签，提示用户避免的行为或话题
+ *   - 绿标签(GREEN)：策略标签，推荐用户采用的行为或话题
+ *   - 标签来源于AI分析或用户手动添加
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 简单的CRUD操作，支持Flow响应式查询
+ *   - 映射函数私有化，避免暴露转换细节
+ *
+ * 【关键逻辑】
+ *   - TagType降级：未知类型默认降级为RISK_RED，保证系统健壮性
+ *   - 响应式查询：getTagsForContact返回Flow，标签变更时自动通知UI
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-002: 标签系统基础功能
  */
 class BrainTagRepositoryImpl @Inject constructor(
     private val dao: BrainTagDao
@@ -55,9 +70,21 @@ class BrainTagRepositoryImpl @Inject constructor(
 }
 
 // ============================================================================
-// 私有映射函数
+// 私有映射函数：Entity ↔ Domain 转换层
 // ============================================================================
+//
+// 【设计决策】将映射函数设为private extension function，避免暴露转换细节
+// 原因：遵循单一职责，Repository只负责调用，不关心转换细节
+// 替代方案：Entity/Domain类中的toDomain()/toEntity()方法（当前方案更简洁）
+//
+// 【健壮性处理】TagType.valueOf失败时默认降级为RISK_RED
+// 原因：数据库中可能存在未知类型，降级处理比崩溃更友好
 
+/**
+ * toDomain 实体转领域模型
+ *
+ * 【降级策略】TagType解析失败时默认降级为RISK_RED
+ */
 private fun BrainTagEntity.toDomain(): BrainTag {
     return BrainTag(
         id = this.id,
@@ -66,6 +93,7 @@ private fun BrainTagEntity.toDomain(): BrainTag {
         type = try {
             TagType.valueOf(this.type)
         } catch (e: IllegalArgumentException) {
+            // 降级策略：未知类型归类为风险标签
             TagType.RISK_RED
         },
         source = this.source,

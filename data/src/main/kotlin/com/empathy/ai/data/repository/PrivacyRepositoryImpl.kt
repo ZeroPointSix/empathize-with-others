@@ -11,9 +11,26 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 隐私规则仓库实现类
+ * PrivacyRepositoryImpl 实现了隐私规则的数据访问层
  *
- * 使用 SharedPreferences 存储隐私映射规则
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00003)隐私保护绝对优先原则
+ *   - 隐私映射：用户自定义的敏感词替换规则
+ *   - 文本脱敏：发送AI前移除或替换敏感信息
+ *   - 混合策略：自定义映射 + 内置敏感词检测
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 使用SharedPreferences存储（简单轻量）
+ *   - 手动JSON序列化，减少第三方依赖
+ *   - 脱敏在IO线程执行，避免阻塞主线程
+ *
+ * 【关键逻辑】
+ *   - maskText：调用PrivacyEngine.maskHybrid实现混合脱敏
+ *   - unmaskText：还原脱敏文本（用于本地显示）
+ *   - 脱敏不持久化：每次使用时动态脱敏，保证数据安全
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-004: 隐私保护和数据脱敏
  */
 @Singleton
 class PrivacyRepositoryImpl @Inject constructor(
@@ -110,6 +127,22 @@ class PrivacyRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * maskText 文本脱敏处理
+     *
+     * 【业务规则】(PRD-00003/AC-004)隐私保护绝对优先
+     *   - 所有敏感数据必须经过脱敏后才能发送给AI
+     *   - 支持多种模式：自定义映射 + 内置敏感词检测
+     *
+     * 【脱敏策略】
+     *   1. 优先使用用户自定义的隐私映射规则
+     *   2. 再应用内置敏感词检测（手机号、身份证号、邮箱）
+     *   3. 使用PrivacyEngine.maskHybrid实现混合脱敏
+     *
+     * 【安全考量】
+     *   - 脱敏在IO线程执行，避免阻塞主线程
+     *   - 脱敏结果不持久化，每次使用时动态脱敏
+     */
     override suspend fun maskText(text: String): String {
         return withContext(Dispatchers.IO) {
             val mapping = getPrivacyMapping().getOrNull().orEmpty()

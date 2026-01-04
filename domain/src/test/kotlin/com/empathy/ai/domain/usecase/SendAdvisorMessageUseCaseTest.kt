@@ -22,6 +22,19 @@ import org.junit.Test
 
 /**
  * SendAdvisorMessageUseCase单元测试
+ *
+ * 业务背景 (PRD-00026):
+ * - AI军师核心业务用例，负责处理用户消息并生成AI回复
+ * - 消息发送流程: 保存用户消息 → 获取联系人画像 → 构建提示词 → 调用AI → 保存AI回复
+ * - 支持联系人对话历史分析，为AI军师提供上下文
+ *
+ * 设计决策 (TDD-00026):
+ * - 采用双阶段提示词构建: 系统提示词(系统角色定义) + 用户提示词(当前问题)
+ * - 历史对话限制为最近20条（受AI模型Context Window限制）
+ * - 会话上下文限制为最近10条，控制Token消耗
+ * - 错误处理: 用户消息保存失败立即返回，AI调用失败仍保存失败状态消息
+ *
+ * 任务: TD-00026/T008
  */
 class SendAdvisorMessageUseCaseTest {
 
@@ -50,6 +63,13 @@ class SendAdvisorMessageUseCaseTest {
         )
     }
 
+    /**
+     * 验证消息发送流程的第一步：先保存用户消息
+     *
+     * 业务规则 (PRD-00026/AC-003):
+     * - 用户消息必须在AI回复之前保存，确保对话历史的完整性
+     * - 消息类型必须正确标记为MessageType.USER
+     */
     @Test
     fun `invoke should save user message first`() = runTest {
         // Given
@@ -70,6 +90,16 @@ class SendAdvisorMessageUseCaseTest {
         assertEquals(MessageType.USER, userMessage.messageType)
     }
 
+    /**
+     * 验证前置条件检查：未配置AI服务商时返回错误
+     *
+     * 业务规则 (PRD-00026):
+     * - AI军师功能依赖第三方AI服务，必须先配置服务商才能使用
+     * - 这是BYOK (Bring Your Own Key) 架构的体现
+     *
+     * 设计权衡 (TDD-00026):
+     * - 选择快速失败策略，避免无效的AI调用请求
+     */
     @Test
     fun `invoke should return failure when no AI provider configured`() = runTest {
         // Given
@@ -99,6 +129,17 @@ class SendAdvisorMessageUseCaseTest {
         assertTrue(result.exceptionOrNull()?.message?.contains("联系人不存在") == true)
     }
 
+    /**
+     * 验证提示词构建：包含联系人画像和当前问题
+     *
+     * 业务规则 (PRD-00026/AC-005):
+     * - AI军师分析时必须包含联系人的基础信息（姓名、关系阶段等）
+     * - 当前问题是AI分析的直接输入
+     *
+     * 设计权衡 (TDD-00026):
+     * - 使用双阶段提示词：系统提示词定义AI角色，用户提示词包含具体问题
+     * - 联系人画像作为上下文背景，帮助AI提供个性化分析
+     */
     @Test
     fun `invoke should call AI repository with correct prompt`() = runTest {
         // Given
@@ -119,6 +160,17 @@ class SendAdvisorMessageUseCaseTest {
         assertTrue(prompt.contains(testMessage))
     }
 
+    /**
+     * 验证上下文连贯性：包含会话历史对话
+     *
+     * 业务规则 (PRD-00026/AC-004):
+     * - AI军师能理解当前对话的上下文和连续性
+     * - 对话历史按时间正序排列，构建完整对话流
+     *
+     * 设计权衡 (TDD-00026):
+     * - 会话上下文限制为最近10条（SESSION_CONTEXT_LIMIT）
+     * - 平衡上下文完整性和Token消耗
+     */
     @Test
     fun `invoke should include conversation history in prompt`() = runTest {
         // Given
@@ -203,6 +255,17 @@ class SendAdvisorMessageUseCaseTest {
         assertTrue(result.exceptionOrNull()?.message?.contains("保存用户消息失败") == true)
     }
 
+    /**
+     * 验证Token消耗控制：会话上下文限制
+     *
+     * 已知限制 (TDD-00026/11.1):
+     * - 受AI模型Context Window限制，会话上下文限制为最近10条
+     * - 这是技术约束而非业务需求，v2.0计划引入RAG解决
+     *
+     * 权衡:
+     * - 牺牲早期对话的上下文，换取对话的持续进行
+     * - 用户可以通过新建会话来重置上下文
+     */
     @Test
     fun `invoke should limit history to SESSION_CONTEXT_LIMIT`() = runTest {
         // Given
@@ -226,6 +289,17 @@ class SendAdvisorMessageUseCaseTest {
         assertTrue(!prompt.contains("Message 1") || prompt.contains("Message 10"))
     }
 
+    /**
+     * 验证个性化分析：包含用户设定的沟通目标
+     *
+     * 业务规则 (PRD-00026/AC-006):
+     * - 分析方向与用户的攻略目标保持一致
+     * - 目标设定影响AI建议的语气、深度和方向
+     *
+     * 场景示例:
+     * - 目标"建立更亲密关系" → AI侧重情感分析
+     * - 目标"保持专业距离" → AI侧重社交边界分析
+     */
     @Test
     fun `invoke should include contact target goal in prompt`() = runTest {
         // Given

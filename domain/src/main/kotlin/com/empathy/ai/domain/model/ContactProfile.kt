@@ -5,14 +5,28 @@ import com.empathy.ai.domain.util.MemoryConstants
 /**
  * 联系人画像 - 核心"角色卡"（扩展版）
  *
- * 存储目标联系人的基本信息、攻略目标和所有事实性信息
- * 支持姓名和目标的编辑追踪功能
+ * 存储目标联系人的基本信息、攻略目标和所有事实性信息。
+ * 这是AI军师功能的核心数据源，用于个性化分析和策略建议。
+ *
+ * 业务背景 (PRD-00003/PRD-00026):
+ * - 联系人画像是AI分析的基础背景信息
+ * - facts包含用户的生日、爱好、工作等关键信息
+ * - targetGoal用于对齐分析方向与用户目标
+ * - AI军师分析时会结合facts提供针对性建议（PRD-00026/3.2.2）
+ *
+ * 设计决策 (TDD-00003):
+ * - 使用List<Fact>替代Map，支持事实的增删改查和版本追踪
+ * - relationshipScore量化关系发展程度（0-100）
+ * - 支持编辑追踪（originalName/originalGoal），用于数据审计
+ * - contextDepth控制每次分析读取的对话记录数量
+ *
+ * 任务追踪: FD-00003/基础数据模型设计
  *
  * @property id 唯一标识 (UUID 或加密 ID)
  * @property name 显示名称 (例如: "王总", "李铁柱")
  * @property targetGoal 核心攻略目标 (例如: "拿下合同", "修复父子关系")
  * @property contextDepth 上下文读取深度 (每次分析读取最近多少条记录，默认为 10)
- * @property facts 核心事实槽 - 存储所有事实类信息（修改为List<Fact>）
+ * @property facts 核心事实槽 - 存储所有事实类信息
  * @property relationshipScore 关系分数 (0-100，默认50)
  * @property lastInteractionDate 最后互动日期 (格式: "yyyy-MM-dd")
  * @property avatarUrl 头像URL

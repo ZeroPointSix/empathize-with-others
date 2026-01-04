@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    悬浮窗输入对话框布局 - AI分析与安全检查交互界面
+
+    业务背景 (PRD-00001):
+    - 用户点击功能菜单后显示输入界面
+    - 支持选择联系人和输入聊天内容
+    - 实时字符计数(最多5000字符)满足长文本需求
+    - 最小化功能支持后台处理 (US-003)
+
+    设计决策 (TDD-00001/输入对话框设计):
+    - 使用 MaterialCardView 提供圆角和阴影效果
+    - 三种状态切换：输入/加载/结果展示
+    - 结果区域展示AI分析的四要素：对方状态/关键洞察/建议回复/风险等级
+    - 滚动容器限制最大高度避免遮挡屏幕
+
+    任务: FD-00001/T002 (输入对话框实现)
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

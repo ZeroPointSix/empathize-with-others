@@ -7,9 +7,24 @@ import javax.inject.Inject
 /**
  * 清理 API 用量记录用例
  *
- * 清理过期的用量记录，默认保留90天数据
+ * 清理过期的用量记录，默认保留90天数据。
  *
- * TD-00025: AI配置功能完善 - 用量统计功能
+ * 业务背景:
+ *   - TD-00025: AI配置功能完善 - 用量统计功能
+ *   - 场景: 用户手动或自动清理过期的API调用记录
+ *
+ * 设计决策:
+ *   - 默认保留90天: 平衡存储空间与历史追溯需求
+ *   - 时间戳计算: 使用 TimeUnit.DAYS.toMillis 避免计算错误
+ *   - 提供多种清理方式:
+ *     * invoke(daysToKeep): 按天数清理
+ *     * clearBefore(beforeTime): 按时间戳清理
+ *     * clearAll(): 清空所有记录
+ *     * getRecordCount(): 查询当前记录数
+ *
+ * 存储限制:
+ *   - MAX_RECORDS = 10000: 硬限制，防止无限增长
+ *   - 建议: 配合时间清理策略使用
  */
 class CleanupApiUsageUseCase @Inject constructor(
     private val apiUsageRepository: ApiUsageRepository

@@ -16,9 +16,27 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 每日总结仓库实现类
+ * DailySummaryRepositoryImpl 实现了每日总结的数据访问层
  *
- * 负责每日总结的数据访问
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00003)联系人画像记忆系统的中期记忆层
+ *   - 每日对话总结：AI自动生成或用户手动编辑
+ *   - 关键事件(KeyEvents)：从对话中提取的标志性事件
+ *   - 关系变化趋势：基于多日总结分析关系走向
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 使用Moshi序列化KeyEvents列表为JSON存储
+ *   - 支持范围查询：getSummariesInRange获取时间段内的总结
+ *   - 支持按类型过滤：DAILY/WEEKLY/MONTHLY等
+ *
+ * 【关键逻辑】
+ *   - toDomain降级：KeyEvents JSON解析失败时返回空列表
+ *   - 范围查询：支持统计缺失天数countMissingDatesInRange
+ *   - 手动总结：getManualSummaries获取用户编辑的总结
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-001: 每日总结自动生成
+ *   - FD-00003/Task-002: 关键事件提取和存储
  */
 @Singleton
 class DailySummaryRepositoryImpl @Inject constructor(
@@ -228,10 +246,18 @@ class DailySummaryRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * toDomain 实体转领域模型
+     *
+     * 【降级策略】KeyEvents JSON解析失败时返回空列表而非抛出异常
+     * 原因：历史数据可能存在格式问题，不应影响用户查看总结内容
+     * 设计权衡：牺牲少量功能完整性，换取系统健壮性
+     */
     private fun DailySummaryEntity.toDomain(): DailySummary {
         val keyEventsList = try {
             keyEventsAdapter.fromJson(keyEventsJson) ?: emptyList()
         } catch (e: Exception) {
+            // 静默降级：解析失败不记录日志，避免日志污染
             emptyList()
         }
 

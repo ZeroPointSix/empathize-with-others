@@ -1,32 +1,22 @@
 package com.empathy.ai.data.repository
 
-import com.empathy.ai.data.remote.api.OpenAiApi
-import com.empathy.ai.data.remote.model.ModelDto
-import com.empathy.ai.data.remote.model.ModelsResponseDto
-import com.empathy.ai.domain.model.AiModel
-import com.empathy.ai.domain.model.AiProvider
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import retrofit2.HttpException
-import retrofit2.Response
-import java.io.IOException
-
 /**
  * AiProviderRepository fetchAvailableModels 单元测试
  *
- * 测试模型列表自动获取功能：
- * - 成功获取模型列表
- * - 处理 HTTP 错误
- * - 处理网络错误
- * - 处理空响应
+ * 测试模型列表自动获取功能 (TDD-00026/4.4.1):
+ * - 成功获取模型列表 - 验证API调用和响应解析
+ * - HTTP错误处理 - 401认证失败、403权限不足、404不支持
+ * - 网络错误处理 - IO异常、连接超时
+ * - 空响应处理 - 无模型时返回空列表
+ * - URL构建 - 正确处理不同provider的baseUrl格式
+ * - 聊天模型过滤 - 只返回chat模型，过滤embedding/whisper等
  *
- * @see SR-00001 模型列表自动获取与调试日志优化
+ * 设计权衡 (TDD-00026/4.3):
+ * - 使用反射测试私有方法buildModelsUrl、isChatModel、generateDisplayName
+ * - 因为这些是工具方法，直接测试更可靠
+ *
+ * 任务追踪:
+ * - SR-00001 - 模型列表自动获取与调试日志优化
  */
 class AiProviderRepositoryFetchModelsTest {
 

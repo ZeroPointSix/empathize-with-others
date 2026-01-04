@@ -14,8 +14,29 @@ import org.junit.Test
 
 /**
  * FloatingWindowPreferences 单元测试
- * 
- * 测试状态持久化功能
+ *
+ * 测试悬浮窗状态持久化功能 (PRD-00004 悬浮窗功能需求):
+ * - 状态保存 - saveState保存所有状态属性
+ * - 状态恢复 - loadState正确读取保存的状态
+ * - 默认值处理 - 无数据时返回默认值
+ * - 启用状态管理 - saveEnabled/loadEnabled配对测试
+ * - 位置坐标保存 - buttonX/buttonY边界值
+ * - 模式切换保存 - saveMode/loadMode正确性
+ * - 最小化状态 - saveMinimizeState/loadMinimizeState
+ *
+ * 业务规则 (TDD-00004/3.2):
+ * - 悬浮窗位置使用屏幕坐标存储
+ * - 模式支持：正常模式、气泡模式、最小化模式
+ * - 状态变化需要立即持久化
+ *
+ * 设计权衡:
+ * - 使用SharedPreferences存储简单状态数据
+ * - 使用JSON存储复杂状态（如FloatingWindowState）
+ * - 启用状态独立存储，便于快速判断
+ *
+ * 任务追踪:
+ * - PRD-00004 - 悬浮窗功能需求
+ * - TDD-00004 - 悬浮窗功能技术设计
  */
 class FloatingWindowPreferencesTest {
     
