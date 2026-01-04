@@ -13,6 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.empathy.ai.presentation.ui.screen.aiconfig.AiConfigScreen
+import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorChatScreen
+import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
 import com.empathy.ai.presentation.ui.screen.chat.ChatScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailTabScreen
@@ -155,19 +157,35 @@ fun NavGraph(
             )
         }
 
-        // AI军师页面（占位，后续实现）
+        // AI军师页面
         composable(route = NavRoutes.AI_ADVISOR) {
-            // TODO: 实现AI军师页面
-            // 暂时显示空白页面
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "AI军师",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            }
+            AiAdvisorScreen(
+                onNavigateToChat = { contactId ->
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId))
+                }
+            )
+        }
+
+        // AI军师对话页面
+        composable(
+            route = NavRoutes.AI_ADVISOR_CHAT,
+            arguments = listOf(
+                navArgument(NavRoutes.AI_ADVISOR_CHAT_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            AiAdvisorChatScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToContact = { contactId ->
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                        popUpTo(NavRoutes.AI_ADVISOR)
+                    }
+                },
+                onNavigateToSettings = {
+                    navController.navigate(NavRoutes.AI_CONFIG)
+                }
+            )
         }
 
         // 用户画像页面

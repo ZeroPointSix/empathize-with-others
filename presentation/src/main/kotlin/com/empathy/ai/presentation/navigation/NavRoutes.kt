@@ -93,6 +93,14 @@ object NavRoutes {
     const val USAGE_STATS = "usage_stats"
 
     /**
+     * AI军师对话页面
+     * TD-00026: 添加AI_ADVISOR_CHAT路由常量
+     * 参数: contactId (String) - 联系人ID
+     */
+    const val AI_ADVISOR_CHAT = "ai_advisor_chat/{contactId}"
+    const val AI_ADVISOR_CHAT_ARG_ID = "contactId"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {
@@ -119,5 +127,13 @@ object NavRoutes {
      */
     fun editProvider(providerId: String): String {
         return "edit_provider/$providerId"
+    }
+
+    /**
+     * 创建AI军师对话路由
+     * TD-00026: 添加aiAdvisorChat辅助函数
+     */
+    fun aiAdvisorChat(contactId: String): String {
+        return "ai_advisor_chat/$contactId"
     }
 }

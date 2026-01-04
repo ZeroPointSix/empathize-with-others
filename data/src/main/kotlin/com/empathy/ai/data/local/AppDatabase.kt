@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.empathy.ai.data.local.converter.FactListConverter
 import com.empathy.ai.data.local.converter.RoomTypeConverters
+import com.empathy.ai.data.local.dao.AiAdvisorDao
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.ApiUsageDao
 import com.empathy.ai.data.local.dao.BrainTagDao
@@ -13,6 +14,8 @@ import com.empathy.ai.data.local.dao.ConversationLogDao
 import com.empathy.ai.data.local.dao.ConversationTopicDao
 import com.empathy.ai.data.local.dao.DailySummaryDao
 import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
+import com.empathy.ai.data.local.entity.AiAdvisorConversationEntity
+import com.empathy.ai.data.local.entity.AiAdvisorSessionEntity
 import com.empathy.ai.data.local.entity.AiProviderEntity
 import com.empathy.ai.data.local.entity.ApiUsageEntity
 import com.empathy.ai.data.local.entity.BrainTagEntity
@@ -47,6 +50,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  *   - v9→v10: 添加编辑追踪字段（is_user_modified, last_modified_time, original_* 等）
  *   - v10→v11: 添加conversation_topics表（对话主题功能）
  *   - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
+ *   - v12→v13: 添加AI军师对话功能表（TD-00026）
  *
  * @property entities 数据库包含的实体类列表
  * @property version 数据库版本号
@@ -62,9 +66,11 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         DailySummaryEntity::class,
         FailedSummaryTaskEntity::class,
         ConversationTopicEntity::class,
-        ApiUsageEntity::class
+        ApiUsageEntity::class,
+        AiAdvisorSessionEntity::class,
+        AiAdvisorConversationEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)
@@ -109,4 +115,9 @@ abstract class AppDatabase : RoomDatabase() {
      * 获取API用量DAO
      */
     abstract fun apiUsageDao(): ApiUsageDao
+
+    /**
+     * 获取AI军师DAO
+     */
+    abstract fun aiAdvisorDao(): AiAdvisorDao
 }
