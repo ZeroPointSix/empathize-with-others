@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.empathy.ai.data.local.AppDatabase
+import com.empathy.ai.data.local.dao.AiAdvisorDao
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.ApiUsageDao
 import com.empathy.ai.data.local.dao.BrainTagDao
@@ -508,6 +509,102 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移: 版本 12 -> 13
+     * TD-00026: AI军师对话功能
+     *
+     * 变更内容：
+     * 1. 新增ai_advisor_sessions表（AI军师会话）
+     * 2. 新增ai_advisor_conversations表（AI军师对话记录）
+     *
+     * ai_advisor_sessions表结构：
+     * - id: 会话唯一标识（主键）
+     * - contact_id: 联系人ID（外键）
+     * - title: 会话标题
+     * - created_at: 创建时间戳
+     * - updated_at: 更新时间戳
+     * - message_count: 消息数量
+     * - is_active: 是否为活跃会话
+     *
+     * ai_advisor_conversations表结构：
+     * - id: 对话唯一标识（主键）
+     * - contact_id: 联系人ID（外键）
+     * - session_id: 会话ID（外键）
+     * - message_type: 消息类型（USER/AI）
+     * - content: 消息内容
+     * - timestamp: 时间戳
+     * - created_at: 创建时间戳
+     * - send_status: 发送状态
+     *
+     * 索引：
+     * - index_ai_advisor_sessions_contact_id: 按联系人查询会话
+     * - index_ai_advisor_sessions_created_at: 按创建时间查询
+     * - index_ai_advisor_sessions_updated_at: 按更新时间查询
+     * - index_ai_advisor_conversations_contact_id: 按联系人查询对话
+     * - index_ai_advisor_conversations_session_id: 按会话查询对话
+     * - index_ai_advisor_conversations_timestamp: 按时间查询对话
+     */
+    // 使用internal修饰符，允许测试模块访问
+    internal val MIGRATION_12_13 = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 创建ai_advisor_sessions表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS ai_advisor_sessions (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    message_count INTEGER NOT NULL DEFAULT 0,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    FOREIGN KEY (contact_id) REFERENCES profiles(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            // 2. 创建ai_advisor_sessions索引
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_ai_advisor_sessions_contact_id ON ai_advisor_sessions(contact_id)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_ai_advisor_sessions_created_at ON ai_advisor_sessions(created_at)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_ai_advisor_sessions_updated_at ON ai_advisor_sessions(updated_at)"
+            )
+
+            // 3. 创建ai_advisor_conversations表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS ai_advisor_conversations (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    contact_id TEXT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    message_type TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    timestamp INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    send_status TEXT NOT NULL DEFAULT 'SUCCESS',
+                    FOREIGN KEY (contact_id) REFERENCES profiles(id) ON DELETE CASCADE,
+                    FOREIGN KEY (session_id) REFERENCES ai_advisor_sessions(id) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            // 4. 创建ai_advisor_conversations索引
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_ai_advisor_conversations_contact_id ON ai_advisor_conversations(contact_id)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_ai_advisor_conversations_session_id ON ai_advisor_conversations(session_id)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_ai_advisor_conversations_timestamp ON ai_advisor_conversations(timestamp)"
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -527,6 +624,7 @@ object DatabaseModule {
      * - v9→v10: 添加编辑追踪字段支持事实流内容编辑
      * - v10→v11: 添加conversation_topics表（对话主题功能）
      * - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
+     * - v12→v13: 添加AI军师对话功能表（TD-00026）
      */
     @Provides
     @Singleton
@@ -547,7 +645,8 @@ object DatabaseModule {
                 MIGRATION_8_9,
                 MIGRATION_9_10,
                 MIGRATION_10_11,
-                MIGRATION_11_12
+                MIGRATION_11_12,
+                MIGRATION_12_13
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据
@@ -582,4 +681,8 @@ object DatabaseModule {
     @Provides
     fun provideApiUsageDao(database: AppDatabase): ApiUsageDao =
         database.apiUsageDao()
+
+    @Provides
+    fun provideAiAdvisorDao(database: AppDatabase): AiAdvisorDao =
+        database.aiAdvisorDao()
 }

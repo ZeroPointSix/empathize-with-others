@@ -5,12 +5,14 @@ import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.data.parser.AiSummaryResponseParserImpl
 import com.empathy.ai.data.repository.AiProviderRepositoryImpl
 import com.empathy.ai.data.repository.AiRepositoryImpl
+import com.empathy.ai.data.repository.AiAdvisorRepositoryImpl
 import com.empathy.ai.data.repository.ApiUsageRepositoryImpl
 import com.empathy.ai.data.repository.BrainTagRepositoryImpl
 import com.empathy.ai.data.repository.ContactRepositoryImpl
 import com.empathy.ai.data.repository.PrivacyRepositoryImpl
 import com.empathy.ai.data.repository.UserProfileRepositoryImpl
 import com.empathy.ai.data.repository.settings.SettingsRepositoryImpl
+import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.ApiUsageRepository
@@ -80,4 +82,10 @@ abstract class RepositoryModule {
      */
     @Binds
     abstract fun bindApiUsageRepository(impl: ApiUsageRepositoryImpl): ApiUsageRepository
+
+    /**
+     * TD-00026: 绑定 AI军师对话仓库
+     */
+    @Binds
+    abstract fun bindAiAdvisorRepository(impl: AiAdvisorRepositoryImpl): AiAdvisorRepository
 }
