@@ -15,9 +15,33 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * AI军师主界面ViewModel
+ * AI军师主界面 ViewModel
  *
- * 管理AI军师主界面的状态，包括联系人列表和最近会话。
+ * ## 业务职责
+ * 管理AI军师功能的全局状态，包括：
+ * - 会话列表的加载和刷新
+ * - 联系人列表管理与最近会话关联
+ * - Token使用统计展示
+ *
+ * ## 关联文档
+ * - PRD-00026: AI军师对话功能需求
+ * - TDD-00026: AI军师对话功能技术设计
+ * - FD-00026: AI军师对话功能设计
+ *
+ * ## 核心数据流
+ * ```
+ * UserAction → ViewModel → UseCase → Repository → UIState
+ *                              ↓
+ *                    TokenUsage → DisplayLimitCheck
+ * ```
+ *
+ * ## 设计决策
+ * - 使用StateFlow而非LiveData，保持Compose响应式特性
+ * - 初始化时加载会话列表，支持下拉刷新
+ * - Token统计按月聚合展示，便于用户管理使用量
+ * - 联系人与最近会话关联显示，提升用户体验
+ *
+ * @see com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
  */
 @HiltViewModel
 class AiAdvisorViewModel @Inject constructor(

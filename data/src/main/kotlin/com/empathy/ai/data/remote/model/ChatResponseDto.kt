@@ -8,9 +8,18 @@ import com.squareup.moshi.JsonClass
  *
  * 符合 OpenAI Chat Completion API 标准的响应结构。
  *
+ * 【设计决策】可选字段使用 Nullable
+ * - API响应可能因服务商不同而缺少某些字段
+ * - 使用 Nullable 确保解析稳定性，不因字段缺失而崩溃
+ *
  * @property id 响应唯一标识
+ *            【用途】用于请求追踪、错误排查、限流控制
+ *            【格式】通常为 "chatcmpl-xxxxxx" 前缀
  * @property choices 回复选项列表 (通常我们只取第 0 个)
+ *                   【多选场景】n>1 时会有多个选项，用于批量生成
  * @property usage Token 使用情况统计 (可选)
+ *                 【成本监控】用于统计API调用费用
+ *                 【性能分析】输入/输出Token比例反映任务复杂度
  *
  * 示例:
  * ```json
@@ -48,8 +57,17 @@ data class ChatResponseDto(
  * 回复选项 DTO
  *
  * @property message 回复消息
+ *                   【提取策略】取 choices[0].message.content
+ *                   【边界】choices 可能为空数组，需做空判断
  * @property index 选项索引 (通常为 0)
+ *                【用途】多选项时标识当前选项
  * @property finishReason 完成原因 (例如: "stop" 表示自然结束, "tool_calls" 表示调用工具)
+ *                        【枚举值】
+ *                        - stop: 正常结束
+ *                        - length: 达到max_tokens限制
+ *                        - tool_calls: 需要调用工具
+ *                        - content_filter: 内容过滤
+ *                        - function_call: 函数调用响应（兼容旧版）
  */
 @JsonClass(generateAdapter = true)
 data class ChoiceDto(

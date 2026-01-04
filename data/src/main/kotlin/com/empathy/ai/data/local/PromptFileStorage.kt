@@ -22,7 +22,26 @@ import javax.inject.Singleton
 /**
  * 提示词JSON文件存储
  *
- * 负责全局提示词配置的读写，支持内存缓存和自动备份
+ * 【存储策略选择】为什么用文件而非数据库？
+ * 1. 用户可能需要导出/分享配置（文件更易处理）
+ * 2. 配置结构简单，关系型数据库过于重量级
+ * 3. 支持直接编辑JSON文件（极客用户需求）
+ *
+ * 【内存缓存的设计】
+ * 每次读取都从文件加载太慢，加入内存缓存：
+ * - 首次读取：从文件加载到内存
+ * - 后续读取：直接从内存返回
+ * - 写入时：同步更新内存缓存
+ *
+ * 【版本迁移策略】
+ * 如果用户配置文件版本低于当前版本：
+ * 1. 加载旧版本配置
+ * 2. 执行迁移逻辑（如v2→v3的CHECK合并到POLISH）
+ * 3. 写入新版本配置
+ * 这样用户无需手动重新配置
+ *
+ * @see DefaultPrompts
+ * @see PromptFileBackup
  */
 @Singleton
 class PromptFileStorage @Inject constructor(
@@ -39,6 +58,18 @@ class PromptFileStorage @Inject constructor(
         private val LEGACY_VARIABLE_PATTERN = Regex("""\{+\w+\}+""")
     }
 
+    /**
+     * 内存缓存 + 互斥锁
+     *
+     * 【缓存一致性问题】
+     * 使用Mutex（互斥锁）防止竞态条件：
+     * - Thread A读取时尚未命中缓存，开始加载文件
+     * - Thread B同时读取，期望共享加载结果
+     * - Mutex确保只有一个线程执行加载，其他等待
+     *
+     * 【volatile的作用】
+     * 确保cachedConfig的可见性，多线程环境下立即感知变化
+     */
     @Volatile
     private var cachedConfig: GlobalPromptConfig? = null
     private val cacheLock = Mutex()
@@ -54,6 +85,25 @@ class PromptFileStorage @Inject constructor(
     )
 
 
+    /**
+     * 读取全局配置
+     *
+     * 【三级缓存策略】
+     * 1. 内存缓存（cachedConfig）：最快的访问路径
+     * 2. 文件读取（globalPromptsFile）：次快，需要I/O
+     * 3. 默认配置（DefaultPrompts兜底）：最慢但最可靠
+     *
+     * 【迁移触发条件】
+     * 如果配置文件版本 < CURRENT_CONFIG_VERSION：
+     * - 执行migrateIfNeeded()
+     * - 迁移后写入新版本配置
+     * - 避免下次再次迁移
+     *
+     * 【容灾恢复】
+     * 如果配置文件损坏：
+     * - 尝试从备份恢复
+     * - 备份也损坏则创建默认配置
+     */
     suspend fun readGlobalConfig(): Result<GlobalPromptConfig> = withContext(ioDispatcher) {
         cachedConfig?.let { return@withContext Result.success(it) }
         cacheLock.withLock {
@@ -86,6 +136,18 @@ class PromptFileStorage @Inject constructor(
         }
     }
 
+    /**
+     * 版本迁移
+     *
+     * 【为什么需要版本迁移】
+     * - 提示词结构可能随功能演进而变化
+     * - 旧版本用户的配置文件需要兼容新版本
+     * - 用户无需手动重新配置
+     *
+     * 【当前迁移逻辑】
+     * v2→v3：将CHECK场景的提示词合并到POLISH
+     * 原因：安全检查和润色本质上都是消息发送前的校验
+     */
     private fun migrateIfNeeded(config: GlobalPromptConfig, fromVersion: Int): GlobalPromptConfig {
         var migratedConfig = config
         if (fromVersion < 3) {
@@ -124,6 +186,18 @@ class PromptFileStorage @Inject constructor(
         return config.copy(prompts = updatedPrompts)
     }
 
+    /**
+     * 保存全局配置
+     *
+     * 【写入前备份】
+     * 保存前先创建备份，防止配置损坏：
+     * 1. 如果配置文件存在，先备份
+     * 2. 然后写入新配置
+     * 3. 成功后再更新内存缓存
+     *
+     * 【事务性写入】
+     * 使用Mutex确保写入原子性，避免写入过程中被读取导致数据不一致
+     */
     suspend fun writeGlobalConfig(config: GlobalPromptConfig): Result<Unit> = withContext(ioDispatcher) {
         cacheLock.withLock {
             try {

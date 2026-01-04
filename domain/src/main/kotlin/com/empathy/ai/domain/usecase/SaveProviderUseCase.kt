@@ -7,14 +7,25 @@ import javax.inject.Inject
 /**
  * 保存服务商用例
  *
- * 验证并保存 AI 服务商配置
+ * 验证并保存 AI 服务商配置。
  *
- * 验证规则：
- * - 名称不能为空
- * - URL 必须以 http:// 或 https:// 开头
- * - API Key 不能为空
- * - 至少包含一个模型
- * - 默认模型 ID 必须在模型列表中
+ * 业务背景:
+ *   - TD-00025: AI配置功能完善
+ *   - 场景: 用户新增或编辑AI服务商配置
+ *
+ * 验证规则（严格模式）:
+ *   1. 名称不能为空
+ *   2. URL 必须以 http:// 或 https:// 开头
+ *   3. API Key 不能为空
+ *   4. 至少包含一个模型
+ *   5. 默认模型 ID 必须在模型列表中
+ *
+ * 设计权衡:
+ *   - 为什么严格验证? 防止保存无效配置导致运行时崩溃
+ *   - 验证失败返回 ValidationException，便于UI展示具体错误
+ *
+ * @see AiProvider 服务商数据模型
+ * @see ValidationException 验证异常
  */
 class SaveProviderUseCase @Inject constructor(
     private val repository: AiProviderRepository

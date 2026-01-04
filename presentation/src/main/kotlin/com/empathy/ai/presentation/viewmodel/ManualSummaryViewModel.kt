@@ -21,9 +21,44 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 手动总结ViewModel
+ * 手动总结功能 ViewModel
  *
- * 管理手动触发AI总结功能的业务逻辑和UI状态
+ * ## 业务职责
+ * 支持用户手动创建对话总结：
+ * - 对话内容输入和编辑
+ * - AI辅助总结生成
+ * - 关键事件标记
+ * - 情感标签标注
+ * - 日期范围选择和验证
+ * - 冲突检测和处理
+ *
+ * ## 关联文档
+ * - PRD-00003: 联系人画像记忆系统需求
+ *
+ * ## 核心数据流
+ * ```
+ * SelectConversation → LoadHistory → UserEdit → [AIAssist] → Save → UpdateProfile
+ * ```
+ *
+ * ## 关键业务概念
+ * - **DateRange**: 日期范围选择，支持快捷选项和自定义范围
+ * - **ConflictResult**: 重复总结检测结果
+ * - **ConflictResolution**: 冲突处理方式（覆盖/跳过/取消）
+ * - **SummaryTask**: 总结任务状态跟踪
+ *
+ * ## 设计决策
+ * - **双模式**: 支持纯手动编辑和AI辅助两种模式
+ * - **草稿保护**: 未保存退出时提示用户保存
+ * - **冲突检测**: 自动检测已存在的总结，避免重复
+ * - **进度展示**: 长时间AI生成过程显示进度条
+ *
+ * ## 业务规则
+ * - 总结必须关联具体联系人
+ * - 敏感信息自动脱敏处理
+ * - 保存后自动更新关系分数
+ * - 日期范围有最大天数限制（防止Token超限）
+ *
+ * @see com.empathy.ai.presentation.ui.screen.ManualSummaryScreen
  */
 @HiltViewModel
 class ManualSummaryViewModel @Inject constructor(

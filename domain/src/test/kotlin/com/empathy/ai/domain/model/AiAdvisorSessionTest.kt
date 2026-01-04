@@ -10,7 +10,17 @@ import org.junit.Test
 /**
  * AiAdvisorSession领域模型单元测试
  *
- * TD-00026 T013: 测试AI军师会话模型的创建和属性
+ * 业务背景 (PRD-00026):
+ * - AI军师会话是组织对话的容器，每个联系人可有多个独立会话
+ * - 会话支持多轮对话，具有独立的创建时间和最后更新时间
+ * - 会话标题用于区分不同主题的对话（如"约会策略分析"、"关系复盘"等）
+ *
+ * 设计决策 (TDD-00026):
+ * - 使用UUID作为会话唯一标识符
+ * - 提供工厂方法create()封装创建逻辑，设置合理默认值
+ * - messageCount和isActive字段支持会话管理功能
+ *
+ * 任务: TD-00026/T013
  */
 class AiAdvisorSessionTest {
 
@@ -22,6 +32,13 @@ class AiAdvisorSessionTest {
         assertNotEquals(session1.id, session2.id)
     }
 
+    /**
+     * 验证工厂方法默认值：新会话使用"新对话"作为默认标题
+     *
+     * 业务规则 (PRD-00026):
+     * - 新建会话时自动生成一个通用标题，用户可后续修改
+     * - 默认标题简洁明了，适用于大多数首次对话场景
+     */
     @Test
     fun `create should set default title`() {
         val session = AiAdvisorSession.create(contactId = "contact1")
@@ -47,6 +64,13 @@ class AiAdvisorSessionTest {
         assertEquals(contactId, session.contactId)
     }
 
+    /**
+     * 验证工厂方法默认值：新创建的消息计数为0
+     *
+     * 设计权衡 (TDD-00026):
+     * - messageCount由数据库触发器或Repository层维护
+     * - 工厂方法只设置初始值0，实际计数在消息保存时递增
+     */
     @Test
     fun `create should initialize messageCount to zero`() {
         val session = AiAdvisorSession.create(contactId = "contact1")
@@ -128,6 +152,17 @@ class AiAdvisorSessionTest {
         assertTrue(session.id.isNotEmpty())
     }
 
+    /**
+     * 验证唯一标识符格式：使用标准UUID格式
+     *
+     * 设计决策 (TDD-00026):
+     * - UUID格式: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+     * - 使用Java UUID.randomUUID()生成，确保全局唯一性
+     *
+     * 业务意义:
+     * - 避免分布式环境下的ID冲突
+     * - 支持离线创建会话，后合并时不会产生冲突
+     */
     @Test
     fun `id should be valid UUID format`() {
         val session = AiAdvisorSession.create(contactId = "contact1")

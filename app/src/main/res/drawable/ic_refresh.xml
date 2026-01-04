@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    刷新功能图标 - 循环箭头
+
+    业务背景 (PRD-00001):
+    - 重新发起AI分析/检查请求
+    - 适用于结果不满意需要重新生成场景
+
+    设计决策:
+    - 标准 Material Design 刷新图标
+    - 使用 ?attr/colorControlNormal 支持主题着色
+    - 顺时针循环箭头表示重新操作
+
+    任务: FD-00001/T002
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

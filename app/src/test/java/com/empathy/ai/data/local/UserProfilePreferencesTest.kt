@@ -22,6 +22,29 @@ import org.junit.Test
 /**
  * UserProfilePreferences 单元测试
  *
+ * 测试用户画像数据序列化和持久化:
+ * - JSON序列化 - Moshi正确序列化和反序列化UserProfile
+ * - 空值处理 - 空JSON字符串返回默认空画像
+ * - 中文支持 - 特殊字符和中文标签正确处理
+ * - 特殊字符 - 标签中的连字符、下划线等
+ * - 多维度 - customDimensions支持多维度自定义数据
+ * - 时间戳 - createdAt/updatedAt正确持久化
+ * - 性能验证 - 大量标签序列化性能测试
+ *
+ * 业务规则 (PRD-00001 用户画像管理):
+ * - 用户画像包含性格、价值观、兴趣、沟通风格等维度
+ * - 支持自定义维度扩展
+ * - 画像数据需要持久化存储
+ *
+ * 设计权衡:
+ * - 使用Moshi进行JSON序列化（Android原生支持好）
+ * - 使用EncryptedSharedPreferences加密存储敏感数据
+ * - 单元测试使用MockK模拟SharedPreferences
+ *
+ * 任务追踪:
+ * - PRD-00001 - 用户画像管理需求
+ * - TDD-00001 - 用户画像管理技术设计
+ *
  * 注意：由于EncryptedSharedPreferences依赖Android环境，
  * 这里使用MockK模拟SharedPreferences行为进行测试。
  * 完整的加密存储测试应在Android测试中进行。

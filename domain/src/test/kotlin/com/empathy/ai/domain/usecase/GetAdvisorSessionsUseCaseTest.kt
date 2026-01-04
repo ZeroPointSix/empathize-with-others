@@ -11,7 +11,22 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * GetAdvisorSessionsUseCase单元测试
+ * GetAdvisorSessionsUseCase 单元测试
+ *
+ * 业务背景 (PRD-00026):
+ *   AI军师会话管理功能测试，验证按联系人获取会话列表的能力
+ *
+ * 功能验证:
+ *   - 按联系人隔离的会话列表查询
+ *   - 空列表边界情况处理
+ *   - 数据库异常的错误传递
+ *   - 会话按更新时间排序（用于UI展示最近活跃会话）
+ *
+ * 设计决策 (TDD-00026):
+ *   - 会话列表按updatedAt降序排列，Repository层负责排序逻辑
+ *   - 使用Result包装所有Repository调用，统一成功/失败处理
+ *
+ * 任务追踪: FD-00026/阶段2-领域层实现
  */
 class GetAdvisorSessionsUseCaseTest {
 

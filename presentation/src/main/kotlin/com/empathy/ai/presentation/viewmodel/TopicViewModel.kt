@@ -18,9 +18,44 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 对话主题ViewModel
+ * 主题管理 ViewModel
  *
- * 管理主题设置界面的状态和业务逻辑
+ * ## 业务职责
+ * 管理讨论主题的完整生命周期：
+ * - 主题列表加载和搜索
+ * - 主题创建和编辑
+ * - 主题历史记录管理
+ * - 主题关联设置（提醒、优先级）
+ * - 多联系人主题隔离
+ *
+ * ## 核心数据流
+ * ```
+ * LoadTopics → Select/Create → Edit → Save → Notify
+ * ```
+ *
+ * ## 关键业务概念
+ * - **ConversationTopic**: 讨论话题（如"生日礼物"、"约会安排"）
+ * - **TopicHistory**: 主题历史记录（快速复用历史主题）
+ * - **TopicSetting**: 主题相关设置（提醒时间、重要程度）
+ *
+ * ## 设计决策
+ * - **按时间分组**: 历史主题按日期分组展示
+ * - **快速复用**: 支持从历史记录快速创建新主题
+ * - **状态追踪**: 标记已完成/未完成/进行中
+ * - **动态联系人**: 支持通过loadTopic()动态切换观察的联系人
+ *
+ * ## 主题状态
+ * - PENDING: 待讨论
+ * - IN_PROGRESS: 讨论中
+ * - COMPLETED: 已完成
+ * - ARCHIVED: 已归档
+ *
+ * ## 数据流说明
+ * - init中根据contactId初始化观察和历史加载
+ * - loadTopic()支持外部触发重新加载指定联系人的主题
+ * - observeTopicForContact()使用Flow持续监听主题变化
+ *
+ * @see com.empathy.ai.presentation.ui.screen.TopicScreen
  */
 @HiltViewModel
 class TopicViewModel @Inject constructor(

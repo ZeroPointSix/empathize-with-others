@@ -7,9 +7,27 @@ import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.ScenePromptConfig
 
 /**
- * 提示词系统测试数据工厂
+ * PromptTestDataFactory 提示词系统测试数据工厂
  *
- * 提供统一的测试数据生成方法，避免测试代码重复
+ * 功能描述:
+ *   提供统一的测试数据生成方法，避免测试代码重复，确保测试数据一致性
+ *
+ * 业务背景 (PRD-00005):
+ *   提示词系统支持多种场景(ANALYZE/CHECK/EXTRACT/SUMMARY)和变量插值
+ *   测试数据需要覆盖正常场景、边界条件和异常情况
+ *
+ * 设计权衡:
+ *   - 工厂模式集中管理测试数据，便于维护和修改
+ *   - 默认值覆盖常见场景，减少测试代码冗余
+ *   - 边界测试数据（最大长度、注入攻击）专门提供
+ *
+ * 测试覆盖:
+ *   - PromptContext: 联系人名称、关系状态、标签、事实数量等
+ *   - GlobalPromptConfig: 版本管理、多场景配置
+ *   - 边界测试: 1000字符限制、注入攻击、空白输入等
+ *
+ * 任务追踪:
+ *   - FD-00005 提示词管理系统功能设计
  */
 object PromptTestDataFactory {
 

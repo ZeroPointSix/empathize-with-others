@@ -10,15 +10,17 @@ import kotlinx.coroutines.flow.Flow
 /**
  * 联系人数据访问对象 (DAO)
  *
- * 设计原则:
- * - 查询要响应式 (Reactive): 返回Flow,数据变动自动推送
- * - 写入要简单粗暴 (Upsert): 使用REPLACE策略,简化上层逻辑
+ * 【设计原则】
+ * - 查询响应式：返回Flow，数据变动自动推送（MVVM架构UI刷新的根本动力）
+ * - 写入简单化：使用REPLACE策略，简化上层insert/update判断
  *
- * 核心操作:
- * 1. 查询所有联系人(getAllProfiles) - 返回Flow<List>,UI自动刷新
- * 2. 插入或更新(insertOrUpdate) - 冲突时覆盖,无需单独update
+ * 【三层记忆架构】联系人画像是长期记忆的载体：
+ * - 短期记忆：对话记录（ConversationLog）
+ * - 中期记忆：每日总结（DailySummary）
+ * - 长期记忆：联系人画像（ContactProfile）
  *
  * @see ContactProfileEntity
+ * @see com.empathy.ai.domain.repository.ContactRepository
  */
 @Dao
 interface ContactDao {
@@ -26,9 +28,12 @@ interface ContactDao {
     /**
      * 查询所有联系人
      *
-     * 返回Flow<List<ContactProfileEntity>>,这意味着不仅仅是一次查询,
-     * 而是一个"长连接管道"。只要profiles表有任何变动,这个Flow会自动
-     * 吐出最新数据。这是MVVM架构UI自动刷新的根本动力。
+     * 【Flow vs List】返回Flow意味着建立一个"数据监听通道"：
+     * - 首次订阅：立即推送当前联系人列表
+     * - 数据变动：自动推送新数据（新增/修改/删除）
+     * - 取消订阅：自动释放资源
+     *
+     * 这就是为什么联系人列表能实时刷新，无需手动调用refresh。
      *
      * @return 联系人实体列表的Flow
      */
@@ -47,12 +52,12 @@ interface ContactDao {
     /**
      * 插入或更新联系人
      *
-     * 使用OnConflictStrategy.REPLACE策略:
-     * - 如果ID不存在,执行插入
-     * - 如果ID已存在,覆盖更新旧数据
-     * 这大大简化了上层逻辑,无需区分insert和update。
+     * 【Upsert设计】使用REPLACE策略：
+     * - ID不存在 → 执行INSERT
+     * - ID已存在 → 执行UPDATE（覆盖旧数据）
      *
-     * 注意:这是挂起函数(suspend),必须在协程中调用。
+     * 上层无需区分insert和update，专注业务逻辑。
+     * 注意：这是挂起函数(suspend)，必须在协程中调用。
      *
      * @param entity 联系人实体
      */
@@ -74,6 +79,12 @@ interface ContactDao {
     /**
      * 更新关系分数
      *
+     * 【关系分数】0-100的量化指标：
+     * - 初始值：50（中立）
+     * - AI建议被采纳：加分
+     * - 沟通效果正向反馈：加分
+     * - 用于AI分析的优先级排序
+     *
      * @param id 联系人ID
      * @param score 新的关系分数
      */
@@ -83,8 +94,14 @@ interface ContactDao {
     /**
      * 更新Facts
      *
+     * 【核心事实槽】Facts是联系人画像的精华：
+     * - 格式：List<Fact>序列化为JSON
+     * - 内容：喜好、习惯、重要日期等
+     * - 来源：用户手动添加 + AI分析推断
+     *
      * @param id 联系人ID
      * @param factsJson Facts的JSON字符串
+     * @see com.empathy.ai.data.local.converter.FactListConverter
      */
     @Query("UPDATE profiles SET facts_json = :factsJson WHERE id = :id")
     suspend fun updateFacts(id: String, factsJson: String)

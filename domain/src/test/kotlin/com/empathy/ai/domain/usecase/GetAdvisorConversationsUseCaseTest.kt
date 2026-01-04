@@ -15,7 +15,23 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * GetAdvisorConversationsUseCase单元测试
+ * GetAdvisorConversationsUseCase 单元测试
+ *
+ * 业务背景 (PRD-00026):
+ *   AI军师对话流获取测试，验证会话内消息的历史记录查询
+ *
+ * 功能验证:
+ *   - 按会话ID查询消息列表（Flow响应式流）
+ *   - 消息按时间戳正序排列（时间线展示）
+ *   - 空对话流的边界处理
+ *   - 失败状态消息的包含（保留完整历史）
+ *
+ * 设计决策 (TDD-00026):
+ *   - 使用Flow响应式流，实时反映消息变化
+ *   - Repository层负责排序，UI层直接消费有序数据
+ *   - 失败消息仍保留，用于审计和问题排查
+ *
+ * 任务追踪: FD-00026/阶段2-领域层实现
  */
 class GetAdvisorConversationsUseCaseTest {
 

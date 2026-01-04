@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    主题资源定义 - Material Design 3 基础主题
+
+    业务背景 (PRD-00001):
+    - 悬浮窗需要在不同设备上保持一致的视觉体验
+    - 支持系统级浅色/深色主题自动切换
+
+    设计决策 (TDD-00001):
+    - 使用 Theme.Material3.Light.NoActionBar 作为基础主题
+    - 悬浮窗场景不使用 ActionBar，保持简洁
+    - 主题属性完整覆盖 Material 3 色彩系统
+
+    任务: FD-00001/T001 (悬浮窗UI实现)
+-->
 <resources>
     <!-- Base application theme using Material Components -->
     <style name="Theme.GiveLove" parent="Theme.Material3.Light.NoActionBar">

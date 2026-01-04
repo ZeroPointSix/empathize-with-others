@@ -30,7 +30,22 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * ManualSummaryViewModel 单元测试
+ * ManualSummaryViewModel 手动触发AI总结功能测试
+ *
+ * 测试范围：
+ * - 日期范围选择与验证
+ * - 冲突检测与解决流程
+ * - 总结生成执行与错误处理
+ * - 取消/重试/导航状态管理
+ *
+ * 业务背景 (PRD-00011):
+ * - 用户可手动触发AI总结，补充历史对话的总结内容
+ * - 支持快捷选项（最近7天、本月等）和自定义日期范围
+ * - 总结前进行冲突检测，避免重复总结
+ * - 提供进度展示、错误提示和重试机制
+ *
+ * 任务追踪:
+ * - FD-00011 手动触发AI总结功能设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManualSummaryViewModelTest {

@@ -44,9 +44,32 @@ import org.junit.Test
 /**
  * ContactDetailTabViewModel 添加事实功能测试
  *
- * 验证 BUG-00006 修复：
- * 1. 添加事实后不应清空现有的AI对话记录
- * 2. 添加的事实应该显示在时间线中
+ * 问题背景 (BUG-00006):
+ *   添加事实后清空现有的AI对话记录和总结，导致数据丢失
+ *   需要确保时间线项目的完整性
+ *
+ * 测试范围：
+ * 1. 添加事实后保留现有对话记录（Conversation）
+ * 2. 添加事实后保留现有AI总结（AiSummary）
+ * 3. 添加的事实正确显示在时间线中（UserFact）
+ * 4. facts列表和latestFact正确更新
+ * 5. 添加成功后关闭对话框并显示成功消息
+ * 6. 空key或空value不应该添加事实
+ * 7. 时间线项目按时间倒序排列
+ *
+ * 业务规则 (PRD-00004/AC-006):
+ *   - 用户可以手动向事实流中添加新的事实
+ *   - 添加的事实立即显示在时间线中
+ *   - 时间线按时间倒序排列，最新的在最前面
+ *
+ * 设计权衡:
+ *   - 使用独立的facts列表和timelineItems分开管理
+ *   - buildTimelineItems() 合并对话、总结、事实构建时间线
+ *   - 时间线排序在构建时统一处理，避免UI层排序
+ *
+ * 任务追踪:
+ *   - BUG-00006 添加事实后清空AI对话记录
+ *   - TD-00014 标签画像V2功能
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactDetailTabViewModelAddFactTest {

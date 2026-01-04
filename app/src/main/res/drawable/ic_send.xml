@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    发送功能图标 - 箭头
+
+    业务背景 (PRD-00001):
+    - 发送输入内容给AI进行处理的确认按钮
+    - 对话界面中的主要操作入口
+
+    设计决策:
+    - 标准 Material Design 发送箭头图标
+    - 使用 ?attr/colorControlNormal 支持主题着色
+    - 箭头朝向右上方，暗示前进/发送
+
+    任务: FD-00001/T002
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

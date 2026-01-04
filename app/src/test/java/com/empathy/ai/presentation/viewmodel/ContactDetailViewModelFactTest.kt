@@ -26,14 +26,25 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * ContactDetailViewModel 事实管理测试
+ * ContactDetailViewModel 事实管理功能测试
  *
- * 测试场景：
+ * 测试范围：
  * 1. 添加多个相同类型的事实应该全部保留
- * 2. 添加完全相同的事实应该去重
+ * 2. 添加完全相同的事实应该去重（key+value都相同）
  * 3. 添加不同类型的事实应该全部保留
+ * 4. 空key或空value应该被忽略
+ * 5. 添加事实后状态更新（hasUnsavedChanges、输入字段清空）
+ * 6. 事实添加顺序保持
  *
- * @see BUG-00017 三个UI交互问题系统性分析
+ * 业务规则 (PRD-00003):
+ *   - 事实(Fact)是联系人画像的核心数据
+ *   - 支持手动添加事实和AI自动提取事实
+ *   - 事实按类型分类组织，支持搜索和筛选
+ *
+ * 设计权衡 (BUG-00017):
+ *   - 使用set操作符确保去重，但保留添加顺序
+ *   - 空值过滤在ViewModel层统一处理，不写入数据库
+ *   - hasUnsavedChanges标志用于检测未保存的修改
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactDetailViewModelFactTest {

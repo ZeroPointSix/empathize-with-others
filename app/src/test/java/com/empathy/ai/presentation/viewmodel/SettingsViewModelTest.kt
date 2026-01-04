@@ -18,14 +18,25 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
 /**
- * SettingsViewModel 单元测试
+ * SettingsViewModel 设置功能测试
  *
  * 测试范围：
- * - AI 服务商选择
- * - 隐私设置切换
- * - 悬浮窗设置
- * 
- * 注意：API Key 配置已移至服务商配置中统一管理（AiConfigScreen）
+ * - AI服务商选择与保存
+ * - 隐私设置切换（数据掩码、本地优先模式）
+ * - 对话框显示/隐藏
+ * - 错误与成功消息处理
+ *
+ * 业务背景 (PRD-00002):
+ * - 设置页面提供AI服务商选择入口
+ * - 隐私保护设置控制数据脱敏和本地优先模式
+ * - 切换设置后显示成功提示，支持清除
+ *
+ * 设计权衡:
+ * - API Key配置移至AiConfigScreen统一管理（关注点分离）
+ * - 使用SavedStateHandle保持状态，应对配置更改
+ *
+ * 任务追踪:
+ * - FD-00002 设置功能设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {

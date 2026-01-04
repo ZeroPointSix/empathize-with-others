@@ -16,13 +16,35 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 联系人列表界面的ViewModel
+ * 联系人列表页面 ViewModel
  *
- * 职责：
- * 1. 管理联系人列表的 UI 状态
- * 2. 处理用户交互事件
- * 3. 调用 Repository 获取联系人数据
- * 4. 处理搜索、选择、删除等操作
+ * ## 业务职责
+ * 管理联系人列表的完整交互逻辑：
+ * - 联系人列表加载和分页
+ * - 搜索过滤（按名称、标签、关系阶段）
+ * - 排序方式切换（最近互动/关系分数/添加时间）
+ * - 批量操作支持（删除、标签管理）
+ * - 多选模式和全选功能
+ *
+ * ## 核心数据流
+ * ```
+ * UserAction(Search/Filter/Sort) → ViewModel → Repository → PagedList → UI
+ * ```
+ *
+ * ## 关键设计决策
+ * - **Paging3**: 大数据量分页加载，避免内存溢出
+ * - **复合过滤**: 搜索词 + 标签过滤 + 排序方式组合生效
+ * - **即时搜索**: 使用Debounce避免频繁请求（300ms延迟）
+ * - **空状态优化**: 不同空状态展示不同UI（无联系人/无匹配结果）
+ *
+ * ## 过滤类型
+ * - ALL: 全部联系人
+ * - STARRED: 仅星标联系人
+ * - RISK_TAG: 仅有雷区标签的联系人
+ * - STRATEGY_TAG:仅有策略标签的联系人
+ * - RECENT: 最近活跃的联系人
+ *
+ * @see com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
  */
 @HiltViewModel
 class ContactListViewModel @Inject constructor(

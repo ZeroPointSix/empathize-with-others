@@ -4,14 +4,31 @@ import com.empathy.ai.domain.model.ConversationLog
 import kotlinx.coroutines.flow.Flow
 
 /**
- * 对话记录仓库接口
+ * 对话记录仓储接口
  *
- * 定义对话记录的数据访问接口
+ * 业务背景 (PRD-00003):
+ * - 对话记录是三层记忆架构的底层（短期记忆）
+ * - 记录每次用户发起的AI分析请求和AI回复
+ * - 用于每日总结的原材料，也是AI分析时回顾历史的依据
+ *
+ * 设计决策:
+ * - 用户输入先保存：用户输入立即持久化，不等AI响应
+ * - 异步保存AI回复：AI响应后异步更新aiResponse字段
+ * - 智能筛选：getRecentConversations限制返回数量，避免token超限
+ *
+ * 生命周期管理:
+ * - 未总结对话：最多保留7天，超期自动标记放弃
+ * - 已总结对话：保留30天，之后自动清理
  */
 interface ConversationRepository {
 
     /**
      * 保存用户输入
+     *
+     * 业务规则:
+     * - 用户输入立即持久化，不等AI响应
+     * - 即使AI分析失败，用户输入也会被保存
+     * - 默认使用当前时间戳，可自定义
      *
      * @param contactId 联系人ID
      * @param userInput 用户输入的聊天记录
@@ -27,6 +44,10 @@ interface ConversationRepository {
     /**
      * 更新AI回复
      *
+     * 业务规则:
+     * - AI响应后异步更新aiResponse字段
+     * - 更新后标记isSummarized = false，等待每日总结
+     *
      * @param logId 对话记录ID
      * @param aiResponse AI的分析回复
      * @return 操作结果
@@ -35,6 +56,11 @@ interface ConversationRepository {
 
     /**
      * 获取未总结的对话记录
+     *
+     * 业务规则:
+     * - 用于每日总结流程
+     * - 只获取指定时间戳之后的记录
+     * - 按contact_id分组，供SummarizeDailyConversationsUseCase处理
      *
      * @param sinceTimestamp 起始时间戳（只获取此时间之后的记录）
      * @return 未总结的对话记录列表
@@ -68,6 +94,11 @@ interface ConversationRepository {
 
     /**
      * 清理过期的已总结对话
+     *
+     * 业务规则:
+     * - 已总结对话保留30天
+     * - 每周自动执行一次清理
+     * - 避免数据库无限增长
      *
      * @param beforeTimestamp 此时间之前的已总结对话将被删除
      * @return 删除的记录数
@@ -110,7 +141,12 @@ interface ConversationRepository {
     /**
      * 获取指定联系人的最近N条对话记录
      *
-     * 用于构建对话上下文连续性，支持AI分析时回顾历史对话
+     * 用途: 构建对话上下文连续性，支持AI分析时回顾历史对话
+     *
+     * 业务规则:
+     * - 返回按时间正序排列的对话记录（最早的在前）
+     * - 限制最大条数，避免上下文过长导致token超限
+     * - 用于构建AI分析的对话历史上下文
      *
      * @param contactId 联系人ID
      * @param limit 最大条数
@@ -134,7 +170,11 @@ interface ConversationRepository {
     suspend fun getById(logId: Long): ConversationLog?
 
     /**
-     * 更新对话内容（编辑，带追踪）
+     * 更新对话内容（编辑追踪）
+     *
+     * 业务规则:
+     * - 仅首次编辑时保存原始输入
+     * - 记录修改时间，用于编辑历史追踪
      *
      * @param logId 对话记录ID
      * @param newUserInput 新的用户输入内容

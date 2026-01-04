@@ -1,30 +1,29 @@
 package com.empathy.ai.data.repository
 
-import com.empathy.ai.data.local.dao.ConversationTopicDao
-import com.empathy.ai.data.local.entity.ConversationTopicEntity
-import com.empathy.ai.domain.model.ConversationTopic
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-
 /**
  * TopicRepositoryImpl单元测试
  *
- * 测试主题仓库实现的各种场景
+ * 测试对话主题功能 (PRD-00016 对话主题功能需求):
+ * - 获取活跃主题 - getActiveTopic、observeActiveTopic
+ * - 设置主题 - setTopic（会自动停用其他主题）
+ * - 更新主题 - updateTopicContent
+ * - 清除主题 - clearTopic（停用所有主题）
+ * - 获取历史 - getTopicHistory（最多10条）
+ * - 删除主题 - deleteTopic
+ *
+ * 业务规则 (TDD-00016/4.1):
+ * - 每个联系人同时只能有一个活跃主题
+ * - 设置新主题时自动停用其他主题
+ * - 主题历史保留最近10条
+ *
+ * 数据库设计 (TDD-00016/4.2):
+ * - conversation_topics表存储主题
+ * - is_active字段标识是否活跃
+ * - contact_id外键关联联系人
+ *
+ * 任务追踪:
+ * - PRD-00016 - 对话主题功能需求
+ * - TDD-00016 - 对话主题功能技术设计
  */
 class TopicRepositoryImplTest {
 

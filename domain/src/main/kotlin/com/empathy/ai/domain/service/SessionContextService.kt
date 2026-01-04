@@ -16,10 +16,16 @@ import javax.inject.Singleton
  * 统一管理历史对话上下文的构建，供所有UseCase共享使用。
  * 解决三种模式（分析/润色/回复）上下文不共通的问题。
  *
- * 设计原则：
- * - 单一职责：专注于历史上下文的查询和构建
- * - 可复用：所有需要历史上下文的UseCase统一调用此服务
- * - 可配置：通过SettingsRepository读取用户配置的历史条数
+ * 业务背景:
+ *   - PRD-00007: 对话上下文连续性增强需求
+ *   - 问题: AnalyzeChat/PolishDraft/GenerateReply 各自独立查询历史，重复代码
+ *   - 解决: 抽取公共逻辑到统一服务，确保上下文一致性
+ *
+ * 设计决策:
+ *   - 单一职责: 专注于历史上下文的查询和构建
+ *   - 可复用: 所有需要历史上下文的UseCase统一调用此服务
+ *   - 可配置: 通过SettingsRepository读取用户配置的历史条数
+ *   - 降级策略: 任何步骤失败返回空字符串，不影响主流程
  *
  * @see BUG-00015 三种模式上下文不共通问题分析
  * @see TDD-00007 对话上下文连续性增强技术设计
@@ -40,6 +46,18 @@ class SessionContextService @Inject constructor(
      *
      * 查询数据库中该联系人的最近对话记录，并构建带时间流逝标记的上下文字符串。
      * 所有UseCase（分析/润色/回复）统一调用此方法获取历史上下文。
+     *
+     * 执行流程:
+     *   1. 读取用户配置的历史条数 (SettingsRepository)
+     *   2. 如果配置为0，直接返回空，跳过数据库查询
+     *   3. 查询最近的对话记录 (ConversationRepository)
+     *   4. 转换为 TimestampedMessage (标记发送者为 ME)
+     *   5. 构建带时间流逝标记的历史上下文 (ConversationContextBuilder)
+     *
+     * 降级策略:
+     *   - 配置为0: 返回空字符串
+     *   - 无历史记录: 返回空字符串
+     *   - 转换/构建失败: 返回空字符串 (不抛出异常)
      *
      * @param contactId 联系人ID
      * @return 格式化后的历史对话上下文字符串，如果没有历史或配置为0则返回空字符串
@@ -138,6 +156,11 @@ class SessionContextService @Inject constructor(
      * 检查是否有历史对话
      *
      * 快速检查联系人是否有历史对话记录，用于UI显示或逻辑判断。
+     * 仅查询1条记录，通过 isNotEmpty() 判断是否存在，效率优先。
+     *
+     * 为什么不用 count() > 0?
+     *   - count() 需要扫描所有匹配行，效率低
+     *   - limit 1 + isNotEmpty() 只需检测是否存在，SQL执行更快
      *
      * @param contactId 联系人ID
      * @return true 如果有历史对话

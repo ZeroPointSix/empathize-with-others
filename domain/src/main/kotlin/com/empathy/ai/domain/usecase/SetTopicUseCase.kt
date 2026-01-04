@@ -9,6 +9,18 @@ import javax.inject.Inject
  *
  * 负责验证和保存用户设置的对话主题。
  * 设置新主题时会自动停用该联系人之前的活跃主题。
+ *
+ * 业务背景:
+ *   - PRD-00016: 对话主题功能需求
+ *   - 场景: 用户为当前对话设置/更新主题
+ *
+ * 设计决策:
+ *   - 单主题模式: 每个联系人同时只能有一个活跃主题
+ *   - 自动停用: 设置新主题时，Repository 自动将旧主题设为非活跃
+ *   - 长度限制: MAX_CONTENT_LENGTH 防止主题过长
+ *
+ * @see TopicRepository.setTopic 仓库设置方法
+ * @see ConversationTopic 主题领域模型
  */
 class SetTopicUseCase @Inject constructor(
     private val topicRepository: TopicRepository

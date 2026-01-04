@@ -7,7 +7,20 @@ import javax.inject.Singleton
 /**
  * 批量移动Fact到新分类用例
  *
- * 将指定的Facts移动到目标分类（更新key字段）
+ * 将指定的Facts移动到目标分类（更新key字段）。
+ *
+ * 业务背景:
+ *   - PRD-00012: 事实流内容编辑功能需求
+ *   - 场景: 用户批量调整事实的分类归属
+ *
+ * 设计决策:
+ *   - 原地修改: 更新现有Fact的key字段，而非创建新对象
+ *   - 保留修改痕迹: 设置 isUserModified = true，记录用户手动编辑
+ *   - 保存原始值: originalKey 保存首次编辑前的分类
+ *   - 效率优化: 单次遍历完成所有更新
+ *
+ * @see Fact.isUserModified 标记是否为用户手动修改
+ * @see Fact.originalKey 原始分类名称
  */
 @Singleton
 class BatchMoveFactsUseCase @Inject constructor(

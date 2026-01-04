@@ -4,10 +4,20 @@ import com.empathy.ai.domain.model.ConversationTopic
 import kotlinx.coroutines.flow.Flow
 
 /**
- * 对话主题仓库接口
+ * 对话主题仓储接口
  *
- * 定义主题数据的访问和管理操作，遵循Clean Architecture原则，
- * 在Domain层定义接口，由Data层实现。
+ * 业务背景:
+ * - 主题(Topic)是联系人对话的上下文锚点
+ * - 每个联系人同一时间只有一个活跃主题
+ * - 主题用于标识当前对话的关注点，支持上下文切换
+ *
+ * 设计决策:
+ * - 活跃主题优先：设置新主题时自动停用旧的
+   - 响应式监听：observeActiveTopic返回Flow，支持UI实时更新
+   - 历史记录：保留最近的主题历史，便于回顾和切换
+   - 轻量级结构：不与对话记录强关联，可独立管理
+ *
+ * 遵循Clean Architecture原则：接口定义在domain层，由data层实现
  */
 interface TopicRepository {
 
@@ -22,6 +32,8 @@ interface TopicRepository {
     /**
      * 获取联系人当前活跃主题的Flow（响应式）
      *
+     * 用途: UI实时监听主题变化
+     *
      * @param contactId 联系人ID
      * @return 主题Flow，实时更新
      */
@@ -30,7 +42,10 @@ interface TopicRepository {
     /**
      * 设置联系人的对话主题
      *
-     * 会自动停用该联系人之前的活跃主题
+     * 业务规则:
+     * - 自动停用该联系人之前的活跃主题
+     * - 新主题自动设为活跃状态
+     * - 如果已存在相同内容的主题，则更新而非新建
      *
      * @param topic 要设置的主题
      * @return 操作结果
@@ -49,6 +64,10 @@ interface TopicRepository {
     /**
      * 清除联系人的当前主题（设置为非活跃）
      *
+     * 业务规则:
+     * - 仅将主题标记为非活跃，不删除
+     * - 保留历史记录供后续查询
+     *
      * @param contactId 联系人ID
      * @return 操作结果
      */
@@ -65,6 +84,10 @@ interface TopicRepository {
 
     /**
      * 删除指定主题
+     *
+     * 业务规则:
+     * - 物理删除，非活跃主题才能删除
+     * - 活跃主题需先调用clearTopic
      *
      * @param topicId 主题ID
      * @return 操作结果

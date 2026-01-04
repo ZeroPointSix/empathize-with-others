@@ -1,34 +1,21 @@
 package com.empathy.ai.data.repository
 
-import com.empathy.ai.data.local.ApiKeyStorage
-import com.empathy.ai.data.local.dao.AiProviderDao
-import com.empathy.ai.domain.model.AiModel
-import com.empathy.ai.domain.model.AiProvider
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withContext
-import org.junit.After
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-
 /**
  * AiProviderRepository 线程调度测试
  *
- * 验证网络请求在正确的线程上执行，防止 NetworkOnMainThreadException
+ * 验证 BUG-00016 修复：网络请求在正确的线程上执行
  *
- * @see BUG-00016 获取模型列表主线程网络异常分析
+ * 测试场景 (TDD-00026/4.4.2):
+ * - fetchAvailableModels() - 网络调用应使用IO调度器
+ * - testConnection() - 连接测试应使用IO调度器
+ *
+ * 业务规则:
+ * - 网络操作必须在非主线程执行，否则会抛出NetworkOnMainThreadException
+ * - Result包装确保调用方能统一处理成功/失败
+ *
+ * 任务追踪:
+ * - BUG-00016 - 获取模型列表主线程网络异常分析
+ * - TDD-00026/4.4 - Repository接口设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AiProviderRepositoryThreadingTest {

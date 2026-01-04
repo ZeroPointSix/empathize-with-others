@@ -26,9 +26,53 @@ import java.net.URLDecoder
 import javax.inject.Inject
 
 /**
- * 提示词编辑器ViewModel
+ * 提示词编辑器 ViewModel
  *
- * 负责管理提示词编辑界面的状态和业务逻辑
+ * ## 业务职责
+ * 提供提示词的编辑和管理能力：
+ * - 提示词模板编辑和语法高亮
+ * - 变量占位符预览和验证
+ * - 字符计数和长度限制
+ * - 历史版本管理和恢复
+ * - 全局/联系人单独提示词配置
+ *
+ * ## 关联文档
+ * - PRD-00005: 提示词管理系统需求
+ *
+ * ## 核心数据流
+ * ```
+ * SelectScene → LoadPrompts → Edit → Validate → [Save/Restore]
+ * ```
+ *
+ * ## 关键业务概念
+ * - **PromptScene**: 提示词场景（ANALYZE/CHECK/EXTRACT/SUMMARY/POLISH/REPLY）
+ * - **VariableInterpolation**: 变量插值，格式 {{variable_name}}
+ * - **SystemPrompt**: 系统提示词（不可修改，定义输出格式）
+ * - **UserPrompt**: 用户提示词（可自定义，覆盖AI行为风格）
+ * - **PromptEditMode**: 编辑模式（全局场景/联系人自定义）
+ *
+ * ## 变量插值支持 (PRD-00005 2.2)
+ * | 变量 | 说明 |
+ * |------|------|
+ * | `{{contact_name}}` | 联系人姓名 |
+ * | `{{relationship_status}}` | 关系阶段 |
+ * | `{{risk_tags}}` | 雷区标签列表 |
+ * | `{{strategy_tags}}` | 策略标签列表 |
+ * | `{{facts_count}}` | 已知事实数量 |
+ * | `{{today_date}}` | 今日日期 |
+ *
+ * ## 设计决策
+ * - **实时预览**: 变量替换结果实时展示
+ * - **防抖保存**: 自动保存避免丢失（100ms延迟）
+ * - **版本独立**: 每个场景独立历史记录
+ * - **大文本保护**: 超长输入自动截断，防止主线程卡死
+ *
+ * ## 约束条件 (PRD-00005 2.1.2)
+ * - 单场景用户提示词最大长度：1000字符
+ * - 超出限制禁止保存，UI显示警告
+ * - 系统提示词不可修改，保证输出格式一致性
+ *
+ * @see com.empathy.ai.presentation.ui.screen.prompt.PromptEditorScreen
  */
 @HiltViewModel
 class PromptEditorViewModel @Inject constructor(

@@ -1,27 +1,25 @@
 package com.empathy.ai.data.repository
 
-import com.empathy.ai.data.local.dao.DailySummaryDao
-import com.empathy.ai.data.local.entity.DailySummaryEntity
-import com.empathy.ai.domain.model.DailySummary
-import com.empathy.ai.domain.model.GenerationSource
-import com.empathy.ai.domain.model.KeyEvent
-import com.empathy.ai.domain.model.RelationshipTrend
-import com.empathy.ai.domain.model.SummaryType
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-
 /**
  * DailySummaryRepositoryImpl 单元测试
  *
- * 测试每日总结仓库实现的所有方法
+ * 测试每日总结仓库实现 (PRD-00011 手动触发AI总结功能):
+ * - 基础CRUD操作 - saveSummary、getSummariesByContact、getSummaryByDate
+ * - 存在性检查 - hasSummaryForDate
+ * - 删除操作 - deleteByContactId、cleanupOldSummaries
+ * - 范围查询 - getSummariesInRange、getSummarizedDatesInRange
+ * - 类型过滤 - getManualSummaries、getSummariesByType
+ * - 缺失日期统计 - countMissingDatesInRange
+ * - 实体映射 - toEntity/toDomain方法验证
+ *
+ * 版本新增功能 (v9):
+ * - 支持日期范围查询和统计
+ * - 支持手动/自动生成总结区分
+ * - 支持多种总结类型（DAILY、CUSTOM_RANGE等）
+ *
+ * 任务追踪:
+ * - PRD-00011 - 手动触发AI总结功能需求
+ * - TDD-00011 - 手动触发AI总结功能技术设计
  */
 class DailySummaryRepositoryImplTest {
 

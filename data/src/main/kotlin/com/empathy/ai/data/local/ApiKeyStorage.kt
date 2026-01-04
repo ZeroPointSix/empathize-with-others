@@ -12,15 +12,19 @@ import javax.inject.Singleton
 /**
  * API Key 加密存储
  *
- * 使用 Android Jetpack Security 的 EncryptedSharedPreferences 实现 API Key 的安全存储。
+ * 【BYOK (Bring Your Own Key) 原则的具体实现】
+ * 应用不持有用户密钥，密钥由用户提供并直接存储在本地。
+ * 加密存储确保：
+ * - 即使设备被攻破，密钥也不会轻易泄露
+ * - 符合隐私优先原则
  *
- * 安全特性:
- * - 使用 AES256_GCM 加密算法
- * - 密钥存储在 Android Keystore (硬件级加密)
- * - 自动处理密钥轮换和备份
- * - 完全延迟初始化 + 重试机制，避免 Keystore 服务未就绪导致崩溃
+ * 【重试机制的设计意图】
+ * MasterKey创建可能因系统状态短暂不稳定而失败：
+ * - 第一次失败：立即重试
+ * - 第二次失败：等待200ms后重试
+ * - 第三次失败：放弃，加密不可用
  *
- * @property context 应用上下文
+ * 这种"指数退避"策略在重试次数和响应延迟之间取得平衡。
  */
 @Singleton
 class ApiKeyStorage @Inject constructor(
@@ -143,6 +147,19 @@ class ApiKeyStorage @Inject constructor(
         }
     }
 
+    /**
+     * 脱敏显示API Key
+     *
+     * 【安全与可用性的平衡】
+     * - 完全隐藏：用户无法确认是否正确
+     * - 完全显示：容易被他人窥视
+     *
+     * 方案：首尾各保留4位，中间用*替代
+     * 这样用户可以：
+     * 1. 确认密钥已被设置
+     * 2. 看到密钥的格式特征
+     * 3. 即使被看到也只知道部分字符
+     */
     fun mask(apiKey: String): String {
         return when {
             apiKey.length <= 8 -> "****"
@@ -150,6 +167,15 @@ class ApiKeyStorage @Inject constructor(
         }
     }
 
+    /**
+     * 生成密钥标识
+     *
+     * 【密钥标识标准化】
+     * 每个服务商对应一个标准化的密钥key：
+     * "api_key_" + providerId
+     * 例如：api_key_deepseek、api_key_openai
+     * 便于管理和查找
+     */
     fun generateKey(providerId: String): String {
         return "api_key_$providerId"
     }

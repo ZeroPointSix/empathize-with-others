@@ -15,13 +15,27 @@ import javax.inject.Inject
  * 发送AI军师消息用例（核心）
  *
  * 发送用户消息并获取AI军师的回复。
- * 这是AI军师对话功能的核心用例，负责：
- * 1. 保存用户消息
- * 2. 获取联系人画像
- * 3. 获取对话历史
- * 4. 构建提示词
- * 5. 调用AI获取回复
- * 6. 保存AI回复
+ * 这是AI军师对话功能的核心用例。
+ *
+ * 业务背景:
+ *   - PRD-00026: AI军师对话功能需求
+ *   - 场景: 用户在AI军师界面输入问题，获得专业的关系分析建议
+ *
+ * 核心职责:
+ *   1. 保存用户消息到 ai_advisor_conversations 表
+ *   2. 获取联系人画像（用于个性化分析）
+ *   3. 获取对话历史（支持上下文连续性）
+ *   4. 构建提示词（联系人画像 + 历史 + 当前问题）
+ *   5. 调用AI获取回复
+ *   6. 保存AI回复
+ *
+ * 已知限制（TDD-00026）:
+ *   - HISTORY_LIMIT = 20: 受AI模型Context Window限制
+ *   - SESSION_CONTEXT_LIMIT = 10: 控制Token消耗
+ *
+ * @see AiAdvisorRepository AI军师仓库接口
+ * @see SystemPrompts.AI_ADVISOR_HEADER AI军师系统提示词头部
+ * @see SystemPrompts.AI_ADVISOR_FOOTER AI军师系统提示词尾部
  */
 class SendAdvisorMessageUseCase @Inject constructor(
     private val aiAdvisorRepository: AiAdvisorRepository,
@@ -106,6 +120,15 @@ class SendAdvisorMessageUseCase @Inject constructor(
 
     /**
      * 构建提示词
+     *
+     * 提示词结构（PRD-00026/3.3.1）:
+     *   1. 【联系人画像】姓名、沟通目标
+     *   2. 【对话历史】最近10条（SESSION_CONTEXT_LIMIT）
+     *   3. 【当前问题】用户输入
+     *
+     * 设计权衡:
+     *   - 为什么限制对话历史为10条? Token消耗控制，避免超出模型Context Window
+     *   - 为什么用 takeLast()? 保留最近上下文，远期对话相关性较低
      */
     private fun buildPrompt(
         contact: ContactProfile,

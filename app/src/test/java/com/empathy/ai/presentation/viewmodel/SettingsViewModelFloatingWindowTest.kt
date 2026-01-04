@@ -22,12 +22,28 @@ import org.junit.Test
 import org.junit.Assert.assertEquals
 
 /**
- * BUG-00019: 设置界面自动展开悬浮球问题测试
+ * BUG-00019: 设置界面悬浮窗功能测试
  *
- * 测试场景：
- * 1. 进入设置界面不应重复启动服务
- * 2. 服务运行状态检查
- * 3. 权限检查与服务启动的协调
+ * 问题背景 (BUG-00019):
+ *   进入设置界面时重复调用startService导致悬浮球自动展开
+ *   需要确保服务启动的幂等性和权限检查的协调
+ *
+ * 测试范围：
+ * 1. 服务运行状态检查与权限验证
+ * 2. 服务启动幂等性（多次调用只启动一次）
+ * 3. 权限被拒绝时的状态重置
+ * 4. UI状态与偏好设置同步
+ * 5. 并发权限检查处理
+ * 6. 边界条件处理（null context）
+ *
+ * 设计权衡:
+ *   - 使用FloatingWindowManager统一管理服务启动
+ *   - hasPermission检查权限后再决定是否启动服务
+ *   - 偏好设置(FloatingWindowPreferences)独立存储状态
+ *   - 幂等性通过isServiceRunning标志实现
+ *
+ * 任务追踪:
+ *   - BUG-00019 设置界面自动展开悬浮球问题
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelFloatingWindowTest {

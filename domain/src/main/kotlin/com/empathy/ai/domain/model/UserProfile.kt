@@ -6,6 +6,20 @@ package com.empathy.ai.domain.model
  * 存储用户自身的性格特点、价值观、兴趣爱好等信息，
  * 用于AI分析时提供个性化上下文。
  *
+ * 业务背景 (PRD-00012):
+ * - 用户画像与联系人画像互补，提供"我"的背景信息
+ * - AI军师分析时会考虑用户的性格特点，提供适配的建议
+ * - 支持5个基础维度 + 自定义维度的灵活配置
+ * - 单例模式（固定ID），确保系统中只有一个用户画像
+ *
+ * 设计决策 (TDD-00012):
+ * - 固定ID="user_profile"，使用单例模式
+ * - 5个基础维度：personalityTraits/values/interests/communicationStyle/socialPreferences
+ * - 支持最多10个自定义维度，每个维度最多20个标签
+ * - 不可变性设计，所有修改操作返回新实例
+ *
+ * 任务追踪: FD-00012/用户画像功能设计
+ *
  * @property id 唯一标识，固定为"user_profile"
  * @property personalityTraits 性格特点标签列表
  * @property values 价值观标签列表

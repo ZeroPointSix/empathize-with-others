@@ -42,9 +42,34 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * ContactDetailTabViewModel 标签画像V2功能单元测试
+ * ContactDetailTabViewModel 标签画像V2功能测试
  *
- * 测试TD-00014相关的事件处理
+ * 测试范围 (TD-00014):
+ * 1. 搜索功能 - UpdatePersonaSearch事件与防抖处理
+ * 2. 分类展开/折叠 - ToggleCategoryExpand
+ * 3. 编辑模式 - EnterEditMode/ExitEditMode
+ * 4. 标签选择 - ToggleFactSelection/SelectAllInCategory
+ * 5. 批量删除 - BatchDelete流程（确认、执行、状态重置）
+ * 6. 批量移动 - BatchMove流程（确认、执行、状态重置）
+ * 7. Feature Flag - SetUsePersonaTabV2控制V1/V2切换
+ * 8. 边界条件 - 无选中项不执行批量操作
+ *
+ * 业务背景 (PRD-00014):
+ *   标签画像V2提供更高效的事实管理方式
+ *   - 按分类组织事实，便于浏览和管理
+ *   - 支持批量选择、删除、移动操作
+ *   - 搜索功能快速定位标签
+ *   - 编辑模式提供多选操作界面
+ *
+ * 设计权衡 (TDD-00014):
+ *   - V1/V2通过Feature Flag控制，渐进式发布
+ *   - 分类数据由GroupFactsByCategoryUseCase聚合
+ *   - 批量操作需要选中状态管理和确认流程
+ *   - 防抖延迟350ms，避免频繁搜索请求
+ *
+ * 任务追踪:
+ *   - TD-00014 标签画像V2功能
+ *   - FD-00014 联系人画像界面升级功能设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactDetailTabViewModelPersonaTest {

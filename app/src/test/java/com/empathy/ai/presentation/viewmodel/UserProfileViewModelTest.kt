@@ -30,7 +30,26 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * UserProfileViewModel 单元测试
+ * UserProfileViewModel 用户画像功能测试
+ *
+ * 测试范围：
+ * - 画像初始化加载
+ * - 标签操作（添加/编辑/删除）
+ * - 维度操作（添加/删除自定义维度）
+ * - 画像导出（JSON/纯文本格式）
+ * - 重置确认流程
+ *
+ * 业务背景 (PRD-00013):
+ * - 用户画像记录用户自己的信息（性格、价值观、兴趣爱好等）
+ * - 标签支持多维度管理，支持自定义维度
+ * - 支持导出画像数据进行备份或分享
+ *
+ * 设计权衡:
+ * - 使用单例仓库确保画像数据全局一致
+ * - 导出功能支持多种格式以适应不同场景
+ *
+ * 任务追踪:
+ * - FD-00013 自己画像界面功能设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserProfileViewModelTest {

@@ -8,7 +8,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * ConversationLog领域模型单元测试
+ * ConversationLog 领域模型单元测试
+ *
+ * 业务背景 (PRD-00007):
+ *   对话记录是联系人的沟通历史，用于AI分析和复盘
+ *   每个记录包含用户输入和AI建议，可选包含AI回复
+ *
+ * 设计决策:
+ *   - 使用自增Long作为主键，支持数据库索引高效查询
+ *   - isSummarized标志用于区分已总结和未总结的对话
+ *   - 支持长文本和特殊字符（emoji等），适应真实对话场景
+ *
+ * 用途:
+ *   - 用户主动喂养的对话记录（userInput + aiResponse）
+ *   - AI军师功能的数据来源（PRD-00026）
+ *
+ * 任务追踪: FD-00007/对话上下文连续性增强
  */
 class ConversationLogTest {
 

@@ -5,10 +5,21 @@ import com.empathy.ai.domain.model.AiAdvisorSession
 import kotlinx.coroutines.flow.Flow
 
 /**
- * AI军师对话仓库接口
+ * AI军师对话仓储接口
  *
- * 提供AI军师会话和对话记录的数据访问抽象。
- * 遵循Clean Architecture原则，定义在domain层，由data层实现。
+ * 业务背景 (PRD-00026):
+ * - AI军师是提供独立深度分析对话的智能体模块，与主应用共享联系人数据
+ * - 支持多会话管理，每个联系人可有多个对话主题
+ * - 实现对话历史持久化，支持上下文连续性
+ *
+ * 设计决策 (TDD-00026):
+ * - 采用会话-对话双层结构：Session(会话)管理主题，Conversation(消息)存储内容
+ * - 会话默认标题机制：首次创建时使用"新对话"，支持后续自定义
+ * - 活跃会话优先策略：getOrCreateActiveSession 确保复用已有会话
+ * - 级联删除：删除会话时自动清理关联的对话记录
+ *
+ * 任务追踪 (FD-00026):
+ * - TD-00026: AI军师对话功能 - 会话与对话管理
  */
 interface AiAdvisorRepository {
 
@@ -16,6 +27,10 @@ interface AiAdvisorRepository {
 
     /**
      * 创建新会话
+     *
+     * 业务规则 (PRD-00026/AC-001):
+     * - 新会话默认为非活跃状态，需要通过 getOrCreateActiveSession 激活
+     * - 会话创建时自动记录创建时间，用于排序和展示
      *
      * @param session 会话对象
      * @return 创建结果
@@ -41,7 +56,13 @@ interface AiAdvisorRepository {
     /**
      * 获取或创建活跃会话
      *
-     * 如果联系人已有活跃会话则返回，否则创建新会话。
+     * 设计权衡 (TDD-00026):
+     * - 优先复用已有活跃会话，避免频繁创建新会话导致上下文碎片化
+     * - 如果联系人不存在活跃会话，则创建新会话并设为活跃
+     *
+     * 业务规则 (PRD-00026):
+     * - 每个联系人同一时间只能有一个活跃会话
+     * - 活跃会话用于继续上次的对话主题
      *
      * @param contactId 联系人ID
      * @param defaultTitle 默认会话标题
@@ -72,7 +93,12 @@ interface AiAdvisorRepository {
     /**
      * 删除会话
      *
-     * 会级联删除该会话下的所有对话记录。
+     * 设计权衡: 采用级联删除策略，删除会话时自动清理所有关联对话记录
+     * 避免数据碎片化和孤立数据，简化上层调用逻辑
+     *
+     * 业务规则 (PRD-00026):
+     * - 会话删除后不可恢复
+     * - 级联删除该会话下的所有对话记录
      *
      * @param sessionId 会话ID
      * @return 删除结果
@@ -118,7 +144,11 @@ interface AiAdvisorRepository {
     /**
      * 获取联系人的最近对话记录
      *
-     * 用于构建AI上下文。
+     * 用途: 用于构建AI上下文，支持多轮对话的连续性分析
+     *
+     * 业务规则:
+     * - 返回按时间戳升序排列的历史记录（ oldest -> newest）
+     * - 限制最大记录数，避免上下文过长导致token超限
      *
      * @param contactId 联系人ID
      * @param limit 最大记录数

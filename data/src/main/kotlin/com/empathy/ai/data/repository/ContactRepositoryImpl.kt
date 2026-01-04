@@ -17,9 +17,27 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 /**
- * 联系人画像仓库实现类
+ * ContactRepositoryImpl 实现了联系人画像的数据访问层
  *
- * 这是连接Domain层(纯Kotlin)和Data层(Android/SQL)的桥梁
+ * 【架构位置】Clean Architecture Data层，负责Domain层接口的具体实现
+ * 【业务背景】(PRD-00003)联系人画像记忆系统的核心数据管理
+ *   - 三层记忆架构：短期对话记录 → 中期每日总结 → 长期联系人画像
+ *   - 关系分数系统：0-100分，反映联系人的重要程度
+ *   - Facts结构：带时间戳和来源的键值对记忆
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 使用Room数据库进行本地存储
+ *   - FactListConverter处理JSON序列化的Facts
+ *   - 异步迁移逻辑：检测旧格式数据并自动升级
+ *
+ * 【关键逻辑】
+ *   - 数据格式迁移：检测不包含"id"字段的旧Facts格式
+ *   - 关系分数约束：使用MemoryConstants钳制在有效范围内
+ *   - 合并策略：新增Fact覆盖同名Key，保留时间戳更新的版本
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-001: 联系人画像基础CRUD
+ *   - FD-00003/Task-003: Facts数据结构增强（带时间戳和来源）
  */
 class ContactRepositoryImpl @Inject constructor(
     private val dao: ContactDao
@@ -217,14 +235,23 @@ class ContactRepositoryImpl @Inject constructor(
         dao.updateGoal(contactId, newGoal, modifiedTime, originalGoal)
     }
 
+    /**
+     * entityToDomain 实体转领域模型
+     *
+     * 【数据迁移】检测旧格式Facts并标记需要迁移
+     * 原因：v1.5.0之前Facts不包含"id"字段，需要升级格式
+     * 策略：首次读取时检测，标记到migratingContacts集合
+     *       下次读取时触发同步迁移，避免阻塞当前操作
+     */
     private fun entityToDomain(entity: ContactProfileEntity): ContactProfile {
         val facts = factListConverter.toFactList(entity.factsJson)
-        
+
         Log.d("ContactRepoImpl", "entityToDomain: contactId=${entity.id}, facts数量=${facts.size}")
-        
+
         val originalJson = entity.factsJson
-        val needsMigration = facts.isNotEmpty() && !originalJson.contains("\"id\":")
-        
+        // 旧格式Facts不包含"id"字段，检测到则标记迁移
+        val needsMigration = facts.isNotEmpty() && !originalJson.contains("\"id\"")
+
         if (needsMigration) {
             Log.w("ContactRepoImpl", "检测到旧格式数据，标记需要迁移: contactId=${entity.id}")
             migratingContacts.add(entity.id)
@@ -271,6 +298,13 @@ class ContactRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * mergeFacts 合并新旧Facts
+     *
+     * 【合并策略】新增Fact覆盖同名Key，保留最新时间戳版本
+     * 设计权衡：使用Map去重比List合并更高效
+     * 业务规则：AI新增的Fact优先于用户手动添加的
+     */
     private fun mergeFacts(existing: List<Fact>, newFacts: List<Fact>): List<Fact> {
         val factsMap = existing.associateBy { it.key }.toMutableMap()
         newFacts.forEach { fact ->

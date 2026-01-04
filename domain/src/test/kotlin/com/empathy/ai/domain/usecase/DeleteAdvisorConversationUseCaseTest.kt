@@ -11,7 +11,22 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * DeleteAdvisorConversationUseCase单元测试
+ * DeleteAdvisorConversationUseCase 单元测试
+ *
+ * 业务背景 (PRD-00026):
+ *   AI军师对话删除功能测试，验证单条消息的移除能力
+ *
+ * 功能验证:
+ *   - 按消息ID删除单条对话记录
+ *   - 删除失败的错误传递
+ *   - 空ID的边界情况（允许删除不做拦截）
+ *
+ * 设计权衡 (TDD-00026):
+ *   - 不在UseCase层做ID格式验证，依赖Repository层处理
+ *   - 采用宽松策略：空ID也尝试删除，由DB层决定结果
+ *   - 单条删除而非清空会话，符合用户精细化管理需求
+ *
+ * 任务追踪: FD-00026/阶段2-领域层实现
  */
 class DeleteAdvisorConversationUseCaseTest {
 

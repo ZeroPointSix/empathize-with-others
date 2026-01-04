@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    状态指示器 - 错误/失败状态图标
+
+    业务背景 (PRD-00001/AC-006):
+    - 最小化状态下显示处理结果
+    - 错误状态（红色背景 + 白色叹号）
+    - 用于 AI 处理失败或网络错误的状态反馈
+
+    设计决策:
+    - 白色叹号配合红色背景使用
+    - 24dp 标准尺寸，适合状态指示器
+    - VectorDrawable 支持缩放
+
+    任务: FD-00001/T003 (最小化功能实现)
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

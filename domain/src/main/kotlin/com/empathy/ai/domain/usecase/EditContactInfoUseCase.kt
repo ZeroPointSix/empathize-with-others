@@ -12,8 +12,21 @@ import javax.inject.Singleton
 /**
  * 联系人信息编辑用例
  *
- * 负责联系人姓名和目标的编辑
- * 姓名和目标分别追踪编辑状态
+ * 负责联系人姓名和目标的编辑。
+ * 姓名和目标分别追踪编辑状态，支持独立修改和回滚。
+ *
+ * 业务背景:
+ *   - PRD-00003: 联系人画像记忆系统需求
+ *   - 场景: 用户编辑联系人的基本信息（姓名、关系目标）
+ *
+ * 设计决策:
+ *   - 分离编辑: editName 和 editGoal 分开，便于独立追踪
+ *   - 变化检测: hasNameChanges/hasGoalChanges 避免无意义更新
+ *   - 保留原始值: originalName/originalGoal 支持撤销操作
+ *   - 统一返回: EditResult 封装各种结果状态
+ *
+ * @see EditResult 编辑结果密封类
+ * @see ContentValidator 内容验证器
  */
 @Singleton
 class EditContactInfoUseCase @Inject constructor(

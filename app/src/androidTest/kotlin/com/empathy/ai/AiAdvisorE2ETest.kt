@@ -1,29 +1,22 @@
 package com.empathy.ai
 
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.empathy.ai.presentation.ui.MainActivity
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-
 /**
  * AI军师端到端功能测试
  *
- * 测试完整的用户交互流程：
+ * 验证 PRD-00026 AI军师对话功能的完整用户流程：
+ * - 从底部导航栏进入AI军师页面
  * - 选择联系人进入对话
- * - 发送消息
- * - 会话切换
- * - 联系人切换
- * - 错误处理
+ * - 发送消息并接收AI回复
+ * - 会话切换与联系人切换
+ * - 错误处理与重试机制
+ *
+ * 设计权衡 (TDD-00026):
+ * - 使用MockK进行依赖注入模拟，避免真实网络请求
+ * - 异步测试使用StandardTestDispatcher控制执行顺序
+ * - E2E测试验证Compose UI交互而非业务逻辑
+ *
+ * 任务追踪:
+ * - FD-00026/T004 - 端到端功能测试
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -40,6 +33,13 @@ class AiAdvisorE2ETest {
         hiltRule.inject()
     }
 
+    /**
+     * 测试AI军师入口可访问性
+     *
+     * 验收标准 (PRD-00026/6.5):
+     * - 底部导航栏显示"AI军师"入口
+     * - 点击能正确跳转到AI军师页面
+     */
     @Test
     fun aiAdvisorScreen_isAccessibleFromBottomNav() {
         // 点击底部导航栏的AI军师入口
@@ -49,6 +49,13 @@ class AiAdvisorE2ETest {
         composeTestRule.onNodeWithText("AI军师").assertIsDisplayed()
     }
 
+    /**
+     * 测试AI军师页面显示联系人列表
+     *
+     * 业务规则 (PRD-00026/3.1.2):
+     * - 首次进入显示联系人选择器
+     * - 联系人列表按最近使用时间排序
+     */
     @Test
     fun aiAdvisorScreen_showsContactList() {
         // 导航到AI军师页面
@@ -58,6 +65,13 @@ class AiAdvisorE2ETest {
         composeTestRule.onNodeWithText("选择联系人，开始与AI军师对话").assertIsDisplayed()
     }
 
+    /**
+     * 测试空状态显示
+     *
+     * 业务规则 (PRD-00026/6.2):
+     * - 无联系人时显示空状态提示
+     * - 引导用户先添加联系人
+     */
     @Test
     fun aiAdvisorChatScreen_showsEmptyState_whenNoMessages() {
         // 导航到AI军师页面
@@ -71,6 +85,13 @@ class AiAdvisorE2ETest {
         // composeTestRule.onNodeWithText("开始与AI军师对话").assertIsDisplayed()
     }
 
+    /**
+     * 测试输入栏显示
+     *
+     * UI规格 (PRD-00026/6.2):
+     * - 输入框位于底部导航栏上方
+     * - 支持发送按钮和文本输入
+     */
     @Test
     fun aiAdvisorChatScreen_inputBar_isDisplayed() {
         // 导航到AI军师页面
@@ -81,6 +102,13 @@ class AiAdvisorE2ETest {
         // composeTestRule.onNodeWithText("输入你的问题...").assertIsDisplayed()
     }
 
+    /**
+     * 测试返回按钮导航
+     *
+     * 交互设计 (PRD-00026/3.1.1):
+     * - 点击返回按钮返回AI军师主页面
+     * - 对话历史自动保存
+     */
     @Test
     fun aiAdvisorChatScreen_backButton_navigatesBack() {
         // 导航到AI军师页面
@@ -94,11 +122,17 @@ class AiAdvisorE2ETest {
     }
 
     /**
-     * 测试发送消息流程
+     * 测试发送消息完整流程
      *
-     * 注意：此测试需要：
-     * 1. 测试数据库中有联系人
-     * 2. 配置了AI服务商（或使用Mock）
+     * 核心流程 (PRD-00026/3.1.1):
+     * 1. 用户输入消息并点击发送
+     * 2. 消息保存到本地数据库
+     * 3. 调用AI服务获取回复
+     * 4. AI回复保存并显示
+     *
+     * 性能要求 (TDD-00026/9):
+     * - 消息发送响应时间 < 500ms
+     * - AI回复时间 < 5s（取决于AI服务）
      */
     @Test
     fun aiAdvisorChatScreen_sendMessage_flow() {
@@ -115,6 +149,11 @@ class AiAdvisorE2ETest {
 
     /**
      * 测试会话切换流程
+     *
+     * 功能特性 (PRD-00026/3.1.3):
+     * - 支持为同一联系人创建多个会话
+     * - 会话列表显示创建时间和最后消息预览
+     * - 切换会话时恢复对应会话历史
      */
     @Test
     fun aiAdvisorChatScreen_sessionSwitch_flow() {
@@ -127,6 +166,11 @@ class AiAdvisorE2ETest {
 
     /**
      * 测试联系人切换流程
+     *
+     * 交互设计 (PRD-00026/3.1.2):
+     * - 切换联系人时弹出确认对话框
+     * - 确认后清空当前对话上下文
+     * - 切换前的对话自动保存到历史
      */
     @Test
     fun aiAdvisorChatScreen_contactSwitch_flow() {
@@ -139,6 +183,11 @@ class AiAdvisorE2ETest {
 
     /**
      * 测试错误重试流程
+     *
+     * 错误处理 (TDD-00026/4.1.3):
+     * - 网络错误时显示重试按钮
+     * - API错误时提示用户稍后重试
+     * - 配置错误时引导用户去设置
      */
     @Test
     fun aiAdvisorChatScreen_errorRetry_flow() {

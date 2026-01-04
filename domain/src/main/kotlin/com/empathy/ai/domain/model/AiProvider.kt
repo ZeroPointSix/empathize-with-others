@@ -3,7 +3,22 @@ package com.empathy.ai.domain.model
 /**
  * AI 服务商
  *
- * 表示一个 AI 服务提供商的完整配置
+ * 表示一个 AI 服务提供商的完整配置。
+ * 支持多服务商管理和模型配置。
+ *
+ * 业务背景 (PRD-00025):
+ * - 支持用户配置多个AI服务商（OpenAI、DeepSeek等）
+ * - 每个服务商支持多个模型选择
+ * - 提供商配置是使用AI功能的前提条件
+ * - AI军师功能需要默认提供商才能正常工作（PRD-00026）
+ *
+ * 设计决策 (TDD-00025):
+ * - 分离temperature和maxTokens控制生成质量
+ * - timeoutMs针对不同服务商差异化配置
+ * - isDefault标记支持多服务商切换
+ * - 安全方法（getSafeTemperature/getSafeMaxTokens）提供边界保护
+ *
+ * 任务追踪: FD-00025/AI配置功能设计
  *
  * @property id 唯一标识（UUID）
  * @property name 显示名称（例如: "OpenAI", "DeepSeek"）

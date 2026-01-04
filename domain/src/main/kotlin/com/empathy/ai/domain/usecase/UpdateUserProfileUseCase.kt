@@ -8,8 +8,13 @@ import javax.inject.Inject
  * 更新用户画像用例
  *
  * 负责更新用户画像数据。
- * 自动更新updatedAt时间戳。
- * 缓存一致性由Repository实现类内部处理。
+ *
+ * 设计决策:
+ *   - 自动更新: 更新时间戳 updatedAt = System.currentTimeMillis()
+ *   - 缓存处理: 缓存一致性由 Repository 实现类内部处理
+ *   - 返回结果: 成功返回更新后的 UserProfile，失败返回异常
+ *
+ * @see UserProfileRepository.updateUserProfile 仓库更新方法
  */
 class UpdateUserProfileUseCase @Inject constructor(
     private val userProfileRepository: UserProfileRepository

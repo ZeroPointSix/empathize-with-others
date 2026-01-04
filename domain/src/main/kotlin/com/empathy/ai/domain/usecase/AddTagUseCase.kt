@@ -10,6 +10,20 @@ import javax.inject.Inject
  *
  * 负责向用户画像的指定维度添加标签。
  * 包含完整的验证逻辑：标签内容验证、重复检查、数量限制检查。
+ *
+ * 业务背景:
+ *   - PRD-00013: 自己画像界面需求
+ *   - 场景: 用户为自己的画像添加特征标签
+ *
+ * 验证流程:
+ *   1. 获取当前用户画像
+ *   2. 清理输入（sanitizeInput防止XSS等）
+ *   3. 综合验证（内容、重复、数量限制）
+ *   4. 添加标签
+ *   5. 保存更新
+ *
+ * @see UserProfileValidator 验证器，负责验证逻辑
+ * @see UserProfile.addTag 添加标签方法
  */
 class AddTagUseCase @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,

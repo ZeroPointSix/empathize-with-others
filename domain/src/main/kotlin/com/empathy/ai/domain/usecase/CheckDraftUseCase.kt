@@ -23,9 +23,28 @@ import javax.inject.Inject
  *
  * 功能: 检查用户正在输入的草稿是否触发雷区
  *
+ * 业务背景:
+ *   - PRD-00001: 悬浮窗功能需求 - 主动风控检查功能
+ *   - 场景: 用户发送消息前进行风险检查，避免触发雷区
+ *
+ * 设计决策（风控分层策略）:
+ *   - Layer 1: 本地匹配（关键词检测）- 极速响应
+ *     * 优先执行，用户无感等待
+ *     * 直接比对 redTags 中的关键词
+ *   - Layer 2: 云端语义检查（AI分析）- 深度检测
+ *     * 本地优先模式关闭时，或本地通过但启用深度检查时执行
+ *     * 理解语义，识别变种表达
+ *
+ * 性能权衡:
+ *   - 为什么先本地后云端? 本地检查毫秒级响应，用户体验更好
+ *   - 本地优先模式默认开启? 是，让用户选择是否需要云端深度检查
+ *
  * 提示词系统集成:
- * - 使用PromptBuilder构建CHECK场景的系统指令
- * - 支持用户自定义提示词
+ *   - 使用PromptBuilder构建CHECK场景的系统指令
+ *   - 支持用户自定义提示词
+ *
+ * @see BrainTagRepository.getTagsForContact 获取雷区标签
+ * @see IdentityPrefixHelper.addPrefix 添加身份前缀（PRD-00008）
  */
 class CheckDraftUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository,

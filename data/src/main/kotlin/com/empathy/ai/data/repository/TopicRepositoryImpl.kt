@@ -14,12 +14,26 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 对话主题仓库实现
+ * TopicRepositoryImpl 实现了对话主题的数据访问层
  *
- * 实现TopicRepository接口，负责：
- * - 主题数据的持久化存储
- * - Entity与Domain模型的转换
- * - 异步操作的线程调度
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00003)联系人画像记忆系统
+ *   - 对话主题：当前与联系人交流的主要话题
+ *   - 活跃主题：同一时间只有一个主题处于活跃状态
+ *   - 主题历史：记录历史交流话题，分析交流趋势
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 使用@IoDispatcher指定IO调度器
+ *   - Flow响应式查询：observeActiveTopic监听主题变化
+ *   - 互斥策略：设置新主题时自动停用所有旧主题
+ *
+ * 【关键逻辑】
+ *   - setTopic：设置新主题前先停用所有旧主题
+ *   - observeActiveTopic：返回Flow，主题变更时自动通知UI
+ *   - getActiveTopic：获取当前活跃主题（一次性查询）
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-002: 对话主题管理功能
  */
 @Singleton
 class TopicRepositoryImpl @Inject constructor(

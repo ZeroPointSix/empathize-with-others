@@ -24,9 +24,39 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * AI军师对话界面ViewModel
+ * AI军师对话界面 ViewModel
  *
- * 管理AI军师对话界面的状态，包括会话管理、消息发送、联系人切换等。
+ * ## 业务职责
+ * 管理AI军师单次对话的完整生命周期：
+ * - 消息历史管理（用户/AI/建议回复三种类型）
+ * - 输入状态和发送流程控制
+ * - 会话管理与切换
+ * - 联系人选择和切换
+ *
+ * ## 关联文档
+ * - PRD-00026: AI军师对话功能需求（多轮对话、上下文管理）
+ * - TDD-00026: AI军师对话功能技术设计
+ * - FD-00026: AI军师对话功能设计（消息流、Token计算）
+ *
+ * ## 核心数据流
+ * ```
+ * UserInput → Validate → AIRequest → Response → UIUpdate
+ *              ↓                              ↓
+ *         ShowError                     TokenCounting
+ * ```
+ *
+ * ## 关键设计决策
+ * 1. **消息类型区分**: 用户消息、AI回复、建议回复三种类型，UI展示差异化
+ * 2. **会话隔离**: 每个联系人独立会话列表，支持会话切换
+ * 3. **联系人切换**: 切换前确认，避免误操作丢失对话上下文
+ * 4. **输入验证**: 防止空消息和超长消息，UI层面引导用户
+ *
+ * ## 重要约束
+ * - 单条消息最大长度限制（防止LLM拒绝处理过长内容）
+ * - 发送中状态禁止重复发送
+ * - 失败消息支持重试
+ *
+ * @see com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorChatScreen
  */
 @HiltViewModel
 class AiAdvisorChatViewModel @Inject constructor(

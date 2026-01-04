@@ -1,3 +1,18 @@
+/**
+ * Package com.empathy.ai.data.repository 实现了多服务商兼容层
+ *
+ * 业务背景 (PRD-00025):
+ *   - 应用支持多种AI服务商（OpenAI、DeepSeek、魔搭、Claude等）
+ *   - 各服务商的API特性差异大，需要动态适配
+ *
+ * 设计决策 (TDD-00025):
+ *   - 使用策略模式封装差异性判断逻辑
+ *   - 每个判断方法独立，便于后续新增服务商支持
+ *   - 策略优先级：Function Calling > Response Format > Prompt Only
+ *
+ * 任务追踪:
+ *   - TD-00025 - AI配置功能完善
+ */
 package com.empathy.ai.data.repository
 
 import com.empathy.ai.domain.model.AiProvider
@@ -7,6 +22,10 @@ import com.empathy.ai.domain.model.AiProvider
  *
  * 不同的 AI 服务商对 response_format 和 Function Calling 的支持不同，
  * 需要根据 Provider 动态调整约束策略。
+ *
+ * 设计权衡 (TDD-00025):
+ *   - 选择策略模式：避免大量条件判断，便于扩展新服务商
+ *   - 每个方法独立测试：降低回归风险
  */
 object ProviderCompatibility {
     
@@ -96,10 +115,21 @@ object ProviderCompatibility {
     
     /**
      * 获取推荐的结构化输出策略
+     *
+     * [Strategy] 多策略结构化输出适配 (TDD-00025/ProviderCompatibility)
+     * 不同的AI服务商对JSON结构化输出的支持能力不同：
+     *   1. FUNCTION_CALLING - OpenAI/DeepSeek/Gemini (最可靠，强制函数调用)
+     *   2. RESPONSE_FORMAT - 大部分支持 response_format 字段
+     *   3. PROMPT_ONLY - 仅通过提示词约束（最不可靠，作为兜底）
+     * 优先级：Function Calling > Response Format > Prompt Only
+     *
+     * 业务规则 (PRD-00025):
+     *   - 优先使用最可靠的输出方式，确保AI返回可解析的JSON
+     *   - Claude/魔搭等不支持 Function Calling 的使用 Response Format
      */
     fun getStructuredOutputStrategy(provider: AiProvider): StructuredOutputStrategy {
         return when {
-            supportsFunctionCalling(provider) && supportsToolChoice(provider) -> 
+            supportsFunctionCalling(provider) && supportsToolChoice(provider) ->
                 StructuredOutputStrategy.FUNCTION_CALLING
             supportsResponseFormat(provider) -> StructuredOutputStrategy.RESPONSE_FORMAT
             else -> StructuredOutputStrategy.PROMPT_ONLY

@@ -27,16 +27,28 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * TopicViewModel 单元测试
+ * TopicViewModel 对话主题功能测试
  *
- * 测试内容：
- * - 初始化状态
- * - 事件处理
- * - 状态更新
- * - 错误处理
+ * 测试范围：
+ * 1. 初始化状态（当前主题、主题历史）
+ * 2. 对话框显示/隐藏与状态管理
+ * 3. 输入内容更新与验证
+ * 4. 主题保存（成功/失败/空内容校验）
+ * 5. 主题清除与历史选择
+ * 6. 错误处理与状态清除
  *
- * @see TD-00016 对话主题功能任务清单
- * @see TDD-00016 对话主题功能技术设计
+ * 业务背景 (PRD-00016):
+ *   对话主题功能用于标记当前与联系人的主要交流话题
+ *   支持设置主题、清除主题、查看历史主题记录
+ *
+ * 设计权衡 (TDD-00016):
+ *   - 使用SavedStateHandle从导航参数获取contactId
+ *   - 主题观察通过GetTopicUseCase的Flow实现响应式更新
+ *   - 历史记录限制最近10条，避免数据膨胀
+ *
+ * 任务追踪:
+ *   - FD-00016 对话主题功能设计
+ *   - TDD-00016 对话主题功能技术设计
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TopicViewModelTest {

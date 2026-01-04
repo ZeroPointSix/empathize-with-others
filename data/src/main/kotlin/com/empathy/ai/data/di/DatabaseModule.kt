@@ -22,9 +22,45 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * 数据库模块
+ * DatabaseModule 实现了数据持久化层的依赖注入配置 (TDD-00017/7.1)
  *
- * 提供 Room Database 和 DAO 的依赖注入配置。
+ * 业务背景：
+ * - 数据层负责所有数据访问、存储和远程调用
+ * - 采用 Room 实现本地数据持久化
+ * - 支持完整的数据库迁移链（v1→v13，共13次增量迁移）
+ *
+ * 设计决策：
+ * - TDD-00017/7.1: DI 模块归属 data 模块，提供 Room 数据库实例
+ * - 已移除 fallbackToDestructiveMigration() 确保数据安全
+ * - 迁移失败时应用抛出异常而不是删除数据（用户需手动处理）
+ *
+ * 迁移历史总览：
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ 版本   │ 功能增量                      │ 关联文档                             │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
+ * │ v1→v2 │ AI服务商表 ai_providers       │ PRD-00025 AI配置功能完善             │
+ * │ v2→v3 │ timeout_ms字段                │ TDD-00025 AI配置功能完善技术设计     │
+ * │ v3→v4 │ 记忆系统表（对话日志、每日总结）│ PRD-00003 联系人画像记忆系统         │
+ * │ v4→v5 │ 失败任务表 failed_summary_    │ -                                   │
+ * │       │ tasks                        │                                     │
+ * │ v5→v6 │ UI扩展字段（avatar_url等）    │ -                                   │
+ * │ v6→v7 │ 修复性迁移（表结构修复）       │ -                                   │
+ * │ v7→v8 │ 提示词管理系统字段             │ PRD-00005 提示词管理系统             │
+ * │ v8→v9 │ 手动总结功能扩展               │ PRD-00011 手动触发AI总结功能         │
+ * │ v9→v10│ 编辑追踪字段                   │ PRD-00012 事实流内容编辑功能         │
+ * │ v10→v11│ 对话主题表 conversation_     │ PRD-00016 对话主题功能               │
+ * │       │ topics                       │                                     │
+ * │ v11→v12│ API用量统计表、温度/Token字段 │ TDD-00025 AI配置功能完善技术设计     │
+ * │ v12→v13│ AI军师对话表（TD-00026）     │ PRD-00026 AI军师对话功能             │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * 架构位置：
+ * - 属于 data 模块（Clean Architecture 数据层）
+ * - 提供 AppDatabase 单例和所有 DAO 实例
+ * - 被 app 模块的 Hilt 入口组装
+ *
+ * @see AppDatabase Room 数据库主类（定义所有表结构）
+ * @see TDD-00017 Clean Architecture 模块化改造技术设计
  */
 @Module
 @InstallIn(SingletonComponent::class)

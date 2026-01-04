@@ -8,15 +8,30 @@ import org.junit.Test
 /**
  * 数据库迁移 10 -> 11 测试
  *
- * 验证 TD-00016 对话主题功能的数据库迁移：
- * - conversation_topics 表创建
- * - 索引创建
- * - 字段默认值
+ * 验证 TD-00016 对话主题功能的数据库迁移:
+ * - conversation_topics 表创建 - 验证DDL语句格式
+ * - 索引创建 - contact_id和is_active字段索引
+ * - 字段默认值 - is_active默认为1（活跃）
  *
- * 注意：这是单元测试版本，验证迁移SQL语句的正确性
- * 完整的迁移测试请参考 androidTest 中的 DatabaseMigrationTest
+ * 测试策略 (TDD-00016/4.2):
+ * - 单元测试版本验证SQL语句的正确性
+ * - 完整迁移测试请参考 androidTest 中的 DatabaseMigrationTest
+ * - 验证SQLite DDL语法兼容性
  *
- * @see TDD-00016 对话主题功能技术设计
+ * 业务规则:
+ * - 迁移脚本必须使用 IF NOT EXISTS 防止重复创建
+ * - 索引命名规范：index_{表名}_{字段名}
+ * - 外键约束确保数据完整性
+ *
+ * 设计权衡:
+ * - 使用 AUTOINCREMENT 自增主键（兼容旧版本）
+ * - 字段命名使用 snake_case 符合SQL规范
+ * - 时间戳使用 INTEGER 存储毫秒级时间
+ *
+ * 任务追踪:
+ * - TD-00016 - 对话主题功能
+ * - TDD-00016/4.2 - 数据库设计
+ * - @see DatabaseMigrationTest - 完整迁移测试
  */
 class Migration10To11Test {
 

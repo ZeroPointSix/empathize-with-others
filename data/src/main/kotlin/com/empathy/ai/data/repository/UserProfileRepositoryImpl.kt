@@ -11,15 +11,27 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 用户画像仓库实现
+ * UserProfileRepositoryImpl 实现了用户画像的数据访问层
  *
- * 实现UserProfileRepository接口，提供用户画像数据的访问和操作。
- * 所有IO操作在后台线程执行。
- * 
- * 实现缓存优先策略：
- * 1. 检查缓存是否有效
- * 2. 缓存有效则直接返回缓存数据
- * 3. 缓存无效则从存储加载并更新缓存
+ * 【架构位置】Clean Architecture Data层
+ * 【业务背景】(PRD-00003)用户画像管理
+ *   - 用户基础信息：头像、昵称、社交账号等
+ *   - 用户偏好设置：AI交互风格、通知设置等
+ *   - 缓存策略：减少频繁的存储访问，提升性能
+ *
+ * 【设计决策】(TDD-00003)
+ *   - 缓存优先策略：优先使用缓存，缓存失效时从存储加载
+ *   - UserProfileCache：内存缓存，有效期内直接返回
+ *   - UserProfilePreferences：持久化存储用户配置
+ *
+ * 【关键逻辑】
+ *   - getUserProfile：缓存有效则返回缓存，否则从存储加载
+ *   - saveUserProfile：更新存储并刷新缓存
+ *   - clearCache：手动清除缓存，强制下次从存储加载
+ *
+ * 【任务追踪】
+ *   - FD-00003/Task-001: 用户画像基础CRUD
+ *   - FD-00003/Task-002: 缓存策略实现
  */
 @Singleton
 class UserProfileRepositoryImpl @Inject constructor(
