@@ -37,6 +37,8 @@
 - `BrainTagViewModel` - 标签视图模型
 - `UserProfileViewModel` - 用户画像视图模型
 - `TopicViewModel` - 主题视图模型
+- `AiAdvisorViewModel` - AI军师视图模型（TD-00026）
+- `AiAdvisorChatViewModel` - AI军师聊天视图模型（TD-00026）
 
 ### 导航系统
 - `NavGraph` - 导航图
@@ -54,6 +56,8 @@
 - `AiConfigScreen` - AI 配置界面
 - `PromptEditorScreen` - 提示词编辑器
 - `UserProfileScreen` - 用户画像
+- `AiAdvisorScreen` - AI军师主界面（TD-00026）
+- `AiAdvisorChatScreen` - AI军师聊天界面（TD-00026）
 
 ### 悬浮窗组件 (Floating)
 - `FloatingViewV2` - 悬浮窗主视图
@@ -165,12 +169,14 @@
 
 ### 单元测试
 - 位置: `presentation/src/test/kotlin/`
-- 测试文件数: 30个
+- 测试文件数: 32个（含AI军师ViewModel测试）
 - 测试覆盖:
   - ViewModel 测试
   - UI 组件测试
   - 主题测试
   - 导航测试
+  - AiAdvisorViewModel 测试（TD-00026）
+  - AiAdvisorChatViewModel 测试（TD-00026）
 
 ### UI 测试
 - 位置: `presentation/src/androidTest/kotlin/`
@@ -198,11 +204,12 @@ A: 使用 Navigation Compose，在 NavGraph 中定义所有路由，通过 NavRo
 ### 核心文件结构
 ```
 presentation/src/main/kotlin/com/empathy/ai/presentation/
-├── ui/              # UI组件（187个文件）
+├── ui/              # UI组件（187个文件，含AI军师屏幕）
 │   ├── screen/      # 屏幕组件
+│   │   └── advisor/ # AI军师屏幕（TD-00026）
 │   ├── component/   # 可复用组件
 │   └── floating/    # 悬浮窗组件
-├── viewmodel/       # ViewModel（18个文件）
+├── viewmodel/       # ViewModel（19个文件，含AI军师ViewModel）
 ├── navigation/      # 导航（4个文件）
 ├── theme/           # 主题（7个文件）
 └── util/            # 工具类（3个文件）
@@ -213,10 +220,22 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 - `navigation/NavRoutes.kt` - 路由定义
 - `viewmodel/ContactListViewModel.kt` - 联系人列表视图模型
 - `viewmodel/ChatViewModel.kt` - 聊天视图模型
+- `viewmodel/AiAdvisorViewModel.kt` - AI军师视图模型（TD-00026）
+- `viewmodel/AiAdvisorChatViewModel.kt` - AI军师聊天视图模型（TD-00026）
 - `theme/Theme.kt` - 主题定义
 - `ui/floating/FloatingViewV2.kt` - 悬浮窗主视图
+- `ui/screen/advisor/AiAdvisorScreen.kt` - AI军师主界面（TD-00026）
+- `ui/screen/advisor/AiAdvisorChatScreen.kt` - AI军师聊天界面（TD-00026）
 
 ## 变更记录 (Changelog)
+
+### 2026-01-04 - Claude (AI军师功能文档更新)
+- 新增AiAdvisorViewModel视图模型
+- 新增AiAdvisorChatViewModel聊天视图模型
+- 新增AiAdvisorScreen AI军师主界面
+- 新增AiAdvisorChatScreen AI军师聊天界面
+- 更新测试覆盖信息（32个测试文件）
+- 更新核心文件结构
 
 ### 2025-12-27 - Claude (表现层模块文档初始化)
 - 创建 presentation 模块 CLAUDE.md 文档
@@ -231,7 +250,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 
 ---
 
-**最后更新**: 2026-01-03 | 更新者: Claude
-**模块状态**: 完成
+**最后更新**: 2026-01-04 02:59:33 | 更新者: Claude
+**模块状态**: 完成（AI军师功能 TD-00026）
 **代码质量**: A级（完整注释、Compose 最佳实践）
-**测试覆盖**: 包含30个单元测试文件和5个Android测试文件
+**测试覆盖**: 包含32个单元测试和7个Android测试（261主源码 + 32测试 + 7Android测试）

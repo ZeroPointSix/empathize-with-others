@@ -35,6 +35,7 @@
 - `UserProfileRepositoryImpl` - 用户画像管理
 - `FailedTaskRepositoryImpl` - 失败任务管理
 - `PrivacyRepositoryImpl` - 隐私数据管理
+- `AiAdvisorRepositoryImpl` - AI军师数据访问（TD-00026）
 
 ## 关键依赖与配置
 
@@ -54,6 +55,7 @@
 - `ConversationTopicDao` - 对话主题操作
 - `DailySummaryDao` - 每日总结操作
 - `FailedSummaryTaskDao` - 失败任务操作
+- `AiAdvisorDao` - AI军师数据操作（TD-00026）
 
 ### Entity (数据库实体)
 - `ContactProfileEntity` - 联系人实体
@@ -63,6 +65,8 @@
 - `ConversationTopicEntity` - 对话主题实体
 - `DailySummaryEntity` - 每日总结实体
 - `FailedSummaryTaskEntity` - 失败任务实体
+- `AiAdvisorConversationEntity` - AI军师对话实体（TD-00026）
+- `AiAdvisorSessionEntity` - AI军师会话实体（TD-00026）
 
 ### 远程访问 (Remote)
 - `OpenAiApi` - OpenAI API 接口定义
@@ -90,7 +94,7 @@
 
 ### 单元测试
 - 位置: `data/src/test/kotlin/`
-- 测试文件数: 70个
+- 测试文件数: 21个（含AI军师仓库测试）
 - 测试覆盖:
   - `FloatingWindowPreferencesTest` - 悬浮窗偏好测试
   - `PromptFileStorageTest` - 提示词存储测试
@@ -98,6 +102,7 @@
   - `AiRepositoryImplExtTest` - AI 仓库扩展测试
   - `AiProviderRepositoryFetchModelsTest` - 服务商模型获取测试
   - `DailySummaryRepositoryImplTest` - 每日总结仓库测试
+  - `AiAdvisorRepositoryImplTest` - AI军师仓库测试（TD-00026）
 
 ### 集成测试
 - 位置: `data/src/androidTest/kotlin/`
@@ -146,8 +151,17 @@ A: 使用 `EncryptedSharedPreferences` 通过 `ApiKeyStorage` 类进行硬件级
 - `repository/PromptRepositoryImpl.kt`
 - `repository/TopicRepositoryImpl.kt`
 - `repository/UserProfileRepositoryImpl.kt`
+- `repository/AiAdvisorRepositoryImpl.kt`（TD-00026）
 
 ## 变更记录 (Changelog)
+
+### 2026-01-04 - Claude (AI军师功能文档更新)
+- 新增AiAdvisorDao数据访问接口
+- 新增AiAdvisorConversationEntity和AiAdvisorSessionEntity实体
+- 新增AiAdvisorRepositoryImpl仓库实现
+- 新增AiAdvisorRepositoryImplTest单元测试
+- 更新测试覆盖信息（21个测试文件）
+- 更新Android集成测试（数据库迁移测试）
 
 ### 2025-12-27 - Claude (数据层模块文档初始化)
 - 创建 data 模块 CLAUDE.md 文档
@@ -162,7 +176,7 @@ A: 使用 `EncryptedSharedPreferences` 通过 `ApiKeyStorage` 类进行硬件级
 
 ---
 
-**最后更新**: 2026-01-03 | 更新者: Claude
-**模块状态**: 完成
+**最后更新**: 2026-01-04 02:59:33 | 更新者: Claude
+**模块状态**: 完成（AI军师功能 TD-00026）
 **代码质量**: A级（完整注释、错误处理）
-**测试覆盖**: 包含70个单元测试和20个Android测试
+**测试覆盖**: 包含21个单元测试和5个Android测试（74主源码 + 21测试 + 5Android测试）

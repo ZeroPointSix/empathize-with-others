@@ -52,6 +52,12 @@
 - SummarizeDailyConversationsUseCase: 每日对话总结
 - DataCleanupManager: 数据清理管理
 
+### AI 军师模块 (TD-00026)
+- `AiAdvisorModule` - AI军师依赖注入模块
+  - 提供AiAdvisorViewModel工厂
+  - 提供AiAdvisorChatViewModel工厂
+  - 绑定AiAdvisorRepository实现
+
 ## 运行时行为
 
 ### 悬浮窗服务恢复
@@ -100,6 +106,11 @@ A: 只会删除90天前的对话记录和总结数据，联系人画像等核心
 
 ## 变更记录 (Changelog)
 
+### 2026-01-04 - Claude (AI军师功能文档更新)
+- 新增AiAdvisorModule依赖注入模块
+- 更新测试覆盖信息
+- 更新测试统计（146个单元测试 + 26个Android测试）
+
 ### 2025-12-20 - Claude (模块文档初始化)
 - 创建app模块CLAUDE.md文档
 - 添加导航面包屑
@@ -117,7 +128,7 @@ A: 只会删除90天前的对话记录和总结数据，联系人画像等核心
 
 ---
 
-**最后更新**: 2026-01-03 | 更新者: Claude
-**模块状态**: 完成
+**最后更新**: 2026-01-04 02:59:33 | 更新者: Claude
+**模块状态**: 完成（AI军师功能 TD-00026）
 **代码质量**: A级 (完整注释、错误处理)
-**测试覆盖**: 包含138个单元测试和23个Android测试
+**测试覆盖**: 包含146个单元测试和26个Android测试（25主源码 + 146测试 + 26Android测试）

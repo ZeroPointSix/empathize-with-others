@@ -40,6 +40,7 @@
 - `PrivacyRepository` - 隐私数据接口
 - `SettingsRepository` - 设置接口
 - `FloatingWindowPreferencesRepository` - 悬浮窗偏好接口
+- `AiAdvisorRepository` - AI军师数据访问接口
 
 ## 关键模型 (Model)
 
@@ -101,6 +102,13 @@
 - `AppError` - 应用错误
 - `SafetyCheckResult` - 安全检查结果
 
+### AI 军师模型 (TD-00026)
+- `AiAdvisorConversation` - AI军师对话
+- `AiAdvisorSession` - AI军师会话
+- `AiAdvisorError` - AI军师错误
+- `MessageType` - 消息类型
+- `SendStatus` - 发送状态
+
 ## 业务用例 (UseCase)
 
 ### 联系人管理
@@ -152,6 +160,13 @@
 - `BatchMoveFactsUseCase` - 批量移动事实
 - `GroupFactsByCategoryUseCase` - 按分类分组事实
 
+### AI 军师功能 (TD-00026)
+- `GetAdvisorSessionsUseCase` - 获取AI军师会话列表
+- `CreateAdvisorSessionUseCase` - 创建新会话
+- `GetAdvisorConversationsUseCase` - 获取对话记录
+- `SendAdvisorMessageUseCase` - 发送消息
+- `DeleteAdvisorConversationUseCase` - 删除对话
+
 ### 其他功能
 - `FeedTextUseCase` - 喂养文本
 - `ManageCustomDimensionUseCase` - 管理自定义维度
@@ -188,11 +203,12 @@
 
 ### 单元测试
 - 位置: `domain/src/test/kotlin/`
-- 测试文件数: 28个
+- 测试文件数: 35个（含AI军师相关测试）
 - 测试覆盖:
-  - 模型测试（Fact, UserProfile, PromptScene 等）
+  - 模型测试（Fact, UserProfile, PromptScene, AiAdvisorConversation, AiAdvisorSession 等）
   - UseCase 测试
   - 工具类测试
+  - AI 军师功能测试
 
 ## 常见问题 (FAQ)
 
@@ -211,8 +227,8 @@ A: UseCase 封装单个业务用例，协调一个或多个 Repository 的调用
 ```
 domain/src/main/kotlin/com/empathy/ai/domain/
 ├── model/           # 业务实体模型（76个文件）
-├── repository/      # 仓库接口（13个文件）
-├── usecase/         # 业务用例（38个文件）
+├── repository/      # 仓库接口（14个文件）
+├── usecase/         # 业务用例（43个文件）
 ├── service/         # 领域服务（4个文件）
 └── util/            # 工具类（29个文件）
 ```
@@ -224,15 +240,26 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 - `model/UserProfile.kt` - 用户画像
 - `model/DailySummary.kt` - 每日总结
 - `model/PromptScene.kt` - 提示词场景
+- `model/AiAdvisorConversation.kt` - AI军师对话（TD-00026）
+- `model/AiAdvisorSession.kt` - AI军师会话（TD-00026）
 - `repository/ContactRepository.kt` - 联系人仓库接口
 - `repository/AiRepository.kt` - AI 仓库接口
+- `repository/AiAdvisorRepository.kt` - AI军师仓库接口（TD-00026）
 - `usecase/AnalyzeChatUseCase.kt` - 对话分析用例
 - `usecase/PolishDraftUseCase.kt` - 草稿润色用例
+- `usecase/GetAdvisorSessionsUseCase.kt` - AI军师会话列表（TD-00026）
 - `service/PrivacyEngine.kt` - 隐私引擎
 - `util/PromptBuilder.kt` - 提示词构建器
 - `util/Logger.kt` - 日志接口
 
 ## 变更记录 (Changelog)
+
+### 2026-01-04 - Claude (AI军师功能文档更新)
+- 新增AI军师模型文档（AiAdvisorConversation, AiAdvisorSession, AiAdvisorError）
+- 新增AI军师仓库接口（AiAdvisorRepository）
+- 新增AI军师用例（GetAdvisorSessionsUseCase, CreateAdvisorSessionUseCase 等）
+- 更新测试覆盖信息（35个测试文件）
+- 更新文件结构统计
 
 ### 2025-12-27 - Claude (领域层模块文档初始化)
 - 创建 domain 模块 CLAUDE.md 文档
@@ -247,7 +274,7 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 
 ---
 
-**最后更新**: 2026-01-03 | 更新者: Claude
-**模块状态**: 完成
+**最后更新**: 2026-01-04 02:59:33 | 更新者: Claude
+**模块状态**: 完成（AI军师功能 TD-00026）
 **代码质量**: A级（纯Kotlin，无Android依赖）
-**测试覆盖**: 包含185个单元测试文件
+**测试覆盖**: 包含35个单元测试文件（168主源码 + 35测试）
