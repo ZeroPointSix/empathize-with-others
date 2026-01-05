@@ -42,6 +42,7 @@ class PrivacyPreferences @Inject constructor(
      * - 防止AI服务商收集用户隐私
      * - 符合隐私优先原则
      */
+    fun isDataMaskingEnabled(): Boolean = prefs.getBoolean(KEY_DATA_MASKING, DEFAULT_DATA_MASKING)
     
     fun setDataMaskingEnabled(enabled: Boolean) { prefs.edit { putBoolean(KEY_DATA_MASKING, enabled) } }
     
@@ -53,6 +54,7 @@ class PrivacyPreferences @Inject constructor(
      * - 本地数据不足时再请求AI
      * - 减少不必要的数据传输
      */
+    fun isLocalFirstModeEnabled(): Boolean = prefs.getBoolean(KEY_LOCAL_FIRST, DEFAULT_LOCAL_FIRST)
     
     fun setLocalFirstModeEnabled(enabled: Boolean) { prefs.edit { putBoolean(KEY_LOCAL_FIRST, enabled) } }
     
@@ -63,6 +65,7 @@ class PrivacyPreferences @Inject constructor(
      * - 数据掩码：开启
      * - 本地优先：开启
      */
+    fun resetToDefaults() {
         prefs.edit {
             putBoolean(KEY_DATA_MASKING, DEFAULT_DATA_MASKING)
             putBoolean(KEY_LOCAL_FIRST, DEFAULT_LOCAL_FIRST)

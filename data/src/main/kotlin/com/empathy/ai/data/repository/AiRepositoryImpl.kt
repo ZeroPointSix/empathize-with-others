@@ -30,7 +30,9 @@ import com.empathy.ai.data.remote.model.ResponseFormat
 import com.empathy.ai.data.remote.model.ToolChoice
 import com.empathy.ai.data.remote.model.ToolChoiceFunction
 import com.empathy.ai.data.remote.model.ToolDefinition
+import com.empathy.ai.data.remote.SseStreamReader
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.domain.model.AiStreamChunk
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.ApiUsageRecord
 import com.empathy.ai.domain.model.ExtractedData
@@ -49,6 +51,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -73,6 +76,7 @@ import javax.inject.Inject
 class AiRepositoryImpl @Inject constructor(
     private val api: OpenAiApi,
     private val settingsRepository: SettingsRepository,
+    private val sseStreamReader: SseStreamReader,  // FD-00028: SSE流式读取器
     private val apiUsageRepository: ApiUsageRepository? = null  // TD-00025: 可选依赖，支持用量记录
 ) : AiRepository {
 
@@ -1169,5 +1173,71 @@ $COMMON_JSON_RULES""".trim()
             .replace(Regex("\\*\\*"), "")
             .trim()
             .take(500)
+    }
+
+    // ==================== FD-00028: 流式响应实现 ====================
+
+    /**
+     * 流式文本生成
+     *
+     * 使用SSE (Server-Sent Events) 实现实时文本流。
+     * 支持DeepSeek R1等模型的思考过程展示。
+     *
+     * 业务规则 (FD-00028):
+     * - 返回Flow<AiStreamChunk>，支持多种事件类型
+     * - 支持reasoning_content字段（DeepSeek R1思考过程）
+     * - 连续失败3次后触发降级异常
+     *
+     * @param provider AI服务商配置
+     * @param prompt 用户提示词
+     * @param systemInstruction 系统指令
+     * @return 流式响应Flow
+     *
+     * @see AiStreamChunk 流式数据块类型定义
+     * @see SseStreamReader SSE流式读取器
+     */
+    override fun generateTextStream(
+        provider: AiProvider,
+        prompt: String,
+        systemInstruction: String
+    ): Flow<AiStreamChunk> {
+        val url = buildChatCompletionsUrl(provider.baseUrl)
+        val model = selectModel(provider)
+        val effectiveTemperature = provider.temperature.toDouble()
+        val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
+
+        val messages = listOf(
+            MessageDto(role = "system", content = systemInstruction),
+            MessageDto(role = "user", content = prompt)
+        )
+
+        val request = ChatRequestDto(
+            model = model,
+            messages = messages,
+            temperature = effectiveTemperature,
+            maxTokens = effectiveMaxTokens,
+            stream = true  // 启用流式响应
+        )
+
+        val requestBodyJson = moshi.adapter(ChatRequestDto::class.java).toJson(request)
+        val headers = mapOf(
+            "Authorization" to "Bearer ${provider.apiKey}",
+            "Content-Type" to "application/json"
+        )
+
+        DebugLogger.logApiRequest(
+            tag = "AiRepositoryImpl",
+            method = "generateTextStream",
+            url = url,
+            model = model,
+            providerName = provider.name,
+            promptContext = prompt,
+            systemInstruction = systemInstruction,
+            additionalInfo = mapOf("Stream" to true),
+            temperature = provider.temperature,
+            maxTokens = effectiveMaxTokens
+        )
+
+        return sseStreamReader.stream(url, requestBodyJson, headers)
     }
 }

@@ -1,7 +1,10 @@
 package com.empathy.ai.domain.repository
 
 import com.empathy.ai.domain.model.AiAdvisorConversation
+import com.empathy.ai.domain.model.AiAdvisorMessageBlock
 import com.empathy.ai.domain.model.AiAdvisorSession
+import com.empathy.ai.domain.model.MessageBlockStatus
+import com.empathy.ai.domain.model.SendStatus
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -182,4 +185,88 @@ interface AiAdvisorRepository {
      * @return 对话数量
      */
     suspend fun getConversationCount(sessionId: String): Result<Int>
+
+    // ==================== FD-00028: Block管理 ====================
+
+    /**
+     * 保存消息块
+     *
+     * 用于创建新的Block（如MAIN_TEXT、THINKING等）。
+     *
+     * @param block 消息块对象
+     * @return 保存结果
+     */
+    suspend fun saveBlock(block: AiAdvisorMessageBlock): Result<Unit>
+
+    /**
+     * 更新Block内容和状态
+     *
+     * 用于流式更新场景，原子性更新content和status字段。
+     * 这是智能节流更新的核心方法。
+     *
+     * @param blockId Block ID
+     * @param content 新内容
+     * @param status 新状态
+     * @return 更新结果
+     */
+    suspend fun updateBlockContent(
+        blockId: String,
+        content: String,
+        status: MessageBlockStatus
+    ): Result<Unit>
+
+    /**
+     * 获取消息的所有Block
+     *
+     * @param messageId 消息ID
+     * @return Block列表，按创建时间升序排列
+     */
+    suspend fun getBlocksByMessageId(messageId: String): Result<List<AiAdvisorMessageBlock>>
+
+    /**
+     * 响应式观察消息的Block
+     *
+     * 返回Flow，支持UI实时更新。
+     *
+     * @param messageId 消息ID
+     * @return Block列表Flow
+     */
+    fun observeBlocksByMessageId(messageId: String): Flow<List<AiAdvisorMessageBlock>>
+
+    /**
+     * 更新消息状态
+     *
+     * 用于更新消息的发送状态（如PENDING→SUCCESS、PENDING→FAILED等）。
+     *
+     * @param messageId 消息ID
+     * @param status 新状态
+     * @return 更新结果
+     */
+    suspend fun updateMessageStatus(messageId: String, status: SendStatus): Result<Unit>
+
+    /**
+     * 更新消息内容和状态
+     *
+     * BUG-044-P1-002: 用于停止生成时保存当前内容并更新状态。
+     *
+     * @param messageId 消息ID
+     * @param content 新内容
+     * @param status 新状态
+     * @return 更新结果
+     */
+    suspend fun updateMessageContentAndStatus(
+        messageId: String,
+        content: String,
+        status: SendStatus
+    ): Result<Unit>
+
+    /**
+     * 删除消息
+     *
+     * BUG-044-P1-002: 用于删除没有内容的消息。
+     *
+     * @param messageId 消息ID
+     * @return 删除结果
+     */
+    suspend fun deleteMessage(messageId: String): Result<Unit>
 }

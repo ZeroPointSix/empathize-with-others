@@ -8,22 +8,31 @@ import androidx.room.PrimaryKey
 /**
  * 策略标签实体 - 对应数据库 brain_tags 表
  *
- * 表结构规范:
- * - 表名: brain_tags (复数形式,snake_case)
- * - 主键: id (Long类型,自增autoGenerate = true)
- * - 外键索引: contact_id (必须加索引,因为查询几乎都是WHERE contact_id = ?)
- * - 列名: snake_case风格
- * - Kotlin属性: camelCase风格
+ * 存储用户的"大脑标签"，即联系人的特征标签，用于AI分析的上下文输入。
+ *
+ * 业务背景 (PRD-00003):
+ *   - 标签分为两种类型：雷区标签（RISK_RED）和策略标签（STRATEGY_GREEN）
+ *   - 雷区标签：提醒用户避免的行为（如"不吃香菜"）
+ *   - 策略标签：建议采用的策略（如"多倾听"）
+ *   - 标签来源：用户手动添加 或 AI分析推断（AI_INFERRED）
+ *
+ * 设计决策 (TDD-00003):
+ *   - 使用自增Long主键，便于快速插入
+ *   - contact_id必须加索引，因为几乎所有查询都是按联系人筛选
+ *   - type字段在Domain层是枚举，在DB层存储为字符串（灵活兼容）
+ *   - is_confirmed字段用于AI推断标签的确认状态
  *
  * 特殊字段处理:
- * - type字段在Domain层是TagType枚举,在DB层存储为String(使用enum.name)
- * - 使用TypeConverter进行枚举和字符串的转换
+ *   - type字段使用TypeConverter进行枚举<->字符串转换
+ *   - is_confirmed默认true，手动添加的标签无需确认
  *
- * @property id 数据库自增ID
- * @property contactId 外键:关联到哪个联系人(必须加索引)
- * @property content 标签内容(e.g., "不喜欢吃香菜")
- * @property type 类型:雷区(RISK_RED)或策略(STRATEGY_GREEN)
- * @property source 来源标记:MANUAL(用户手动添加)或AI_INFERRED(AI分析得出)
+ * 字段说明:
+ *   - id: 数据库自增ID
+ *   - contact_id: 外键，关联到哪个联系人
+ *   - content: 标签内容（如"不喜欢吃香菜"）
+ *   - type: 标签类型（RISK_RED/STRATEGY_GREEN）
+ *   - source: 来源标记（MANUAL用户添加/AI_INFERRED AI推断）
+ *   - is_confirmed: AI推断的标签是否已确认
  *
  * @see com.empathy.ai.domain.model.BrainTag
  * @see com.empathy.ai.domain.model.TagType

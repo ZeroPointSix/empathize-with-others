@@ -3,7 +3,56 @@ package com.empathy.ai.presentation.navigation
 /**
  * 导航路由定义
  *
- * 定义应用中所有页面的路由路径和参数
+ * ## 业务职责
+ * 定义应用中所有页面的路由路径字符串常量，作为导航的唯一数据源。
+ * 采用object单例模式，确保路由常量的唯一性和可访问性。
+ *
+ * ## 命名规范
+ * - **页面路由**: 使用小写字母和下划线，如 `contact_list`
+ * - **参数路由**: 使用 `{paramName}` 占位符，如 `contact_detail/{contactId}`
+ * - **参数常量**: 使用 `ARG_ID` 后缀，如 `CONTACT_DETAIL_ARG_ID`
+ * - **辅助函数**: 使用 `create`/`edit`/`xxx` 动词前缀，如 `createContactDetailRoute`
+ *
+ * ## 路由层级
+ * ```
+ * presentation/navigation/
+ * ├── NavRoutes.kt      # 路由常量定义（当前文件）
+ * ├── NavGraph.kt       # 导航图实现
+ * └── prompt/           # 提示词编辑器导航（嵌套）
+ * ```
+ *
+ * ## 路由清单
+ * | 路由 | 功能 | 参数 | 关联功能 |
+ * |------|------|------|----------|
+ * | CONTACT_LIST | 联系人列表 | 无 | 底部Tab首页 |
+ * | CONTACT_DETAIL | 联系人详情 | contactId | 旧版详情页（已废弃） |
+ * | CONTACT_DETAIL_TAB | 联系人详情(新) | contactId | 四标签页设计 |
+ * | CREATE_CONTACT | 新建联系人 | 无 | TD-00020 |
+ * | CHAT | AI分析 | contactId | 聊天分析界面 |
+ * | BRAIN_TAG | 标签管理 | 无 | 标签管理界面 |
+ * | AI_ADVISOR | AI军师主界面 | 无 | TD-00026 |
+ * | AI_ADVISOR_CHAT | AI军师对话 | contactId | TD-00026 |
+ * | SETTINGS | 设置 | 无 | 底部Tab页 |
+ * | AI_CONFIG | AI配置 | 无 | 服务商管理 |
+ * | ADD_PROVIDER | 添加服务商 | 无 | TD-00021 |
+ * | EDIT_PROVIDER | 编辑服务商 | providerId | TD-00021 |
+ * | USAGE_STATS | 用量统计 | 无 | TD-00025 |
+ * | USER_PROFILE | 用户画像 | 无 | 个人信息 |
+ *
+ * ## 底部导航路由
+ * BOTTOM_NAV_ROUTES 定义了底部Tab栏对应的三个页面：
+ * 1. CONTACT_LIST - 联系人
+ * 2. AI_ADVISOR - AI军师
+ * 3. SETTINGS - 设置
+ *
+ * ## 设计决策
+ * 1. **路由字符串硬编码**: 在object中定义常量，便于IDE自动完成和重构
+ * 2. **参数常量分离**: 参数名单独定义，避免字符串重复
+ * 3. **辅助函数封装**: 复杂的路由拼接逻辑封装为函数，降低调用方复杂度
+ * 4. **命名一致性**: 路由名与Screen Composable命名保持一致
+ *
+ * @see NavGraph 导航图实现
+ * @see AnimationSpec 转场动画定义
  */
 object NavRoutes {
     /**

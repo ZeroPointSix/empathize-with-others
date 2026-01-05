@@ -6,6 +6,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.empathy.ai.data.local.AppDatabase
 import com.empathy.ai.data.local.dao.AiAdvisorDao
+import com.empathy.ai.data.local.dao.AiAdvisorMessageBlockDao
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.ApiUsageDao
 import com.empathy.ai.data.local.dao.BrainTagDao
@@ -641,6 +642,69 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移 v13 → v14
+     *
+     * FD-00028: AI军师流式对话升级功能
+     *
+     * 变更内容：
+     * 1. 新增ai_advisor_message_blocks表，支持Block-based消息架构
+     * 2. 为现有AI消息创建默认MAIN_TEXT Block（数据迁移）
+     *
+     * 新增表：
+     * - ai_advisor_message_blocks: 消息块表
+     *
+     * 新增索引：
+     * - index_ai_advisor_message_blocks_message_id: 按消息ID查询
+     */
+    internal val MIGRATION_13_14 = object : Migration(13, 14) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 创建消息块表
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS ai_advisor_message_blocks (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    message_id TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    metadata TEXT,
+                    created_at INTEGER NOT NULL,
+                    FOREIGN KEY (message_id) 
+                        REFERENCES ai_advisor_conversations(id) 
+                        ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            // 2. 创建索引（优化按消息ID查询）
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS index_ai_advisor_message_blocks_message_id 
+                ON ai_advisor_message_blocks(message_id)
+                """.trimIndent()
+            )
+
+            // 3. 数据迁移：为现有AI消息创建默认Block
+            // 注意：使用 || 进行字符串拼接（SQLite语法）
+            db.execSQL(
+                """
+                INSERT INTO ai_advisor_message_blocks 
+                    (id, message_id, type, status, content, created_at)
+                SELECT 
+                    id || '_main_block',
+                    id,
+                    'MAIN_TEXT',
+                    'SUCCESS',
+                    content,
+                    created_at
+                FROM ai_advisor_conversations
+                WHERE message_type = 'AI'
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -661,6 +725,7 @@ object DatabaseModule {
      * - v10→v11: 添加conversation_topics表（对话主题功能）
      * - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
      * - v12→v13: 添加AI军师对话功能表（TD-00026）
+     * - v13→v14: 添加AI军师消息块表（FD-00028流式对话升级）
      */
     @Provides
     @Singleton
@@ -682,7 +747,8 @@ object DatabaseModule {
                 MIGRATION_9_10,
                 MIGRATION_10_11,
                 MIGRATION_11_12,
-                MIGRATION_12_13
+                MIGRATION_12_13,
+                MIGRATION_13_14  // FD-00028: 流式对话升级
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据
@@ -721,4 +787,8 @@ object DatabaseModule {
     @Provides
     fun provideAiAdvisorDao(database: AppDatabase): AiAdvisorDao =
         database.aiAdvisorDao()
+
+    @Provides
+    fun provideAiAdvisorMessageBlockDao(database: AppDatabase): AiAdvisorMessageBlockDao =
+        database.aiAdvisorMessageBlockDao()
 }

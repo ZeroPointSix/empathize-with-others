@@ -2,6 +2,7 @@ package com.empathy.ai.data.di
 
 import android.util.Log
 import com.empathy.ai.data.local.ProxyPreferences
+import com.empathy.ai.data.remote.SseStreamReader
 import com.empathy.ai.data.remote.api.OpenAiApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -14,6 +15,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 /**
@@ -173,5 +175,54 @@ object NetworkModule {
     @Singleton
     fun provideOpenAiApi(retrofit: Retrofit): OpenAiApi {
         return retrofit.create(OpenAiApi::class.java)
+    }
+
+    // ==================== FD-00028: SSE流式响应支持 ====================
+
+    /**
+     * 提供 SSE 专用 OkHttpClient
+     *
+     * SSE (Server-Sent Events) 需要特殊的超时配置：
+     * - readTimeout = 0: 无限读取超时，因为SSE是长连接
+     * - connectTimeout = 30秒: 连接超时保持正常
+     * - writeTimeout = 30秒: 写入超时保持正常
+     *
+     * 业务背景 (FD-00028):
+     * - 流式响应需要保持长连接
+     * - AI生成可能需要较长时间
+     * - 不能因为读取超时而中断流式响应
+     *
+     * @param factory OkHttpClientFactory 实例，用于获取代理配置
+     * @return SSE专用OkHttpClient实例
+     */
+    @Provides
+    @Singleton
+    @Named("sse")
+    fun provideSseOkHttpClient(factory: OkHttpClientFactory): OkHttpClient {
+        // 基于现有客户端配置，但修改超时设置
+        return factory.getClient().newBuilder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(0, TimeUnit.SECONDS)  // SSE需要无限读取超时
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build()
+    }
+
+    /**
+     * 提供 SseStreamReader
+     *
+     * SSE流式读取器，用于处理AI流式响应。
+     *
+     * @param okHttpClient SSE专用OkHttpClient
+     * @return SseStreamReader实例
+     *
+     * @see FD-00028 AI军师流式对话升级功能设计
+     */
+    @Provides
+    @Singleton
+    fun provideSseStreamReader(
+        @Named("sse") okHttpClient: OkHttpClient
+    ): SseStreamReader {
+        return SseStreamReader(okHttpClient)
     }
 }

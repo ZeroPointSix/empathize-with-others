@@ -3,7 +3,17 @@ package com.empathy.ai.domain.model
 /**
  * API 用量统计
  *
- * 聚合统计结果，用于展示用量概览
+ * 聚合统计结果，用于展示用量概览和成本分析。
+ *
+ * 业务背景:
+ * - 追踪AI API调用次数和Token消耗
+ * - 支持按服务商、模型维度统计分析
+ * - 便于用户了解API使用情况和成本控制
+ *
+ * 设计决策:
+ * - 使用嵌套数据类支持多维度统计
+ * - 提供格式化方法便于UI展示
+ * - 冗余存储providerName和modelName，避免查询时的关联
  *
  * @property totalRequests 总请求数
  * @property successRequests 成功请求数

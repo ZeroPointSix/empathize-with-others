@@ -88,10 +88,61 @@ private val DarkColorScheme = darkColorScheme(
 
 /**
  * Empathy应用主题
- * 
- * @param darkTheme 是否使用深色模式,默认跟随系统
- * @param dynamicColor 是否使用动态颜色 (Android 12+)
- * @param content 主题内容
+ *
+ * ## 业务职责
+ * 定义应用的整体视觉风格，包括：
+ * - 浅色/深色配色方案
+ * - Material 3 主题配置
+ * - 动态颜色支持（Android 12+）
+ * - 语义化颜色（SemanticColors）
+ * - 响应式尺寸（AdaptiveDimensions）
+ *
+ * ## 主题层级
+ * ```
+ * Theme.kt
+ * ├── LightColorScheme  / DarkColorScheme  ← Material 3 配色
+ * ├── SemanticColors (Local)                ← 语义化颜色
+ * ├── AdaptiveDimensions (Local)           ← 响应式尺寸
+ * └── Typography                            ← 字体排版
+ * ```
+ *
+ * ## 颜色系统设计
+ * - **Material 3**: 基于Material Design 3的色彩系统
+ * - **动态颜色**: Android 12+ 可从壁纸提取主题色
+ * - **语义化颜色**: 按功能命名（成功、警告、错误等）
+ * - **iOS风格**: 额外的iOS风格颜色（iOSBlue, iOSPurple等）
+ *
+ * ## 主题选择逻辑
+ * ```
+ * if (dynamicColor && Android 12+) {
+ *     // 动态颜色：跟随系统壁纸主题
+ *     colorScheme = dynamicDarkColorScheme / dynamicLightColorScheme
+ * } else if (darkTheme) {
+ *     // 深色模式：预定义的深色配色
+ *     colorScheme = DarkColorScheme
+ * } else {
+ *     // 浅色模式：预定义的浅色配色
+ *     colorScheme = LightColorScheme
+ * }
+ * ```
+ *
+ * ## 设计决策
+ * 1. **动态颜色默认启用**: 提升用户体验，个性化主题
+ * 2. **系统主题跟随**: 默认跟随系统深色模式设置
+ * 3. **状态栏颜色同步**: 状态栏颜色随主题变化
+ * 4. **CompositionLocal**: 语义化颜色通过Local提供，支持嵌套覆盖
+ *
+ * ## 关联组件
+ * - Color.kt: 颜色值定义
+ * - Type.kt: 字体排版定义
+ * - AnimationSpec.kt: 动画规格定义
+ *
+ * @param darkTheme 是否使用深色模式，默认跟随系统设置
+ * @param dynamicColor 是否使用动态颜色（Android 12+），默认启用
+ * @param content 主题包裹的UI内容
+ * @see LightColorScheme 浅色配色方案
+ * @see DarkColorScheme 深色配色方案
+ * @see SemanticColors 语义化颜色
  */
 @Composable
 fun EmpathyTheme(

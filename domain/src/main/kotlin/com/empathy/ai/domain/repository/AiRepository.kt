@@ -1,11 +1,13 @@
 package com.empathy.ai.domain.repository
 
 import com.empathy.ai.domain.model.AiProvider
+import com.empathy.ai.domain.model.AiStreamChunk
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.ExtractedData
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.SafetyCheckResult
+import kotlinx.coroutines.flow.Flow
 
 /**
  * AI服务仓储接口 - "大脑连接器"
@@ -223,4 +225,38 @@ interface AiRepository {
         provider: AiProvider,
         refinementPrompt: String
     ): Result<ReplyResult>
+
+    // ==================== FD-00028: 流式响应接口 ====================
+
+    /**
+     * 流式文本生成 (功能K)
+     *
+     * 业务规则 (FD-00028):
+     * - 使用Server-Sent Events (SSE) 实现实时文本流
+     * - 支持DeepSeek R1等模型的思考过程展示
+     * - 返回Flow<AiStreamChunk>，支持多种事件类型
+     *
+     * 设计决策:
+     * - 使用Flow而非suspend函数，支持流式数据发射
+     * - AiStreamChunk密封类定义统一的事件协议
+     * - 调用方负责处理各种Chunk类型并更新UI
+     *
+     * 用途:
+     * - AI军师流式对话
+     * - 实时打字机效果
+     * - 思考过程可视化
+     *
+     * @param provider AI服务商配置
+     * @param prompt 用户提示词
+     * @param systemInstruction 系统指令
+     * @return 流式响应Flow
+     *
+     * @see AiStreamChunk 流式数据块类型定义
+     * @see FD-00028 AI军师流式对话升级功能设计
+     */
+    fun generateTextStream(
+        provider: AiProvider,
+        prompt: String,
+        systemInstruction: String
+    ): Flow<AiStreamChunk>
 }

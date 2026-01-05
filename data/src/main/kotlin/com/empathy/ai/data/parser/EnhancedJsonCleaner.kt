@@ -3,7 +3,29 @@ package com.empathy.ai.data.parser
 import android.util.Log
 
 /**
- * Enhanced JSON Cleaner Implementation
+ * 增强型JSON清理器
+ *
+ * 提供多层次的JSON修复和验证功能，处理AI返回的各种异常JSON格式。
+ *
+ * 业务背景:
+ *   - AI返回的JSON可能包含Markdown代码块、Unicode转义、格式错误等
+ *   - 需要在不破坏有效数据的前提下修复这些问题
+ *   - 增强的日志记录便于调试和追踪问题
+ *
+ * 设计决策:
+ *   - 清理流程按序执行，每步独立可测试
+ *   - 保留原始JSON作为兜底，清理失败时返回原值
+ *   - 使用CleaningContext控制各功能的开关
+ *
+ * 清理流程:
+ *   1. removeMarkdownBlocks - 移除Markdown代码块包装
+ *   2. fixUnicodeAndEscapeCharacters - 修复Unicode转义
+ *   3. extractJsonObject - 提取JSON对象
+ *   4. fixCommonJsonErrors - 修复常见格式错误
+ *   5. validateAndFixJson - 最终验证和修复
+ *
+ * @see JsonCleaner 基础清理接口
+ * @see CleaningContext 清理配置上下文
  */
 class EnhancedJsonCleaner : JsonCleaner {
     
@@ -44,6 +66,21 @@ class EnhancedJsonCleaner : JsonCleaner {
         }
     }
     
+    /**
+     * JSON有效性验证
+     *
+     * [Algorithm] 使用括号配对验证JSON结构
+     * 步骤：
+     *   1. 查找首尾花括号位置
+     *   2. 统计括号数量是否相等
+     *   3. 返回验证结果
+     *
+     * 注意：此方法不解析JSON内容，仅验证结构。
+     * 更严格的验证需要使用JSON解析器。
+     *
+     * @param json 待验证的JSON字符串
+     * @return true表示结构有效，false表示无效
+     */
     override fun isValid(json: String): Boolean {
         return try {
             val startIndex = json.indexOf("{")
@@ -104,6 +141,20 @@ class EnhancedJsonCleaner : JsonCleaner {
         return result
     }
     
+    /**
+     * 提取JSON对象
+     *
+     * [Algorithm] 括号计数算法
+     * 从第一个{开始，统计嵌套深度，遇到}递减，
+     * 深度为0时说明找到了完整的JSON对象。
+     *
+     * 设计权衡：
+     *   - 不使用正则表达式，避免复杂嵌套场景处理失败
+     *   - 不解析具体内容，仅提取结构
+     *
+     * @param text 包含JSON的文本
+     * @return 提取的JSON对象，提取失败返回"{}"
+     */
     private fun extractJsonObjectEnhanced(json: String): String {
         val startIndex = json.indexOf("{")
         if (startIndex == -1) return "{}"
@@ -158,6 +209,21 @@ class EnhancedJsonCleaner : JsonCleaner {
         return result
     }
     
+    /**
+     * 尝试修复括号不匹配
+     *
+     * [Algorithm] 括号数量平衡算法
+     * 场景：
+     *   - 缺少右括号：补充相应数量的}
+     *   - 缺少左括号：移除多余的}
+     *
+     * 设计权衡：
+     *   - 简单的数量修复，不处理嵌套不匹配的情况
+     *   - 复杂的嵌套问题交给validateAndFixJson的兜底逻辑
+     *
+     * @param json 可能有括号问题的JSON
+     * @return 修复后的JSON
+     */
     private fun tryFixBracketMismatch(json: String): String {
         val openCount = json.count { it == '{' }
         val closeCount = json.count { it == '}' }
