@@ -154,7 +154,7 @@ object PrivacyEngine {
             val regex = Patterns.ALL_PATTERNS[patternName] ?: return@forEach
             regex.findAll(maskedText).forEach { matchResult ->
                 val isOverlapping = allMatches.any { existing ->
-                    existing.range.intersects(matchResult.range)
+                    existing.range.first <= matchResult.range.last && matchResult.range.first <= existing.range.last
                 }
                 if (!isOverlapping) {
                     allMatches.add(

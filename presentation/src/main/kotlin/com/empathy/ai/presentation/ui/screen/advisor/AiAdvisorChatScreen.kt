@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.AlertDialog
@@ -72,11 +73,67 @@ import com.empathy.ai.presentation.theme.iOSRed
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.screen.advisor.component.StreamingMessageBubbleSimple
 import com.empathy.ai.presentation.viewmodel.AiAdvisorChatUiState
 import com.empathy.ai.presentation.viewmodel.AiAdvisorChatViewModel
 
 /**
  * AI军师对话界面（iOS风格）
+ *
+ * ## 业务职责
+ * 实现AI军师的核心对话功能，支持：
+ * - 多轮对话交互（用户提问/AI回复）
+ * - 思考过程展示（AI推理耗时实时显示）
+ * - 流式响应显示（打字机效果）
+ * - 会话管理（多会话切换/新建）
+ * - 联系人切换（带确认对话框）
+ *
+ * ## 关联文档
+ * - PRD-00026: AI军师对话功能需求（多轮对话、上下文管理）
+ * - TDD-00026: AI军师对话功能技术设计
+ * - TDD-00028: AI军师流式对话升级技术设计
+ * - FD-00026: AI军师对话功能设计
+ * - BUG-044: 流式对话相关Bug修复记录
+ *
+ * ## 页面布局
+ * ```
+ * ┌─────────────────────────────────────┐
+ * │ [<] AI军师 │ 与 张三 的对话     [人]│  ← iOS导航栏
+ * ├─────────────────────────────────────┤
+ * │ [新对话][会话A][会话B]              │  ← 会话选择器
+ * ├─────────────────────────────────────┤
+ * │                                     │
+ * │   [AI头像] 您好！有什么可以帮您？   │  ← AI回复气泡
+ * │                                     │
+ * │   你好，我想咨询...               →│  ← 用户消息气泡
+ * │                                     │
+ * │   [AI头像] [思考中: 3.2s]          │  ← 流式思考状态
+ * │   "正在分析您的需求..."             │  ← 流式打字效果
+ * │                              [■]停止│  ← 停止按钮
+ * │                                     │
+ * ├─────────────────────────────────────┤
+ * │ [输入你的问题...            [发送]] │  ← 输入栏
+ * └─────────────────────────────────────┘
+ * ```
+ *
+ * ## 核心交互设计
+ * 1. **流式响应**: AI回复时实时显示思考时间和生成内容，支持中途停止
+ * 2. **会话管理**: 横向滚动的会话标签，支持快速切换和新建
+ * 3. **消息气泡**: 用户/AI消息区分展示，失败消息显示重试/删除选项
+ * 4. **自动滚动**: 用户在底部附近时自动滚动到最新消息（BUG-044-P0-004修复）
+ *
+ * ## 状态驱动的UI更新
+ * - `isLoading`: 显示加载指示器
+ * - `isStreaming`: 显示停止按钮和流式消息
+ * - `error`: 显示错误横幅
+ * - `showContactSelector`: 显示联系人选择对话框
+ *
+ * @param onNavigateBack 返回按钮点击回调
+ * @param onNavigateToContact 切换联系人后的导航回调
+ * @param onNavigateToSettings 设置按钮点击回调（预留）
+ * @param viewModel 注入的ViewModel
+ * @see AiAdvisorChatViewModel 管理对话状态和业务逻辑
+ * @see StreamingMessageBubbleSimple 流式消息气泡组件
  */
 @Composable
 fun AiAdvisorChatScreen(
@@ -96,10 +153,24 @@ fun AiAdvisorChatScreen(
         }
     }
 
-    // Scroll to bottom when new message arrives
-    LaunchedEffect(uiState.conversations.size) {
-        if (uiState.conversations.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.conversations.size - 1)
+    // BUG-044-P0-004修复：只在用户在底部附近时才自动滚动
+    LaunchedEffect(uiState.conversations.size, uiState.streamingContent) {
+        if (uiState.conversations.isNotEmpty() || uiState.isStreaming) {
+            // 检查用户是否在底部附近
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val totalItems = uiState.conversations.size + (if (uiState.isStreaming) 1 else 0)
+            val isNearBottom = lastVisibleIndex >= totalItems - 2
+
+            if (isNearBottom) {
+                val targetIndex = if (uiState.isStreaming) {
+                    uiState.conversations.size // 流式消息在最后
+                } else {
+                    uiState.conversations.size - 1
+                }
+                if (targetIndex >= 0) {
+                    listState.animateScrollToItem(targetIndex.coerceAtLeast(0))
+                }
+            }
         }
     }
 
@@ -135,7 +206,7 @@ fun AiAdvisorChatScreen(
                         color = iOSBlue
                     )
                 }
-                uiState.conversations.isEmpty() -> {
+                uiState.conversations.isEmpty() && !uiState.isStreaming -> {
                     EmptyChatState(modifier = Modifier.align(Alignment.Center))
                 }
                 else -> {
@@ -144,6 +215,7 @@ fun AiAdvisorChatScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // 已完成的对话消息
                         items(
                             items = uiState.conversations,
                             key = { it.id }
@@ -151,8 +223,25 @@ fun AiAdvisorChatScreen(
                             ChatBubble(
                                 conversation = conversation,
                                 onRetry = { viewModel.retryMessage(conversation) },
-                                onDelete = { viewModel.deleteMessage(conversation.id) }
+                                onDelete = { viewModel.deleteMessage(conversation.id) },
+                                onRegenerate = { viewModel.regenerateLastMessage() },
+                                isLastAiMessage = conversation == uiState.conversations.lastOrNull { it.messageType == MessageType.AI }
                             )
+                        }
+
+                        // 流式响应中的消息
+                        // BUG-044-P0-001/P0-005修复：添加更严格的渲染条件
+                        if (uiState.isStreaming && uiState.currentStreamingMessageId != null) {
+                            item(key = "streaming_message") {
+                                StreamingMessageBubbleSimple(
+                                    content = uiState.streamingContent,
+                                    thinkingContent = uiState.thinkingContent,
+                                    thinkingElapsedMs = uiState.thinkingElapsedMs,
+                                    isStreaming = true,
+                                    onStopGeneration = { viewModel.stopGeneration() },
+                                    onRegenerate = { viewModel.regenerateLastMessage() }
+                                )
+                            }
                         }
                     }
                 }
@@ -171,8 +260,10 @@ fun AiAdvisorChatScreen(
         ChatInputBar(
             inputText = uiState.inputText,
             isSending = uiState.isSending,
+            isStreaming = uiState.isStreaming,
             onInputChange = viewModel::updateInput,
-            onSend = viewModel::sendMessage
+            onSend = viewModel::sendMessage,
+            onStopGeneration = viewModel::stopGeneration
         )
     }
 
@@ -346,10 +437,13 @@ private fun SessionChip(
 private fun ChatBubble(
     conversation: AiAdvisorConversation,
     onRetry: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onRegenerate: () -> Unit,
+    isLastAiMessage: Boolean
 ) {
     val isUser = conversation.messageType == MessageType.USER
     val isFailed = conversation.sendStatus == SendStatus.FAILED
+    val isCancelled = conversation.sendStatus == SendStatus.CANCELLED
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     Row(
@@ -387,17 +481,17 @@ private fun ChatBubble(
                     bottomEnd = if (isUser) 4.dp else 18.dp
                 ),
                 color = when {
-                    isFailed -> iOSRed.copy(alpha = 0.1f)
+                    isFailed || isCancelled -> iOSRed.copy(alpha = 0.1f)
                     isUser -> iOSBlue
                     else -> iOSCardBackground
                 },
-                shadowElevation = if (!isUser && !isFailed) 1.dp else 0.dp
+                shadowElevation = if (!isUser && !isFailed && !isCancelled) 1.dp else 0.dp
             ) {
                 Text(
                     text = conversation.content.ifEmpty { "..." },
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     color = when {
-                        isFailed -> iOSRed
+                        isFailed || isCancelled -> iOSRed
                         isUser -> Color.White
                         else -> iOSTextPrimary
                     },
@@ -406,8 +500,8 @@ private fun ChatBubble(
                 )
             }
 
-            // 失败消息操作
-            if (isFailed) {
+            // 失败/取消消息操作
+            if (isFailed || isCancelled) {
                 Row(
                     modifier = Modifier.padding(top = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -440,6 +534,25 @@ private fun ChatBubble(
                     }
                 }
             }
+
+            // AI消息的重新生成按钮（仅最后一条AI消息显示）
+            if (!isUser && !isFailed && !isCancelled && isLastAiMessage) {
+                Row(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .clickable(onClick = onRegenerate),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = iOSBlue,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("重新生成", fontSize = 12.sp, color = iOSBlue)
+                }
+            }
         }
 
         if (isUser) {
@@ -466,8 +579,10 @@ private fun ChatBubble(
 private fun ChatInputBar(
     inputText: String,
     isSending: Boolean,
+    isStreaming: Boolean,
     onInputChange: (String) -> Unit,
-    onSend: () -> Unit
+    onSend: () -> Unit,
+    onStopGeneration: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -492,7 +607,7 @@ private fun ChatInputBar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 10.dp),
-                    enabled = !isSending,
+                    enabled = !isSending && !isStreaming,
                     textStyle = TextStyle(
                         fontSize = 16.sp,
                         color = iOSTextPrimary
@@ -502,7 +617,7 @@ private fun ChatInputBar(
                         Box {
                             if (inputText.isEmpty()) {
                                 Text(
-                                    text = "输入你的问题...",
+                                    text = if (isStreaming) "AI正在回复..." else "输入你的问题...",
                                     fontSize = 16.sp,
                                     color = iOSTextSecondary
                                 )
@@ -515,29 +630,51 @@ private fun ChatInputBar(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 发送按钮
-            Surface(
-                onClick = { if (inputText.isNotBlank() && !isSending) onSend() },
-                shape = CircleShape,
-                color = if (inputText.isNotBlank() && !isSending) iOSBlue else Color(0xFFE5E5EA)
-            ) {
-                Box(
-                    modifier = Modifier.size(36.dp),
-                    contentAlignment = Alignment.Center
+            // 发送/停止按钮
+            if (isStreaming) {
+                // 停止生成按钮
+                Surface(
+                    onClick = onStopGeneration,
+                    shape = CircleShape,
+                    color = iOSRed
                 ) {
-                    if (isSending) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                    } else {
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "发送",
-                            tint = if (inputText.isNotBlank()) Color.White else iOSTextSecondary,
+                            imageVector = Icons.Default.Stop,
+                            contentDescription = "停止生成",
+                            tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
+                    }
+                }
+            } else {
+                // 发送按钮
+                Surface(
+                    onClick = { if (inputText.isNotBlank() && !isSending) onSend() },
+                    shape = CircleShape,
+                    color = if (inputText.isNotBlank() && !isSending) iOSBlue else Color(0xFFE5E5EA)
+                ) {
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isSending) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "发送",
+                                tint = if (inputText.isNotBlank()) Color.White else iOSTextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }

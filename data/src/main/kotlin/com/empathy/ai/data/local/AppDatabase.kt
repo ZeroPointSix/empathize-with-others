@@ -22,6 +22,7 @@ import androidx.room.TypeConverters
 import com.empathy.ai.data.local.converter.FactListConverter
 import com.empathy.ai.data.local.converter.RoomTypeConverters
 import com.empathy.ai.data.local.dao.AiAdvisorDao
+import com.empathy.ai.data.local.dao.AiAdvisorMessageBlockDao
 import com.empathy.ai.data.local.dao.AiProviderDao
 import com.empathy.ai.data.local.dao.ApiUsageDao
 import com.empathy.ai.data.local.dao.BrainTagDao
@@ -31,6 +32,7 @@ import com.empathy.ai.data.local.dao.ConversationTopicDao
 import com.empathy.ai.data.local.dao.DailySummaryDao
 import com.empathy.ai.data.local.dao.FailedSummaryTaskDao
 import com.empathy.ai.data.local.entity.AiAdvisorConversationEntity
+import com.empathy.ai.data.local.entity.AiAdvisorMessageBlockEntity
 import com.empathy.ai.data.local.entity.AiAdvisorSessionEntity
 import com.empathy.ai.data.local.entity.AiProviderEntity
 import com.empathy.ai.data.local.entity.ApiUsageEntity
@@ -67,6 +69,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  *   - v10→v11: 添加conversation_topics表（对话主题功能）
  *   - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
  *   - v12→v13: 添加AI军师对话功能表（TD-00026）
+ *   - v13→v14: 添加AI军师消息块表（FD-00028流式对话升级）
  *
  * @property entities 数据库包含的实体类列表
  * @property version 数据库版本号
@@ -84,9 +87,10 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         ConversationTopicEntity::class,
         ApiUsageEntity::class,
         AiAdvisorSessionEntity::class,
-        AiAdvisorConversationEntity::class
+        AiAdvisorConversationEntity::class,
+        AiAdvisorMessageBlockEntity::class  // FD-00028: 流式对话消息块
     ],
-    version = 13,
+    version = 14,  // FD-00028: 版本升级
     exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)
@@ -183,4 +187,14 @@ abstract class AppDatabase : RoomDatabase() {
      * - 提供智能对话建议
      */
     abstract fun aiAdvisorDao(): AiAdvisorDao
+
+    /**
+     * 获取AI军师消息块DAO
+     *
+     * 【FD-00028】流式对话消息块管理：
+     * - 支持Block-based消息架构
+     * - 支持思考过程展示
+     * - 支持智能节流更新
+     */
+    abstract fun aiAdvisorMessageBlockDao(): AiAdvisorMessageBlockDao
 }

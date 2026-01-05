@@ -33,10 +33,66 @@ import com.empathy.ai.presentation.theme.AnimationSpec
 /**
  * 应用导航图
  *
- * 定义应用的导航结构和页面跳转逻辑
+ * ## 业务职责
+ * 定义完整的应用导航结构，使用Navigation Compose实现页面路由管理。
+ * 采用单Activity多页面的导航模式，支持参数传递和页面转场动画。
  *
- * @param navController 导航控制器
- * @param modifier Modifier
+ * ## 架构设计
+ * - **单入口**: 从联系人列表(CONTACT_LIST)作为启动页
+ * - **扁平化**: 所有页面平铺在NavHost中，无嵌套导航
+ * - **参数化**: 通过NavArgument传递页面参数（联系人ID、服务商ID等）
+ * - **动画化**: 统一的页面转场动画（AnimationSpec定义）
+ *
+ * ## 导航流程
+ * ```
+ * ┌─────────────────────────────────────────────────────────┐
+ * │                      MainActivity                        │
+ * │              NavController + NavHost                    │
+ * └─────────────────────────────────────────────────────────┘
+ *                           │
+ *                           ▼
+ * ┌─────────────────────────────────────────────────────────┐
+ * │                  NavGraph (startDestination=CONTACT_LIST)│
+ * ├─────────────────────────────────────────────────────────┤
+ * │  CONTACT_LIST ──→ CONTACT_DETAIL_TAB/{id}              │  ← 联系人管理
+ * │       │           CREATE_CONTACT                        │
+ * │       │                                                   │
+ * │       ├──→ CHAT/{id}                                   │  ← AI分析
+ * │       │                                                   │
+ * │       ├──→ BRAIN_TAG                                   │  ← 标签管理
+ * │       │                                                   │
+ * │       ├──→ AI_ADVISOR ──→ AI_ADVISOR_CHAT/{id}         │  ← AI军师 (TD-00026)
+ * │       │                                                   │
+ * │       └──→ SETTINGS ──→ AI_CONFIG ──→ ADD_PROVIDER     │  ← 设置
+ * │                       │          EDIT_PROVIDER/{id}     │
+ * │                       │          USAGE_STATS            │
+ * │                       └──→ USER_PROFILE                │
+ * └─────────────────────────────────────────────────────────┘
+ * ```
+ *
+ * ## 页面转场动画
+ * - **进入动画**: 从右侧滑入，淡入效果
+ * - **退出动画**: 向右滑出，淡出效果
+ * - **弹出进入**: 从左侧滑入（返回时）
+ * - **弹出退出**: 向左滑出（返回时）
+ * - 动画时长: 300ms，缓动曲线: cubic-bezier(0.4, 0, 0.2, 1)
+ *
+ * ## 设计决策
+ * 1. **底部导航路由**: BOTTOM_NAV_ROUTES定义底部Tab页，支持单例启动
+ * 2. **参数化路由**: 联系人/服务商等使用ID参数，支持动态路由生成
+ * 3. **状态恢复**: 使用saveState/restoreState保持页面状态
+ * 4. **页面复用**: AddProviderScreen被EditProviderScreen复用（BUG-00040修复）
+ *
+ * ## 关联文档
+ * - TD-00026: AI军师功能（新增AI_ADVISOR和AI_ADVISOR_CHAT路由）
+ * - TD-00020: 新建联系人功能（新增CREATE_CONTACT路由）
+ * - TD-00021: 服务商配置功能（新增ADD_PROVIDER/EDIT_PROVIDER路由）
+ * - TD-00025: 用量统计功能（新增USAGE_STATS路由）
+ *
+ * @param navController 导航控制器，由MainActivity创建并传入
+ * @param modifier 组合修饰符
+ * @see NavRoutes 路由常量定义
+ * @see AnimationSpec 转场动画定义
  */
 @Composable
 fun NavGraph(

@@ -9,6 +9,7 @@ import com.empathy.ai.domain.usecase.DeleteAdvisorConversationUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorConversationsUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorSessionsUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
+import com.empathy.ai.domain.usecase.SendAdvisorMessageStreamingUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,6 +20,7 @@ import javax.inject.Singleton
  * AI军师功能依赖注入模块
  *
  * 提供AI军师对话功能（TD-00026）所需的UseCase依赖注入配置。
+ * 🆕 FD-00028: 新增流式对话支持
  *
  * 业务背景 (PRD-00026):
  *   AI军师是一个独立的智能对话模块，允许用户与AI进行自由对话，
@@ -27,13 +29,16 @@ import javax.inject.Singleton
  * 模块职责:
  *   - 会话管理: 创建、获取、删除会话及对话记录
  *   - 消息处理: 发送消息、接收AI响应
+ *   - 🆕 流式响应: SSE流式对话，支持思考过程展示
  *
  * 架构决策 (TDD-00026):
  *   - 使用SingletonComponent确保所有UseCase为单例，复用会话状态
  *   - SendAdvisorMessageUseCase依赖4个仓库，体现其核心编排角色
+ *   - 🆕 SendAdvisorMessageStreamingUseCase支持流式响应
  *
  * @see PRD-00026 AI军师对话功能需求
  * @see TDD-00026 AI军师对话功能技术设计
+ * @see FD-00028 AI军师流式对话升级功能设计
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -121,6 +126,44 @@ object AiAdvisorModule {
         aiProviderRepository: AiProviderRepository
     ): SendAdvisorMessageUseCase {
         return SendAdvisorMessageUseCase(
+            aiAdvisorRepository,
+            aiRepository,
+            contactRepository,
+            aiProviderRepository
+        )
+    }
+
+    /**
+     * 提供发送AI军师消息用例（流式版本）
+     *
+     * 🆕 FD-00028: 流式对话升级
+     *
+     * [核心编排用例] 流式消息发送的完整流程:
+     *   1. 创建用户消息记录
+     *   2. 创建AI消息占位（PENDING状态）
+     *   3. 创建初始Block（MAIN_TEXT）
+     *   4. 调用AI Repository获取流式响应
+     *   5. 实时更新Block内容
+     *   6. 完成后更新消息状态
+     *
+     * 与非流式版本的区别:
+     *   - 返回Flow<StreamingState>而非Result<Unit>
+     *   - 支持思考过程展示（DeepSeek R1等模型）
+     *   - 支持停止生成功能
+     *   - 使用Block架构存储消息内容
+     *
+     * @see FD-00028 AI军师流式对话升级功能设计
+     * @see StreamingState 流式状态定义
+     */
+    @Provides
+    @Singleton
+    fun provideSendAdvisorMessageStreamingUseCase(
+        aiAdvisorRepository: AiAdvisorRepository,
+        aiRepository: AiRepository,
+        contactRepository: ContactRepository,
+        aiProviderRepository: AiProviderRepository
+    ): SendAdvisorMessageStreamingUseCase {
+        return SendAdvisorMessageStreamingUseCase(
             aiAdvisorRepository,
             aiRepository,
             contactRepository,

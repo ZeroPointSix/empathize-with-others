@@ -3,7 +3,21 @@ package com.empathy.ai.domain.model
 /**
  * 连接测试结果
  *
- * 包含测试的详细结果信息
+ * 用于测试AI服务商连接状态，包含成功/失败结果和详细信息。
+ *
+ * 业务背景 (PRD-00002):
+ * - 用户配置AI服务商后需要测试连接是否正常
+ * - 区分不同错误类型，便于用户定位问题
+ * - latencyMs用于评估服务商响应速度
+ *
+ * 设计决策:
+ * - 使用嵌套枚举定义错误类型，覆盖常见失败场景
+ * - 提供工厂方法和用户友好消息，便于UI使用
+ *
+ * @property isSuccess 测试是否成功
+ * @property latencyMs 响应延迟（毫秒）
+ * @property errorType 错误类型（如果失败）
+ * @property errorMessage 错误消息（如果失败）
  */
 data class ConnectionTestResult(
     /**

@@ -3,7 +3,17 @@ package com.empathy.ai.domain.model
 /**
  * API 用量记录
  *
- * 记录单次 API 调用的详细信息，用于统计和分析
+ * 记录单次 API 调用的详细信息，用于统计分析和问题排查。
+ *
+ * 业务背景:
+ * - 每一次AI API调用都生成一条记录
+ * - 记录Token消耗和请求耗时
+ * - 支持成功/失败状态的追踪
+ *
+ * 设计决策:
+ * - 使用String类型id支持分布式环境
+ * - 冗余存储providerName和modelName，便于查询和展示
+ * - 提供格式化方法便于UI展示
  *
  * @property id 唯一标识
  * @property providerId 服务商 ID

@@ -38,5 +38,14 @@ enum class SendStatus {
      * - 网络错误/API错误/超时等
      * - UI显示重试按钮和错误提示
      */
-    FAILED
+    FAILED,
+
+    /**
+     * 用户取消
+     * - 用户主动中断流式响应
+     * - UI显示已取消状态，支持重新生成
+     *
+     * 新增于 FD-00028: AI军师流式对话升级功能
+     */
+    CANCELLED
 }

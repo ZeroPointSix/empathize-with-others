@@ -6,6 +6,7 @@ import com.empathy.ai.domain.model.AiAdvisorSession
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
+import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
 import com.empathy.ai.domain.usecase.DeleteAdvisorConversationUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorConversationsUseCase
@@ -13,6 +14,7 @@ import com.empathy.ai.domain.usecase.GetAdvisorSessionsUseCase
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
+import com.empathy.ai.domain.usecase.SendAdvisorMessageStreamingUseCase
 import com.empathy.ai.presentation.navigation.NavRoutes
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -36,6 +38,8 @@ import org.junit.Test
 
 /**
  * AiAdvisorChatViewModel单元测试
+ *
+ * 包含BUG-00044修复后的测试用例
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AiAdvisorChatViewModelTest {
@@ -48,7 +52,9 @@ class AiAdvisorChatViewModelTest {
     private lateinit var getAdvisorSessionsUseCase: GetAdvisorSessionsUseCase
     private lateinit var getAdvisorConversationsUseCase: GetAdvisorConversationsUseCase
     private lateinit var sendAdvisorMessageUseCase: SendAdvisorMessageUseCase
+    private lateinit var sendAdvisorMessageStreamingUseCase: SendAdvisorMessageStreamingUseCase
     private lateinit var deleteAdvisorConversationUseCase: DeleteAdvisorConversationUseCase
+    private lateinit var aiAdvisorRepository: AiAdvisorRepository
 
     private val testDispatcher = StandardTestDispatcher()
     private val testContactId = "test-contact-1"
@@ -65,7 +71,9 @@ class AiAdvisorChatViewModelTest {
         getAdvisorSessionsUseCase = mockk()
         getAdvisorConversationsUseCase = mockk()
         sendAdvisorMessageUseCase = mockk()
+        sendAdvisorMessageStreamingUseCase = mockk()
         deleteAdvisorConversationUseCase = mockk()
+        aiAdvisorRepository = mockk()
 
         // Default mock behaviors
         every { getAllContactsUseCase() } returns flowOf(emptyList())
@@ -86,7 +94,9 @@ class AiAdvisorChatViewModelTest {
             getAdvisorSessionsUseCase = getAdvisorSessionsUseCase,
             getAdvisorConversationsUseCase = getAdvisorConversationsUseCase,
             sendAdvisorMessageUseCase = sendAdvisorMessageUseCase,
-            deleteAdvisorConversationUseCase = deleteAdvisorConversationUseCase
+            sendAdvisorMessageStreamingUseCase = sendAdvisorMessageStreamingUseCase,
+            deleteAdvisorConversationUseCase = deleteAdvisorConversationUseCase,
+            aiAdvisorRepository = aiAdvisorRepository
         )
     }
 
@@ -465,6 +475,97 @@ class AiAdvisorChatViewModelTest {
 
         // Then
         coVerify(exactly = 0) { deleteAdvisorConversationUseCase(any()) }
+    }
+
+    // ==================== BUG-00044修复测试 ====================
+
+    /**
+     * BUG-044-P1-001: 测试CANCELLED状态的消息可以重试
+     */
+    @Test
+    fun `retryMessage should retry cancelled message`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        val cancelledConversation = AiAdvisorConversation(
+            id = "conv-1",
+            contactId = testContactId,
+            sessionId = testSessionId,
+            messageType = MessageType.USER,
+            content = "Cancelled message",
+            timestamp = System.currentTimeMillis(),
+            createdAt = System.currentTimeMillis(),
+            sendStatus = SendStatus.CANCELLED
+        )
+        val aiResponse = createTestConversation(
+            "conv-2", testContactId, testSessionId, MessageType.AI, "Response"
+        )
+
+        coEvery { deleteAdvisorConversationUseCase("conv-1") } returns Result.success(Unit)
+        coEvery {
+            sendAdvisorMessageUseCase(testContactId, testSessionId, "Cancelled message")
+        } returns Result.success(aiResponse)
+
+        createViewModel()
+        // 禁用流式模式以使用非流式发送
+        viewModel.setStreamingMode(false)
+        advanceUntilIdle()
+
+        // When
+        viewModel.retryMessage(cancelledConversation)
+        advanceUntilIdle()
+
+        // Then
+        coVerify { deleteAdvisorConversationUseCase("conv-1") }
+        coVerify { sendAdvisorMessageUseCase(testContactId, testSessionId, "Cancelled message") }
+    }
+
+    /**
+     * BUG-044-P1-005: 测试切换会话时停止流式响应
+     */
+    @Test
+    fun `switchSession should clear streaming state`() = runTest {
+        // Given
+        val session1 = createTestSession("session-1", testContactId)
+        val session2 = createTestSession("session-2", testContactId)
+        val contact = createTestContact(testContactId, "Test")
+
+        coEvery { getContactUseCase(testContactId) } returns Result.success(contact)
+        coEvery { getAdvisorSessionsUseCase(testContactId) } returns Result.success(listOf(session1, session2))
+
+        createViewModel()
+        advanceUntilIdle()
+
+        // When
+        viewModel.switchSession("session-2")
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals("session-2", state.currentSessionId)
+        assertFalse(state.isStreaming)
+        assertEquals("", state.streamingContent)
+        assertEquals("", state.thinkingContent)
+    }
+
+    /**
+     * BUG-044-P1-002: 测试停止生成时清空流式状态
+     */
+    @Test
+    fun `stopGeneration should clear streaming state`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        createViewModel()
+        advanceUntilIdle()
+
+        // When
+        viewModel.stopGeneration()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertFalse(state.isStreaming)
+        assertEquals("", state.streamingContent)
+        assertEquals("", state.thinkingContent)
+        assertNull(state.currentStreamingMessageId)
     }
 
     // ==================== 错误处理测试 ====================
