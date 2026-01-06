@@ -77,7 +77,6 @@ data class AiAdvisorSessionEntity(
      *
      * 领域模型是内存中的数据模型，不包含Room的ColumnInfo注解。
      */
-     */
     fun toDomain(): AiAdvisorSession = AiAdvisorSession(
         id = id,
         contactId = contactId,

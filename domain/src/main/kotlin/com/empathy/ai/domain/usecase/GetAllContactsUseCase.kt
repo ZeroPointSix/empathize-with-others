@@ -8,10 +8,18 @@ import javax.inject.Inject
 /**
  * 获取所有联系人列表用例
  *
- * 职责：
- * 1. 获取所有联系人数据流
- * 2. 提供响应式数据源
- * 3. 支持实时更新
+ * 负责提供联系人列表的响应式数据流，支持实时更新。
+ *
+ * 业务背景 (PRD-00003):
+ * - 联系人画像是AI分析的基础数据源
+ * - 使用Flow支持响应式数据更新，UI自动感知变化
+ *
+ * 设计决策 (TDD-00003):
+ * - 直接委托给Repository，不做额外处理
+ * - 返回Flow而非List，支持实时更新
+ *
+ * @return Flow<List<ContactProfile>> 联系人列表数据流，支持实时更新
+ * @see ContactRepository 联系人仓库接口
  */
 class GetAllContactsUseCase @Inject constructor(
     private val contactRepository: ContactRepository

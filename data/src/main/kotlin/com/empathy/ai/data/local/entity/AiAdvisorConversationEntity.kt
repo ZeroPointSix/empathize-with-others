@@ -81,7 +81,11 @@ data class AiAdvisorConversationEntity(
     val createdAt: Long,
 
     @ColumnInfo(name = "send_status", defaultValue = "SUCCESS")
-    val sendStatus: String = "SUCCESS"
+    val sendStatus: String = "SUCCESS",
+
+    // BUG-048-V4: 关联的用户消息ID，用于重新生成时获取原始用户输入
+    @ColumnInfo(name = "related_user_message_id", defaultValue = "")
+    val relatedUserMessageId: String = ""
 ) {
     /**
      * 转换为领域模型
@@ -94,7 +98,8 @@ data class AiAdvisorConversationEntity(
         content = content,
         timestamp = timestamp,
         createdAt = createdAt,
-        sendStatus = SendStatus.valueOf(sendStatus)
+        sendStatus = SendStatus.valueOf(sendStatus),
+        relatedUserMessageId = relatedUserMessageId.ifEmpty { null }
     )
 
     companion object {
@@ -110,7 +115,8 @@ data class AiAdvisorConversationEntity(
                 content = conversation.content,
                 timestamp = conversation.timestamp,
                 createdAt = conversation.createdAt,
-                sendStatus = conversation.sendStatus.name
+                sendStatus = conversation.sendStatus.name,
+                relatedUserMessageId = conversation.relatedUserMessageId ?: ""
             )
     }
 }

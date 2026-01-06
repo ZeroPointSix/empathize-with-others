@@ -22,13 +22,37 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
 /**
  * AI 服务商卡片组件
  *
- * 用于展示 AI 服务商的详细信息
+ * ## 业务职责
+ * 展示已配置的AI服务商信息，支持编辑、删除和设为默认操作。
+ * 用于AI配置页面，让用户管理多个AI服务商。
  *
- * @param provider 服务商信息
+ * ## 页面布局
+ * ```
+ * ┌─────────────────────────────────────┐
+ * │  DeepSeek              [默认] [✏️][🗑️]│  ← 名称 + 标签 + 操作按钮
+ * ├─────────────────────────────────────┤
+ * │  模型: deepseek-chat               │
+ * │  状态: ✅ 已连接                   │
+ * │  请求数: 1,234 次                  │
+ * └─────────────────────────────────────┘
+ * ```
+ *
+ * ## 核心设计决策
+ * 1. **默认标识**: 默认服务商显示"默认"标签和强调色背景
+ * 2. **视觉区分**: 默认服务商使用 primaryContainer 背景色
+ * 3. **完整信息**: 展示服务商名称、模型、连接状态、使用统计
+ * 4. **操作按钮**: 支持编辑、删除、设为默认操作
+ *
+ * ## 状态可视化
+ * - **默认**: 强调色背景 + "默认"芯片
+ * - **非默认**: 标准表面色背景
+ *
+ * @param provider 服务商完整信息
  * @param onEdit 编辑回调
  * @param onDelete 删除回调
- * @param onSetDefault 设置为默认回调
- * @param modifier 修饰符
+ * @param onSetDefault 设为默认回调
+ * @param modifier Modifier
+ * @see AiProvider 服务商数据模型
  */
 @Composable
 fun ProviderCard(

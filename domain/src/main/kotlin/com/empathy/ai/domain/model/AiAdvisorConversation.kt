@@ -28,6 +28,7 @@ import java.util.UUID
  * @property timestamp 时间戳，用于对话历史排序
  * @property createdAt 创建时间，用于数据管理和过期清理
  * @property sendStatus 发送状态（用于UI显示），支持PENDING/SUCCESS/FAILED
+ * @property relatedUserMessageId 关联的用户消息ID（BUG-048-V4修复：用于重新生成时获取原始用户输入）
  */
 data class AiAdvisorConversation(
     val id: String,
@@ -37,7 +38,8 @@ data class AiAdvisorConversation(
     val content: String,
     val timestamp: Long,
     val createdAt: Long = System.currentTimeMillis(),
-    val sendStatus: SendStatus = SendStatus.SUCCESS
+    val sendStatus: SendStatus = SendStatus.SUCCESS,
+    val relatedUserMessageId: String? = null // BUG-048-V4: 关联的用户消息ID
 ) {
     companion object {
         /**

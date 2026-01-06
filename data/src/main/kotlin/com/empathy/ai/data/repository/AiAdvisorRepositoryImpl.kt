@@ -295,6 +295,27 @@ class AiAdvisorRepositoryImpl @Inject constructor(
     }
 
     /**
+     * 更新AI消息内容和状态（带类型验证）
+     *
+     * BUG-048修复: 只更新AI类型的消息，防止误更新用户消息。
+     *
+     * @param messageId 消息ID
+     * @param content 新内容
+     * @param status 新状态
+     * @return 更新结果，包含是否成功更新（如果消息不是AI类型则返回false）
+     */
+    override suspend fun updateAiMessageContentAndStatus(
+        messageId: String,
+        content: String,
+        status: SendStatus
+    ): Result<Boolean> = withContext(ioDispatcher) {
+        runCatching {
+            val updatedRows = aiAdvisorDao.updateAiMessageContentAndStatus(messageId, content, status.name)
+            updatedRows > 0
+        }
+    }
+
+    /**
      * 删除消息
      *
      * BUG-044-P1-002: 用于删除没有内容的消息。

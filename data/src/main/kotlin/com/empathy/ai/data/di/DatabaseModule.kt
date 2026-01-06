@@ -656,6 +656,7 @@ object DatabaseModule {
      * 新增索引：
      * - index_ai_advisor_message_blocks_message_id: 按消息ID查询
      */
+    @Suppress("ClassName")
     internal val MIGRATION_13_14 = object : Migration(13, 14) {
         override fun migrate(db: SupportSQLiteDatabase) {
             // 1. 创建消息块表
@@ -705,6 +706,40 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移 v14 → v15
+     *
+     * BUG-00048-V4: 终止后重新生成消息角色错误修复
+     * BUG-00048-V5: 修复NOT NULL约束不匹配问题
+     *
+     * 变更内容：
+     * 1. ai_advisor_conversations表添加related_user_message_id字段
+     *    用于关联AI消息与其对应的用户消息，确保重新生成时能正确获取原始用户输入
+     *
+     * 修复问题：
+     * - 用户终止AI生成后点击"重新生成"时，被停止的内容被错误地显示为用户消息
+     * - 根因：lastUserInput未持久化，应用重启/ViewModel重建后丢失
+     * - 解决方案：通过relatedUserMessageId关联用户消息，实现三重保障获取用户输入
+     *
+     * V5修复：
+     * - 问题：ALTER TABLE ADD COLUMN默认创建允许NULL的列，与Entity定义不匹配
+     * - 解决：添加NOT NULL约束，确保与Entity定义一致
+     */
+    @Suppress("ClassName")
+    internal val MIGRATION_14_15 = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // BUG-00048-V5: 添加NOT NULL约束，确保与Entity定义一致
+            // Entity定义: @ColumnInfo(name = "related_user_message_id", defaultValue = "")
+            // 需要: notNull = true
+            db.execSQL(
+                """
+                ALTER TABLE ai_advisor_conversations 
+                ADD COLUMN related_user_message_id TEXT NOT NULL DEFAULT ''
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -726,6 +761,7 @@ object DatabaseModule {
      * - v11→v12: 添加API用量统计表和AI服务商高级选项字段（TD-00025）
      * - v12→v13: 添加AI军师对话功能表（TD-00026）
      * - v13→v14: 添加AI军师消息块表（FD-00028流式对话升级）
+     * - v14→v15: 添加related_user_message_id字段（BUG-00048-V4修复）
      */
     @Provides
     @Singleton
@@ -748,7 +784,8 @@ object DatabaseModule {
                 MIGRATION_10_11,
                 MIGRATION_11_12,
                 MIGRATION_12_13,
-                MIGRATION_13_14  // FD-00028: 流式对话升级
+                MIGRATION_13_14,  // FD-00028: 流式对话升级
+                MIGRATION_14_15   // BUG-00048-V4: 终止后重新生成消息角色错误修复
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据

@@ -78,6 +78,10 @@ class AiAdvisorChatViewModel @Inject constructor(
     private val aiAdvisorRepository: AiAdvisorRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "AiAdvisorChatViewModel"
+    }
+
     private val contactId: String = savedStateHandle[NavRoutes.AI_ADVISOR_CHAT_ARG_ID] ?: ""
 
     private val _uiState = MutableStateFlow(AiAdvisorChatUiState())
@@ -85,6 +89,9 @@ class AiAdvisorChatViewModel @Inject constructor(
 
     /** 流式响应Job，用于取消操作 */
     private var streamingJob: Job? = null
+
+    /** conversations Flow收集Job，用于避免多个收集器冲突 - BUG-046修复 */
+    private var conversationsJob: Job? = null
 
     /** 是否启用流式模式（可配置） */
     private var useStreamingMode: Boolean = true
@@ -126,6 +133,8 @@ class AiAdvisorChatViewModel @Inject constructor(
 
     /**
      * 加载会话列表
+     * 
+     * BUG-046-P0-V3-003修复：保持当前会话ID，避免自动跳转到第一个会话
      */
     private suspend fun loadSessions(contactId: String) {
         getAdvisorSessionsUseCase(contactId).onSuccess { sessions ->
@@ -133,7 +142,13 @@ class AiAdvisorChatViewModel @Inject constructor(
                 // Create default session
                 createNewSession(contactId)
             } else {
-                val activeSession = sessions.first()
+                // BUG-046修复：保持当前会话，如果存在的话
+                val currentSessionId = _uiState.value.currentSessionId
+                val activeSession = if (currentSessionId != null) {
+                    sessions.find { it.id == currentSessionId } ?: sessions.first()
+                } else {
+                    sessions.first()
+                }
                 _uiState.update {
                     it.copy(
                         sessions = sessions,
@@ -152,11 +167,20 @@ class AiAdvisorChatViewModel @Inject constructor(
 
     /**
      * 加载对话记录
+     * 
+     * BUG-046修复：使用单一Flow收集器，避免多个收集器冲突
+     * 在加载新会话的对话前，先取消之前的收集器
      */
     private fun loadConversations(sessionId: String) {
-        viewModelScope.launch {
+        // BUG-046修复：取消之前的收集器
+        conversationsJob?.cancel()
+        
+        conversationsJob = viewModelScope.launch {
             getAdvisorConversationsUseCase(sessionId).collect { conversations ->
-                _uiState.update { it.copy(conversations = conversations) }
+                // BUG-046修复：验证sessionId仍然匹配，避免跨会话数据污染
+                if (_uiState.value.currentSessionId == sessionId) {
+                    _uiState.update { it.copy(conversations = conversations) }
+                }
             }
         }
     }
@@ -195,12 +219,14 @@ class AiAdvisorChatViewModel @Inject constructor(
      * 支持思考过程展示和停止生成功能。
      *
      * BUG-044-P0-003修复：先取消旧的流式请求，避免重复请求导致卡住
+     * BUG-048修复：记录用户输入到lastUserInput，用于重新生成时避免消息角色混淆
      */
     private fun sendMessageStreaming(message: String, sessionId: String) {
         // BUG-044-P0-003: 先取消旧的流式请求
         streamingJob?.cancel()
         streamingJob = null
 
+        // BUG-048修复：记录用户输入，用于重新生成时使用
         _uiState.update {
             it.copy(
                 isStreaming = true,
@@ -210,7 +236,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                 streamingContent = "",
                 thinkingContent = "",
                 thinkingElapsedMs = 0,
-                currentStreamingMessageId = null
+                currentStreamingMessageId = null,
+                lastUserInput = message // BUG-048: 记录用户输入
             )
         }
 
@@ -240,15 +267,47 @@ class AiAdvisorChatViewModel @Inject constructor(
                         }
 
                         is StreamingState.Completed -> {
+                            // BUG-046-P0-V3-001修复：完成后保持内容，等待conversations列表更新
+                            // 记录完成时的会话ID，用于延迟清空时验证
+                            val completedSessionId = _uiState.value.currentSessionId
+                            val completedMessageId = _uiState.value.currentStreamingMessageId
+                            
                             _uiState.update {
                                 it.copy(
                                     isStreaming = false,
-                                    streamingContent = "",
+                                    // 保持streamingContent，让UI继续显示直到conversations更新
+                                    streamingContent = state.fullText,
                                     thinkingContent = "",
                                     thinkingElapsedMs = 0,
-                                    currentStreamingMessageId = null,
+                                    // 保持currentStreamingMessageId，让UI知道显示哪条消息
                                     lastTokenUsage = state.usage
                                 )
+                            }
+                            
+                            // BUG-047优化：增加延迟时间，确保DB更新和Flow通知完成
+                            // 同时验证会话ID未变化，避免跨会话状态污染
+                            viewModelScope.launch {
+                                kotlinx.coroutines.delay(1200)
+                                val currentState = _uiState.value
+                                
+                                // 验证消息是否已在conversations列表中且有内容
+                                val messageInList = currentState.conversations.any { 
+                                    it.id == completedMessageId && it.content.isNotEmpty() 
+                                }
+                                
+                                if (currentState.currentSessionId == completedSessionId &&
+                                    currentState.currentStreamingMessageId == completedMessageId) {
+                                    if (messageInList) {
+                                        // 消息已正确显示在列表中，可以安全清空streamingContent
+                                        _uiState.update {
+                                            it.copy(
+                                                streamingContent = "",
+                                                currentStreamingMessageId = null
+                                            )
+                                        }
+                                    }
+                                    // 如果消息未在列表中，保持streamingContent作为备份显示
+                                }
                             }
                         }
 
@@ -292,6 +351,9 @@ class AiAdvisorChatViewModel @Inject constructor(
      * 取消当前流式响应，将消息状态更新为已取消。
      *
      * BUG-044-P1-002修复：保存当前内容，避免显示空的"..."消息
+     * BUG-046-P1-V3-002修复：增强错误处理，确保消息正确删除或更新
+     * BUG-048修复：使用updateAiMessageContentAndStatus确保只更新AI类型的消息
+     * BUG-048-V4修复：增强状态管理，确保停止后消息不消失，添加重试机制
      */
     fun stopGeneration() {
         streamingJob?.cancel()
@@ -300,29 +362,107 @@ class AiAdvisorChatViewModel @Inject constructor(
         val messageId = _uiState.value.currentStreamingMessageId
         val currentContent = _uiState.value.streamingContent
 
+        // BUG-048-V4修复：如果没有messageId，说明流式还没开始，直接清空状态返回
+        if (messageId == null) {
+            _uiState.update {
+                it.copy(
+                    isStreaming = false,
+                    isRegenerating = false,
+                    streamingContent = "",
+                    currentStreamingMessageId = null,
+                    thinkingContent = "",
+                    thinkingElapsedMs = 0
+                )
+            }
+            return
+        }
+
+        // BUG-047-P0-V5-002修复：先标记为非流式状态，但保持内容显示
+        // BUG-048-V4修复：保持streamingContent和currentStreamingMessageId，直到数据库更新成功
         _uiState.update {
             it.copy(
                 isStreaming = false,
-                streamingContent = "",
+                isRegenerating = false,
+                // 关键：保持 streamingContent 和 currentStreamingMessageId，让UI继续显示
                 thinkingContent = "",
-                thinkingElapsedMs = 0,
-                currentStreamingMessageId = null
+                thinkingElapsedMs = 0
             )
         }
 
-        // BUG-044-P1-002: 根据内容决定处理方式
-        messageId?.let { id ->
-            viewModelScope.launch {
-                if (currentContent.isNotEmpty()) {
-                    // 有内容时，保存内容并标记为取消
-                    aiAdvisorRepository.updateMessageContentAndStatus(
-                        id,
-                        currentContent + "\n\n[用户已停止生成]",
-                        SendStatus.CANCELLED
-                    )
+        // BUG-048-V4修复：异步更新数据库，使用重试机制确保消息不消失
+        viewModelScope.launch {
+            try {
+                // 即使没有内容也保留消息，显示"[用户已停止生成]"
+                val finalContent = if (currentContent.isNotEmpty()) {
+                    currentContent + "\n\n[用户已停止生成]"
                 } else {
-                    // 没有内容时，删除消息
-                    aiAdvisorRepository.deleteMessage(id)
+                    "[用户已停止生成]"
+                }
+                
+                // BUG-048修复：使用带类型验证的方法，确保只更新AI消息
+                val result = aiAdvisorRepository.updateAiMessageContentAndStatus(
+                    messageId,
+                    finalContent,
+                    SendStatus.CANCELLED
+                )
+                
+                if (result.isSuccess && result.getOrNull() == true) {
+                    // BUG-048-V4修复：使用重试机制等待Flow更新，最多等待2秒
+                    var retryCount = 0
+                    val maxRetries = 4
+                    val retryDelay = 500L
+                    
+                    while (retryCount < maxRetries) {
+                        kotlinx.coroutines.delay(retryDelay)
+                        
+                        // 验证消息已在列表中且有内容
+                        val messageInList = _uiState.value.conversations.any { 
+                            it.id == messageId && it.content.isNotEmpty() 
+                        }
+                        
+                        if (messageInList) {
+                            // 消息已正确显示在列表中，清空流式状态
+                            _uiState.update {
+                                it.copy(
+                                    streamingContent = "",
+                                    currentStreamingMessageId = null
+                                )
+                            }
+                            return@launch
+                        }
+                        
+                        retryCount++
+                    }
+                    
+                    // 超时后仍然清空流式状态，但消息应该已经在数据库中了
+                    _uiState.update {
+                        it.copy(
+                            streamingContent = "",
+                            currentStreamingMessageId = null
+                        )
+                    }
+                } else if (result.isSuccess && result.getOrNull() == false) {
+                    // BUG-048: 消息不是AI类型，可能是时序问题导致的ID错误
+                    // 保持streamingContent显示，让用户看到内容，但显示错误提示
+                    _uiState.update {
+                        it.copy(
+                            error = "停止生成失败：消息类型不匹配，请重试"
+                        )
+                    }
+                } else {
+                    // BUG-048-V4修复：更新失败时保持内容显示，不清空状态
+                    _uiState.update {
+                        it.copy(
+                            error = "保存消息失败，请重试"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // BUG-048-V4修复：异常时也保持内容显示，让用户可以看到已生成的内容
+                _uiState.update {
+                    it.copy(
+                        error = "操作失败: ${e.message}"
+                    )
                 }
             }
         }
@@ -331,21 +471,226 @@ class AiAdvisorChatViewModel @Inject constructor(
     /**
      * 重新生成最后一条AI回复
      *
+     * BUG-046-P0-V3-002修复：等待删除完成后再重新生成，避免出现两个AI对话框
+     * BUG-045-P0-NEW-002修复：不创建新的用户消息，直接重新生成AI回复
+     * BUG-048修复：优先使用lastUserInput，避免终止后重新生成时消息角色混淆
+     * BUG-048-V3修复：使用时间戳排序确保找到正确的用户消息，添加时间戳约束
+     * BUG-048-V4修复：添加relatedUserMessageId三重保障机制，确保应用重启后仍能正确获取用户输入
      * 删除最后一条AI消息，使用相同的用户问题重新生成。
      */
     fun regenerateLastMessage() {
         val conversations = _uiState.value.conversations
-        val lastAiMessage = conversations.lastOrNull { it.messageType == MessageType.AI }
-        val lastUserMessage = conversations.lastOrNull { it.messageType == MessageType.USER }
+        val sessionId = _uiState.value.currentSessionId ?: return
+        
+        // BUG-048-V3修复：使用时间戳找到最后一条AI消息（包括CANCELLED状态）
+        val lastAiMessage = conversations
+            .filter { it.messageType == MessageType.AI }
+            .maxByOrNull { it.timestamp }
+        
+        if (lastAiMessage == null) {
+            _uiState.update { it.copy(error = "未找到AI消息，无法重新生成") }
+            return
+        }
+        
+        // BUG-048-V4修复：三重保障获取用户输入
+        val (userInputToUse, relatedUserMessageId) = getUserInputForRegenerate(lastAiMessage, conversations)
+        
+        // 验证用户输入不为空
+        if (userInputToUse.isEmpty()) {
+            _uiState.update { it.copy(error = "未找到有效的用户消息，无法重新生成") }
+            return
+        }
 
-        if (lastAiMessage != null && lastUserMessage != null) {
-            viewModelScope.launch {
-                // 删除最后一条AI消息
-                deleteAdvisorConversationUseCase(lastAiMessage.id)
-                // 重新发送用户消息
-                _uiState.update { it.copy(inputText = lastUserMessage.content) }
-                sendMessage()
+        viewModelScope.launch {
+            // BUG-046修复：设置重新生成状态
+            _uiState.update { it.copy(isRegenerating = true) }
+            
+            // 删除最后一条AI消息
+            val deleteResult = deleteAdvisorConversationUseCase(lastAiMessage.id)
+            
+            if (deleteResult.isSuccess) {
+                // BUG-048-V3修复：增加延迟时间，确保Flow更新完成
+                kotlinx.coroutines.delay(200)
+                
+                // BUG-048-V4修复：使用验证过的用户输入和关联ID进行重新生成
+                regenerateStreaming(userInputToUse, sessionId, relatedUserMessageId)
+            } else {
+                _uiState.update { 
+                    it.copy(
+                        isRegenerating = false,
+                        error = "删除消息失败，请重试"
+                    ) 
+                }
             }
+        }
+    }
+
+    /**
+     * BUG-048-V4: 三重保障获取用户输入
+     *
+     * 优先级：
+     * 1. 内存中的lastUserInput（最快，但应用重启后丢失）
+     * 2. 通过relatedUserMessageId查找关联的用户消息（持久化，最可靠）
+     * 3. 时间戳回退查找（兼容旧数据）
+     *
+     * @param lastAiMessage 最后一条AI消息
+     * @param conversations 当前对话列表
+     * @return Pair<用户输入内容, 关联的用户消息ID>
+     */
+    private fun getUserInputForRegenerate(
+        lastAiMessage: AiAdvisorConversation,
+        conversations: List<AiAdvisorConversation>
+    ): Pair<String, String?> {
+        // 优先级1：使用内存中的lastUserInput
+        val fromMemory = _uiState.value.lastUserInput
+        if (fromMemory.isNotEmpty()) {
+            // 尝试找到对应的用户消息ID
+            val relatedId = lastAiMessage.relatedUserMessageId
+                ?: conversations
+                    .filter { 
+                        it.messageType == MessageType.USER && 
+                        it.sendStatus == SendStatus.SUCCESS &&
+                        it.timestamp < lastAiMessage.timestamp
+                    }
+                    .maxByOrNull { it.timestamp }
+                    ?.id
+            return Pair(fromMemory, relatedId)
+        }
+        
+        // 优先级2：通过relatedUserMessageId查找
+        val relatedUserMessageId = lastAiMessage.relatedUserMessageId
+        if (!relatedUserMessageId.isNullOrEmpty()) {
+            val relatedMessage = conversations.find { it.id == relatedUserMessageId }
+            if (relatedMessage != null && relatedMessage.content.isNotEmpty()) {
+                return Pair(relatedMessage.content, relatedUserMessageId)
+            }
+        }
+        
+        // 优先级3：时间戳回退查找（兼容旧数据）
+        val fallbackMessage = conversations
+            .filter { 
+                it.messageType == MessageType.USER && 
+                it.sendStatus == SendStatus.SUCCESS &&
+                it.timestamp < lastAiMessage.timestamp
+            }
+            .maxByOrNull { it.timestamp }
+        
+        return Pair(fallbackMessage?.content ?: "", fallbackMessage?.id)
+    }
+
+    /**
+     * 重新生成AI回复（不创建新的用户消息）
+     *
+     * BUG-045-P0-NEW-002修复：专门用于重新生成场景，跳过用户消息保存
+     * BUG-048-V4修复：传递relatedUserMessageId，确保新AI消息关联正确的用户消息
+     *
+     * @param userMessage 用户消息内容
+     * @param sessionId 会话ID
+     * @param relatedUserMessageId 关联的用户消息ID（用于新AI消息的关联）
+     */
+    private fun regenerateStreaming(
+        userMessage: String, 
+        sessionId: String,
+        relatedUserMessageId: String? = null
+    ) {
+        streamingJob?.cancel()
+        streamingJob = null
+
+        _uiState.update {
+            it.copy(
+                isStreaming = true,
+                isSending = false,
+                error = null,
+                streamingContent = "",
+                thinkingContent = "",
+                thinkingElapsedMs = 0,
+                currentStreamingMessageId = null
+            )
+        }
+
+        streamingJob = viewModelScope.launch {
+            // BUG-048-V4: 使用skipUserMessage参数跳过用户消息保存，并传递relatedUserMessageId
+            sendAdvisorMessageStreamingUseCase(
+                contactId = contactId, 
+                sessionId = sessionId, 
+                userMessage = userMessage, 
+                skipUserMessage = true,
+                relatedUserMessageId = relatedUserMessageId
+            )
+                .collect { state ->
+                    when (state) {
+                        is StreamingState.Started -> {
+                            _uiState.update {
+                                it.copy(currentStreamingMessageId = state.messageId)
+                            }
+                        }
+
+                        is StreamingState.ThinkingUpdate -> {
+                            _uiState.update {
+                                it.copy(
+                                    thinkingContent = state.content,
+                                    thinkingElapsedMs = state.elapsedMs
+                                )
+                            }
+                        }
+
+                        is StreamingState.TextUpdate -> {
+                            _uiState.update {
+                                it.copy(streamingContent = state.content)
+                            }
+                        }
+
+                        is StreamingState.Completed -> {
+                            // BUG-047修复：与sendMessageStreaming保持一致的完成处理逻辑
+                            val completedSessionId = _uiState.value.currentSessionId
+                            val completedMessageId = _uiState.value.currentStreamingMessageId
+                            
+                            _uiState.update {
+                                it.copy(
+                                    isStreaming = false,
+                                    isRegenerating = false,
+                                    streamingContent = state.fullText,
+                                    thinkingContent = "",
+                                    thinkingElapsedMs = 0,
+                                    lastTokenUsage = state.usage
+                                )
+                            }
+                            
+                            viewModelScope.launch {
+                                kotlinx.coroutines.delay(1200)
+                                val currentState = _uiState.value
+                                
+                                // 验证消息是否已在conversations列表中且有内容
+                                val messageInList = currentState.conversations.any { 
+                                    it.id == completedMessageId && it.content.isNotEmpty() 
+                                }
+                                
+                                if (currentState.currentSessionId == completedSessionId &&
+                                    currentState.currentStreamingMessageId == completedMessageId) {
+                                    if (messageInList) {
+                                        _uiState.update {
+                                            it.copy(
+                                                streamingContent = "",
+                                                currentStreamingMessageId = null
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        is StreamingState.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isStreaming = false,
+                                    streamingContent = "",
+                                    thinkingContent = "",
+                                    error = state.error.message ?: "流式响应失败"
+                                )
+                            }
+                        }
+                    }
+                }
         }
     }
 
@@ -380,14 +725,20 @@ class AiAdvisorChatViewModel @Inject constructor(
      * 切换会话
      *
      * BUG-044-P1-005修复：切换前先停止当前流式响应
+     * BUG-046修复：取消conversations收集器，避免跨会话数据污染
      */
     fun switchSession(sessionId: String) {
         // BUG-044-P1-005: 先停止当前流式响应
         stopGeneration()
+        
+        // BUG-046修复：取消conversations收集器
+        conversationsJob?.cancel()
+        conversationsJob = null
 
         _uiState.update {
             it.copy(
                 currentSessionId = sessionId,
+                conversations = emptyList(), // 清空当前对话，等待新会话加载
                 streamingContent = "",
                 thinkingContent = "",
                 thinkingElapsedMs = 0,
@@ -512,6 +863,7 @@ class AiAdvisorChatViewModel @Inject constructor(
  * @property isLoading 是否正在加载
  * @property isSending 是否正在发送（非流式模式）
  * @property isStreaming 是否正在流式接收
+ * @property isRegenerating 是否正在重新生成（BUG-046新增）
  * @property contactName 联系人名称
  * @property inputText 输入框文本
  * @property currentSessionId 当前会话ID
@@ -533,6 +885,7 @@ data class AiAdvisorChatUiState(
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
     val isStreaming: Boolean = false,
+    val isRegenerating: Boolean = false, // BUG-046新增：是否正在重新生成
     val contactName: String = "",
     val inputText: String = "",
     val currentSessionId: String? = null,
@@ -549,5 +902,7 @@ data class AiAdvisorChatUiState(
     val thinkingContent: String = "",
     val thinkingElapsedMs: Long = 0,
     val currentStreamingMessageId: String? = null,
-    val lastTokenUsage: TokenUsage? = null
+    val lastTokenUsage: TokenUsage? = null,
+    // BUG-048新增：记录最后一次用户输入，用于重新生成时避免消息角色混淆
+    val lastUserInput: String = ""
 )

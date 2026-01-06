@@ -261,6 +261,23 @@ interface AiAdvisorRepository {
     ): Result<Unit>
 
     /**
+     * 更新AI消息内容和状态（带类型验证）
+     *
+     * BUG-048修复: 只更新AI类型的消息，防止误更新用户消息。
+     * 用于停止生成时保存当前内容并更新状态。
+     *
+     * @param messageId 消息ID
+     * @param content 新内容
+     * @param status 新状态
+     * @return 更新结果，包含是否成功更新（如果消息不是AI类型则返回false）
+     */
+    suspend fun updateAiMessageContentAndStatus(
+        messageId: String,
+        content: String,
+        status: SendStatus
+    ): Result<Boolean>
+
+    /**
      * 删除消息
      *
      * BUG-044-P1-002: 用于删除没有内容的消息。

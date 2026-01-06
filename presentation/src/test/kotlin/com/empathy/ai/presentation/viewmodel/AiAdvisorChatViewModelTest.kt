@@ -656,4 +656,106 @@ class AiAdvisorChatViewModelTest {
             sendStatus = SendStatus.SUCCESS
         )
     }
+
+    // ==================== BUG-046 isRegenerating 状态测试 ====================
+
+    /**
+     * TC-046-REG-001: 重新生成时设置isRegenerating状态
+     *
+     * 场景：调用regenerateLastMessage
+     * 预期：isRegenerating应该变为true
+     */
+    @Test
+    fun `regenerateLastMessage should set isRegenerating to true during operation`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        val userConversation = createTestConversation(
+            "user-1", testContactId, testSessionId, MessageType.USER, "用户消息内容"
+        )
+        val aiConversation = createTestConversation(
+            "ai-1", testContactId, testSessionId, MessageType.AI, "AI回复内容"
+        )
+
+        every { getAdvisorConversationsUseCase(testSessionId) } returns flowOf(
+            listOf(userConversation, aiConversation)
+        )
+        coEvery { deleteAdvisorConversationUseCase("ai-1") } returns Result.success(Unit)
+        coEvery {
+            sendAdvisorMessageStreamingUseCase(any(), any(), any(), any(), any())
+        } returns flowOf()
+
+        createViewModel()
+        advanceUntilIdle()
+
+        // 初始状态isRegenerating应该为false
+        assertFalse(viewModel.uiState.value.isRegenerating)
+
+        // When - 重新生成
+        viewModel.regenerateLastMessage()
+        advanceUntilIdle()
+
+        // Then - isRegenerating应该变回false（操作完成）
+        assertFalse(viewModel.uiState.value.isRegenerating)
+    }
+
+    /**
+     * TC-046-REG-002: 重新生成失败时清除isRegenerating状态
+     *
+     * 场景：删除消息失败
+     * 预期：isRegenerating应该变为false，并显示错误
+     */
+    @Test
+    fun `regenerateLastMessage should clear isRegenerating when delete fails`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        val userConversation = createTestConversation(
+            "user-1", testContactId, testSessionId, MessageType.USER, "用户消息内容"
+        )
+        val aiConversation = createTestConversation(
+            "ai-1", testContactId, testSessionId, MessageType.AI, "AI回复内容"
+        )
+
+        every { getAdvisorConversationsUseCase(testSessionId) } returns flowOf(
+            listOf(userConversation, aiConversation)
+        )
+        coEvery { deleteAdvisorConversationUseCase("ai-1") } returns Result.failure(Exception("删除失败"))
+        coEvery {
+            sendAdvisorMessageStreamingUseCase(any(), any(), any(), any(), any())
+        } returns flowOf()
+
+        createViewModel()
+        advanceUntilIdle()
+
+        // When - 重新生成
+        viewModel.regenerateLastMessage()
+        advanceUntilIdle()
+
+        // Then - isRegenerating应该变为false，错误信息应该显示
+        assertFalse(viewModel.uiState.value.isRegenerating)
+        assertTrue(viewModel.uiState.value.error?.contains("删除失败") == true)
+    }
+
+    /**
+     * TC-046-REG-003: 停止生成时清除isRegenerating状态
+     *
+     * 场景：重新生成过程中停止
+     * 预期：isRegenerating应该变为false
+     */
+    @Test
+    fun `stopGeneration should clear isRegenerating state`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        createViewModel()
+        advanceUntilIdle()
+
+        // 模拟重新生成状态
+        viewModel.regenerateLastMessage()
+
+        // When - 停止生成
+        viewModel.stopGeneration()
+        advanceUntilIdle()
+
+        // Then - isRegenerating应该变为false
+        assertFalse(viewModel.uiState.value.isRegenerating)
+    }
 }
