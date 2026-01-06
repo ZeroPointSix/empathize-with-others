@@ -8,9 +8,27 @@ import javax.inject.Inject
 /**
  * 记录 API 用量用例
  *
- * 记录单次 API 调用的用量信息
+ * 记录单次 API 调用的用量信息，用于用量统计和成本分析。
  *
- * TD-00025: AI配置功能完善 - 用量统计功能
+ * 业务背景 (TD-00025):
+ * - 追踪AI API调用次数和Token消耗
+ * - 区分成功/失败记录，便于问题排查
+ * - 支持按服务商、模型维度统计分析
+ *
+ * 设计决策:
+ * - 成功和失败记录分开方法，便于调用方区分处理
+ * - 自动计算总Token数（prompt + completion）
+ * - 使用UUID生成唯一ID，支持分布式环境
+ *
+ * @param providerId 服务商 ID
+ * @param providerName 服务商名称
+ * @param modelId 模型 ID
+ * @param modelName 模型名称
+ * @param promptTokens 输入 Token 数
+ * @param completionTokens 输出 Token 数
+ * @param requestTimeMs 请求耗时（毫秒）
+ * @see ApiUsageRecord API用量记录模型
+ * @see ApiUsageRepository 用量仓库接口
  */
 class RecordApiUsageUseCase @Inject constructor(
     private val apiUsageRepository: ApiUsageRepository

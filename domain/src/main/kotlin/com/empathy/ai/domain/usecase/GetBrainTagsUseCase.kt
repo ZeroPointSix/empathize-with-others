@@ -9,10 +9,19 @@ import javax.inject.Inject
 /**
  * 获取联系人标签用例
  *
- * 职责：
- * 1. 根据联系人ID获取标签列表
- * 2. 提供响应式数据流
- * 3. 支持实时更新
+ * 负责获取指定联系人的大脑标签列表。
+ *
+ * 业务背景:
+ * - BrainTag用于标记沟通雷区和策略建议
+ * - 分为RISK_RED（雷区）和STRATEGY_GREEN（策略）两种类型
+ *
+ * 设计决策:
+ * - 空contactId返回空列表而非异常，提供更稳定的行为
+ * - 使用Flow支持实时更新
+ *
+ * @param contactId 联系人ID
+ * @return Flow<List<BrainTag>> 标签列表数据流，支持实时更新
+ * @see BrainTagRepository 标签仓库接口
  */
 class GetBrainTagsUseCase @Inject constructor(
     private val brainTagRepository: BrainTagRepository

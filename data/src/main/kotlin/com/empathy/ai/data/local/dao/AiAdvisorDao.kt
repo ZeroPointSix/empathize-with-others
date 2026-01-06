@@ -201,4 +201,22 @@ interface AiAdvisorDao {
         WHERE id = :conversationId
     """)
     suspend fun updateContentAndStatus(conversationId: String, content: String, status: String)
+
+    /**
+     * 更新AI消息内容和状态（带类型验证）
+     *
+     * BUG-048修复: 只更新AI类型的消息，防止误更新用户消息。
+     * 用于停止生成时保存当前内容并更新状态。
+     *
+     * @param conversationId 对话ID
+     * @param content 当前内容（可能不完整）
+     * @param status 新状态（如CANCELLED）
+     * @return 更新的行数（0表示未找到匹配的AI消息）
+     */
+    @Query("""
+        UPDATE ai_advisor_conversations 
+        SET content = :content, send_status = :status 
+        WHERE id = :conversationId AND message_type = 'AI'
+    """)
+    suspend fun updateAiMessageContentAndStatus(conversationId: String, content: String, status: String): Int
 }

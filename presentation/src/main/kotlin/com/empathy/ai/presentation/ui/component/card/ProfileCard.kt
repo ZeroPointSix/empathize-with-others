@@ -35,11 +35,41 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
 /**
  * 联系人档案卡片组件
  *
- * 用于展示联系人的详细档案信息
+ * ## 业务职责
+ * 展示联系人的核心档案信息（头像、姓名、关系分数、标签等）。
+ * 常见于联系人详情页的概览区域，作为联系人的"名片"。
  *
- * @param contact 联系人信息
- * @param onEdit 编辑回调
- * @param modifier 修饰符
+ * ## 页面布局
+ * ```
+ * ┌─────────────────────────────────────┐
+ * │  👤                          [✏️] │  ← 头像 + 编辑按钮
+ * ├─────────────────────────────────────┤
+ * │  张三                              │  ← 姓名
+ * │  关系分数: 85/100  [📈]            │  ← 关系分数 + 趋势
+ * │                                     │
+ * │  [雷区标签]  [策略标签]  [标签]     │  ← 标签流
+ * │                                     │
+ * │  最近互动：今天下午3点              │  ← 互动信息
+ * └─────────────────────────────────────┘
+ * ```
+ *
+ * ## 核心设计决策
+ * 1. **头像自动生成**: 无头像时使用姓名首字母作为占位符
+ * 2. **标签流展示**: 使用FlowRow自动换行展示标签
+ * 3. **响应式布局**: 使用AdaptiveDimensions适配不同屏幕
+ * 4. **编辑入口**: 右上角编辑按钮支持快速修改联系人信息
+ *
+ * ## 数据来源
+ * - 头像: contact.avatarUrl（为空则显示首字母）
+ * - 姓名: contact.name
+ * - 关系分数: contact.relationshipScore
+ * - 标签: contact.tags
+ *
+ * @param contact 联系人完整信息
+ * @param onEdit 编辑按钮点击回调
+ * @param modifier Modifier
+ * @see ContactProfile 联系人数据模型
+ * @see TagChip 标签组件
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

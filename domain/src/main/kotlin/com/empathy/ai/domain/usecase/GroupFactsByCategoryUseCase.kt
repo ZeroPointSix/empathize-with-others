@@ -9,7 +9,22 @@ import javax.inject.Singleton
 /**
  * 按分类分组Fact用例
  *
- * 将Fact列表按key字段分组，并为每个分类分配颜色
+ * 将Fact列表按key字段分组，并为每个分类分配颜色。
+ *
+ * 业务背景:
+ * - Facts按类型分组便于UI展示和用户理解
+ * - 不同分类使用不同颜色区分（深色/浅色模式适配）
+ *
+ * 设计决策:
+ * - 分类内标签按时间倒序排列（新的在前）
+ * - 分类按名称排序
+ * - 支持保持现有的展开状态
+ *
+ * @param facts Fact列表
+ * @param isDarkMode 是否为深色模式（影响颜色分配）
+ * @return 分组后的FactCategory列表
+ * @see FactCategory 事实分类模型
+ * @see CategoryColorAssigner 分类颜色分配器
  */
 @Singleton
 class GroupFactsByCategoryUseCase @Inject constructor(

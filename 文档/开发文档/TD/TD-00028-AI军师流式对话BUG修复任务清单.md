@@ -1,11 +1,11 @@
 # TD-00028: AI军师流式对话BUG修复任务清单
 
 **创建日期**: 2026-01-04
-**关联BUG**: BUG-00044
+**关联BUG**: BUG-00044, BUG-00048
 **关联功能**: FD-00028 AI军师流式对话升级
 **预计工时**: 10小时
 **状态**: 进行中
-**最后更新**: 2026-01-04
+**最后更新**: 2026-01-05
 
 ---
 
@@ -26,6 +26,7 @@
 | T-003 | 修复已创建对话重新输入无反应问题 | P0-003 | 0.5h | ✅ 已完成 |
 | T-004 | 修复滚动时自动跳回顶部问题 | P0-004 | 1h | ✅ 已完成 |
 | T-005 | 修复输入时自动弹出"..."问题 | P0-005 | 0.5h | ✅ 已完成 |
+| T-016 | 修复终止后重新生成消息角色错误 | BUG-00048 | 1h | ✅ 已完成 |
 
 ### Phase 2: P1级问题修复（用户体验）
 
@@ -49,7 +50,7 @@
 
 | 任务ID | 任务描述 | 预计工时 | 状态 |
 |--------|----------|----------|------|
-| T-014 | 编写单元测试 | 1h | ⬜ 待开始 |
+| T-014 | 编写单元测试 | 1h | ✅ 已完成 |
 | T-015 | 执行人工测试验证 | 1h | ⬜ 待开始 |
 
 ---
@@ -166,26 +167,109 @@ streamingJob = viewModelScope.launch {
 - [x] 所有P0级问题修复完成
 - [x] 大部分P1级问题修复完成（10/11）
 - [x] P2级光标动画已存在
-- [ ] 单元测试通过
-- [ ] 人工测试验证通过（使用TE-00028-V2）
+- [x] 单元测试通过（RegenerateLastMessageTest）
+- [ ] 人工测试验证通过（使用TE-00028-V7）
 
 ---
 
 ## 6. 修复进度
 
-**完成率**: 11/13 核心任务 (84.6%)
+**完成率**: 12/14 核心任务 (85.7%)
 
 | 优先级 | 完成数 | 总数 | 完成率 |
 |--------|--------|------|--------|
-| P0 | 5 | 5 | 100% |
+| P0 | 6 | 6 | 100% |
 | P1 | 5 | 6 | 83.3% |
 | P2 | 1 | 2 | 50% |
 
 ---
 
-**文档版本**: v1.1
+## 7. BUG-00048 V3 修复记录（2026-01-05）
+
+### 问题描述
+终止AI生成后点击重新生成，被停止的内容"[用户已停止生成]"被错误地当作用户消息显示。
+
+### 根因分析
+1. `regenerateLastMessage()`中的消息查询逻辑没有使用时间戳排序
+2. 查找用户消息时没有添加时间戳约束（必须在AI消息之前）
+3. `lastUserInput`在某些场景下可能为空
+
+### 修复方案
+修改`AiAdvisorChatViewModel.regenerateLastMessage()`方法：
+1. 使用`maxByOrNull { it.timestamp }`按时间戳找最后一条AI消息
+2. 添加时间戳约束：`it.timestamp < lastAiMessage.timestamp`
+3. 增加延迟时间到200ms，确保Flow更新完成
+
+### 修改的文件
+- `presentation/.../AiAdvisorChatViewModel.kt` - 改进消息查询逻辑
+
+### 新增测试
+- `presentation/src/test/.../RegenerateLastMessageTest.kt` - 9个测试用例
+
+### 相关文档
+- `文档/开发文档/BUG/BUG-00048-终止后重新生成消息角色错误问题分析.md` (V3)
+- `文档/开发文档/TE/TE-00028-V7-BUG-00048-V3测试用例.md`
+
+---
+
+## 8. BUG-00048 V4 修复记录（2026-01-05）
+
+### 问题描述
+V3修复后问题仍然存在。深度分析发现根因是：
+1. `lastUserInput`未持久化，应用重启/ViewModel重建后丢失
+2. 回退查询逻辑存在时序问题（Flow更新延迟）
+
+### 根因分析（深度）
+```
+问题：重新生成时消息角色错误
+│
+├── 框架机制层
+│   ├── Flow更新延迟（Room Flow通知有延迟）
+│   └── StateFlow状态管理（lastUserInput未持久化）
+│
+├── 模块交互层
+│   ├── ViewModel与Repository的异步通信
+│   └── 删除操作与查询操作的时序问题
+│
+└── 边界条件层
+    ├── lastUserInput为空的场景（应用重启、ViewModel重建）
+    └── conversations列表未及时更新
+```
+
+### 修复方案（方案C：双重保障机制）
+
+1. **添加`relatedUserMessageId`字段**：在AI消息中存储关联的用户消息ID
+2. **三重保障获取用户输入**：
+   - 优先级1：内存中的`lastUserInput`
+   - 优先级2：通过`relatedUserMessageId`查找关联用户消息
+   - 优先级3：时间戳回退查找（兼容旧数据）
+
+### 修改的文件
+
+| 文件 | 修改内容 |
+|------|----------|
+| `domain/model/AiAdvisorConversation.kt` | 添加`relatedUserMessageId`字段 |
+| `data/local/entity/AiAdvisorConversationEntity.kt` | 添加`related_user_message_id`列 |
+| `data/di/DatabaseModule.kt` | 添加MIGRATION_14_15迁移脚本 |
+| `data/local/AppDatabase.kt` | 版本号从14升级到15 |
+| `domain/usecase/SendAdvisorMessageStreamingUseCase.kt` | 添加relatedUserMessageId参数 |
+| `presentation/viewmodel/AiAdvisorChatViewModel.kt` | 添加getUserInputForRegenerate方法 |
+
+### 新增测试
+- `presentation/src/test/.../RegenerateLastMessageV4Test.kt` - 10个测试用例
+
+### 相关文档
+- `文档/开发文档/BUG/BUG-00048-V4-终止后重新生成消息角色错误深度分析.md`
+- `文档/开发文档/TE/TE-00028-V9-BUG-00048-V4测试用例.md`
+
+### 状态
+🟢 代码修改已完成，待构建验证和人工测试
+
+---
+
+**文档版本**: v1.3
 **创建日期**: 2026-01-04
-**最后更新**: 2026-01-04
+**最后更新**: 2026-01-05
 
 ---
 

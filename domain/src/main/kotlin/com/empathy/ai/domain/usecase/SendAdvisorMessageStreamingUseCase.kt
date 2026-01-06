@@ -71,24 +71,35 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
      * @param contactId 联系人ID
      * @param sessionId 会话ID
      * @param userMessage 用户消息内容
+     * @param skipUserMessage 是否跳过保存用户消息（用于重新生成场景）
+     * @param relatedUserMessageId 关联的用户消息ID（用于重新生成场景，BUG-00048-V4）
      * @return 流式响应Flow
      */
     operator fun invoke(
         contactId: String,
         sessionId: String,
-        userMessage: String
+        userMessage: String,
+        skipUserMessage: Boolean = false,
+        relatedUserMessageId: String? = null
     ): Flow<StreamingState> = flow {
-        // 1. 保存用户消息
-        val userConversation = AiAdvisorConversation(
-            id = UUID.randomUUID().toString(),
-            contactId = contactId,
-            sessionId = sessionId,
-            messageType = MessageType.USER,
-            content = userMessage,
-            timestamp = System.currentTimeMillis(),
-            sendStatus = SendStatus.SUCCESS
-        )
-        aiAdvisorRepository.saveMessage(userConversation)
+        // 1. 保存用户消息（如果不是重新生成场景）
+        val userMessageId = if (!skipUserMessage) {
+            val id = UUID.randomUUID().toString()
+            val userConversation = AiAdvisorConversation(
+                id = id,
+                contactId = contactId,
+                sessionId = sessionId,
+                messageType = MessageType.USER,
+                content = userMessage,
+                timestamp = System.currentTimeMillis(),
+                sendStatus = SendStatus.SUCCESS
+            )
+            aiAdvisorRepository.saveMessage(userConversation)
+            id
+        } else {
+            // BUG-00048-V4: 重新生成场景，使用传入的relatedUserMessageId
+            relatedUserMessageId
+        }
 
         // 2. 创建AI消息占位
         val aiMessageId = UUID.randomUUID().toString()
@@ -99,7 +110,9 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
             messageType = MessageType.AI,
             content = "",
             timestamp = System.currentTimeMillis(),
-            sendStatus = SendStatus.PENDING
+            sendStatus = SendStatus.PENDING,
+            // BUG-00048-V4: 关联用户消息ID，用于重新生成时获取原始用户输入
+            relatedUserMessageId = userMessageId
         )
         aiAdvisorRepository.saveMessage(aiMessage)
 
@@ -175,17 +188,34 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
 
                     is AiStreamChunk.Complete -> {
                         val finalContent = chunk.fullText.ifEmpty { contentBuilder.toString() }
+                        
+                        // 更新Block内容
                         aiAdvisorRepository.updateBlockContent(
                             blockId = mainTextBlock.id,
                             content = finalContent,
                             status = MessageBlockStatus.SUCCESS
                         )
-                        aiAdvisorRepository.updateMessageStatus(aiMessageId, SendStatus.SUCCESS)
+                        
+                        // 【BUG-047修复】更新Message的content和status
+                        // 原因：getConversationsFlow()返回的是Message，UI使用Message.content渲染
+                        // 必须同步更新Message.content，否则UI显示空白
+                        aiAdvisorRepository.updateMessageContentAndStatus(
+                            messageId = aiMessageId,
+                            content = finalContent,
+                            status = SendStatus.SUCCESS
+                        )
+                        
                         emit(StreamingState.Completed(finalContent, chunk.usage))
                     }
 
                     is AiStreamChunk.Error -> {
-                        aiAdvisorRepository.updateMessageStatus(aiMessageId, SendStatus.FAILED)
+                        // 【BUG-047修复】错误时也更新content，显示错误信息
+                        val errorContent = "[AI响应失败: ${chunk.error.message ?: "未知错误"}]"
+                        aiAdvisorRepository.updateMessageContentAndStatus(
+                            messageId = aiMessageId,
+                            content = errorContent,
+                            status = SendStatus.FAILED
+                        )
                         emit(StreamingState.Error(chunk.error))
                     }
                 }

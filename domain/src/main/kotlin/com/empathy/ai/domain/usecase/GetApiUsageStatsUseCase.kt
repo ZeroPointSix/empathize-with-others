@@ -9,9 +9,23 @@ import javax.inject.Inject
 /**
  * 获取 API 用量统计用例
  *
- * 支持按时间段（今日/本周/本月/全部）获取统计数据
+ * 支持按时间段（今日/本周/本月/全部）获取统计数据。
  *
- * TD-00025: AI配置功能完善 - 用量统计功能
+ * 业务背景 (TD-00025):
+ * - 提供用量概览，帮助用户了解API使用情况
+ * - 支持多维度统计（按服务商、模型）
+ * - 支持时间范围筛选
+ *
+ * 设计决策:
+ * - 提供便捷方法（getToday、getThisWeek等）和通用方法
+ * - 便捷方法委托给通用方法，减少代码重复
+ * - companion object中提供时间戳计算方法，便于复用
+ *
+ * @param period 统计时间段
+ * @return 用量统计结果
+ * @see ApiUsageStats API用量统计聚合结果
+ * @see UsageStatsPeriod 统计时间范围枚举
+ * @see ApiUsageRepository 用量仓库接口
  */
 class GetApiUsageStatsUseCase @Inject constructor(
     private val apiUsageRepository: ApiUsageRepository

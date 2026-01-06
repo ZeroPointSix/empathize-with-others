@@ -153,24 +153,27 @@ fun AiAdvisorChatScreen(
         }
     }
 
-    // BUG-044-P0-004修复：只在用户在底部附近时才自动滚动
-    LaunchedEffect(uiState.conversations.size, uiState.streamingContent) {
-        if (uiState.conversations.isNotEmpty() || uiState.isStreaming) {
+    // BUG-046-P1-V3-001修复：优化滚动逻辑，避免频繁触发
+    // 只在消息数量变化时触发滚动，不依赖streamingContent
+    LaunchedEffect(uiState.conversations.size) {
+        if (uiState.conversations.isNotEmpty()) {
             // 检查用户是否在底部附近
             val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = uiState.conversations.size + (if (uiState.isStreaming) 1 else 0)
+            val totalItems = uiState.conversations.size
             val isNearBottom = lastVisibleIndex >= totalItems - 2
 
             if (isNearBottom) {
-                val targetIndex = if (uiState.isStreaming) {
-                    uiState.conversations.size // 流式消息在最后
-                } else {
-                    uiState.conversations.size - 1
-                }
-                if (targetIndex >= 0) {
-                    listState.animateScrollToItem(targetIndex.coerceAtLeast(0))
-                }
+                val targetIndex = (totalItems - 1).coerceAtLeast(0)
+                listState.animateScrollToItem(targetIndex)
             }
+        }
+    }
+    
+    // BUG-046修复：流式开始时滚动到底部
+    LaunchedEffect(uiState.isStreaming) {
+        if (uiState.isStreaming && uiState.conversations.isNotEmpty()) {
+            val targetIndex = uiState.conversations.size
+            listState.animateScrollToItem(targetIndex.coerceAtLeast(0))
         }
     }
 
@@ -231,13 +234,29 @@ fun AiAdvisorChatScreen(
 
                         // 流式响应中的消息
                         // BUG-044-P0-001/P0-005修复：添加更严格的渲染条件
-                        if (uiState.isStreaming && uiState.currentStreamingMessageId != null) {
+                        // BUG-045-P0-NEW-001修复：完成后也继续显示，直到内容被清空
+                        // BUG-047-P0-V5-001修复：检查消息是否已在conversations列表中且有内容，避免双气泡
+                        // BUG-048-V4修复：增强检测逻辑，检查消息状态不是PENDING或有内容
+                        val messageAlreadyInList = uiState.currentStreamingMessageId?.let { messageId ->
+                            uiState.conversations.any { conv ->
+                                conv.id == messageId && 
+                                (conv.content.isNotEmpty() || conv.sendStatus != SendStatus.PENDING)
+                            }
+                        } ?: false
+                        
+                        // BUG-048-V4修复：简化条件，只有在流式进行中或消息还没进入列表时才显示
+                        val shouldShowStreamingBubble = !messageAlreadyInList && (
+                            uiState.isStreaming || 
+                            (uiState.streamingContent.isNotEmpty() && uiState.currentStreamingMessageId != null)
+                        )
+                        
+                        if (shouldShowStreamingBubble) {
                             item(key = "streaming_message") {
                                 StreamingMessageBubbleSimple(
                                     content = uiState.streamingContent,
                                     thinkingContent = uiState.thinkingContent,
                                     thinkingElapsedMs = uiState.thinkingElapsedMs,
-                                    isStreaming = true,
+                                    isStreaming = uiState.isStreaming,
                                     onStopGeneration = { viewModel.stopGeneration() },
                                     onRegenerate = { viewModel.regenerateLastMessage() }
                                 )
@@ -444,7 +463,14 @@ private fun ChatBubble(
     val isUser = conversation.messageType == MessageType.USER
     val isFailed = conversation.sendStatus == SendStatus.FAILED
     val isCancelled = conversation.sendStatus == SendStatus.CANCELLED
+    val isPending = conversation.sendStatus == SendStatus.PENDING
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    // BUG-045-P0-NEW-003修复：不渲染空内容的PENDING状态AI消息
+    // 这些消息由StreamingMessageBubbleSimple组件显示
+    if (!isUser && conversation.content.isEmpty() && isPending) {
+        return
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -487,8 +513,10 @@ private fun ChatBubble(
                 },
                 shadowElevation = if (!isUser && !isFailed && !isCancelled) 1.dp else 0.dp
             ) {
+                // BUG-045-P0-NEW-003修复：移除空内容时显示"..."的逻辑
+                // 空内容的AI消息已在上面被过滤，这里直接显示内容
                 Text(
-                    text = conversation.content.ifEmpty { "..." },
+                    text = conversation.content,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     color = when {
                         isFailed || isCancelled -> iOSRed
