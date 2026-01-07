@@ -158,6 +158,27 @@ interface AiAdvisorDao {
     suspend fun getRecentConversations(contactId: String, limit: Int): List<AiAdvisorConversationEntity>
 
     /**
+     * 获取指定会话的最近N条对话（会话内隔离）
+     *
+     * FD-00030: 会话上下文隔离
+     * 业务规则:
+     *   - 只获取当前会话的历史记录，不跨会话
+     *   - 按时间倒序获取最近N条，然后在Repository层反转为正序
+     *   - 用于构建AI上下文，实现新会话不包含历史对话
+     *
+     * @param sessionId 会话ID
+     * @param limit 最大记录数
+     * @return 当前会话的对话记录列表（按时间倒序）
+     */
+    @Query("""
+        SELECT * FROM ai_advisor_conversations 
+        WHERE session_id = :sessionId 
+        ORDER BY timestamp DESC 
+        LIMIT :limit
+    """)
+    suspend fun getConversationsBySessionWithLimit(sessionId: String, limit: Int): List<AiAdvisorConversationEntity>
+
+    /**
      * 删除单条对话记录
      */
     @Query("DELETE FROM ai_advisor_conversations WHERE id = :conversationId")

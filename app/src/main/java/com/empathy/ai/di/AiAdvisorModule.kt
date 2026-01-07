@@ -3,6 +3,7 @@ package com.empathy.ai.di
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
 import com.empathy.ai.domain.usecase.DeleteAdvisorConversationUseCase
@@ -10,6 +11,7 @@ import com.empathy.ai.domain.usecase.GetAdvisorConversationsUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorSessionsUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageStreamingUseCase
+import com.empathy.ai.domain.util.Logger
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +23,7 @@ import javax.inject.Singleton
  *
  * 提供AI军师对话功能（TD-00026）所需的UseCase依赖注入配置。
  * 🆕 FD-00028: 新增流式对话支持
+ * 🆕 FD-00030: 新增会话上下文隔离和Markdown渲染支持
  *
  * 业务背景 (PRD-00026):
  *   AI军师是一个独立的智能对话模块，允许用户与AI进行自由对话，
@@ -30,15 +33,18 @@ import javax.inject.Singleton
  *   - 会话管理: 创建、获取、删除会话及对话记录
  *   - 消息处理: 发送消息、接收AI响应
  *   - 🆕 流式响应: SSE流式对话，支持思考过程展示
+ *   - 🆕 会话隔离: 新会话只包含联系人画像，不包含历史对话
  *
  * 架构决策 (TDD-00026):
  *   - 使用SingletonComponent确保所有UseCase为单例，复用会话状态
  *   - SendAdvisorMessageUseCase依赖4个仓库，体现其核心编排角色
  *   - 🆕 SendAdvisorMessageStreamingUseCase支持流式响应
+ *   - 🆕 FD-00030: SendAdvisorMessageStreamingUseCase新增BrainTagRepository依赖
  *
  * @see PRD-00026 AI军师对话功能需求
  * @see TDD-00026 AI军师对话功能技术设计
  * @see FD-00028 AI军师流式对话升级功能设计
+ * @see FD-00030 AI军师Markdown渲染与会话隔离功能设计
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -137,6 +143,7 @@ object AiAdvisorModule {
      * 提供发送AI军师消息用例（流式版本）
      *
      * 🆕 FD-00028: 流式对话升级
+     * 🆕 FD-00030: 会话上下文隔离和联系人画像增强
      *
      * [核心编排用例] 流式消息发送的完整流程:
      *   1. 创建用户消息记录
@@ -152,7 +159,13 @@ object AiAdvisorModule {
      *   - 支持停止生成功能
      *   - 使用Block架构存储消息内容
      *
+     * FD-00030新增功能:
+     *   - 会话上下文隔离：新会话只包含联系人画像，不包含历史对话
+     *   - 联系人画像增强：添加标签（雷区/策略）和事实流信息
+     *   - 依赖BrainTagRepository获取联系人标签
+     *
      * @see FD-00028 AI军师流式对话升级功能设计
+     * @see FD-00030 AI军师Markdown渲染与会话隔离功能设计
      * @see StreamingState 流式状态定义
      */
     @Provides
@@ -161,13 +174,17 @@ object AiAdvisorModule {
         aiAdvisorRepository: AiAdvisorRepository,
         aiRepository: AiRepository,
         contactRepository: ContactRepository,
-        aiProviderRepository: AiProviderRepository
+        aiProviderRepository: AiProviderRepository,
+        brainTagRepository: BrainTagRepository,  // FD-00030: 新增标签仓库依赖
+        logger: Logger  // CR-001: 新增日志记录器依赖
     ): SendAdvisorMessageStreamingUseCase {
         return SendAdvisorMessageStreamingUseCase(
             aiAdvisorRepository,
             aiRepository,
             contactRepository,
-            aiProviderRepository
+            aiProviderRepository,
+            brainTagRepository,
+            logger
         )
     }
 }

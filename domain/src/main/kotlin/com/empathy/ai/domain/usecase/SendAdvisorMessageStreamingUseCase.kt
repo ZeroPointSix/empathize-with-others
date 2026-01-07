@@ -3,17 +3,24 @@ package com.empathy.ai.domain.usecase
 import com.empathy.ai.domain.model.AiAdvisorConversation
 import com.empathy.ai.domain.model.AiAdvisorMessageBlock
 import com.empathy.ai.domain.model.AiStreamChunk
+import com.empathy.ai.domain.model.BrainTag
+import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.MessageBlockStatus
 import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
 import com.empathy.ai.domain.model.StreamingState
+import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.TokenUsage
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
+import com.empathy.ai.domain.util.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import java.util.UUID
 import javax.inject.Inject
@@ -32,27 +39,37 @@ import javax.inject.Inject
  * - 支持DeepSeek R1等模型的思考过程展示
  * - Block架构支持多种内容类型（文本、思考、错误）
  *
+ * FD-00030更新:
+ * - 会话上下文隔离：新会话只包含联系人画像信息，不包含历史对话
+ * - 增强联系人画像：添加标签和事实流信息到系统提示词
+ *
  * 设计决策 (TDD-00028):
  * - 返回Flow<StreamingState>，支持UI实时更新
  * - 使用Block架构存储消息内容
  * - 思考过程和主文本分别存储在不同Block中
  *
  * @see FD-00028 AI军师流式对话升级功能设计
+ * @see FD-00030 AI军师Markdown渲染与会话隔离功能设计
  * @see StreamingState 流式状态定义
  */
 class SendAdvisorMessageStreamingUseCase @Inject constructor(
     private val aiAdvisorRepository: AiAdvisorRepository,
     private val aiRepository: AiRepository,
     private val contactRepository: ContactRepository,
-    private val aiProviderRepository: AiProviderRepository
+    private val aiProviderRepository: AiProviderRepository,
+    private val brainTagRepository: BrainTagRepository,  // FD-00030: 添加标签仓库
+    private val logger: Logger  // CR-001: 添加日志记录器
 ) {
     companion object {
+        private const val TAG = "SendAdvisorMessageStreamingUseCase"  // CR-001: 日志标签
         private const val DEFAULT_HISTORY_LIMIT = 10
+        private const val MAX_FACTS_COUNT = 10  // FD-00030: 最大事实数量
 
         /**
          * AI军师系统提示词
          *
          * 定义AI军师的角色和行为规范。
+         * FD-00030更新：支持Markdown格式输出
          */
         private const val SYSTEM_INSTRUCTION = """你是一位专业的社交沟通顾问，帮助用户分析聊天场景并提供建议。
 
@@ -62,7 +79,16 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
 3. 提供具体、实用的沟通建议
 4. 帮助用户理解对方的心理状态
 
-请根据联系人画像和对话历史，给出具体、实用的沟通建议。回复时请直接给出分析和建议，不需要JSON格式。"""
+请根据联系人画像和对话历史，给出具体、实用的沟通建议。
+
+输出格式要求：
+- 使用Markdown格式组织回复内容
+- 重要观点使用**粗体**强调
+- 建议列表使用有序或无序列表
+- 代码或专业术语使用`行内代码`格式
+- 分析结论可使用引用格式
+
+回复时请直接给出分析和建议，不需要JSON格式。"""
     }
 
     /**
@@ -134,10 +160,24 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
             return@flow
         }
         
+        // FD-00030: 获取联系人画像信息
         val contact = contactRepository.getProfile(contactId).getOrNull()
-        val historyResult = aiAdvisorRepository.getRecentConversations(contactId, DEFAULT_HISTORY_LIMIT)
+        
+        // FD-00030: 获取联系人标签（雷区和策略）
+        // CR-001: 添加异常日志记录，便于问题排查
+        val tags = try {
+            brainTagRepository.getTagsForContact(contactId).first()
+        } catch (e: Exception) {
+            logger.w(TAG, "获取联系人标签失败: contactId=$contactId, error=${e.message}")
+            emptyList()
+        }
+        
+        // FD-00030: 会话上下文隔离 - 只获取当前会话的历史记录
+        val historyResult = aiAdvisorRepository.getConversationsBySessionWithLimit(sessionId, DEFAULT_HISTORY_LIMIT)
         val history = historyResult.getOrNull() ?: emptyList()
-        val prompt = buildPrompt(contact?.name, history, userMessage)
+        
+        // FD-00030: 增强提示词构建，包含联系人画像信息
+        val prompt = buildPrompt(contact, tags, history, userMessage)
 
         // 5. 调用流式API并处理响应
         var thinkingBlockId: String? = null
@@ -228,29 +268,73 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
     /**
      * 构建AI军师提示词
      *
-     * 将联系人信息、对话历史和用户消息组合成完整的提示词。
+     * FD-00030更新：增强联系人画像信息
+     * 将联系人画像（包含标签和事实流）、对话历史和用户消息组合成完整的提示词。
      *
-     * @param contactName 联系人名称
-     * @param history 对话历史
+     * @param contact 联系人画像（包含facts等信息）
+     * @param tags 联系人标签列表（雷区和策略）
+     * @param history 对话历史（仅当前会话）
      * @param userMessage 用户消息
      * @return 构建好的提示词
      */
     private fun buildPrompt(
-        contactName: String?,
+        contact: ContactProfile?,
+        tags: List<BrainTag>,
         history: List<AiAdvisorConversation>,
         userMessage: String
     ): String {
         val sb = StringBuilder()
 
-        // 联系人信息
-        if (!contactName.isNullOrBlank()) {
-            sb.appendLine("【联系人】$contactName")
+        // FD-00030: 联系人画像信息（增强版）
+        if (contact != null) {
+            sb.appendLine("【联系人画像】")
+            sb.appendLine("姓名: ${contact.name}")
+            
+            // 关系目标
+            if (contact.targetGoal.isNotBlank()) {
+                sb.appendLine("关系目标: ${contact.targetGoal}")
+            }
+            
+            // 关系分数
+            sb.appendLine("关系亲密度: ${contact.relationshipScore}/100")
+            
+            // 事实流（最近的重要信息）
+            val facts = contact.facts
+            if (facts.isNotEmpty()) {
+                sb.appendLine()
+                sb.appendLine("【重要信息】")
+                facts.take(MAX_FACTS_COUNT).forEach { fact ->
+                    sb.appendLine("- ${fact.key}: ${fact.value}")
+                }
+            }
             sb.appendLine()
         }
 
-        // 对话历史
+        // FD-00030: 标签信息（雷区和策略）
+        if (tags.isNotEmpty()) {
+            val riskTags = tags.filter { it.type == TagType.RISK_RED }
+            val strategyTags = tags.filter { it.type == TagType.STRATEGY_GREEN }
+            
+            if (riskTags.isNotEmpty()) {
+                sb.appendLine("【⚠️ 雷区标签 - 避免触碰】")
+                riskTags.forEach { tag ->
+                    sb.appendLine("- ${tag.content}")
+                }
+                sb.appendLine()
+            }
+            
+            if (strategyTags.isNotEmpty()) {
+                sb.appendLine("【✅ 策略标签 - 推荐话题】")
+                strategyTags.forEach { tag ->
+                    sb.appendLine("- ${tag.content}")
+                }
+                sb.appendLine()
+            }
+        }
+
+        // FD-00030: 会话历史（仅当前会话，实现上下文隔离）
         if (history.isNotEmpty()) {
-            sb.appendLine("【对话历史】")
+            sb.appendLine("【当前会话历史】")
             // 按时间正序排列（oldest -> newest）
             history.sortedBy { it.timestamp }.forEach { conv ->
                 val role = if (conv.messageType == MessageType.USER) "用户" else "AI军师"

@@ -1,3 +1,4 @@
 {
-    "html.autoClosingTags": false
+    "html.autoClosingTags": false,
+    "git.ignoreLimitWarning": true
 }

@@ -105,6 +105,10 @@ dependencies {
     // Coil for image loading
     implementation(libs.coil.compose)
 
+    // Markdown Rendering (FD-00030: AI军师Markdown渲染)
+    implementation(libs.richtext.commonmark)
+    implementation(libs.richtext.ui.material3)
+
     // Paging
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
