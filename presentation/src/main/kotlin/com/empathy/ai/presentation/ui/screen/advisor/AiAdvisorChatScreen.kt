@@ -99,10 +99,14 @@ import com.empathy.ai.presentation.viewmodel.AiAdvisorChatViewModel
  * - FD-00026: AI军师对话功能设计
  * - BUG-044: 流式对话相关Bug修复记录
  *
+ * ## 变更记录 (Changelog)
+ * - 2026-01-07: UI优化 - 导航栏图标从 Psychology 改为 Favorite，
+ *               标题从"AI军师"改为"心语助手"；空状态布局添加 fillMaxWidth()
+ *
  * ## 页面布局
  * ```
  * ┌─────────────────────────────────────┐
- * │ [☰] AI军师 │ 与 张三 的对话     [👤]│  ← iOS导航栏（PRD-00029修改）
+ * │ [☰] 心语助手 │ 与 张三 的对话   [👤]│  ← iOS导航栏（PRD-00029修改，2026-01-07更名）
  * ├─────────────────────────────────────┤
  * │ [新对话][会话A][会话B]              │  ← 会话选择器
  * ├─────────────────────────────────────┤
@@ -349,14 +353,14 @@ private fun IOSChatNavigationBar(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Outlined.Psychology,
+                        imageVector = Icons.Outlined.Favorite,
                         contentDescription = null,
                         tint = iOSPurple,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "AI军师",
+                        text = "心语助手",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = iOSTextPrimary
@@ -879,7 +883,9 @@ private fun EmptyChatState(modifier: Modifier = Modifier) {
     val gradientEnd = Color(0xFFFF8E53)
     
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 共情Logo - 渐变心形背景
