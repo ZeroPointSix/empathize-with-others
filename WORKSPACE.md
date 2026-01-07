@@ -1,18 +1,46 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-03 | 更新者: Kiro (BUG-00042修复 + AI调试脚本)
+> 最后更新: 2026-01-07 | 更新者: Kiro (PRD-00029 AI军师UI架构优化完成)
 
 ## 📋 当前工作状态
 
 ### 正在进行的任务
 | 任务ID | 任务名称 | 负责AI | 状态 | 优先级 | 开始时间 | 预计完成 |
 |--------|---------|--------|------|--------|----------|----------|
-| - | 无进行中任务 | - | - | - | - | - |
+| - | - | - | - | - | - | - |
 
 ### 已完成任务（最近3条）
+- [x] 2026-01-07 - **PRD-00029 AI军师UI架构优化** - Kiro - 三页面导航架构实现完成
 - [x] 2026-01-03 - **BUG-00042 新建AI服务商未自动设为默认** - Kiro - 相关文档: [BUG-00042](文档/开发文档/BUG/BUG-00042-新建AI服务商未自动设为默认.md)
 - [x] 2026-01-03 - **BUG-00041 悬浮窗发送AI请求时应用崩溃** - Kiro - 通知图标问题修复
-- [x] 2026-01-02 - **TD-00025 AI配置功能完善** - Kiro - 相关文档: [TD-00025](文档/开发文档/TD/TD-00025-AI配置功能完善任务清单.md) - 38/45任务完成（84%）
+
+### PRD-00029 完成详情
+**AI军师UI架构优化** - 三页面导航架构实现 ✅ 已完成
+
+已完成任务：
+- [x] T029-01: 创建 `AiAdvisorPreferences.kt` - 加密偏好存储（实现AiAdvisorPreferencesRepository接口）
+- [x] T029-XX: 创建 `AiAdvisorPreferencesRepository.kt` - domain层接口定义
+- [x] T029-02: 修改 `NavRoutes.kt` - 新增路由常量
+- [x] T029-03: 修改 `NavGraph.kt` - 新增路由配置
+- [x] T029-05: 创建 `SessionHistoryViewModel.kt` - 会话历史ViewModel
+- [x] T029-10: 创建 `ContactSelectViewModel.kt` - 联系人选择ViewModel
+- [x] T029-06: 创建 `SessionHistoryScreen.kt` - 会话历史页面（iOS风格UI）
+- [x] T029-11: 创建 `ContactSelectScreen.kt` - 联系人选择页面（iOS风格UI）
+- [x] T029-16: 修改 `AiAdvisorScreen.kt` - 改为入口路由页面
+- [x] T029-17: 创建 `AiAdvisorEntryViewModel.kt` - 入口页面ViewModel
+- [x] T029-14: 修改 `AiAdvisorChatScreen.kt` - 导航栏改为☰和👤图标
+- [x] T029-XX: 修改 `RepositoryModule.kt` - 添加AiAdvisorPreferencesRepository绑定
+- [x] T029-04: 编写 `AiAdvisorPreferencesTest` 单元测试
+- [x] T029-08: 编写 `SessionHistoryViewModelTest` 单元测试
+- [x] T029-12: 编写 `ContactSelectViewModelTest` 单元测试
+- [x] T029-XX: 编写 `AiAdvisorEntryViewModelTest` 单元测试
+
+架构亮点：
+- ✅ 严格遵循Clean Architecture：domain层接口 → data层实现 → presentation层使用
+- ✅ 使用EncryptedSharedPreferences加密存储用户偏好
+- ✅ iOS风格UI设计，参考PRD29原型
+- ✅ 完整的单元测试覆盖
+- ✅ Debug APK构建成功
 
 ### 待办任务队列
 

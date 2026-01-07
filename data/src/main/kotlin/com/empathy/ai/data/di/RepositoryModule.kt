@@ -1,5 +1,6 @@
 package com.empathy.ai.data.di
 
+import com.empathy.ai.data.local.AiAdvisorPreferences
 import com.empathy.ai.data.local.CleanupPreferencesImpl
 import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.data.parser.AiSummaryResponseParserImpl
@@ -12,6 +13,7 @@ import com.empathy.ai.data.repository.ContactRepositoryImpl
 import com.empathy.ai.data.repository.PrivacyRepositoryImpl
 import com.empathy.ai.data.repository.UserProfileRepositoryImpl
 import com.empathy.ai.data.repository.settings.SettingsRepositoryImpl
+import com.empathy.ai.domain.repository.AiAdvisorPreferencesRepository
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
@@ -88,4 +90,12 @@ abstract class RepositoryModule {
      */
     @Binds
     abstract fun bindAiAdvisorRepository(impl: AiAdvisorRepositoryImpl): AiAdvisorRepository
+
+    /**
+     * TD-00029: 绑定 AI军师偏好设置仓库
+     */
+    @Binds
+    abstract fun bindAiAdvisorPreferencesRepository(
+        impl: AiAdvisorPreferences
+    ): AiAdvisorPreferencesRepository
 }

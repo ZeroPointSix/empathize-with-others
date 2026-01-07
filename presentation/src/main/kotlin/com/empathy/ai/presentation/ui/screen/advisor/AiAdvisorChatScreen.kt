@@ -29,10 +29,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -90,15 +92,17 @@ import com.empathy.ai.presentation.viewmodel.AiAdvisorChatViewModel
  *
  * ## 关联文档
  * - PRD-00026: AI军师对话功能需求（多轮对话、上下文管理）
+ * - PRD-00029: AI军师UI架构优化需求（三页面导航）
  * - TDD-00026: AI军师对话功能技术设计
  * - TDD-00028: AI军师流式对话升级技术设计
+ * - TDD-00029: AI军师UI架构优化技术设计
  * - FD-00026: AI军师对话功能设计
  * - BUG-044: 流式对话相关Bug修复记录
  *
  * ## 页面布局
  * ```
  * ┌─────────────────────────────────────┐
- * │ [<] AI军师 │ 与 张三 的对话     [人]│  ← iOS导航栏
+ * │ [☰] AI军师 │ 与 张三 的对话     [👤]│  ← iOS导航栏（PRD-00029修改）
  * ├─────────────────────────────────────┤
  * │ [新对话][会话A][会话B]              │  ← 会话选择器
  * ├─────────────────────────────────────┤
@@ -121,6 +125,7 @@ import com.empathy.ai.presentation.viewmodel.AiAdvisorChatViewModel
  * 2. **会话管理**: 横向滚动的会话标签，支持快速切换和新建
  * 3. **消息气泡**: 用户/AI消息区分展示，失败消息显示重试/删除选项
  * 4. **自动滚动**: 用户在底部附近时自动滚动到最新消息（BUG-044-P0-004修复）
+ * 5. **导航栏**: 左侧☰图标→会话历史，右侧👤图标→联系人选择（PRD-00029）
  *
  * ## 状态驱动的UI更新
  * - `isLoading`: 显示加载指示器
@@ -131,6 +136,8 @@ import com.empathy.ai.presentation.viewmodel.AiAdvisorChatViewModel
  * @param onNavigateBack 返回按钮点击回调
  * @param onNavigateToContact 切换联系人后的导航回调
  * @param onNavigateToSettings 设置按钮点击回调（预留）
+ * @param onNavigateToSessionHistory 导航到会话历史页面回调（PRD-00029新增）
+ * @param onNavigateToContactSelect 导航到联系人选择页面回调（PRD-00029新增）
  * @param viewModel 注入的ViewModel
  * @see AiAdvisorChatViewModel 管理对话状态和业务逻辑
  * @see StreamingMessageBubbleSimple 流式消息气泡组件
@@ -140,6 +147,8 @@ fun AiAdvisorChatScreen(
     onNavigateBack: () -> Unit,
     onNavigateToContact: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToSessionHistory: () -> Unit = {},
+    onNavigateToContactSelect: () -> Unit = {},
     viewModel: AiAdvisorChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -184,21 +193,16 @@ fun AiAdvisorChatScreen(
             .imePadding()
     ) {
         // iOS导航栏
+        // PRD-00029: 修改导航栏，左侧☰→会话历史，右侧👤→联系人选择
         IOSChatNavigationBar(
             contactName = uiState.contactName,
-            onNavigateBack = onNavigateBack,
-            onContactSelect = { viewModel.showContactSelector() }
+            onMenuClick = onNavigateToSessionHistory,
+            onContactClick = onNavigateToContactSelect
         )
 
-        // 会话选择器
-        if (uiState.sessions.isNotEmpty()) {
-            SessionChips(
-                sessions = uiState.sessions,
-                currentSessionId = uiState.currentSessionId,
-                onSessionSelect = viewModel::switchSession,
-                onNewSession = { viewModel.createNewSession() }
-            )
-        }
+        // BUG-00049修复: 移除SessionChips组件
+        // PRD-00029要求: 会话历史应通过左上角☰图标进入独立的会话历史页面
+        // 不应在对话界面直接显示会话选择器
 
         // 对话内容
         Box(modifier = Modifier.weight(1f)) {
@@ -304,11 +308,19 @@ fun AiAdvisorChatScreen(
     }
 }
 
+/**
+ * iOS风格导航栏
+ *
+ * PRD-00029修改：
+ * - 左侧：☰ 菜单图标 → 点击进入会话历史页面
+ * - 中间：标题 "AI 军师" + 联系人名称
+ * - 右侧：👤 联系人图标 → 点击进入联系人选择页面
+ */
 @Composable
 private fun IOSChatNavigationBar(
     contactName: String,
-    onNavigateBack: () -> Unit,
-    onContactSelect: () -> Unit
+    onMenuClick: () -> Unit,
+    onContactClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -321,11 +333,11 @@ private fun IOSChatNavigationBar(
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 返回按钮
-            IconButton(onClick = onNavigateBack) {
+            // 菜单按钮（会话历史）
+            IconButton(onClick = onMenuClick) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "会话历史",
                     tint = iOSBlue
                 )
             }
@@ -359,11 +371,11 @@ private fun IOSChatNavigationBar(
                 }
             }
 
-            // 切换联系人按钮
-            IconButton(onClick = onContactSelect) {
+            // 联系人选择按钮
+            IconButton(onClick = onContactClick) {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "切换联系人",
+                    contentDescription = "选择联系人",
                     tint = iOSBlue
                 )
             }
@@ -848,37 +860,61 @@ private fun SwitchConfirmDialog(
     )
 }
 
+/**
+ * 空状态欢迎区域
+ *
+ * BUG-00049修复: 按PRD-00029要求显示共情Logo和标语
+ *
+ * PRD-00029要求:
+ * - 显示共情Logo（渐变心形，从#FF6B6B到#FF8E53）
+ * - 显示"共情"文字
+ * - 显示"懂你所想，助你表达"标语
+ *
+ * @see 文档/开发文档/UI-原型/PRD29/gemini对话界面.html
+ */
 @Composable
 private fun EmptyChatState(modifier: Modifier = Modifier) {
+    // 共情Logo渐变色
+    val gradientStart = Color(0xFFFF6B6B)
+    val gradientEnd = Color(0xFFFF8E53)
+    
     Column(
         modifier = modifier.padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Surface(
-            modifier = Modifier.size(80.dp),
-            shape = CircleShape,
-            color = iOSPurple.copy(alpha = 0.1f)
+        // 共情Logo - 渐变心形背景
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(gradientStart, gradientEnd)
+                    )
+                ),
+            contentAlignment = Alignment.Center
         ) {
+            // 心形图标
             Icon(
-                imageVector = Icons.Outlined.Psychology,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-                tint = iOSPurple.copy(alpha = 0.6f)
+                imageVector = Icons.Outlined.Favorite,
+                contentDescription = "共情Logo",
+                modifier = Modifier.size(48.dp),
+                tint = Color.White
             )
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        // "共情"标题
         Text(
-            text = "开始与AI军师对话",
-            fontSize = 20.sp,
+            text = "共情",
+            fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
             color = iOSTextPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
+        // "懂你所想，助你表达"标语
         Text(
-            text = "向AI军师咨询任何社交沟通问题",
-            fontSize = 15.sp,
+            text = "懂你所想，助你表达",
+            fontSize = 14.sp,
             color = iOSTextSecondary
         )
     }

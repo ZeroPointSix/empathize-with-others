@@ -1,7 +1,7 @@
 # 共情AI助手 (Empathy AI Assistant)
 
 > 基于 Android 平台的智能社交沟通辅助应用
-> 最后更新: 2026-01-06 15:00:00 | 维护者: Claude | 版本: v4.4.0
+> 最后更新: 2026-01-07 19:05:02 | 维护者: Claude | 版本: v4.6.0
 
 ---
 
@@ -32,10 +32,10 @@
 |------|------|
 | **版本** | v1.0.0 (MVP) |
 | **完成度** | 95% |
-| **测试覆盖率** | 29.8% |
-| **Kotlin文件** | 934个（656主源码 + 239单元测试 + 39Android测试） |
+| **测试覆盖率** | 23.8% |
+| **Kotlin文件** | 1188个（905主源码 + 244单元测试 + 39Android测试） |
 | **架构合规性** | A级 (100%合规) |
-| **项目成熟度** | 93.8/100 |
+| **项目成熟度** | 93.5/100 |
 
 ### 技术栈
 - **语言**: Kotlin 2.0.21 (K2编译器)
@@ -89,19 +89,19 @@ graph TD
     B --> B2["MainActivity"]
     B --> B3["DI模块(11个)"]
 
-    C --> C1["model<br/>业务模型<br/>213个"]
+    C --> C1["model<br/>业务模型<br/>174个"]
     C --> C2["repository<br/>仓库接口<br/>13个"]
     C --> C3["usecase<br/>业务用例<br/>38个"]
     C --> C4["service<br/>领域服务<br/>2个"]
     C --> C5["util<br/>工具类<br/>29个"]
 
-    D --> D1["local<br/>本地存储<br/>108个"]
+    D --> D1["local<br/>本地存储<br/>80个"]
     D --> D2["remote<br/>远程访问<br/>6个"]
     D --> D3["repository<br/>仓库实现<br/>13个"]
     D --> D4["parser<br/>数据解析<br/>6个"]
     D --> D5["di<br/>依赖注入<br/>7个"]
 
-    E --> E1["ui<br/>UI组件<br/>310个"]
+    E --> E1["ui<br/>UI组件<br/>272个"]
     E --> E2["viewmodel<br/>视图模型<br/>19个"]
     E --> E3["navigation<br/>导航系统<br/>4个"]
     E --> E4["theme<br/>主题配置<br/>17个"]
@@ -123,10 +123,10 @@ graph TD
 
 | 模块 | 类型 | 文件数 | 说明 | 文档 |
 |------|------|--------|------|------|
-| **domain** | Kotlin Library | 253 (213主源码 + 40测试) | 纯Kotlin业务层，无Android依赖 | [CLAUDE.md](./domain/CLAUDE.md) |
-| **data** | Android Library | 137 (108主源码 + 23测试 + 6Android测试) | 数据层实现，Room、Retrofit、Repository | [CLAUDE.md](./data/CLAUDE.md) |
-| **presentation** | Android Library | 353 (310主源码 + 36测试 + 7Android测试) | UI层，Compose、ViewModel、Navigation | [CLAUDE.md](./presentation/CLAUDE.md) |
-| **app** | Application | 191 (25主源码 + 140测试 + 26Android测试) | 应用入口，DI配置，Android服务 | [CLAUDE.md](./app/src/main/java/com/empathy/ai/app/CLAUDE.md) |
+| **domain** | Kotlin Library | 216 (176主源码 + 40测试) | 纯Kotlin业务层，无Android依赖 | [CLAUDE.md](./domain/CLAUDE.md) |
+| **data** | Android Library | 244 (214主源码 + 24测试 + 6Android测试) | 数据层实现，Room、Retrofit、Repository | [CLAUDE.md](./data/CLAUDE.md) |
+| **presentation** | Android Library | 366 (319主源码 + 40测试 + 7Android测试) | UI层，Compose、ViewModel、Navigation | [CLAUDE.md](./presentation/CLAUDE.md) |
+| **app** | Application | 362 (196主源码 + 140测试 + 26Android测试) | 应用入口，DI配置，Android服务 | [CLAUDE.md](./app/src/main/java/com/empathy/ai/app/CLAUDE.md) |
 
 ---
 
@@ -332,23 +332,34 @@ scripts\ai-debug-full.bat 127.0.0.1:7555  # 指定设备
 
 | 指标 | 数值 |
 |------|------|
-| **Kotlin文件总数** | 934个 |
-| **主源码文件** | 656个 |
-| **单元测试文件** | 239个 |
+| **Kotlin文件总数** | 1188个 |
+| **主源码文件** | 905个 |
+| **单元测试文件** | 244个 |
 | **Android测试文件** | 39个 |
-| **测试覆盖率** | 29.8% |
+| **测试覆盖率** | 23.8% |
 | **架构模式** | Clean Architecture + MVVM |
 | **数据库版本** | Room v11 |
 
 ### 模块文件统计
-- **domain模块**: 253个文件（213主源码 + 40测试）
-- **data模块**: 137个文件（108主源码 + 23单元测试 + 6Android测试）
-- **presentation模块**: 353个文件（310主源码 + 36单元测试 + 7Android测试）
-- **app模块**: 191个文件（25主源码 + 140单元测试 + 26Android测试）
+- **domain模块**: 216个文件（176主源码 + 40测试）
+- **data模块**: 244个文件（214主源码 + 24单元测试 + 6Android测试）
+- **presentation模块**: 366个文件（319主源码 + 40单元测试 + 7Android测试）
+- **app模块**: 362个文件（196主源码 + 140单元测试 + 26Android测试）
 
 ---
 
 ## 变更记录 (Changelog)
+
+### 2026-01-07 10:05:23 - Claude (项目文档刷新)
+- **执行项目文档例行刷新**
+- **更新文档时间戳为2026-01-07 10:05:23**
+- **执行项目完整代码扫描和统计（基于实际文件）**
+- **更新代码统计为1188个Kotlin文件（905主源码 + 244单元测试 + 39Android测试）**
+- **更新测试覆盖率为23.8%（基于实际文件统计）**
+- **更正各模块文件统计数据（domain:216, data:244, presentation:366, app:362）**
+- **同步更新.kiro/steering/目录下所有项目状态文件**
+- **验证Clean Architecture合规性100%(domain层无Android依赖)**
+- **更新文档版本为v4.5.0**
 
 ### 2026-01-06 15:00:00 - Claude (AI上下文初始化完成)
 - **执行项目AI上下文初始化和文档更新**
@@ -502,9 +513,9 @@ scripts\ai-debug-full.bat 127.0.0.1:7555  # 指定设备
 
 ### 整体架构评估
 - **架构设计**: 100/100 - Clean Architecture完全合规，多模块架构，domain层纯Kotlin无Android依赖
-- **代码组织**: 95/100 - 模块职责明确，包结构合理，656个主源码文件
+- **代码组织**: 95/100 - 模块职责明确，包结构合理，905个主源码文件
 - **依赖管理**: 100/100 - 依赖方向正确，DI模块完整配置，Hilt统一管理
-- **测试覆盖**: 30/100 - 278个测试文件，29.8%总覆盖率，测试数量需提升
+- **测试覆盖**: 24/100 - 283个测试文件，23.8%总覆盖率，测试数量需提升
 - **文档完整性**: 100/100 - CLAUDE.md文档体系完善，9个模块文档全部就位
 - **SOLID遵循**: 95/100 - 完全遵循SOLID原则，单一职责，接口隔离
 - **技术选型**: 95/100 - 使用成熟稳定的技术栈，Kotlin 2.0.21 + Compose BOM 2024.12.01
@@ -512,13 +523,13 @@ scripts\ai-debug-full.bat 127.0.0.1:7555  # 指定设备
 - **可维护性**: 98/100 - 模块化清晰，文档完善
 - **安全性**: 92/100 - 完善的隐私保护和数据加密
 
-**总体评分**: **93.8/100** A级
+**总体评分**: **93.5/100** A级
 
 ---
 
-**最后更新**: 2026-01-06 15:00:00 | 更新者: Claude
+**最后更新**: 2026-01-07 10:05:23 | 更新者: Claude
 **维护者**: hushaokang
-**文档版本**: v4.4.0
+**文档版本**: v4.6.0
 **架构状态**: Clean Architecture完全合规，domain层无Android依赖
 **文档体系**: 已建立完整的模块级文档结构（9个CLAUDE.md文件，100%覆盖率）
-**项目状态**: AI军师功能模块（TD-00026）已上线，934个Kotlin文件，278个测试文件
+**项目状态**: AI军师功能模块（TD-00026）已上线，1188个Kotlin文件，283个测试文件

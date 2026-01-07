@@ -150,6 +150,20 @@ object NavRoutes {
     const val AI_ADVISOR_CHAT_ARG_ID = "contactId"
 
     /**
+     * AI军师会话历史页面
+     * PRD-00029: 新增会话历史路由
+     * 参数: contactId (String) - 联系人ID
+     */
+    const val AI_ADVISOR_SESSIONS = "ai_advisor_sessions/{contactId}"
+    const val AI_ADVISOR_SESSIONS_ARG_ID = "contactId"
+
+    /**
+     * AI军师联系人选择页面
+     * PRD-00029: 新增联系人选择路由
+     */
+    const val AI_ADVISOR_CONTACTS = "ai_advisor_contacts"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {
@@ -184,5 +198,13 @@ object NavRoutes {
      */
     fun aiAdvisorChat(contactId: String): String {
         return "ai_advisor_chat/$contactId"
+    }
+
+    /**
+     * 创建AI军师会话历史路由
+     * PRD-00029: 新增辅助函数
+     */
+    fun aiAdvisorSessions(contactId: String): String {
+        return "ai_advisor_sessions/$contactId"
     }
 }
