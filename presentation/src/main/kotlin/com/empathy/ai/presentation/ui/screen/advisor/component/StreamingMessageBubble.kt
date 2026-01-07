@@ -31,6 +31,8 @@ import com.empathy.ai.domain.model.MessageBlockType
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSTextPrimary
+import com.halilibo.richtext.commonmark.Markdown
+import com.halilibo.richtext.ui.material3.RichText
 
 /**
  * 流式消息气泡组件
@@ -130,6 +132,7 @@ fun StreamingMessageBubble(
 /**
  * 主文本气泡
  *
+ * FD-00030: 使用Markdown渲染AI回复内容
  * 显示AI回复的主要内容，流式时显示光标。
  */
 @Composable
@@ -160,13 +163,13 @@ private fun MainTextBubble(
                     StreamingCursor()
                 }
             } else {
+                // FD-00030: 使用Markdown渲染AI回复内容
                 Row {
-                    Text(
-                        text = content,
-                        fontSize = 16.sp,
-                        lineHeight = 22.sp,
-                        color = iOSTextPrimary
-                    )
+                    RichText(
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        Markdown(content = content)
+                    }
                     if (isStreaming) {
                         StreamingCursor()
                     }

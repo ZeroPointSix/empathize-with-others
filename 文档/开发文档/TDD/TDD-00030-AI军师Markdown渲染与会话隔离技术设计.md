@@ -30,6 +30,20 @@
 | Kotlin Coding Conventions | 2.0.21 | 代码规范 |
 | CommonMark Spec | 0.30 | Markdown语法标准 |
 
+### 1.3 与PRD-00030需求对比
+
+| 需求项 | PRD描述 | TDD实现方案 | 一致性 |
+|--------|---------|-------------|--------|
+| Markdown粗体渲染 | `**文字**`显示为粗体 | 使用compose-markdown的Markdown组件 | ✅ 一致 |
+| Markdown斜体渲染 | `*文字*`显示为斜体 | 使用compose-markdown的Markdown组件 | ✅ 一致 |
+| Markdown无序列表 | `- 项目`显示为项目符号列表 | 使用compose-markdown的Markdown组件 | ✅ 一致 |
+| Markdown有序列表 | `1. 项目`显示为编号列表 | 使用compose-markdown的Markdown组件 | ✅ 一致 |
+| Markdown行内代码 | `` `code` ``显示为灰色背景 | 配置inlineCodeBackground = Color(0xFFE8E8E8) | ✅ 一致 |
+| Markdown代码块 | 代码块显示灰色背景区域 | 配置codeBackground = Color(0xFFF5F5F5) | ✅ 一致 |
+| 新会话隔离 | AI无法获取之前会话历史 | 改用getConversationsBySession(sessionId) | ✅ 一致 |
+| 画像信息保留 | AI可获取联系人画像（姓名、标签、事实流） | 增强buildPrompt方法，新增BrainTagRepository依赖 | ✅ 一致 |
+| 当前会话连续 | 同一会话内多轮对话保持上下文连续 | 按sessionId获取历史，保持会话内连续 | ✅ 一致 |
+
 ---
 
 ## 2. 架构概述
@@ -444,6 +458,37 @@ private suspend fun buildPrompt(
 val prompt = buildPrompt(contactId, contact?.name, history, userMessage)
 ```
 
+#### 4.2.3 联系人画像Prompt模板示例
+
+**完整Prompt输出格式**：
+
+```
+【联系人画像】
+姓名: 张三
+标签: 喜欢旅游, 工作压力大, 性格外向
+重要事实:
+- 上周刚换了新工作
+- 最近在学习摄影
+- 喜欢周末去爬山
+- 养了一只猫叫小花
+- 下个月要去日本旅行
+
+【当前会话历史】
+用户: 你好，我想问一下关于工作的事情
+AI军师: 好的，请问您想了解什么方面的工作问题？
+用户: 我想知道怎么和新同事相处
+
+【当前问题】
+有什么建议吗？
+```
+
+**Prompt构建规则**：
+1. 联系人画像信息始终放在最前面，为AI提供背景上下文
+2. 标签以逗号分隔，最多显示10个
+3. 事实流最多显示5条，按时间倒序（最新的在前）
+4. 当前会话历史按时间正序排列
+5. 当前问题放在最后，作为AI需要回答的内容
+
 ---
 
 ## 5. Repository接口确认
@@ -644,12 +689,14 @@ AiRepository.generateTextStream(provider, prompt, systemInstruction)
 | `StreamingMessageBubble.kt` | :presentation | MainTextBubble组件使用Markdown渲染 |
 | `SendAdvisorMessageStreamingUseCase.kt` | :domain | 1. 新增BrainTagRepository依赖<br>2. 修改历史获取为按sessionId<br>3. 增强buildPrompt方法 |
 | `AiAdvisorModule.kt` | :app | 更新UseCase依赖注入配置 |
+| `AiAdvisorRepository.kt` | :domain | 新增getConversationsBySession方法定义 |
+| `AiAdvisorRepositoryImpl.kt` | :data | 实现getConversationsBySession方法 |
+| `AiAdvisorDao.kt` | :data | 新增按sessionId查询的DAO方法 |
 
 ### 8.3 需确认文件
 
 | 文件路径 | 模块 | 确认内容 |
 |---------|------|----------|
-| `AiAdvisorRepository.kt` | :domain | 确认getConversationsBySession方法存在 |
 | `BrainTagRepository.kt` | :domain | 确认getTagsByContact方法存在 |
 | `ContactRepository.kt` | :domain | 确认getFactsByContact方法存在（如不存在需新增） |
 
@@ -809,21 +856,77 @@ fun `AI消息应正确渲染代码块`() {
 | 风险 | 影响 | 概率 | 缓解措施 |
 |------|------|------|----------|
 | compose-markdown库兼容性问题 | 高 | 低 | 使用稳定版本0.5.4，已验证与Compose BOM 2024.12.01兼容 |
-| getConversationsBySession方法不存在 | 高 | 中 | 提前确认Repository接口，必要时新增方法 |
+| getConversationsBySession方法不存在 | 高 | 高 | 需要在Repository接口和实现中新增该方法，同时新增DAO查询 |
 | 流式Markdown渲染性能问题 | 中 | 低 | 监控渲染性能，必要时添加防抖处理 |
-| 联系人画像信息过长 | 中 | 低 | 限制事实流数量为5条，标签数量不限制 |
+| 联系人画像信息过长 | 中 | 低 | 限制事实流数量为5条，标签数量限制为10个 |
+| BrainTagRepository依赖缺失 | 中 | 中 | 确认Repository已在RepositoryModule中注册 |
+
+### 11.1 性能监控指标
+
+| 指标 | 目标值 | 监控方式 |
+|------|--------|----------|
+| Markdown单条消息渲染时间 | < 50ms | 使用Compose性能追踪 |
+| 流式渲染帧率 | > 30fps | 监控recomposition次数 |
+| 联系人画像加载时间 | < 100ms | 在buildPrompt方法中添加计时日志 |
+| 会话历史加载时间 | < 200ms | 在getConversationsBySession调用处添加计时日志 |
+| 内存占用增量 | < 5MB | 使用Android Profiler监控 |
+
+### 11.2 性能优化策略
+
+1. **Markdown渲染优化**
+   - 对于超长消息（>5000字符），考虑分段渲染
+   - 使用`remember`缓存已解析的Markdown AST
+
+2. **流式渲染优化**
+   - 添加防抖处理，避免每个字符都触发重新渲染
+   - 考虑使用`derivedStateOf`优化状态更新
+
+3. **数据加载优化**
+   - 联系人画像信息可以在会话开始时预加载
+   - 使用协程并行加载标签和事实流
 
 ---
 
-## 12. 关联文档
+## 12. 实现状态追踪
+
+### 12.1 当前实现状态
+
+| 功能模块 | TDD设计状态 | 代码实现状态 | 完成度 |
+|---------|------------|-------------|--------|
+| Markdown依赖添加 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| ChatBubble Markdown渲染 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| StreamingMessageBubble Markdown渲染 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| getConversationsBySession方法 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| 会话隔离逻辑修改 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| 联系人画像信息增强 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| BrainTagRepository依赖注入 | ✅ 已设计 | ⏳ 待实现 | 0% |
+| 单元测试 | ✅ 已设计 | ⏳ 待实现 | 0% |
+
+### 12.2 实现优先级
+
+| 优先级 | 任务 | 说明 |
+|--------|------|------|
+| P0 | 实现getConversationsBySession方法 | 会话隔离核心依赖 |
+| P0 | 修改SendAdvisorMessageStreamingUseCase | 会话隔离逻辑 |
+| P0 | 添加Markdown依赖和渲染 | 核心功能 |
+| P1 | 增强联系人画像信息 | 提升AI回复质量 |
+| P1 | 更新DI模块配置 | 依赖注入 |
+| P2 | 编写单元测试 | 质量保障 |
+| P2 | 性能监控和优化 | 用户体验 |
+
+---
+
+## 13. 关联文档
 
 - [PRD-00030-AI军师Markdown渲染与会话隔离需求](../PRD/PRD-00030-AI军师Markdown渲染与会话隔离需求.md)
 - [TDD-00026-AI军师对话功能技术设计](./TDD-00026-AI军师对话功能技术设计.md)
 - [TDD-00029-AI军师UI架构优化技术设计](./TDD-00029-AI军师UI架构优化技术设计.md)
+- [DR-00030-TDD-00030审查报告](../DR/DR-00030-TDD-00030审查报告.md)
+- [DR-00048-PRD00030文档审查报告](../DR/DR-00048-PRD00030文档审查报告.md)
 
 ---
 
-**文档版本**: 1.0  
+**文档版本**: 1.1  
 **最后更新**: 2026-01-07  
-**更新内容**: 初始版本
+**更新内容**: 根据DR-00030审查报告补充：PRD对比表、文件变更清单完善、Prompt模板示例、性能监控指标、实现状态追踪
 

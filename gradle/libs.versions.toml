@@ -53,6 +53,10 @@ material = "1.12.0"
 # Coil (Image Loading)
 coil = "2.5.0"
 
+# Markdown Rendering (FD-00030: AI军师Markdown渲染)
+# 使用compose-richtext库，在Maven Central上可用
+composeRichtext = "1.0.0-alpha01"
+
 # Desugaring (Java 8+ API support for older Android versions)
 desugarJdkLibs = "2.0.4"
 
@@ -125,6 +129,11 @@ material = { group = "com.google.android.material", name = "material", version.r
 
 # Coil (Image Loading)
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Markdown Rendering (FD-00030: AI军师Markdown渲染)
+# 使用compose-richtext库，在Maven Central上可用
+richtext-commonmark = { module = "com.halilibo.compose-richtext:richtext-commonmark", version.ref = "composeRichtext" }
+richtext-ui-material3 = { module = "com.halilibo.compose-richtext:richtext-ui-material3", version.ref = "composeRichtext" }
 
 # Desugaring (Java 8+ API support)
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }

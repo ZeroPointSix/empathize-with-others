@@ -78,6 +78,8 @@ import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.ui.screen.advisor.component.StreamingMessageBubbleSimple
 import com.empathy.ai.presentation.viewmodel.AiAdvisorChatUiState
 import com.empathy.ai.presentation.viewmodel.AiAdvisorChatViewModel
+import com.halilibo.richtext.commonmark.Markdown
+import com.halilibo.richtext.ui.material3.RichText
 
 /**
  * AI军师对话界面（iOS风格）
@@ -529,19 +531,26 @@ private fun ChatBubble(
                 },
                 shadowElevation = if (!isUser && !isFailed && !isCancelled) 1.dp else 0.dp
             ) {
-                // BUG-045-P0-NEW-003修复：移除空内容时显示"..."的逻辑
-                // 空内容的AI消息已在上面被过滤，这里直接显示内容
-                Text(
-                    text = conversation.content,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    color = when {
-                        isFailed || isCancelled -> iOSRed
-                        isUser -> Color.White
-                        else -> iOSTextPrimary
-                    },
-                    fontSize = 16.sp,
-                    lineHeight = 22.sp
-                )
+                // FD-00030: AI消息使用Markdown渲染，用户消息使用普通Text
+                if (isUser) {
+                    // 用户消息：普通文本
+                    Text(
+                        text = conversation.content,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        lineHeight = 22.sp
+                    )
+                } else {
+                    // AI消息：Markdown渲染
+                    RichText(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Markdown(
+                            content = conversation.content
+                        )
+                    }
+                }
             }
 
             // 失败/取消消息操作

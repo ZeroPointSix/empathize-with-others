@@ -163,6 +163,26 @@ interface AiAdvisorRepository {
     ): Result<List<AiAdvisorConversation>>
 
     /**
+     * 获取指定会话的最近对话记录
+     *
+     * FD-00030: 会话上下文隔离
+     * 用途: 用于构建AI上下文，只获取当前会话的历史记录
+     *
+     * 业务规则:
+     * - 返回按时间戳升序排列的历史记录（oldest -> newest）
+     * - 限制最大记录数，避免上下文过长导致token超限
+     * - 新会话不包含其他会话的历史记录，实现上下文隔离
+     *
+     * @param sessionId 会话ID
+     * @param limit 最大记录数
+     * @return 当前会话的对话记录列表
+     */
+    suspend fun getConversationsBySessionWithLimit(
+        sessionId: String,
+        limit: Int = 20
+    ): Result<List<AiAdvisorConversation>>
+
+    /**
      * 删除单条对话记录
      *
      * @param conversationId 对话记录ID

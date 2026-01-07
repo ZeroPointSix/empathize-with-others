@@ -168,6 +168,28 @@ class AiAdvisorRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * 获取指定会话的最近对话记录
+     *
+     * FD-00030: 会话上下文隔离
+     * 实现会话内的上下文隔离，新会话不包含其他会话的历史记录。
+     *
+     * @param sessionId 会话ID
+     * @param limit 最大记录数
+     * @return 当前会话的对话记录列表（按时间正序）
+     */
+    override suspend fun getConversationsBySessionWithLimit(
+        sessionId: String,
+        limit: Int
+    ): Result<List<AiAdvisorConversation>> = withContext(ioDispatcher) {
+        runCatching {
+            // DAO返回的是倒序（最新在前），需要反转为正序（oldest -> newest）
+            aiAdvisorDao.getConversationsBySessionWithLimit(sessionId, limit)
+                .map { it.toDomain() }
+                .reversed()
+        }
+    }
+
     override suspend fun deleteConversation(conversationId: String): Result<Unit> =
         withContext(ioDispatcher) {
             runCatching {
