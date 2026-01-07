@@ -53,9 +53,39 @@
       "Bash(git merge:*)",
       "Bash(git branch:*)",
       "Skill(code-deep-research)",
-      "Skill(code-question-refiner)"
+      "Skill(code-question-refiner)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/read-rules.ps1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/update-task-log.ps1\"*)"
     ],
     "deny": [],
     "ask": []
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/read-rules.ps1\"",
+            "timeout": 30,
+            "statusMessage": "读取Rules文档..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/update-task-log.ps1\"",
+            "timeout": 10,
+            "statusMessage": "更新任务日志..."
+          }
+        ]
+      }
+    ]
   }
 }

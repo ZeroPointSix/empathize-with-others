@@ -15,6 +15,8 @@ import androidx.navigation.navArgument
 import com.empathy.ai.presentation.ui.screen.aiconfig.AiConfigScreen
 import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorChatScreen
 import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
+import com.empathy.ai.presentation.ui.screen.advisor.ContactSelectScreen
+import com.empathy.ai.presentation.ui.screen.advisor.SessionHistoryScreen
 import com.empathy.ai.presentation.ui.screen.chat.ChatScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailTabScreen
@@ -213,11 +215,19 @@ fun NavGraph(
             )
         }
 
-        // AI军师页面
+        // AI军师入口页面
+        // PRD-00029: 修改为入口路由页面，检查偏好设置决定导航目标
         composable(route = NavRoutes.AI_ADVISOR) {
             AiAdvisorScreen(
                 onNavigateToChat = { contactId ->
-                    navController.navigate(NavRoutes.aiAdvisorChat(contactId))
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                        popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                    }
+                },
+                onNavigateToContactSelect = {
+                    navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
+                        popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                    }
                 }
             )
         }
@@ -230,16 +240,66 @@ fun NavGraph(
                     type = NavType.StringType
                 }
             )
-        ) {
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString(NavRoutes.AI_ADVISOR_CHAT_ARG_ID) ?: ""
             AiAdvisorChatScreen(
                 onNavigateBack = { navController.navigateUp() },
-                onNavigateToContact = { contactId ->
-                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                onNavigateToContact = { newContactId ->
+                    navController.navigate(NavRoutes.aiAdvisorChat(newContactId)) {
                         popUpTo(NavRoutes.AI_ADVISOR)
                     }
                 },
                 onNavigateToSettings = {
                     navController.navigate(NavRoutes.AI_CONFIG)
+                },
+                onNavigateToSessionHistory = {
+                    navController.navigate(NavRoutes.aiAdvisorSessions(contactId))
+                },
+                onNavigateToContactSelect = {
+                    navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS)
+                }
+            )
+        }
+
+        // AI军师会话历史页面
+        // PRD-00029: 新增会话历史路由
+        composable(
+            route = NavRoutes.AI_ADVISOR_SESSIONS,
+            arguments = listOf(
+                navArgument(NavRoutes.AI_ADVISOR_SESSIONS_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString(NavRoutes.AI_ADVISOR_SESSIONS_ARG_ID) ?: ""
+            SessionHistoryScreen(
+                contactId = contactId,
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToChat = { sessionId ->
+                    // 加载指定会话并返回对话界面
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                        popUpTo(NavRoutes.AI_ADVISOR_SESSIONS) { inclusive = true }
+                    }
+                },
+                onCreateNewSession = {
+                    // 创建新会话并返回对话界面
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                        popUpTo(NavRoutes.AI_ADVISOR_SESSIONS) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // AI军师联系人选择页面
+        // PRD-00029: 新增联系人选择路由
+        composable(route = NavRoutes.AI_ADVISOR_CONTACTS) {
+            ContactSelectScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onSelectContact = { contactId ->
+                    // 保存联系人ID并导航到对话界面
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                        popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                    }
                 }
             )
         }

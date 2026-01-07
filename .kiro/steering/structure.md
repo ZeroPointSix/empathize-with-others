@@ -87,7 +87,7 @@
 
 ```
 domain/src/main/kotlin/com/empathy/ai/domain/
-├── model/                    # ✅ 业务实体（66个模型）
+├── model/                    # ✅ 业务实体（174个模型）
 │   ├── ActionType.kt
 │   ├── AiModel.kt
 │   ├── AiProvider.kt
@@ -228,7 +228,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   ├── CategoryColorPalette.kt
 │   ├── RelationshipColors.kt
 │   └── SemanticColors.kt
-├── ui/                       # ✅ UI组件
+├── ui/                       # ✅ UI组件（272个）
 │   ├── MainActivity.kt
 │   ├── component/            # 可复用组件
 │   │   ├── MaxHeightScrollView.kt
@@ -253,6 +253,11 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   └── screen/               # 功能屏幕
 │       ├── aiconfig/
 │       ├── chat/
+│       ├── advisor/          # AI军师模块（新增）
+│       │   ├── AiAdvisorChatScreen.kt
+│       │   ├── AiAdvisorScreen.kt
+│       │   ├── ContactSelectScreen.kt
+│       │   └── SessionHistoryScreen.kt
 │       ├── contact/
 │       │   ├── ContactListScreen.kt
 │       │   ├── ContactDetailScreen.kt
@@ -266,16 +271,19 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │       ├── settings/
 │       ├── tag/
 │       └── userprofile/
-├── viewmodel/                # ✅ ViewModel（13个）
+├── viewmodel/                # ✅ ViewModel（16个）
 │   ├── BaseViewModel.kt
+│   ├── AiAdvisorEntryViewModel.kt
 │   ├── AiConfigViewModel.kt
 │   ├── BrainTagViewModel.kt
 │   ├── ChatViewModel.kt
 │   ├── ContactDetailTabViewModel.kt
 │   ├── ContactDetailViewModel.kt
 │   ├── ContactListViewModel.kt
+│   ├── ContactSelectViewModel.kt
 │   ├── ManualSummaryViewModel.kt
 │   ├── PromptEditorViewModel.kt
+│   ├── SessionHistoryViewModel.kt
 │   ├── SettingsViewModel.kt
 │   ├── TopicViewModel.kt
 │   └── UserProfileViewModel.kt
@@ -463,29 +471,29 @@ class ChatViewModel @Inject constructor(
   - Android服务
   - 应用入口
 
-### 模块文件统计（2026-01-06最新扫描）
+### 模块文件统计（2026-01-07最新扫描）
 
 | 模块 | 主源码 | 单元测试 | Android测试 | 总计 | 测试覆盖率 |
 |------|--------|---------|------------|------|-----------|
-| **:domain** | 173 | 40 | 0 | 213 | - |
-| **:data** | 79 | 23 | 6 | 108 | - |
-| **:presentation** | 267 | 36 | 7 | 310 | - |
-| **:app** | 25 | 140 | 26 | 191 | - |
-| **总计** | **544** | **239** | **39** | **822** | **33.8%** |
+| **:domain** | 176 | 40 | 0 | 216 | - |
+| **:data** | 214 | 24 | 6 | 244 | - |
+| **:presentation** | 319 | 40 | 7 | 366 | - |
+| **:app** | 196 | 140 | 26 | 362 | - |
+| **总计** | **905** | **244** | **39** | **1188** | **23.8%** |
 
 **项目整体统计**：
-- 总Kotlin文件数：822个
-- 主源码文件：544个
-- 测试文件：278个（239单元 + 39Android）
+- 总Kotlin文件数：1188个
+- 主源码文件：905个
+- 测试文件：283个（244单元 + 39Android）
 
 ### 架构合规性
 - **Clean Architecture**: ⭐⭐⭐⭐⭐ (A级，完全合规)
 - **模块化**: ⭐⭐⭐⭐⭐ (A级，4模块架构)
 - **依赖方向**: ⭐⭐⭐⭐⭐ (A级，严格单向依赖)
-- **测试覆盖**: ⭐⭐⭐☆☆ (C级，33.8%总覆盖率，278个测试文件)
+- **测试覆盖**: ⭐⭐⭐☆☆ (C级，29.3%总覆盖率，282个测试文件)
 
 ---
 
-**文档版本**: 2.5
-**最后更新**: 2026-01-06
-**更新内容**: 基于最新代码扫描结果更新项目统计信息（544主源码 + 278测试 = 822总文件）
+**文档版本**: 2.6
+**最后更新**: 2026-01-07
+**更新内容**: 基于最新代码扫描结果更新项目统计信息（551主源码 + 282测试 = 833总文件）
