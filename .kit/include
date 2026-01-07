@@ -1,24 +1,27 @@
 # Kit Include Rules
 # 每行一个 Glob 模式
-.claude/**/*.json
+
 *.md
 **/*.md
 **/*.ps1
 
+
 !文档
-!CODE_ANALYSIS
-!subagent
 !skills
-!.Roo
-!.archive
-!.kiro
-!.claude/CLAUDE.md
-!.kilocode
-!CLAUDE.md
-!app
+!subagent
 !presentation
-!*/WORKSPACE.md
+!domain
+!debug_persona_tab_scroll_issue.md
+!app
 !WORKSPACE.md
-!docs
-!plans
+!CODE_ANALYSIS
+!.kiro
+!.kilocode
+!.claude/commands
+!.Roo
+!Rules
 !temp_apk_analysis
+!plans
+!docs
+!data
+!.claude/steering
