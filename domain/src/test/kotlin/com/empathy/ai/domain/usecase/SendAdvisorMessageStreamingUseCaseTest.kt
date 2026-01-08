@@ -1,19 +1,25 @@
 package com.empathy.ai.domain.usecase
 
+import com.empathy.ai.domain.model.BrainTag
+import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.AiAdvisorConversation
 import com.empathy.ai.domain.model.AiAdvisorMessageBlock
+import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.domain.model.AiStreamChunk
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageBlockStatus
 import com.empathy.ai.domain.model.MessageBlockType
+import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
 import com.empathy.ai.domain.model.StreamingState
 import com.empathy.ai.domain.model.TokenUsage
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
+import com.empathy.ai.domain.util.Logger
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -31,6 +37,7 @@ import java.io.IOException
  * SendAdvisorMessageStreamingUseCase流式发送用例测试
  *
  * @see FD-00028 AI军师流式对话升级功能设计
+ * @see FD-00030 AI军师Markdown渲染与会话隔离功能设计
  */
 class SendAdvisorMessageStreamingUseCaseTest {
 
@@ -39,6 +46,8 @@ class SendAdvisorMessageStreamingUseCaseTest {
     private lateinit var aiRepository: AiRepository
     private lateinit var contactRepository: ContactRepository
     private lateinit var aiProviderRepository: AiProviderRepository
+    private lateinit var brainTagRepository: BrainTagRepository  // FD-00030: 新增标签仓库
+    private lateinit var logger: Logger  // CR-001: 新增日志记录器
 
     private val testContactId = "contact-123"
     private val testSessionId = "session-456"
@@ -49,7 +58,8 @@ class SendAdvisorMessageStreamingUseCaseTest {
         name = "Test Provider",
         baseUrl = "https://api.test.com",
         apiKey = "test-key",
-        model = "test-model",
+        models = listOf(AiModel(id = "test-model", displayName = "Test Model")),
+        defaultModelId = "test-model",
         isDefault = true
     )
 
@@ -59,18 +69,23 @@ class SendAdvisorMessageStreamingUseCaseTest {
         aiRepository = mockk(relaxed = true)
         contactRepository = mockk(relaxed = true)
         aiProviderRepository = mockk(relaxed = true)
+        brainTagRepository = mockk(relaxed = true)  // FD-00030: 初始化标签仓库Mock
+        logger = mockk(relaxed = true)  // CR-001: 初始化日志记录器Mock
 
         useCase = SendAdvisorMessageStreamingUseCase(
             aiAdvisorRepository,
             aiRepository,
             contactRepository,
-            aiProviderRepository
+            aiProviderRepository,
+            brainTagRepository,  // FD-00030: 新增依赖
+            logger  // CR-001: 新增依赖
         )
 
         // 默认mock配置
         coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
         coEvery { contactRepository.getProfile(any()) } returns Result.success(null)
-        coEvery { aiAdvisorRepository.getRecentConversations(any(), any()) } returns Result.success(emptyList())
+        coEvery { brainTagRepository.getTagsForContact(any()) } returns flowOf(emptyList())  // FD-00030: 标签Mock
+        coEvery { aiAdvisorRepository.getConversationsBySessionWithLimit(any(), any()) } returns Result.success(emptyList())  // FD-00030: 会话隔离
         coEvery { aiAdvisorRepository.saveMessage(any()) } returns Result.success(Unit)
         coEvery { aiAdvisorRepository.saveBlock(any()) } returns Result.success(Unit)
         coEvery { aiAdvisorRepository.updateBlockContent(any(), any(), any()) } returns Result.success(Unit)
@@ -128,16 +143,13 @@ class SendAdvisorMessageStreamingUseCaseTest {
             AiStreamChunk.Complete("Answer", null)
         )
 
-        val blockSlot = slot<AiAdvisorMessageBlock>()
-
         // When
         useCase(testContactId, testSessionId, testMessage).toList()
 
-        // Then
-        coVerify(atLeast = 1) { aiAdvisorRepository.saveBlock(capture(blockSlot)) }
-        val savedBlocks = mutableListOf<AiAdvisorMessageBlock>()
-        coVerify { aiAdvisorRepository.saveBlock(capture(savedBlocks)) }
-        assertTrue(savedBlocks.any { it.type == MessageBlockType.THINKING })
+        // Then - FD-00030: saveBlock被调用多次（THINKING block + MAIN_TEXT block）
+        coVerify(atLeast = 2) { aiAdvisorRepository.saveBlock(any()) }
+        // 验证至少有一个THINKING类型的block
+        coVerify { aiAdvisorRepository.saveBlock(match { it.type == MessageBlockType.THINKING }) }
     }
 
     @Test
@@ -188,8 +200,8 @@ class SendAdvisorMessageStreamingUseCaseTest {
         // When
         useCase(testContactId, testSessionId, testMessage).toList()
 
-        // Then
-        coVerify { aiAdvisorRepository.updateMessageStatus(any(), SendStatus.FAILED) }
+        // Then - FD-00030: API变更为updateMessageContentAndStatus
+        coVerify { aiAdvisorRepository.updateMessageContentAndStatus(any(), eq("[AI响应失败: Error]"), eq(SendStatus.FAILED)) }
     }
 
     @Test
@@ -204,8 +216,8 @@ class SendAdvisorMessageStreamingUseCaseTest {
         // When
         useCase(testContactId, testSessionId, testMessage).toList()
 
-        // Then
-        coVerify { aiAdvisorRepository.updateMessageStatus(any(), SendStatus.SUCCESS) }
+        // Then - FD-00030: API变更为updateMessageContentAndStatus
+        coVerify { aiAdvisorRepository.updateMessageContentAndStatus(any(), eq("Response"), eq(SendStatus.SUCCESS)) }
     }
 
     @Test
@@ -232,13 +244,13 @@ class SendAdvisorMessageStreamingUseCaseTest {
             AiStreamChunk.Complete("Response", null)
         )
 
-        val messageSlot = slot<AiAdvisorConversation>()
-
         // When
         useCase(testContactId, testSessionId, testMessage).toList()
 
-        // Then
-        coVerify { aiAdvisorRepository.saveMessage(capture(messageSlot)) }
+        // Then - FD-00030: saveMessage被调用2次（用户消息+AI初始消息）
+        coVerify(atLeast = 2) { aiAdvisorRepository.saveMessage(any()) }
+        // 验证至少有一次是用户消息
+        coVerify { aiAdvisorRepository.saveMessage(match { it.messageType == MessageType.USER }) }
     }
 
     @Test

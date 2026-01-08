@@ -11,8 +11,10 @@ import androidx.core.content.ContextCompat
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.AiResult
 import com.empathy.ai.domain.model.AnalysisResult
+import com.empathy.ai.domain.model.KnowledgeQueryResponse
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.ReplyResult
+import com.empathy.ai.domain.model.Recommendation
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.presentation.ui.component.MaxHeightScrollView
 import com.google.android.material.card.MaterialCardView
@@ -20,13 +22,15 @@ import com.google.android.material.card.MaterialCardView
 /**
  * AI结果展示卡片组件
  *
- * 支持展示三种类型的AI结果：
+ * 支持展示四种类型的AI结果：
  * - 分析结果（AnalysisResult）
  * - 润色结果（PolishResult）
  * - 回复结果（ReplyResult）
+ * - 知识查询结果（KnowledgeQueryResponse）
  *
  * @see PRD-00009 悬浮窗功能重构需求
  * @see TDD-00009 悬浮窗功能重构技术设计
+ * @see PRD-00031 悬浮窗快速知识回答功能需求
  */
 class ResultCard @JvmOverloads constructor(
     context: Context,
@@ -44,10 +48,17 @@ class ResultCard @JvmOverloads constructor(
     private var strategyNote: TextView? = null
     private var btnCopy: com.google.android.material.button.MaterialButton? = null
     private var btnRegenerate: com.google.android.material.button.MaterialButton? = null
+    
+    // TD-00031: 知识查询相关UI组件
+    private var sourceLabel: TextView? = null
+    private var recommendationsContainer: LinearLayout? = null
 
     private var currentResult: AiResult? = null
     private var onCopyClickListener: ((String) -> Unit)? = null
     private var onRegenerateClickListener: (() -> Unit)? = null
+    
+    // TD-00031: 推荐项点击回调
+    private var onRecommendationClickListener: ((Recommendation) -> Unit)? = null
 
     init {
         LayoutInflater.from(context).inflate(R.layout.floating_result_card, this, true)
@@ -204,7 +215,115 @@ class ResultCard @JvmOverloads constructor(
             is AiResult.Analysis -> showAnalysisResult(result.result)
             is AiResult.Polish -> showPolishResult(result.result)
             is AiResult.Reply -> showReplyResult(result.result)
+            is AiResult.Knowledge -> showKnowledgeResult(result.result)
         }
+    }
+    
+    /**
+     * 显示知识查询结果
+     *
+     * TD-00031: 快速问答功能的结果展示
+     *
+     * @param result 知识查询结果
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    fun showKnowledgeResult(result: KnowledgeQueryResponse) {
+        currentResult = AiResult.Knowledge(result)
+        resultTitle?.text = "💡 知识解答"
+        resultContent?.text = result.getDisplayContent()
+
+        // 隐藏风险等级标签
+        riskBadge?.visibility = View.GONE
+
+        // 隐藏风险提示
+        riskWarningContainer?.visibility = View.GONE
+
+        // 显示来源标签
+        if (sourceLabel != null) {
+            sourceLabel?.visibility = View.VISIBLE
+            sourceLabel?.text = "${result.getSourceIcon()} ${result.getSourceLabel()}"
+        } else {
+            // 如果没有专门的来源标签，使用策略说明区域显示
+            strategyNote?.visibility = View.VISIBLE
+            strategyNote?.text = "${result.getSourceIcon()} ${result.getSourceLabel()}"
+        }
+
+        // 显示推荐列表
+        showRecommendations(result.recommendations)
+
+        // BUG-00017修复：显式设置按钮可见
+        ensureButtonsVisible()
+
+        visibility = View.VISIBLE
+    }
+    
+    /**
+     * 显示推荐列表
+     *
+     * TD-00031: 展示相关推荐话题
+     *
+     * @param recommendations 推荐列表
+     */
+    private fun showRecommendations(recommendations: List<Recommendation>) {
+        if (recommendations.isEmpty()) {
+            recommendationsContainer?.visibility = View.GONE
+            return
+        }
+        
+        // 如果有专门的推荐容器，使用它
+        if (recommendationsContainer != null) {
+            recommendationsContainer?.visibility = View.VISIBLE
+            recommendationsContainer?.removeAllViews()
+            
+            // 添加标题
+            val titleView = TextView(context).apply {
+                text = "📚 相关推荐"
+                textSize = 14f
+                setTextColor(context.getColor(android.R.color.darker_gray))
+                setPadding(0, 16, 0, 8)
+            }
+            recommendationsContainer?.addView(titleView)
+            
+            // 添加推荐项
+            recommendations.take(5).forEach { recommendation ->
+                val itemView = TextView(context).apply {
+                    text = "• ${recommendation.title}"
+                    textSize = 13f
+                    setTextColor(context.getColor(R.color.floating_primary))
+                    setPadding(8, 4, 8, 4)
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener {
+                        onRecommendationClickListener?.invoke(recommendation)
+                    }
+                }
+                recommendationsContainer?.addView(itemView)
+            }
+        } else {
+            // 如果没有专门的推荐容器，在内容后追加推荐信息
+            val currentText = resultContent?.text?.toString() ?: ""
+            val recommendationText = buildString {
+                append(currentText)
+                appendLine()
+                appendLine()
+                appendLine("📚 相关推荐：")
+                recommendations.take(5).forEach { rec ->
+                    appendLine("• ${rec.title}")
+                }
+            }
+            resultContent?.text = recommendationText
+        }
+    }
+    
+    /**
+     * 设置推荐项点击监听器
+     *
+     * TD-00031: 点击推荐项时触发新的查询
+     *
+     * @param listener 点击回调，参数为推荐项
+     */
+    fun setOnRecommendationClickListener(listener: (Recommendation) -> Unit) {
+        onRecommendationClickListener = listener
     }
 
     /**

@@ -160,6 +160,13 @@ class AiResultTest {
             ),
             AiResult.Reply(
                 ReplyResult("回复")
+            ),
+            // TD-00031: 新增 Knowledge 类型的测试
+            AiResult.Knowledge(
+                KnowledgeQueryResponse(
+                    title = "测试标题",
+                    content = "测试内容"
+                )
             )
         )
 
@@ -168,6 +175,7 @@ class AiResultTest {
                 is AiResult.Analysis -> "analysis"
                 is AiResult.Polish -> "polish"
                 is AiResult.Reply -> "reply"
+                is AiResult.Knowledge -> "knowledge"  // TD-00031: 新增分支
             }
             assertTrue(type.isNotEmpty())
         }

@@ -278,4 +278,26 @@ class PromptBuilder @Inject constructor(
             null
         }
     }
+
+    // ==================== PRD-00031: 知识查询提示词构建 ====================
+
+    /**
+     * 构建知识查询的系统指令
+     *
+     * 用于快速问答功能，生成知识解释和相关推荐
+     *
+     * @return 构建好的知识查询系统指令
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    fun buildKnowledgePrompt(): String {
+        return buildString {
+            // 1. 系统角色定义
+            append(SystemPrompts.KNOWLEDGE_HEADER)
+            appendLine()
+            appendLine()
+            
+            // 2. 输出格式约束
+            append(SystemPrompts.KNOWLEDGE_FOOTER)
+        }
+    }
 }

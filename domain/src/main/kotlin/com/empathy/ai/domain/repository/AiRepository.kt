@@ -4,6 +4,7 @@ import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.domain.model.AiStreamChunk
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.ExtractedData
+import com.empathy.ai.domain.model.KnowledgeQueryResponse
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.SafetyCheckResult
@@ -259,4 +260,33 @@ interface AiRepository {
         prompt: String,
         systemInstruction: String
     ): Flow<AiStreamChunk>
+
+    // ==================== PRD-00031: 知识查询接口 ====================
+
+    /**
+     * 知识查询 (功能L)
+     *
+     * 业务规则 (PRD-00031):
+     * - 悬浮窗新增第4个Tab"快速问答"
+     * - 支持联网优先、AI本地知识兜底的知识获取策略
+     * - 返回Markdown格式的知识解释和相关推荐
+     *
+     * 设计决策:
+     * - 统一的查询接口，内部根据模型能力选择联网或本地策略
+     * - 返回KnowledgeQueryResponse，包含内容、来源和推荐
+     * - 超时时间：联网3秒，本地2秒
+     *
+     * @param provider AI服务商配置
+     * @param content 查询内容（已清理和验证）
+     * @param systemInstruction 系统指令
+     * @return 知识查询响应
+     *
+     * @see KnowledgeQueryResponse 知识查询响应模型
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    suspend fun queryKnowledge(
+        provider: AiProvider,
+        content: String,
+        systemInstruction: String
+    ): Result<KnowledgeQueryResponse>
 }

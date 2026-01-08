@@ -36,8 +36,10 @@ import com.empathy.ai.domain.model.AiStreamChunk
 import com.empathy.ai.domain.model.AnalysisResult
 import com.empathy.ai.domain.model.ApiUsageRecord
 import com.empathy.ai.domain.model.ExtractedData
+import com.empathy.ai.domain.model.KnowledgeQueryResponse
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.PromptScene
+import com.empathy.ai.domain.model.Recommendation
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.domain.model.SafetyCheckResult
@@ -1239,5 +1241,196 @@ $COMMON_JSON_RULES""".trim()
         )
 
         return sseStreamReader.stream(url, requestBodyJson, headers)
+    }
+
+    // ==================== PRD-00031: 知识查询实现 ====================
+
+    /**
+     * 知识查询
+     *
+     * 实现快速问答功能，返回Markdown格式的知识解释和相关推荐。
+     *
+     * 业务规则 (PRD-00031):
+     * - 悬浮窗新增第4个Tab"快速问答"
+     * - 返回KnowledgeQueryResponse，包含内容、来源和推荐
+     * - 使用JSON格式解析AI响应
+     *
+     * @param provider AI服务商配置
+     * @param content 查询内容（已清理和验证）
+     * @param systemInstruction 系统指令
+     * @return 知识查询响应
+     *
+     * @see KnowledgeQueryResponse 知识查询响应模型
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    override suspend fun queryKnowledge(
+        provider: AiProvider,
+        content: String,
+        systemInstruction: String
+    ): Result<KnowledgeQueryResponse> {
+        val startTime = System.currentTimeMillis()
+        val model = selectModel(provider)
+        
+        return try {
+            val url = buildChatCompletionsUrl(provider.baseUrl)
+            val headers = mapOf(
+                "Authorization" to "Bearer ${provider.apiKey}",
+                "Content-Type" to "application/json"
+            )
+            
+            val messages = listOf(
+                MessageDto(role = "system", content = systemInstruction),
+                MessageDto(role = "user", content = content)
+            )
+
+            val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
+            // 使用服务商配置的 temperature 和 maxTokens
+            val effectiveTemperature = provider.temperature.toDouble()
+            val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
+            
+            val request = ChatRequestDto(
+                model = model,
+                messages = messages,
+                temperature = effectiveTemperature,
+                maxTokens = effectiveMaxTokens,
+                stream = false,
+                responseFormat = if (useResponseFormat) ResponseFormat(type = "json_object") else null
+            )
+
+            DebugLogger.logApiRequest(
+                tag = "AiRepositoryImpl",
+                method = "queryKnowledge",
+                url = url,
+                model = model,
+                providerName = provider.name,
+                promptContext = content,
+                systemInstruction = systemInstruction,
+                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat),
+                temperature = provider.temperature,
+                maxTokens = effectiveMaxTokens
+            )
+
+            val response = withRetry { api.chatCompletion(url, headers, request) }
+            val responseContent = response.choices.firstOrNull()?.message?.content
+                ?: return Result.failure(Exception("Empty response from AI"))
+            
+            // 记录成功的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + content),
+                completionTokens = estimateTokens(responseContent),
+                requestTimeMs = requestTimeMs,
+                isSuccess = true
+            )
+            
+            parseKnowledgeQueryResponse(responseContent)
+
+        } catch (e: HttpException) {
+            val errorBody = try { e.response()?.errorBody()?.string() ?: "No error body" } catch (ex: Exception) { "Failed to read error body" }
+            Log.e("AiRepositoryImpl", "HTTP错误 (queryKnowledge): ${e.code()} - $errorBody")
+            // 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + content),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = "HTTP ${e.code()}"
+            )
+            Result.failure(Exception("HTTP ${e.code()}: $errorBody"))
+        } catch (e: Exception) {
+            Log.e("AiRepositoryImpl", "知识查询失败 (queryKnowledge)", e)
+            // 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + content),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = e.message
+            )
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 解析知识查询响应
+     *
+     * @param json AI返回的JSON字符串
+     * @return 解析后的KnowledgeQueryResponse
+     */
+    private fun parseKnowledgeQueryResponse(json: String): Result<KnowledgeQueryResponse> {
+        return try {
+            val jsonCleaner = EnhancedJsonCleaner()
+            val cleaningContext = CleaningContext(
+                enableUnicodeFix = true,
+                enableFormatFix = true,
+                enableFuzzyFix = true,
+                enableDetailedLogging = true
+            )
+            val cleanedJson = jsonCleaner.clean(json, cleaningContext)
+
+            // 尝试解析JSON
+            val mapAdapter = moshi.adapter<Map<String, Any>>(
+                Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
+            ).lenient()
+            val jsonMap = mapAdapter.fromJson(cleanedJson)
+
+            if (jsonMap != null) {
+                val title = jsonMap["title"] as? String
+                val content = jsonMap["content"] as? String ?: extractContentFromResponse(json)
+                
+                @Suppress("UNCHECKED_CAST")
+                val recommendationsList = jsonMap["recommendations"] as? List<String> ?: emptyList()
+                val recommendations = recommendationsList.map { 
+                    Recommendation.fromTitle(it) 
+                }
+
+                Result.success(
+                    KnowledgeQueryResponse(
+                        title = title,
+                        content = content,
+                        source = "AI知识库",
+                        sourceTime = null,
+                        isFromNetwork = false,
+                        recommendations = recommendations
+                    )
+                )
+            } else {
+                // Fallback: 将原始内容作为知识响应
+                Result.success(
+                    KnowledgeQueryResponse.fromAiFallback(
+                        content = extractContentFromResponse(json)
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("AiRepositoryImpl", "解析知识查询结果失败", e)
+            // Fallback
+            Result.success(
+                KnowledgeQueryResponse.fromAiFallback(
+                    content = extractContentFromResponse(json)
+                )
+            )
+        }
+    }
+
+    /**
+     * 从响应中提取内容（用于Fallback）
+     */
+    private fun extractContentFromResponse(response: String): String {
+        return response
+            .replace(Regex("```json\\s*"), "")
+            .replace(Regex("```\\s*"), "")
+            .trim()
     }
 }

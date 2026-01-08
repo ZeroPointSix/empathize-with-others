@@ -555,6 +555,7 @@ class FloatingViewV2(
             ActionType.ANALYZE -> "粘贴对方发来的消息..."
             ActionType.POLISH -> "输入你想说的话，AI帮你润色..."
             ActionType.REPLY -> "粘贴对方发来的消息，AI帮你回复..."
+            ActionType.KNOWLEDGE -> "输入你想了解的内容（最多500字）..."
             else -> "输入内容..."
         }
         inputLayout?.hint = hint
@@ -563,9 +564,14 @@ class FloatingViewV2(
             ActionType.ANALYZE -> "分析"
             ActionType.POLISH -> "润色"
             ActionType.REPLY -> "生成回复"
+            ActionType.KNOWLEDGE -> "获取知识"
             else -> "发送"
         }
         btnSubmit?.text = buttonText
+        
+        // TD-00031: 知识问答模式不需要选择联系人
+        val needsContact = tab != ActionType.KNOWLEDGE
+        contactSelectorLayout?.visibility = if (needsContact) View.VISIBLE else View.GONE
     }
 
     companion object {

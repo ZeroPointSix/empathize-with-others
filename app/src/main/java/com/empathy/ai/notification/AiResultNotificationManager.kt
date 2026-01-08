@@ -87,6 +87,7 @@ class AiResultNotificationManager @Inject constructor(
             ActionType.POLISH -> "润色完成，点击查看结果"
             ActionType.REPLY -> "回复已生成，点击查看"
             ActionType.CHECK -> "检查完成，点击查看结果"
+            ActionType.KNOWLEDGE -> "知识查询完成，点击查看"
         }
 
         showNotification(

@@ -88,6 +88,7 @@ object IdentityPrefixHelper {
             ActionType.CHECK -> PREFIX_USER
             ActionType.POLISH -> PREFIX_USER  // 润色场景：用户的草稿
             ActionType.REPLY -> PREFIX_CONTACT  // 回复场景：对方的消息
+            ActionType.KNOWLEDGE -> ""  // 知识查询不需要身份前缀
         }
 
         return "$prefix$cleanContent"

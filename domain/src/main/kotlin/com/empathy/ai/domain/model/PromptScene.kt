@@ -148,6 +148,7 @@ enum class PromptScene(
             ActionType.ANALYZE -> ANALYZE
             ActionType.POLISH -> POLISH
             ActionType.REPLY -> REPLY
+            ActionType.KNOWLEDGE -> ANALYZE  // KNOWLEDGE使用ANALYZE场景的提示词配置
             @Suppress("DEPRECATION")
             ActionType.CHECK -> POLISH  // CHECK映射到POLISH（TD-00015迁移）
         }
