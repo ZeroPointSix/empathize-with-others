@@ -283,9 +283,9 @@ class ResultCard @JvmOverloads constructor(
                 setPadding(0, 16, 0, 8)
             }
             recommendationsContainer?.addView(titleView)
-            
-            // 添加推荐项
-            recommendations.take(5).forEach { recommendation ->
+
+            // 添加推荐项（TD-00031修复：使用常量替代magic number）
+            recommendations.take(MAX_RECOMMENDATIONS).forEach { recommendation ->
                 val itemView = TextView(context).apply {
                     text = "• ${recommendation.title}"
                     textSize = 13f
@@ -307,7 +307,7 @@ class ResultCard @JvmOverloads constructor(
                 appendLine()
                 appendLine()
                 appendLine("📚 相关推荐：")
-                recommendations.take(5).forEach { rec ->
+                recommendations.take(MAX_RECOMMENDATIONS).forEach { rec ->
                     appendLine("• ${rec.title}")
                 }
             }
@@ -436,5 +436,15 @@ class ResultCard @JvmOverloads constructor(
 
     companion object {
         private const val TAG = "ResultCard"
+
+        /**
+         * 最大推荐数量
+         *
+         * 业务规则 (PRD-00031/3.5):
+         * - 数量限制：3-5条推荐内容
+         *
+         * TD-00031修复: 将magic number提取为常量，便于维护和测试
+         */
+        const val MAX_RECOMMENDATIONS = 5
     }
 }

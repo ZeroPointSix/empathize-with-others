@@ -25,9 +25,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 构建与测试
 ./gradlew assembleDebug          # Debug构建
 ./gradlew assembleRelease        # Release构建
-./gradlew test                   # 单元测试
+./gradlew test                   # 所有单元测试
+./gradlew testDebugUnitTest      # Debug单元测试
+./gradlew connectedAndroidTest   # 连接设备运行Android测试
+
+# 单个模块测试
 ./gradlew :presentation:test     # presentation模块测试
 ./gradlew :domain:test           # domain模块测试
+./gradlew :data:test             # data模块测试
+
+# 运行单个测试类
+./gradlew :domain:test --tests "com.empathy.ai.domain.usecase.SendAdvisorMessageUseCaseTest"
+
+# Lint检查
+./gradlew lint                   # 全局Lint
+./gradlew :presentation:lint     # presentation模块Lint
+./gradlew ktlintCheck            # Kotlin代码风格检查
 
 # 调试脚本
 scripts\logcat.bat -e            # ERROR日志
@@ -37,7 +50,17 @@ scripts\ai-debug.bat             # AI请求调试
 # ADB调试
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.empathy.ai/.ui.MainActivity
+adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈
 ```
+
+## 测试覆盖
+
+| 模块 | 单元测试 | Android测试 | 关键测试 |
+|------|----------|-------------|----------|
+| domain | 40个 | - | UseCase、Model、PromptBuilder |
+| presentation | 36个 | 7个 | ViewModel、Compose UI |
+| data | 23个 | 6个 | Repository、Database |
+| app | 1个 | - | Application初始化 |
 
 ## 架构结构
 
@@ -67,6 +90,39 @@ adb shell am start -n com.empathy.ai/.ui.MainActivity
 - 敏感数据处理使用 `PrivacyEngine`
 - 错误处理统一使用 `Result<T>` 类型
 
+### 核心功能流程
+
+**悬浮窗+无障碍服务交互**
+```
+用户选择文本 → 无障碍服务捕获 → FloatingWindowService → ChatViewModel → AI分析 → 结果悬浮窗显示
+```
+
+**每日总结流程**
+```
+应用启动 → 检查跨天 → SummarizeDailyConversationsUseCase → AI生成 → DailySummary保存 → 本地通知
+```
+
+
+
+## 项目现状（2026-01-08更新）
+
+### 模块文件统计
+
+| 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
+|------|--------|---------|------------|------|
+| **:domain** | 214 | 40 | 0 | 254 |
+| **:data** | 214 | 24 | 6 | 244 |
+| **:presentation** | 319 | 47 | 7 | 373 |
+| **:app** | 196 | 140 | 26 | 362 |
+| **总计** | **943** | **251** | **39** | **1233** |
+
+### 架构合规性
+- **Clean Architecture**: 5星 (A级，完全合规)
+- **模块化**: 5星 (A级，4模块架构)
+- **依赖方向**: 5星 (A级，严格单向依赖)
+- **测试覆盖**: 3星 (C级，~24%总覆盖率)
+
+
 ## 模块文档
 
 详细架构信息参考各模块文档：
@@ -81,3 +137,19 @@ adb shell am start -n com.empathy.ai/.ui.MainActivity
 - 所有公共API必须有KDoc注释
 - 使用 `Result<T>` 统一处理成功/失败
 - 测试文件命名: `XxxTest.kt` / `XxxSpec.kt`
+
+## 仓库镜像配置
+
+项目使用国内镜像加速依赖下载，优先级：腾讯云 > 阿里云 > 官方仓库
+
+## 关键命名约定
+
+| 类型 | 前缀/后缀 | 示例 |
+|------|-----------|------|
+| UseCase | `XxxUseCase` | `AnalyzeChatUseCase` |
+| Repository接口 | `XxxRepository` | `AiRepository` |
+| Repository实现 | `XxxRepositoryImpl` | `AiRepositoryImpl` |
+| ViewModel | `XxxViewModel` | `ChatViewModel` |
+| Entity | `XxxEntity` | `ContactProfileEntity` |
+| DTO | `XxxDto` | `ChatRequestDto` |
+| 测试用例 | `XxxTest` | `SendAdvisorMessageUseCaseTest` |

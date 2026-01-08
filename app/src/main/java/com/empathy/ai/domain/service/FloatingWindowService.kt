@@ -1881,7 +1881,21 @@ class FloatingWindowService : Service() {
             DEFAULT_AI_TIMEOUT_MS
         }
     }
-    
+
+    /**
+     * 获取知识查询专用超时时间（TD-00031修复）
+     *
+     * 业务规则 (PRD-00031/6.3):
+     * - 本地AI响应: ≤ 2秒
+     *
+     * 知识查询是快速响应场景，使用独立于其他操作的超时配置
+     *
+     * @return 超时时间（毫秒）
+     */
+    private fun getKnowledgeTimeout(): Long {
+        return KNOWLEDGE_QUERY_TIMEOUT_MS
+    }
+
     // ==================== TD-00009: 新版UI方法 ====================
     
     /**
@@ -2329,7 +2343,8 @@ class FloatingWindowService : Service() {
         
         serviceScope.launch {
             try {
-                val timeoutMs = getAiTimeout()
+                // TD-00031修复: 使用知识查询专用超时（2秒，符合PRD-00031性能要求）
+                val timeoutMs = getKnowledgeTimeout()
                 val result = withTimeout(timeoutMs) {
                     queryKnowledgeUseCase(text)
                 }
@@ -3185,7 +3200,15 @@ class FloatingWindowService : Service() {
          * 当无法获取 Provider 配置时使用
          */
         private const val DEFAULT_AI_TIMEOUT_MS = 50000L
-        
+
+        /**
+         * 知识查询超时时间（毫秒）
+         *
+         * 业务规则 (PRD-00031/6.3):
+         * - 本地AI响应: ≤ 2秒
+         */
+        private const val KNOWLEDGE_QUERY_TIMEOUT_MS = 2000L
+
         /**
          * 清理延迟时间（毫秒）
          * 
