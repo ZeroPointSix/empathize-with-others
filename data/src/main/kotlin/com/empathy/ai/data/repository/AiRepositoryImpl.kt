@@ -1283,18 +1283,18 @@ $COMMON_JSON_RULES""".trim()
                 MessageDto(role = "user", content = content)
             )
 
-            val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
+            val shouldUseJsonFormat = ProviderCompatibility.supportsResponseFormat(provider)
             // 使用服务商配置的 temperature 和 maxTokens
             val effectiveTemperature = provider.temperature.toDouble()
             val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
-            
+
             val request = ChatRequestDto(
                 model = model,
                 messages = messages,
                 temperature = effectiveTemperature,
                 maxTokens = effectiveMaxTokens,
                 stream = false,
-                responseFormat = if (useResponseFormat) ResponseFormat(type = "json_object") else null
+                responseFormat = if (shouldUseJsonFormat) ResponseFormat(type = "json_object") else null
             )
 
             DebugLogger.logApiRequest(
@@ -1305,7 +1305,7 @@ $COMMON_JSON_RULES""".trim()
                 providerName = provider.name,
                 promptContext = content,
                 systemInstruction = systemInstruction,
-                additionalInfo = mapOf("UseResponseFormat" to useResponseFormat),
+                additionalInfo = mapOf("ShouldUseJsonFormat" to shouldUseJsonFormat),
                 temperature = provider.temperature,
                 maxTokens = effectiveMaxTokens
             )

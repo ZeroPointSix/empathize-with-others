@@ -56,7 +56,8 @@
       "Skill(code-question-refiner)",
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/read-rules.ps1\")",
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/update-task-log.ps1\"*)",
-      "Skill(debug)"
+      "Skill(debug)",
+      "Skill(test)"
     ],
     "deny": [],
     "ask": []

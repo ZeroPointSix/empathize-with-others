@@ -16,6 +16,66 @@
 
 ## 待执行任务
 
+### BUG修复任务
+
+#### BUG-00001: 新对话按钮无法创建新会话
+
+- **优先级**: P0 (阻断)
+- **问题描述**: 点击"新对话"按钮后无法创建新会话，每次都跳转到上一个对话页面
+- **预期行为**: 创建新会话后跳转到聊天输入界面
+- **实际行为**: 跳转到上一个对话页面，无法创建新会话
+- **发生频率**: 每次必现
+- **问题根因**:
+  1. `NavGraph.kt:284-288` - `onCreateNewSession` 只导航不创建会话
+  2. `NavGraph.kt:278-282` - `onNavigateToChat` 接收 `sessionId` 但使用 `contactId`
+- **修复方案**: 方案A - 添加sessionId参数支持
+
+**修改文件清单**:
+1. `presentation/navigation/NavRoutes.kt` - 添加sessionId参数
+2. `presentation/navigation/NavGraph.kt` - 修复导航逻辑
+3. `presentation/viewmodel/SessionHistoryViewModel` - 添加createNewSession方法
+
+**关联文档**:
+- BUG文档: `文档/开发文档/BUG/BUG-00001-新对话按钮无法创建新会话.md`
+- 测试用例: `文档/测试用例/TC-00001-新对话功能测试.md`
+
+---
+
+### 需求文档任务
+
+#### PRD-00032: 提示词优化模块
+
+- **优先级**: P1 (重要)
+- **问题描述**: 当前提示词调优需重新编译，测试周期长，无法A/B测试，效果评估主观
+- **预期目标**: 建立独立的提示词优化模块，支持热更新测试、快速对比、效果评估、版本管理
+- **关联文档**:
+  - PRD文档: `文档/开发文档/PRD/PRD-00032-提示词优化模块.md`
+  - 汇总文档: `文档/开发文档/SUMMARY-00001-提示词系统优化改进汇总.md`
+
+**核心功能模块**:
+1. 提示词编辑器（热更新编辑）
+2. A/B测试模式（对比测试）
+3. 效果分析器（质量评估）
+4. 版本管理器（历史回滚）
+5. 测试用例库（标准化测试）
+
+**实施阶段**:
+- 第一阶段: 核心框架（编辑器）
+- 第二阶段: A/B测试功能
+- 第三阶段: 效果分析功能
+- 第四阶段: 完善与优化
+
+**修改文件清单**:
+1. `domain/src/main/kotlin/com/empathy/ai/domain/model/prompt/` - 新增领域模型
+2. `domain/src/main/kotlin/com/empathy/ai/domain/usecase/prompt/` - 新增UseCase
+3. `domain/src/main/kotlin/com/empathy/ai/domain/repository/` - 新增仓库接口
+4. `data/src/main/kotlin/com/empathy/ai/data/local/` - 新增存储实现
+5. `data/src/main/kotlin/com/empathy/ai/data/repository/` - 新增仓库实现
+6. `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/prompt/` - 新增UI
+7. `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/` - 新增ViewModel
+
+---
+
 ### 测试任务（验证任务永动机）
 
 - [x] 任务1：读取项目的 CLAUDE.md 文件并输出文件行数 ✅

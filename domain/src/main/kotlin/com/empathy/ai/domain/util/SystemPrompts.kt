@@ -359,11 +359,13 @@ object SystemPrompts {
      */
     const val KNOWLEDGE_FOOTER = """【输出要求】
 请以JSON格式返回结果：
+```json
 {
   "title": "知识点标题（可选，如果用户查询的是一个明确的概念）",
   "content": "知识解释内容（支持Markdown格式）",
-  "recommendations": ["相关话题1", "相关话题2", "相关话题3"]
+  "recommendations": ["推荐话题1", "推荐话题2", "推荐话题3"]
 }
+```
 
 【字段说明】
 - title: 知识点的标题，如果用户查询的不是明确概念可以为null
