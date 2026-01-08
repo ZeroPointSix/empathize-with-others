@@ -164,6 +164,20 @@ object NavRoutes {
     const val AI_ADVISOR_CONTACTS = "ai_advisor_contacts"
 
     /**
+     * 系统提示词列表页面
+     * PRD-00033: 开发者模式 - 系统提示词编辑
+     */
+    const val SYSTEM_PROMPT_LIST = "system_prompt_list"
+
+    /**
+     * 系统提示词编辑页面
+     * PRD-00033: 开发者模式 - 系统提示词编辑
+     * 参数: scene (String) - 场景名称
+     */
+    const val SYSTEM_PROMPT_EDIT = "system_prompt_edit/{scene}"
+    const val SYSTEM_PROMPT_EDIT_ARG_SCENE = "scene"
+
+    /**
      * 创建联系人详情路由
      */
     fun createContactDetailRoute(contactId: String): String {
@@ -206,5 +220,13 @@ object NavRoutes {
      */
     fun aiAdvisorSessions(contactId: String): String {
         return "ai_advisor_sessions/$contactId"
+    }
+
+    /**
+     * 创建系统提示词编辑路由
+     * PRD-00033: 开发者模式 - 系统提示词编辑
+     */
+    fun systemPromptEdit(scene: String): String {
+        return "system_prompt_edit/$scene"
     }
 }

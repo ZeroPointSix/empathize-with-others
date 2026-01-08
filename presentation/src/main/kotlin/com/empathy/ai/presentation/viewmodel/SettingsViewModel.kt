@@ -604,4 +604,5 @@ class SettingsViewModel @Inject constructor(
     private fun clearPendingPermissionRequest() {
         _uiState.update { it.copy(pendingPermissionRequest = false) }
     }
+
 }

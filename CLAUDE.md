@@ -57,10 +57,10 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
-| domain | 40个 | - | UseCase、Model、PromptBuilder |
-| presentation | 36个 | 7个 | ViewModel、Compose UI |
-| data | 23个 | 6个 | Repository、Database |
-| app | 1个 | - | Application初始化 |
+| domain | 40+ | - | UseCase、Model、PromptBuilder |
+| presentation | 47+ | 7+ | ViewModel、Compose UI |
+| data | 24+ | 6+ | Repository、Database |
+| app | 140+ | 26+ | Application初始化、服务测试 |
 
 ## 架构结构
 
@@ -102,34 +102,13 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 应用启动 → 检查跨天 → SummarizeDailyConversationsUseCase → AI生成 → DailySummary保存 → 本地通知
 ```
 
-
-
-## 项目现状（2026-01-08更新）
-
-### 模块文件统计
-
-| 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
-|------|--------|---------|------------|------|
-| **:domain** | 214 | 40 | 0 | 254 |
-| **:data** | 214 | 24 | 6 | 244 |
-| **:presentation** | 319 | 47 | 7 | 373 |
-| **:app** | 196 | 140 | 26 | 362 |
-| **总计** | **943** | **251** | **39** | **1233** |
-
-### 架构合规性
-- **Clean Architecture**: 5星 (A级，完全合规)
-- **模块化**: 5星 (A级，4模块架构)
-- **依赖方向**: 5星 (A级，严格单向依赖)
-- **测试覆盖**: 3星 (C级，~24%总覆盖率)
-
-
 ## 模块文档
 
 详细架构信息参考各模块文档：
 - [domain/CLAUDE.md](./domain/CLAUDE.md) - 领域层详细文档
 - [data/CLAUDE.md](./data/CLAUDE.md) - 数据层详细文档
 - [presentation/CLAUDE.md](./presentation/CLAUDE.md) - 表现层详细文档
-- [app/.../CLAUDE.md](./app/src/main/java/com/empathy/ai/app/CLAUDE.md) - 应用层详细文档
+- [app/src/main/java/com/empathy/ai/app/CLAUDE.md](./app/src/main/java/com/empathy/ai/app/CLAUDE.md) - 应用层详细文档
 
 ## 编码规范
 
@@ -153,3 +132,21 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 | Entity | `XxxEntity` | `ContactProfileEntity` |
 | DTO | `XxxDto` | `ChatRequestDto` |
 | 测试用例 | `XxxTest` | `SendAdvisorMessageUseCaseTest` |
+
+## 多AI协作规则
+
+项目使用 Rules/WORKSPACE.md 管理多AI协作状态：
+
+**任务开始前必须**：
+1. 读取 Rules/WORKSPACE.md 检查是否有其他AI正在执行相关任务
+2. 检查资源锁定状态和待处理冲突
+3. 在 WORKSPACE 中记录任务开始信息
+
+**任务执行中必须**：
+- 重要里程碑实时更新到 WORKSPACE
+- 发现的问题立即记录
+
+**任务完成后必须**：
+- 更新 WORKSPACE 任务状态
+- 更新AI工具状态
+- 添加变更日志

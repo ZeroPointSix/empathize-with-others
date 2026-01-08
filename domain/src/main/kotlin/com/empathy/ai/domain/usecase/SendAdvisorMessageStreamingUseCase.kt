@@ -12,12 +12,14 @@ import com.empathy.ai.domain.model.SendStatus
 import com.empathy.ai.domain.model.StreamingState
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.TokenUsage
+import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.util.Logger
+import com.empathy.ai.domain.util.SystemPrompts
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -178,6 +180,10 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
         
         // FD-00030: 增强提示词构建，包含联系人画像信息
         val prompt = buildPrompt(contact, tags, history, userMessage)
+        
+        // PRD-00033: 使用SystemPrompts获取系统提示词，支持开发者模式自定义
+        // 注意：AI_ADVISOR场景不返回JSON，直接返回自然语言
+        val systemInstruction = SystemPrompts.getHeaderAsync(PromptScene.AI_ADVISOR)
 
         // 5. 调用流式API并处理响应
         var thinkingBlockId: String? = null
@@ -185,7 +191,7 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
         val thinkingBuilder = StringBuilder()
         var thinkingStartTime = 0L
 
-        aiRepository.generateTextStream(provider, prompt, SYSTEM_INSTRUCTION)
+        aiRepository.generateTextStream(provider, prompt, systemInstruction)
             .collect { chunk ->
                 when (chunk) {
                     is AiStreamChunk.Started -> {

@@ -117,6 +117,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation("app.cash.turbine:turbine:1.0.0")  // Flow测试库
+    testImplementation(kotlin("test"))  // Kotlin测试断言
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

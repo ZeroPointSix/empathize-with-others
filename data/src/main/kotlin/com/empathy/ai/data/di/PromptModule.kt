@@ -3,9 +3,12 @@ package com.empathy.ai.data.di
 import android.content.Context
 import com.empathy.ai.data.local.PromptFileBackup
 import com.empathy.ai.data.local.PromptFileStorage
+import com.empathy.ai.data.local.SystemPromptStorage
 import com.empathy.ai.data.local.dao.ContactDao
 import com.empathy.ai.data.repository.PromptRepositoryImpl
+import com.empathy.ai.data.repository.SystemPromptRepositoryImpl
 import com.empathy.ai.domain.repository.PromptRepository
+import com.empathy.ai.domain.repository.SystemPromptRepository
 import com.empathy.ai.domain.util.Logger
 import com.empathy.ai.domain.util.PromptBuilder
 import com.empathy.ai.domain.util.PromptValidator
@@ -80,5 +83,32 @@ object PromptModule {
         logger: Logger
     ): PromptBuilder {
         return PromptBuilder(promptRepository, variableResolver, logger)
+    }
+
+    // ========== 系统提示词编辑功能 (PRD-00033) ==========
+
+    /**
+     * 提供系统提示词存储
+     */
+    @Provides
+    @Singleton
+    fun provideSystemPromptStorage(
+        @ApplicationContext context: Context,
+        moshi: Moshi,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): SystemPromptStorage {
+        return SystemPromptStorage(context, moshi, ioDispatcher)
+    }
+
+    /**
+     * 提供系统提示词仓库
+     */
+    @Provides
+    @Singleton
+    fun provideSystemPromptRepository(
+        storage: SystemPromptStorage,
+        moshi: Moshi
+    ): SystemPromptRepository {
+        return SystemPromptRepositoryImpl(storage, moshi)
     }
 }

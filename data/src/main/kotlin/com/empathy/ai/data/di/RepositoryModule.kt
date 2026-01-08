@@ -10,6 +10,7 @@ import com.empathy.ai.data.repository.AiAdvisorRepositoryImpl
 import com.empathy.ai.data.repository.ApiUsageRepositoryImpl
 import com.empathy.ai.data.repository.BrainTagRepositoryImpl
 import com.empathy.ai.data.repository.ContactRepositoryImpl
+import com.empathy.ai.data.repository.DeveloperModeRepositoryImpl
 import com.empathy.ai.data.repository.PrivacyRepositoryImpl
 import com.empathy.ai.data.repository.UserProfileRepositoryImpl
 import com.empathy.ai.data.repository.settings.SettingsRepositoryImpl
@@ -20,6 +21,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
+import com.empathy.ai.domain.repository.DeveloperModeRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
 import com.empathy.ai.domain.repository.SettingsRepository
@@ -98,4 +100,14 @@ abstract class RepositoryModule {
     abstract fun bindAiAdvisorPreferencesRepository(
         impl: AiAdvisorPreferences
     ): AiAdvisorPreferencesRepository
+
+    /**
+     * BUG-00050: 绑定开发者模式仓库
+     * 
+     * 用于持久化开发者模式状态，确保导航离开设置页面后状态保持。
+     */
+    @Binds
+    abstract fun bindDeveloperModeRepository(
+        impl: DeveloperModeRepositoryImpl
+    ): DeveloperModeRepository
 }
