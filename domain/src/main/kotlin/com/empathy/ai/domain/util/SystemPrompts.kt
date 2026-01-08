@@ -1,14 +1,112 @@
 package com.empathy.ai.domain.util
 
 import com.empathy.ai.domain.model.PromptScene
+import com.empathy.ai.domain.model.SystemPromptScene
 
 /**
  * 系统提示词常量
  *
  * 管理不可修改的系统约束提示词，包括角色定义和输出格式约束
  * 这些内容用户不可自定义，确保AI行为的一致性和安全性
+ * 
+ * PRD-00033: 支持开发者模式下的自定义配置
  */
 object SystemPrompts {
+
+    /**
+     * 自定义配置提供者接口
+     * 用于在运行时获取用户自定义的Header/Footer
+     */
+    interface ConfigProvider {
+        /**
+         * 获取场景的自定义Header
+         * @return 自定义Header，为空则使用默认值
+         */
+        suspend fun getCustomHeader(scene: SystemPromptScene): String
+        
+        /**
+         * 获取场景的自定义Footer
+         * @return 自定义Footer，为空则使用默认值
+         */
+        suspend fun getCustomFooter(scene: SystemPromptScene): String
+    }
+
+    /**
+     * 配置提供者实例
+     * 在Application初始化时设置
+     */
+    private var configProvider: ConfigProvider? = null
+
+    /**
+     * 设置配置提供者
+     * @param provider 配置提供者实例
+     */
+    fun setConfigProvider(provider: ConfigProvider) {
+        configProvider = provider
+    }
+
+    /**
+     * PromptScene 到 SystemPromptScene 的映射
+     *
+     * PRD-00033: 用于在PromptBuilder中获取对应的系统提示词
+     * 设计权衡: 使用when表达式映射，比Map查找更高效，且Kotlin编译器会警告未覆盖的枚举
+     *
+     * @param PromptScene 提示词场景枚举
+     * @return SystemPromptScene系统提示词场景枚举，废弃场景返回null
+     */
+    private fun mapToSystemPromptScene(scene: PromptScene): SystemPromptScene? = when (scene) {
+        PromptScene.ANALYZE -> SystemPromptScene.ANALYZE
+        PromptScene.POLISH -> SystemPromptScene.POLISH
+        PromptScene.REPLY -> SystemPromptScene.REPLY
+        PromptScene.SUMMARY -> SystemPromptScene.SUMMARY
+        PromptScene.AI_ADVISOR -> SystemPromptScene.AI_ADVISOR
+        @Suppress("DEPRECATION")
+        PromptScene.CHECK -> SystemPromptScene.POLISH // CHECK已废弃，映射到POLISH保持兼容性
+        PromptScene.EXTRACT -> null // EXTRACT已废弃，无对应场景
+    }
+
+    /**
+     * 获取场景的系统头部（角色定义）
+     * 支持自定义配置（如果ConfigProvider已设置）
+     *
+     * PRD-00033: 异步方法，支持从SystemPromptRepository读取自定义配置
+     * 业务规则: 优先使用自定义Header，自定义为空时fallback到默认值
+     *
+     * @param scene 场景类型
+     * @return 系统头部提示词（自定义或默认）
+     * @see SystemPrompts.ConfigProvider 自定义配置提供者接口
+     */
+    suspend fun getHeaderAsync(scene: PromptScene): String {
+        val systemScene = mapToSystemPromptScene(scene)
+        return if (systemScene != null && configProvider != null) {
+            // 使用自定义配置（如果有）
+            getFullHeader(systemScene)
+        } else {
+            // 使用默认配置
+            getHeader(scene)
+        }
+    }
+
+    /**
+     * 获取场景的系统尾部（格式约束）
+     * Footer始终使用默认值，不支持自定义
+     *
+     * PRD-00033: 异步方法，但Footer始终使用默认值
+     * 业务规则: Footer与JSON解析逻辑绑定，不允许开发者修改以确保解析兼容性
+     *
+     * @param scene 场景类型
+     * @return 系统尾部提示词
+     */
+    suspend fun getFooterAsync(scene: PromptScene): String {
+        val systemScene = mapToSystemPromptScene(scene)
+        return if (systemScene != null && configProvider != null) {
+            // Footer始终使用默认值
+            getFullFooter(systemScene)
+        } else {
+            // 使用默认配置
+            getFooter(scene)
+        }
+    }
 
     /**
      * 获取场景的系统头部（角色定义）
@@ -24,6 +122,7 @@ object SystemPrompts {
         PromptScene.SUMMARY -> SUMMARY_HEADER
         PromptScene.POLISH -> POLISH_HEADER
         PromptScene.REPLY -> REPLY_HEADER
+        PromptScene.AI_ADVISOR -> AI_ADVISOR_HEADER
     }
 
     /**
@@ -40,6 +139,67 @@ object SystemPrompts {
         PromptScene.SUMMARY -> SUMMARY_FOOTER
         PromptScene.POLISH -> POLISH_FOOTER
         PromptScene.REPLY -> REPLY_FOOTER
+        PromptScene.AI_ADVISOR -> AI_ADVISOR_FOOTER
+    }
+
+    /**
+     * 获取SystemPromptScene场景的默认Header
+     * PRD-00033: 用于开发者模式显示默认值
+     *
+     * @param scene 系统提示词场景
+     * @return 默认Header
+     */
+    fun getHeaderForScene(scene: SystemPromptScene): String = when (scene) {
+        SystemPromptScene.ANALYZE -> ANALYZE_HEADER
+        SystemPromptScene.POLISH -> POLISH_HEADER
+        SystemPromptScene.REPLY -> REPLY_HEADER
+        SystemPromptScene.SUMMARY -> SUMMARY_HEADER
+        SystemPromptScene.AI_ADVISOR -> AI_ADVISOR_HEADER
+    }
+
+    /**
+     * 获取SystemPromptScene场景的默认Footer
+     * PRD-00033: 用于开发者模式显示默认值
+     *
+     * @param scene 系统提示词场景
+     * @return 默认Footer
+     */
+    fun getFooterForScene(scene: SystemPromptScene): String = when (scene) {
+        SystemPromptScene.ANALYZE -> ANALYZE_FOOTER
+        SystemPromptScene.POLISH -> POLISH_FOOTER
+        SystemPromptScene.REPLY -> REPLY_FOOTER
+        SystemPromptScene.SUMMARY -> SUMMARY_FOOTER
+        SystemPromptScene.AI_ADVISOR -> AI_ADVISOR_FOOTER
+    }
+
+    /**
+     * 获取完整的Header（优先使用自定义，否则使用默认值）
+     * PRD-00033: 支持自定义配置直接替换
+     *
+     * @param scene 系统提示词场景
+     * @return 完整Header（自定义或默认）
+     */
+    suspend fun getFullHeader(scene: SystemPromptScene): String {
+        val customHeader = configProvider?.getCustomHeader(scene) ?: ""
+        return if (customHeader.isNotEmpty()) {
+            // 直接使用自定义Header替换默认值
+            customHeader
+        } else {
+            // 使用默认Header
+            getHeaderForScene(scene)
+        }
+    }
+
+    /**
+     * 获取Footer（始终使用默认值，不支持自定义）
+     * PRD-00033: Footer与数据解析绑定，不允许修改
+     *
+     * @param scene 系统提示词场景
+     * @return 默认Footer
+     */
+    suspend fun getFullFooter(scene: SystemPromptScene): String {
+        // Footer始终使用默认值，确保输出格式与解析逻辑一致
+        return getFooterForScene(scene)
     }
 
     // ========== 聊天分析场景 ==========

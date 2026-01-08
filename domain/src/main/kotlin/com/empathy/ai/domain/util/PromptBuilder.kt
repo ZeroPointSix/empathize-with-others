@@ -83,7 +83,8 @@ class PromptBuilder @Inject constructor(
     ): String {
         return buildString {
             // 1. 系统角色定义（用户不可见）
-            append(SystemPrompts.getHeader(scene))
+            // PRD-00033: 使用异步方法获取Header，支持自定义配置
+            append(SystemPrompts.getHeaderAsync(scene))
             appendLine()
             appendLine()
 
@@ -118,7 +119,8 @@ class PromptBuilder @Inject constructor(
             }
 
             // 4. 输出格式约束（用户不可见）
-            append(SystemPrompts.getFooter(scene))
+            // PRD-00033: 使用异步方法获取Footer（始终使用默认值）
+            append(SystemPrompts.getFooterAsync(scene))
         }
     }
 

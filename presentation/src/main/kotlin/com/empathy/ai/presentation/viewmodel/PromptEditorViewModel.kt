@@ -375,6 +375,7 @@ class PromptEditorViewModel @Inject constructor(
                     PromptScene.SUMMARY -> "可选：自定义总结风格\n\n例如：\n• 总结今天的对话亮点\n• 指出需要注意的地方\n• 给出明天跟进的建议"
                     PromptScene.POLISH -> "可选：自定义润色风格\n\n例如：\n• 润色时保持原意不变\n• 让表达更加得体礼貌\n• 避免使用过于生硬的词汇"
                     PromptScene.REPLY -> "可选：自定义回复风格\n\n例如：\n• 回复要简洁有力\n• 语气要友好亲切\n• 适当使用表情符号"
+                    PromptScene.AI_ADVISOR -> "可选：自定义AI军师风格\n\n例如：\n• 分析要深入透彻\n• 建议要具体可行\n• 语气要像朋友聊天一样自然"
                 }
             }
         }

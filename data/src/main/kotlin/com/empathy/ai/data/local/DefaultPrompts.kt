@@ -27,6 +27,7 @@ object DefaultPrompts {
         PromptScene.SUMMARY -> SUMMARY_DEFAULT
         PromptScene.POLISH -> POLISH_DEFAULT
         PromptScene.REPLY -> REPLY_DEFAULT
+        PromptScene.AI_ADVISOR -> AI_ADVISOR_DEFAULT
     }
 
     /**
@@ -75,4 +76,12 @@ object DefaultPrompts {
      * 联系人信息、策略等数据会由系统自动注入
      */
     private const val REPLY_DEFAULT = ""
+
+    /**
+     * AI军师场景默认提示词
+     *
+     * 用户可以自定义AI军师的分析风格和建议重点
+     * 联系人画像、对话历史等数据会由系统自动注入
+     */
+    private const val AI_ADVISOR_DEFAULT = ""
 }

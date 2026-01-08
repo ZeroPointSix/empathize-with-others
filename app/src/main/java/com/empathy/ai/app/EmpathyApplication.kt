@@ -6,6 +6,7 @@ import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.domain.usecase.SummarizeDailyConversationsUseCase
 import com.empathy.ai.domain.util.DataCleanupManager
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.domain.util.SystemPrompts
 import com.empathy.ai.util.AndroidFloatingWindowManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -23,9 +24,10 @@ import javax.inject.Provider
  * 
  * 职责：
  * 1. 初始化 Hilt 依赖注入
- * 2. 恢复悬浮窗服务（如果之前已启用）
- * 3. 触发每日自动总结（记忆系统）
- * 4. 执行数据清理
+ * 2. 初始化系统提示词配置提供者（PRD-00033）
+ * 3. 恢复悬浮窗服务（如果之前已启用）
+ * 4. 触发每日自动总结（记忆系统）
+ * 5. 执行数据清理
  * 
  * 容错机制 (BUG-00028 修复)：
  * - 使用 Provider<T> 延迟注入，避免在 Application 创建时触发 Keystore 访问
@@ -82,6 +84,13 @@ class EmpathyApplication : Application() {
     lateinit var dataCleanupManagerProvider: Provider<DataCleanupManager>
     
     /**
+     * 系统提示词配置提供者（延迟注入）
+     * PRD-00033: 开发者模式 - 系统提示词编辑
+     */
+    @Inject
+    lateinit var systemPromptConfigProvider: Provider<SystemPromptConfigProvider>
+    
+    /**
      * 应用级协程作用域
      * 
      * 使用 SupervisorJob 确保一个子任务失败不会影响其他任务。
@@ -92,6 +101,10 @@ class EmpathyApplication : Application() {
         super.onCreate()
         Log.d(TAG, "Application onCreate 开始")
         
+        // PRD-00033: 初始化系统提示词配置提供者
+        // 必须在主线程同步初始化，确保后续所有AI调用都能使用自定义配置
+        initializeSystemPrompts()
+        
         // 延迟执行后台任务，给系统服务（如 Keystore）更多启动时间
         // 这是 BUG-00028 修复的关键：避免在系统服务未就绪时访问 Keystore
         applicationScope.launch {
@@ -101,6 +114,30 @@ class EmpathyApplication : Application() {
         }
         
         Log.d(TAG, "Application onCreate 完成（后台任务将延迟执行）")
+    }
+    
+    /**
+     * 初始化系统提示词配置提供者
+     *
+     * PRD-00033: 开发者模式 - 系统提示词编辑
+     * TDD-00033: 在Application主线程同步初始化，确保后续所有AI调用都能使用自定义配置
+     *
+     * 设计权衡: 在主线程初始化而非后台任务，确保SystemPrompts.configProvider在
+     * 应用启动早期就设置完成，避免并发访问时的空指针风险。
+     *
+     * 容错机制: 初始化失败不影响应用启动，SystemPrompts会fallback到默认值
+     */
+    private fun initializeSystemPrompts() {
+        try {
+            Log.d(TAG, "初始化系统提示词配置提供者...")
+            val provider = systemPromptConfigProvider.get()
+            SystemPrompts.setConfigProvider(provider)
+            Log.d(TAG, "系统提示词配置提供者初始化成功")
+        } catch (e: Exception) {
+            // 初始化失败不应该导致应用崩溃，但需要记录错误
+            // 如果失败，SystemPrompts 将使用默认配置
+            Log.e(TAG, "系统提示词配置提供者初始化失败，将使用默认配置", e)
+        }
     }
     
     /**

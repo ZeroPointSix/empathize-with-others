@@ -113,14 +113,37 @@ enum class PromptScene(
         ),
         isDeprecated = false,
         showInSettings = true
+    ),
+
+    /**
+     * AI军师对话场景 - 多轮对话咨询，提供社交沟通建议
+     *
+     * PRD-00026: AI军师对话功能
+     * 特点：
+     * - 支持多轮对话
+     * - 不返回JSON，直接返回自然语言
+     * - 支持Markdown格式输出
+     */
+    AI_ADVISOR(
+        displayName = "AI军师",
+        description = "多轮对话咨询，提供社交沟通建议",
+        availableVariables = listOf(
+            "contact_name",
+            "relationship_status",
+            "risk_tags",
+            "strategy_tags",
+            "facts_count"
+        ),
+        isDeprecated = false,
+        showInSettings = true
     );
 
     companion object {
         /**
          * 设置界面场景显示顺序
-         * 按照用户使用频率和逻辑顺序排列：分析 → 润色 → 回复 → 总结
+         * 按照用户使用频率和逻辑顺序排列：分析 → 润色 → 回复 → 总结 → AI军师
          */
-        val SETTINGS_SCENE_ORDER = listOf(ANALYZE, POLISH, REPLY, SUMMARY)
+        val SETTINGS_SCENE_ORDER = listOf(ANALYZE, POLISH, REPLY, SUMMARY, AI_ADVISOR)
 
         /**
          * 获取在设置界面显示的场景列表

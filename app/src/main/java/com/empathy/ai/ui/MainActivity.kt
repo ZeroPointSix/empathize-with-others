@@ -27,6 +27,10 @@ import dagger.hilt.android.AndroidEntryPoint
  * 
  * 主题说明: 使用app模块本地的AppTheme而非presentation模块的EmpathyTheme，
  * 以解决多模块架构下ThemeKt类在运行时无法被找到的问题。
+ * 
+ * 开发者模式: DeveloperModeViewModel使用Activity作为ViewModelStoreOwner，
+ * 在SettingsScreen中通过hiltViewModel()获取同一个实例
+ * @see BUG-00050 开发者模式导航时意外退出
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

@@ -45,6 +45,8 @@ import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
 import com.empathy.ai.presentation.ui.component.ios.IOSSwitch
 import com.empathy.ai.presentation.ui.component.navigation.EmpathyBottomNavigation
+import com.empathy.ai.presentation.ui.screen.settings.component.DeveloperOptionsSection
+import com.empathy.ai.presentation.viewmodel.DeveloperModeViewModel
 import com.empathy.ai.presentation.viewmodel.SettingsViewModel
 
 /**
@@ -62,6 +64,7 @@ import com.empathy.ai.presentation.viewmodel.SettingsViewModel
  * ## 关联文档
  * - PRD-00002: 设置功能需求
  * - TDD-00002: 设置页面技术设计
+ * - BUG-00050: 开发者模式导航时意外退出
  *
  * ## 页面布局
  * ```
@@ -95,6 +98,8 @@ import com.empathy.ai.presentation.viewmodel.SettingsViewModel
  * 3. **Switch切换**: 开关类设置使用IOSSwitch组件
  * 4. **权限处理**: 悬浮窗权限需要特殊处理（跳转到系统设置）
  * 5. **双重导航**: 支持底部Tab导航和内部页面导航
+ * 6. **开发者模式**: DeveloperModeViewModel使用Activity作为ViewModelStoreOwner，
+ *    通过hiltViewModel()自动获取Activity级别的实例，确保导航时状态不丢失
  *
  * ## 特殊权限处理
  * 悬浮窗权限需要用户手动在系统设置中授权：
@@ -113,6 +118,7 @@ import com.empathy.ai.presentation.viewmodel.SettingsViewModel
  * @param viewModel 设置ViewModel
  * @param modifier Modifier
  * @see SettingsViewModel 管理设置状态和业务逻辑
+ * @see DeveloperModeViewModel 管理开发者模式状态（Activity级别）
  * @see FloatingWindowManager 悬浮窗权限和服务管理
  */
 @Composable
@@ -121,14 +127,28 @@ fun SettingsScreen(
     onNavigateToAiConfig: () -> Unit = {},
     onNavigateToPromptEditor: (String) -> Unit = {},
     onNavigateToUserProfile: () -> Unit = {},
+    onNavigateToSystemPromptList: () -> Unit = {},
     onNavigate: (String) -> Unit = {},
     onAddClick: () -> Unit = {},
     currentRoute: String = NavRoutes.SETTINGS,
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
+    // 使用hiltViewModel()获取Activity级别的DeveloperModeViewModel实例
+    // 这样可以确保在导航时状态不丢失
+    val developerModeViewModel: DeveloperModeViewModel = hiltViewModel()
+    
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isDeveloperMode by developerModeViewModel.isDeveloperMode.collectAsStateWithLifecycle()
+    val toastMessage by developerModeViewModel.toastMessage.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
+
+    // 显示Toast消息
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let { message ->
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
@@ -170,11 +190,14 @@ fun SettingsScreen(
 
     SettingsScreenContent(
         uiState = uiState,
+        isDeveloperMode = isDeveloperMode,
         onEvent = viewModel::onEvent,
+        onVersionClick = developerModeViewModel::onVersionClick,
         onNavigateBack = onNavigateBack,
         onNavigateToAiConfig = onNavigateToAiConfig,
         onNavigateToPromptEditor = onNavigateToPromptEditor,
         onNavigateToUserProfile = onNavigateToUserProfile,
+        onNavigateToSystemPromptList = onNavigateToSystemPromptList,
         onNavigate = onNavigate,
         onAddClick = onAddClick,
         currentRoute = currentRoute,
@@ -190,11 +213,14 @@ fun SettingsScreen(
 @Composable
 private fun SettingsScreenContent(
     uiState: SettingsUiState,
+    isDeveloperMode: Boolean,
     onEvent: (SettingsUiEvent) -> Unit,
+    onVersionClick: () -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToAiConfig: () -> Unit,
     onNavigateToPromptEditor: (String) -> Unit,
     onNavigateToUserProfile: () -> Unit,
+    onNavigateToSystemPromptList: () -> Unit,
     onNavigate: (String) -> Unit,
     onAddClick: () -> Unit,
     currentRoute: String,
@@ -358,7 +384,17 @@ private fun SettingsScreenContent(
                         title = "版本",
                         value = uiState.appVersion,
                         showArrow = false,
-                        showDivider = false
+                        showDivider = false,
+                        onClick = onVersionClick
+                    )
+                }
+            }
+
+            // 开发者选项分组（仅在开发者模式解锁后显示）
+            if (isDeveloperMode) {
+                item {
+                    DeveloperOptionsSection(
+                        onSystemPromptEditClick = onNavigateToSystemPromptList
                     )
                 }
             }
@@ -475,11 +511,14 @@ private fun SettingsScreenPreview() {
                 availableProviders = emptyList(),
                 hasFloatingWindowPermission = false
             ),
+            isDeveloperMode = false,
             onEvent = {},
+            onVersionClick = {},
             onNavigateBack = {},
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
             onNavigateToUserProfile = {},
+            onNavigateToSystemPromptList = {},
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,
@@ -499,11 +538,41 @@ private fun SettingsScreenConfiguredPreview() {
                 hasFloatingWindowPermission = true,
                 floatingWindowEnabled = true
             ),
+            isDeveloperMode = false,
             onEvent = {},
+            onVersionClick = {},
             onNavigateBack = {},
             onNavigateToAiConfig = {},
             onNavigateToPromptEditor = {},
             onNavigateToUserProfile = {},
+            onNavigateToSystemPromptList = {},
+            onNavigate = {},
+            onAddClick = {},
+            currentRoute = NavRoutes.SETTINGS,
+            promptScenes = PromptScene.SETTINGS_SCENE_ORDER
+        )
+    }
+}
+
+@Preview(name = "设置页面 - 开发者模式", showBackground = true)
+@Composable
+private fun SettingsScreenDeveloperModePreview() {
+    EmpathyTheme {
+        SettingsScreenContent(
+            uiState = SettingsUiState(
+                selectedProvider = "DeepSeek",
+                availableProviders = listOf("OpenAI", "DeepSeek"),
+                hasFloatingWindowPermission = true,
+                floatingWindowEnabled = true
+            ),
+            isDeveloperMode = true,
+            onEvent = {},
+            onVersionClick = {},
+            onNavigateBack = {},
+            onNavigateToAiConfig = {},
+            onNavigateToPromptEditor = {},
+            onNavigateToUserProfile = {},
+            onNavigateToSystemPromptList = {},
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,

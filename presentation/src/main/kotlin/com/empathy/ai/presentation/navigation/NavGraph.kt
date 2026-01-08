@@ -196,6 +196,9 @@ fun NavGraph(
                 onNavigateToUserProfile = {
                     navController.navigate(NavRoutes.USER_PROFILE)
                 },
+                onNavigateToSystemPromptList = {
+                    navController.navigate(NavRoutes.SYSTEM_PROMPT_LIST)
+                },
                 // 修复BUG-001: 添加底部导航栏的导航回调
                 onNavigate = { route ->
                     if (route != NavRoutes.SETTINGS) {
@@ -411,5 +414,31 @@ fun NavGraph(
 
         // 提示词编辑器
         promptEditorNavigation(navController)
+
+        // 系统提示词列表页面（开发者模式）
+        // PRD-00033: 开发者模式 - 系统提示词编辑
+        composable(route = NavRoutes.SYSTEM_PROMPT_LIST) {
+            com.empathy.ai.presentation.ui.screen.settings.SystemPromptListScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToEdit = { scene ->
+                    navController.navigate(NavRoutes.systemPromptEdit(scene))
+                }
+            )
+        }
+
+        // 系统提示词编辑页面（开发者模式）
+        // PRD-00033: 开发者模式 - 系统提示词编辑
+        composable(
+            route = NavRoutes.SYSTEM_PROMPT_EDIT,
+            arguments = listOf(
+                navArgument(NavRoutes.SYSTEM_PROMPT_EDIT_ARG_SCENE) {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            com.empathy.ai.presentation.ui.screen.settings.SystemPromptEditScreen(
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
     }
 }
