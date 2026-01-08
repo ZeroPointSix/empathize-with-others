@@ -76,6 +76,10 @@ class FloatingWindowService : Service() {
     @Inject
     lateinit var refinementUseCase: RefinementUseCase
     
+    // TD-00031: 知识查询UseCase
+    @Inject
+    lateinit var queryKnowledgeUseCase: com.empathy.ai.domain.usecase.QueryKnowledgeUseCase
+    
     @Inject
     lateinit var contactRepository: ContactRepository
     
@@ -2310,6 +2314,57 @@ class FloatingWindowService : Service() {
     }
 
     /**
+     * 处理知识查询请求（TD-00031）
+     * 
+     * 快速问答功能：用户输入查询内容，AI返回知识解释和相关推荐
+     * 
+     * @param text 用户输入的查询内容（最多500字符）
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    private fun handleKnowledgeV2(text: String) {
+        floatingViewV2?.showLoading("AI正在查询知识...")
+        
+        // TD-00010: 标记AI请求开始
+        onAiRequestStarted(ActionType.KNOWLEDGE)
+        
+        serviceScope.launch {
+            try {
+                val timeoutMs = getAiTimeout()
+                val result = withTimeout(timeoutMs) {
+                    queryKnowledgeUseCase(text)
+                }
+                
+                result.fold(
+                    onSuccess = { knowledgeResult ->
+                        val aiResult = AiResult.Knowledge(knowledgeResult)
+                        currentUiState = currentUiState.copy(lastResult = aiResult)
+                        floatingViewV2?.showResult(aiResult)
+                        // TD-00010: 标记AI请求成功
+                        onAiRequestCompleted(ActionType.KNOWLEDGE)
+                        android.util.Log.d("FloatingWindowService", "知识查询成功，内容长度: ${knowledgeResult.content.length}")
+                    },
+                    onFailure = { error ->
+                        floatingViewV2?.showError("知识查询失败：${error.message}")
+                        // TD-00010: 标记AI请求失败
+                        onAiRequestFailed(error)
+                        android.util.Log.e("FloatingWindowService", "知识查询失败", error)
+                    }
+                )
+            } catch (e: TimeoutCancellationException) {
+                floatingViewV2?.showError("请求超时，请重试")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
+                android.util.Log.e("FloatingWindowService", "知识查询超时", e)
+            } catch (e: Exception) {
+                floatingViewV2?.showError("知识查询失败：${e.message}")
+                // TD-00010: 标记AI请求失败
+                onAiRequestFailed(e)
+                android.util.Log.e("FloatingWindowService", "知识查询异常", e)
+            }
+        }
+    }
+
+    /**
      * 处理重新生成请求（TD-00009）
      * 
      * TD-00010修复：添加AI请求状态回调，支持悬浮球状态指示和通知
@@ -2589,6 +2644,7 @@ class FloatingWindowService : Service() {
                     ActionType.ANALYZE -> handleAnalyzeV2(contactId, text)
                     ActionType.POLISH -> handlePolishV2(contactId, text)
                     ActionType.REPLY -> handleReplyV2(contactId, text)
+                    ActionType.KNOWLEDGE -> handleKnowledgeV2(text)  // TD-00031: 知识查询不需要contactId
                     else -> handleAnalyzeV2(contactId, text)
                 }
             }

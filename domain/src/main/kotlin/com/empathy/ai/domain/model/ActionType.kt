@@ -58,6 +58,22 @@ enum class ActionType(
         displayName = "帮我检查",
         icon = "⚠️",
         identityPrefix = "【我正在回复】"
+    ),
+
+    /**
+     * 快速问答 - 知识查询
+     * 调用 QueryKnowledgeUseCase 进行知识查询
+     *
+     * 业务背景 (PRD-00031):
+     * - 悬浮窗新增第4个Tab"快速问答"
+     * - 支持联网优先、AI本地知识兜底的知识获取策略
+     *
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    KNOWLEDGE(
+        displayName = "快速问答",
+        icon = "💡",
+        identityPrefix = "【我想了解】"
     );
 
     companion object {
@@ -70,5 +86,13 @@ enum class ActionType(
          * 获取有效的操作类型（排除废弃的 CHECK）
          */
         fun validTypes(): List<ActionType> = listOf(ANALYZE, POLISH, REPLY)
+        
+        /**
+         * 获取悬浮窗显示的Tab列表（包含KNOWLEDGE，排除废弃的CHECK）
+         *
+         * @return 悬浮窗可见的Tab列表
+         * @see PRD-00031 悬浮窗快速知识回答功能需求
+         */
+        fun getVisibleTabs(): List<ActionType> = listOf(ANALYZE, POLISH, REPLY, KNOWLEDGE)
     }
 }

@@ -50,6 +50,20 @@ sealed class AiResult {
     data class Reply(val result: ReplyResult) : AiResult()
 
     /**
+     * 知识查询结果
+     *
+     * 快速问答功能的知识查询结果，包含Markdown格式的解释和相关推荐
+     *
+     * 业务背景 (PRD-00031):
+     * - 悬浮窗新增第4个Tab"快速问答"
+     * - 支持联网优先、AI本地知识兜底的知识获取策略
+     *
+     * @property result 知识查询结果详情
+     * @see PRD-00031 悬浮窗快速知识回答功能需求
+     */
+    data class Knowledge(val result: KnowledgeQueryResponse) : AiResult()
+
+    /**
      * 获取可复制的文本
      *
      * 根据不同结果类型返回对应的可复制内容
@@ -60,6 +74,7 @@ sealed class AiResult {
         is Analysis -> result.replySuggestion
         is Polish -> result.getCopyableText()
         is Reply -> result.getCopyableText()
+        is Knowledge -> result.getCopyableText()
     }
 
     /**
@@ -79,6 +94,7 @@ sealed class AiResult {
         }
         is Polish -> result.getDisplayContent()
         is Reply -> result.getDisplayContent()
+        is Knowledge -> result.getDisplayContent()
     }
 
     /**
@@ -90,5 +106,6 @@ sealed class AiResult {
         is Analysis -> ActionType.ANALYZE
         is Polish -> ActionType.POLISH
         is Reply -> ActionType.REPLY
+        is Knowledge -> ActionType.KNOWLEDGE
     }
 }

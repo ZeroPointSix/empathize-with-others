@@ -11,11 +11,12 @@ import com.google.android.material.button.MaterialButton
 /**
  * 悬浮窗Tab切换组件
  *
- * 提供三个Tab（分析/润色/回复）的切换功能
+ * 提供四个Tab（分析/润色/回复/问答）的切换功能
  * 使用预加载方式，通过VISIBLE/GONE切换避免重复inflate
  *
  * @see PRD-00009 悬浮窗功能重构需求
  * @see TDD-00009 悬浮窗功能重构技术设计
+ * @see PRD-00031 悬浮窗快速知识回答功能需求
  */
 class TabSwitcher @JvmOverloads constructor(
     context: Context,
@@ -26,6 +27,7 @@ class TabSwitcher @JvmOverloads constructor(
     private var tabAnalyze: MaterialButton? = null
     private var tabPolish: MaterialButton? = null
     private var tabReply: MaterialButton? = null
+    private var tabKnowledge: MaterialButton? = null  // PRD-00031: 新增问答Tab
 
     private var selectedTab: ActionType = ActionType.ANALYZE
     private var onTabSelectedListener: ((ActionType) -> Unit)? = null
@@ -41,12 +43,14 @@ class TabSwitcher @JvmOverloads constructor(
         tabAnalyze = findViewById(R.id.tab_analyze)
         tabPolish = findViewById(R.id.tab_polish)
         tabReply = findViewById(R.id.tab_reply)
+        tabKnowledge = findViewById(R.id.tab_knowledge)  // PRD-00031: 新增问答Tab
     }
 
     private fun setupClickListeners() {
         tabAnalyze?.setOnClickListener { selectTab(ActionType.ANALYZE) }
         tabPolish?.setOnClickListener { selectTab(ActionType.POLISH) }
         tabReply?.setOnClickListener { selectTab(ActionType.REPLY) }
+        tabKnowledge?.setOnClickListener { selectTab(ActionType.KNOWLEDGE) }  // PRD-00031: 新增问答Tab
     }
 
     /**
@@ -100,6 +104,10 @@ class TabSwitcher @JvmOverloads constructor(
         // 更新回复Tab状态
         tabReply?.isSelected = selectedTab == ActionType.REPLY
         tabReply?.isChecked = selectedTab == ActionType.REPLY
+
+        // PRD-00031: 更新问答Tab状态
+        tabKnowledge?.isSelected = selectedTab == ActionType.KNOWLEDGE
+        tabKnowledge?.isChecked = selectedTab == ActionType.KNOWLEDGE
     }
 
     companion object {

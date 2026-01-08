@@ -523,6 +523,7 @@ class FloatingView(context: Context) : FrameLayout(context) {
                 ActionType.CHECK -> "🛡️ 帮我检查"
                 ActionType.POLISH -> "✨ 帮我润色"
                 ActionType.REPLY -> "💬 帮我回复"
+                ActionType.KNOWLEDGE -> "💡 快速问答"
             }
             
             // 最小化按钮
@@ -609,6 +610,7 @@ class FloatingView(context: Context) : FrameLayout(context) {
                 ActionType.CHECK -> "🛡️ 帮我检查"
                 ActionType.POLISH -> "✨ 帮我润色"
                 ActionType.REPLY -> "💬 帮我回复"
+                ActionType.KNOWLEDGE -> "💡 快速问答"
             }
             
             // 更新联系人列表

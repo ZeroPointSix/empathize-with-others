@@ -81,6 +81,10 @@ class RefinementUseCase @Inject constructor(
                 aiRepository.refineReply(defaultProvider, refinementPrompt)
                     .map { AiResult.Reply(it) }
             }
+            ActionType.KNOWLEDGE -> {
+                // KNOWLEDGE 不支持微调，返回错误
+                Result.failure(IllegalArgumentException("知识查询不支持微调功能"))
+            }
             @Suppress("DEPRECATION")
             ActionType.CHECK -> {
                 // CHECK 已废弃，使用 POLISH 替代
@@ -122,6 +126,10 @@ class RefinementUseCase @Inject constructor(
             ActionType.REPLY -> {
                 aiRepository.refineReply(defaultProvider, regeneratePrompt)
                     .map { AiResult.Reply(it) }
+            }
+            ActionType.KNOWLEDGE -> {
+                // KNOWLEDGE 不支持重新生成，返回错误
+                Result.failure(IllegalArgumentException("知识查询不支持重新生成功能"))
             }
             @Suppress("DEPRECATION")
             ActionType.CHECK -> {
