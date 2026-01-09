@@ -1883,17 +1883,18 @@ class FloatingWindowService : Service() {
     }
 
     /**
-     * 获取知识查询专用超时时间（TD-00031修复）
+     * 获取知识查询专用超时时间
      *
-     * 业务规则 (PRD-00031/6.3):
-     * - 本地AI响应: ≤ 2秒
+     * BUG-00056修复：使用Provider配置的超时时间，而不是硬编码的2秒
+     * 
+     * 原PRD-00031/6.3假设使用本地AI（≤2秒），但实际用户使用云端AI服务
+     * （如DeepSeek、OpenAI），网络延迟+API处理时间通常需要5-30秒
      *
-     * 知识查询是快速响应场景，使用独立于其他操作的超时配置
-     *
-     * @return 超时时间（毫秒）
+     * @return 超时时间（毫秒），使用Provider配置或默认50秒
      */
-    private fun getKnowledgeTimeout(): Long {
-        return KNOWLEDGE_QUERY_TIMEOUT_MS
+    private suspend fun getKnowledgeTimeout(): Long {
+        // BUG-00056: 使用与其他AI操作相同的超时逻辑
+        return getAiTimeout()
     }
 
     // ==================== TD-00009: 新版UI方法 ====================

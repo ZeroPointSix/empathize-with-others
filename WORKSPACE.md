@@ -1,6 +1,6 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-07 | 更新者: Kiro (PRD-00029 AI军师UI架构优化完成)
+> 最后更新: 2026-01-09 | 更新者: Kiro (BUG-00054 AI配置功能多项问题修复)
 
 ## 📋 当前工作状态
 
@@ -10,9 +10,24 @@
 | - | - | - | - | - | - | - |
 
 ### 已完成任务（最近3条）
+- [x] 2026-01-09 - **BUG-00056 知识查询超时时间过短修复** - Kiro - 相关文档: [BUG-00056](文档/开发文档/BUG/BUG-00056-知识查询超时时间过短.md)
+- [x] 2026-01-09 - **BUG-00054 AI配置功能多项问题修复** - Kiro - 相关文档: [BUG-00054](文档/开发文档/BUG/BUG-00054-AI配置功能多项问题.md)
 - [x] 2026-01-09 - **BUG-00052 AI军师界面布局与字体自适应问题修复** - Kiro - 相关文档: [BUG-00052](文档/开发文档/BUG/BUG-00052-我们的军师界面头顶问题.md)
-- [x] 2026-01-07 - **PRD-00029 AI军师UI架构优化** - Kiro - 三页面导航架构实现完成
-- [x] 2026-01-03 - **BUG-00042 新建AI服务商未自动设为默认** - Kiro - 相关文档: [BUG-00042](文档/开发文档/BUG/BUG-00042-新建AI服务商未自动设为默认.md)
+
+### BUG-00054 修复详情
+**AI配置功能多项问题** - 悬浮窗发送失败、超时设置无效 ✅ 已修复
+
+修复内容：
+- [x] P2修复：悬浮窗快速发送失败 - 添加默认供应商降级逻辑
+- [x] P3修复：超时设置没有作用 - 应用provider的超时配置
+- [x] P1增强：添加详细日志便于调试
+
+修改文件：
+- `data/src/main/kotlin/com/empathy/ai/data/repository/AiProviderRepositoryImpl.kt`
+
+新增测试：
+- `data/src/test/kotlin/com/empathy/ai/data/repository/AiProviderRepositoryBug00054Test.kt`
+- `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/AiConfigViewModelBug00054Test.kt`
 
 ### PRD-00029 完成详情
 **AI军师UI架构优化** - 三页面导航架构实现 ✅ 已完成

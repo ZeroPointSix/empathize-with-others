@@ -214,6 +214,17 @@ sealed interface AiConfigUiEvent {
      */
     data class UpdateFormMaxTokens(val maxTokens: Int) : AiConfigUiEvent
 
+    // ==================== BUG-00054: 超时设置事件 ====================
+
+    /**
+     * 更新表单超时时间
+     * 
+     * BUG-00054 第二轮修复：添加超时设置事件
+     * 
+     * @param timeoutMs 超时时间（毫秒），范围 5000-120000
+     */
+    data class UpdateFormTimeoutMs(val timeoutMs: Long) : AiConfigUiEvent
+
     // ==================== TD-00025: 代理配置事件 ====================
 
     /**

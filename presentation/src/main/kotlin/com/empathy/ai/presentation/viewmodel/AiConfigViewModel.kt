@@ -110,6 +110,9 @@ class AiConfigViewModel @Inject constructor(
             is AiConfigUiEvent.UpdateFormTemperature -> updateFormTemperature(event.temperature)
             is AiConfigUiEvent.UpdateFormMaxTokens -> updateFormMaxTokens(event.maxTokens)
 
+            // === BUG-00054: 超时设置事件 ===
+            is AiConfigUiEvent.UpdateFormTimeoutMs -> updateFormTimeoutMs(event.timeoutMs)
+
             // === TD-00025: 代理配置事件 ===
             is AiConfigUiEvent.ShowProxyDialog -> showProxyDialog()
             is AiConfigUiEvent.DismissProxyDialog -> dismissProxyDialog()
@@ -819,6 +822,19 @@ class AiConfigViewModel @Inject constructor(
     private fun updateFormMaxTokens(maxTokens: Int) {
         val safeMaxTokens = maxTokens.coerceIn(1, 128000)
         _uiState.update { it.copy(formMaxTokens = safeMaxTokens) }
+    }
+
+    // ==================== BUG-00054: 超时设置方法 ====================
+
+    /**
+     * 更新表单超时时间
+     * 
+     * BUG-00054 第二轮修复：添加超时设置方法
+     * 超时值范围限制在 5000-120000 毫秒（5秒-120秒）
+     */
+    private fun updateFormTimeoutMs(timeoutMs: Long) {
+        val safeTimeout = timeoutMs.coerceIn(5000L, 120000L)
+        _uiState.update { it.copy(formTimeoutMs = safeTimeout) }
     }
 
     // ==================== TD-00025: 代理配置方法 ====================

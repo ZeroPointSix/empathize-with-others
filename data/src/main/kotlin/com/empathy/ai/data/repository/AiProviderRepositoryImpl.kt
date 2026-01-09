@@ -80,26 +80,60 @@ class AiProviderRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * 获取默认AI服务商
+     *
+     * BUG-00054修复：添加降级逻辑
+     * - 首先尝试获取标记为默认的供应商
+     * - 如果没有默认供应商，返回第一个可用的供应商
+     * - 如果没有任何供应商，返回null
+     */
     override suspend fun getDefaultProvider(): Result<AiProvider?> {
         return try {
-            val entity = dao.getDefaultProvider().first()
-            Result.success(entity?.let { entityToDomain(it) })
+            // 首先尝试获取标记为默认的供应商
+            val defaultEntity = dao.getDefaultProvider().first()
+            if (defaultEntity != null) {
+                return Result.success(entityToDomain(defaultEntity))
+            }
+            
+            // BUG-00054降级逻辑：如果没有默认供应商，返回第一个可用的供应商
+            val allProviders = dao.getAllProviders().first()
+            val firstProvider = allProviders.firstOrNull()
+            Result.success(firstProvider?.let { entityToDomain(it) })
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+    /**
+     * 保存AI服务商配置
+     *
+     * BUG-00054修复：添加详细日志便于调试
+     */
     override suspend fun saveProvider(provider: AiProvider): Result<Unit> {
+        android.util.Log.d("AiProviderRepository", "=== saveProvider START ===")
+        android.util.Log.d("AiProviderRepository", "provider.id: ${provider.id}")
+        android.util.Log.d("AiProviderRepository", "provider.name: '${provider.name}'")
+        android.util.Log.d("AiProviderRepository", "provider.models count: ${provider.models.size}")
+        android.util.Log.d("AiProviderRepository", "provider.defaultModelId: '${provider.defaultModelId}'")
+        android.util.Log.d("AiProviderRepository", "provider.isDefault: ${provider.isDefault}")
+        android.util.Log.d("AiProviderRepository", "provider.timeoutMs: ${provider.timeoutMs}")
+        
         return try {
             if (provider.isDefault) {
+                android.util.Log.d("AiProviderRepository", "Clearing all default flags...")
                 dao.clearAllDefaultFlags()
             }
             val apiKeyRef = apiKeyStorage.generateKey(provider.id)
+            android.util.Log.d("AiProviderRepository", "Generated apiKeyRef: $apiKeyRef")
             apiKeyStorage.save(apiKeyRef, provider.apiKey)
             val entity = domainToEntity(provider, apiKeyRef)
+            android.util.Log.d("AiProviderRepository", "Calling dao.insertOrUpdate...")
             dao.insertOrUpdate(entity)
+            android.util.Log.d("AiProviderRepository", "=== saveProvider SUCCESS ===")
             Result.success(Unit)
         } catch (e: Exception) {
+            android.util.Log.e("AiProviderRepository", "=== saveProvider FAILED ===", e)
             Result.failure(e)
         }
     }
@@ -154,9 +188,12 @@ class AiProviderRepositoryImpl @Inject constructor(
 
         return withContext(Dispatchers.IO) {
             try {
+                // BUG-00054修复：使用provider的超时配置，而不是硬编码
+                val timeoutSeconds = (provider.timeoutMs / 1000).coerceIn(5, 120).toLong()
+                
                 val client = OkHttpClient.Builder()
-                    .connectTimeout(10, TimeUnit.SECONDS)
-                    .readTimeout(10, TimeUnit.SECONDS)
+                    .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
                     .build()
 
                 val request = Request.Builder()
@@ -253,9 +290,12 @@ class AiProviderRepositoryImpl @Inject constructor(
 
         return withContext(Dispatchers.IO) {
             try {
+                // BUG-00054修复：使用provider的超时配置，默认15秒
+                val timeoutSeconds = (provider.timeoutMs / 1000).coerceIn(5, 120).toLong()
+                
                 val client = OkHttpClient.Builder()
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(15, TimeUnit.SECONDS)
+                    .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
                     .build()
 
                 val request = Request.Builder()
