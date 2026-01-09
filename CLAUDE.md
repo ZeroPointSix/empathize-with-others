@@ -58,19 +58,19 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
 | domain | 43 | - | UseCase、Model、PromptBuilder |
-| presentation | 45 | 7 | ViewModel、Compose UI |
-| data | 24 | 6 | Repository、Database |
-| app | 140 | 25 | Application初始化、服务测试 |
+| presentation | 50 | 7 | ViewModel、Compose UI |
+| data | 25 | 6 | Repository、Database |
+| app | 141 | 26 | Application初始化、服务测试 |
 
 ### 模块文件统计（2026-01-09最新扫描）
 
 | 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
 |------|--------|---------|------------|------|
 | **:domain** | 183 | 43 | 0 | 226 |
-| **:data** | 84 | 24 | 6 | 114 |
-| **:presentation** | 279 | 45 | 7 | 331 |
-| **:app** | 27 | 140 | 25 | 192 |
-| **总计** | **573** | **252** | **38** | **863** |
+| **:data** | 84 | 25 | 6 | 115 |
+| **:presentation** | 280 | 50 | 7 | 337 |
+| **:app** | 27 | 141 | 26 | 194 |
+| **总计** | **574** | **259** | **39** | **872** |
 
 **最后更新**: 2026-01-09
 
@@ -108,6 +108,28 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - 敏感数据处理使用 `PrivacyEngine`
 - 错误处理统一使用 `Result<T>` 类型
 - Hilt 模块配置：`di/` 目录下的 HiltModule
+
+### 注解处理器配置
+| 模块 | 处理器 | 用途 |
+|------|--------|------|
+| data | KSP | Room 数据库注解处理 |
+| data | Kapt | Retrofit/Moshi 注解处理 |
+| app/presentation | Kapt | Hilt 依赖注入 |
+
+### Room 数据库版本
+- **当前版本**: v12
+- **迁移路径**: `data/src/main/kotlin/com/empathy/ai/data/local/MIGRATION_*.kt`
+- **迁移策略**: 每次架构变更添加增量迁移脚本
+
+### Hilt 模块索引
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| app | `AppModule.kt` | Application 级注入 |
+| app | `ServiceModule.kt` | Android Service 注入 |
+| data | `DatabaseModule.kt` | Room 数据库配置 |
+| data | `NetworkModule.kt` | Retrofit/OkHttp 配置 |
+| data | `RepositoryModule.kt` | Repository 实现绑定 |
+| presentation | `ViewModelModule.kt` | ViewModel Factory |
 
 ### 核心功能流程
 

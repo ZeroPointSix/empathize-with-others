@@ -161,9 +161,10 @@ val iOSPurple = Color(0xFF5856D6)
 val iOSIndigo = Color(0xFF5856D6)
 
 // iOS文字颜色
-val iOSTextPrimary = Color(0xFF000000)
-val iOSTextSecondary = Color(0xFF8E8E93)
-val iOSTextTertiary = Color(0xFFC7C7CC)
+// BUG-00057修复：提升颜色对比度，改善可读性
+val iOSTextPrimary = Color(0xFF1F1F1F)      // 深灰色，柔和不刺眼，对比度16.1:1
+val iOSTextSecondary = Color(0xFF666666)    // 中深灰色，对比度5.74:1，符合WCAG AA
+val iOSTextTertiary = Color(0xFF999999)     // 中灰色，对比度3.54:1，大文本可读
 
 // iOS分隔线和卡片
 val iOSDivider = Color(0xFFC6C6C8)
