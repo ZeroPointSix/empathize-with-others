@@ -3,19 +3,16 @@ package com.empathy.ai.presentation.viewmodel
 import com.empathy.ai.domain.model.UserProfile
 import com.empathy.ai.domain.model.UserProfileDimension
 import com.empathy.ai.domain.repository.UserProfileRepository
-import com.empathy.ai.domain.usecase.userprofile.AddTagUseCase
-import com.empathy.ai.domain.usecase.userprofile.GetUserProfileUseCase
-import com.empathy.ai.domain.usecase.userprofile.RemoveTagUseCase
-import com.empathy.ai.domain.usecase.userprofile.ManageCustomDimensionUseCase
-import com.empathy.ai.domain.usecase.userprofile.ExportUserProfileUseCase
-import com.empathy.ai.domain.usecase.userprofile.UpdateUserProfileUseCase
+import com.empathy.ai.domain.usecase.AddTagUseCase
+import com.empathy.ai.domain.usecase.GetUserProfileUseCase
+import com.empathy.ai.domain.usecase.RemoveTagUseCase
+import com.empathy.ai.domain.usecase.ManageCustomDimensionUseCase
+import com.empathy.ai.domain.usecase.ExportUserProfileUseCase
+import com.empathy.ai.domain.usecase.UpdateUserProfileUseCase
 import com.empathy.ai.presentation.ui.screen.userprofile.UserProfileUiEvent
-import com.empathy.ai.presentation.ui.screen.userprofile.UserProfileUiState
-import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -51,23 +48,14 @@ class UserProfileViewModelBug00053Test {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        getUserProfileUseCase = mockk()
-        updateUserProfileUseCase = mockk()
-        addTagUseCase = mockk()
-        removeTagUseCase = mockk()
-        manageCustomDimensionUseCase = mockk()
-        exportUserProfileUseCase = mockk()
-        userProfileRepository = mockk()
-
-        // 设置默认返回值
-        coEvery { getUserProfileUseCase() } returns flowOf(Result.success(UserProfile()))
-        coEvery { updateUserProfileUseCase(any()) } returns Result.success(Unit)
-        coEvery { addTagUseCase(any(), any()) } returns Result.success(Unit)
-        coEvery { removeTagUseCase(any(), any()) } returns Result.success(Unit)
-        coEvery { manageCustomDimensionUseCase.add(any()) } returns Result.success(Unit)
-        coEvery { manageCustomDimensionUseCase.remove(any(), any()) } returns Result.success(Unit)
-        coEvery { manageCustomDimensionUseCase.rename(any(), any()) } returns Result.success(Unit)
-        coEvery { userProfileRepository.exportUserProfile(any()) } returns Result.success("{}")
+        // 使用 relaxed mock 自动返回默认值
+        getUserProfileUseCase = mockk(relaxed = true)
+        updateUserProfileUseCase = mockk(relaxed = true)
+        addTagUseCase = mockk(relaxed = true)
+        removeTagUseCase = mockk(relaxed = true)
+        manageCustomDimensionUseCase = mockk(relaxed = true)
+        exportUserProfileUseCase = mockk(relaxed = true)
+        userProfileRepository = mockk(relaxed = true)
 
         viewModel = UserProfileViewModel(
             getUserProfileUseCase = getUserProfileUseCase,
@@ -121,7 +109,7 @@ class UserProfileViewModelBug00053Test {
         val tag = "测试标签"
 
         // 添加自定义维度
-        viewModel.onEvent(UserProfileUiEvent.AddCustomDimension(customDimensionName))
+        viewModel.onEvent(UserProfileUiEvent.AddDimension(customDimensionName))
         testDispatcher.scheduler.advanceUntilIdle()
 
         // 添加标签到自定义维度
@@ -169,7 +157,7 @@ class UserProfileViewModelBug00053Test {
     }
 
     @Test
-    fun `问题1-对比localEditTag-应该正确关闭对话框`() = runTest {
+    fun `问题1-对比EditTag-应该正确关闭对话框`() = runTest {
         // Given: 添加标签并打开编辑对话框
         val dimensionKey = UserProfileDimension.INTERESTS.name
         val oldTag = "阅读"
@@ -188,8 +176,8 @@ class UserProfileViewModelBug00053Test {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then: 编辑对话框应该关闭（这是正确的行为，用于对比）
-        assertFalse("localEditTag后编辑对话框应该关闭", viewModel.uiState.value.showEditTagDialog)
-        assertNull("localEditTag后currentEditTag应该为null", viewModel.uiState.value.currentEditTag)
+        assertFalse("EditTag后编辑对话框应该关闭", viewModel.uiState.value.showEditTagDialog)
+        assertNull("EditTag后currentEditTag应该为null", viewModel.uiState.value.currentEditTag)
     }
 
     // ==================== 问题1边缘情况测试 ====================

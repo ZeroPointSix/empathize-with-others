@@ -54,6 +54,8 @@ import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -379,7 +381,16 @@ $COMMON_JSON_RULES""".trim()
                 }
             }
 
-            val response = withRetry { api.chatCompletion(url, headers, request) }
+            // BUG-00054: 使用provider的超时配置进行协程超时控制
+            val timeoutMs = provider.timeoutMs.coerceIn(5000L, 120000L)
+            val response = try {
+                withTimeout(timeoutMs) {
+                    withRetry { api.chatCompletion(url, headers, request) }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e("AiRepositoryImpl", "analyzeChat超时 (${timeoutMs}ms)")
+                return Result.failure(Exception("请求超时，请检查网络或增加超时时间"))
+            }
             val choice = response.choices.firstOrNull()
                 ?: return Result.failure(Exception("Empty response from AI"))
 
@@ -641,7 +652,16 @@ $COMMON_JSON_RULES""".trim()
                 maxTokens = effectiveMaxTokens
             )
 
-            val response = withRetry { api.chatCompletion(url, headers, request) }
+            // BUG-00054: 使用provider的超时配置进行协程超时控制
+            val timeoutMs = provider.timeoutMs.coerceIn(5000L, 120000L)
+            val response = try {
+                withTimeout(timeoutMs) {
+                    withRetry { api.chatCompletion(url, headers, request) }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e("AiRepositoryImpl", "polishDraft超时 (${timeoutMs}ms)")
+                return Result.failure(Exception("请求超时，请检查网络或增加超时时间"))
+            }
             val content = response.choices.firstOrNull()?.message?.content
                 ?: return Result.failure(Exception("Empty response from AI"))
             
@@ -723,7 +743,16 @@ $COMMON_JSON_RULES""".trim()
                 maxTokens = effectiveMaxTokens
             )
 
-            val response = withRetry { api.chatCompletion(url, headers, request) }
+            // BUG-00054: 使用provider的超时配置进行协程超时控制
+            val timeoutMs = provider.timeoutMs.coerceIn(5000L, 120000L)
+            val response = try {
+                withTimeout(timeoutMs) {
+                    withRetry { api.chatCompletion(url, headers, request) }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e("AiRepositoryImpl", "generateReply超时 (${timeoutMs}ms)")
+                return Result.failure(Exception("请求超时，请检查网络或增加超时时间"))
+            }
             val content = response.choices.firstOrNull()?.message?.content
                 ?: return Result.failure(Exception("Empty response from AI"))
             
@@ -1310,7 +1339,16 @@ $COMMON_JSON_RULES""".trim()
                 maxTokens = effectiveMaxTokens
             )
 
-            val response = withRetry { api.chatCompletion(url, headers, request) }
+            // BUG-00054: 使用provider的超时配置进行协程超时控制
+            val timeoutMs = provider.timeoutMs.coerceIn(5000L, 120000L)
+            val response = try {
+                withTimeout(timeoutMs) {
+                    withRetry { api.chatCompletion(url, headers, request) }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e("AiRepositoryImpl", "queryKnowledge超时 (${timeoutMs}ms)")
+                return Result.failure(Exception("请求超时，请检查网络或增加超时时间"))
+            }
             val responseContent = response.choices.firstOrNull()?.message?.content
                 ?: return Result.failure(Exception("Empty response from AI"))
             

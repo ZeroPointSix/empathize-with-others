@@ -209,6 +209,8 @@ class AiConfigViewModel @Inject constructor(
                 formApiKey = "",
                 formModels = emptyList(),
                 formDefaultModelId = "",
+                // BUG-00054: 重置超时设置为默认值
+                formTimeoutMs = 30000L,
                 formNameError = null,
                 formBaseUrlError = null,
                 formApiKeyError = null,
@@ -222,6 +224,7 @@ class AiConfigViewModel @Inject constructor(
      * 显示编辑服务商对话框
      * 
      * BUG-00040修复：添加高级选项（temperature、maxTokens）的加载
+     * BUG-00054修复：添加超时设置（timeoutMs）的加载
      */
     private fun showEditDialog(provider: AiProvider) {
         _uiState.update {
@@ -238,6 +241,8 @@ class AiConfigViewModel @Inject constructor(
                 // BUG-00040: 加载高级选项
                 formTemperature = provider.temperature,
                 formMaxTokens = provider.maxTokens,
+                // BUG-00054: 加载超时设置
+                formTimeoutMs = provider.timeoutMs,
                 formNameError = null,
                 formBaseUrlError = null,
                 formApiKeyError = null,
@@ -415,6 +420,7 @@ class AiConfigViewModel @Inject constructor(
 
         // 构建 AiProvider 对象
         // BUG-00040修复：添加高级选项（temperature、maxTokens）的保存
+        // BUG-00054修复：添加超时设置（timeoutMs）的保存
         val provider = AiProvider(
             id = currentState.editingProvider?.id ?: UUID.randomUUID().toString(),
             name = currentState.formName.trim(),
@@ -431,6 +437,8 @@ class AiConfigViewModel @Inject constructor(
             // BUG-00040: 保存高级选项
             temperature = currentState.formTemperature,
             maxTokens = currentState.formMaxTokens,
+            // BUG-00054: 保存超时设置
+            timeoutMs = currentState.formTimeoutMs,
             createdAt = currentState.editingProvider?.createdAt ?: System.currentTimeMillis()
         )
 
@@ -563,6 +571,8 @@ class AiConfigViewModel @Inject constructor(
                             // BUG-00040: 加载高级选项
                             formTemperature = loadedProvider.temperature,
                             formMaxTokens = loadedProvider.maxTokens,
+                            // BUG-00054: 加载超时设置
+                            formTimeoutMs = loadedProvider.timeoutMs,
                             formNameError = null,
                             formBaseUrlError = null,
                             formApiKeyError = null,
