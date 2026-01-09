@@ -66,7 +66,7 @@ fun AddTagButton(
         Spacer(modifier = Modifier.width(dimensions.spacingXSmall))
         Text(
             text = "添加",
-            fontSize = 15.sp,
+            fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
             color = iOSTextSecondary
         )
     }

@@ -98,7 +98,7 @@ fun IOSTabSwitcher(
                 ) {
                     Text(
                         text = tab,
-                        fontSize = 15.sp,
+                        fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                         fontWeight = if (index == selectedIndex) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (index == selectedIndex) iOSBlue else iOSTextSecondary,
                         textAlign = TextAlign.Center

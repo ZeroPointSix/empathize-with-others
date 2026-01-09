@@ -40,8 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
+import com.empathy.ai.presentation.ui.component.text.AutoSizeText
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
@@ -240,11 +242,13 @@ private fun DraggableModelItemRow(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
+                // BUG-00054: 使用AutoSizeText自动缩小字体以适应长模型名称
+                AutoSizeText(
                     text = model.displayName.ifBlank { model.id },
-                    fontSize = dimensions.fontSizeSubtitle,
-                    fontWeight = FontWeight.Medium,
-                    color = iOSTextPrimary
+                    maxFontSize = dimensions.fontSizeSubtitle,
+                    minFontSize = 10.sp,  // 最小字体10sp，保持可读性
+                    color = iOSTextPrimary,
+                    fontWeight = FontWeight.Medium
                 )
                 if (model.isDefault) {
                     Text(

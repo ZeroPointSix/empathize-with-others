@@ -119,6 +119,9 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation("app.cash.turbine:turbine:1.0.0")  // Flow测试库
     testImplementation(kotlin("test"))  // Kotlin测试断言
+    // Compose UI Testing - 允许在单元测试中使用Compose测试API
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

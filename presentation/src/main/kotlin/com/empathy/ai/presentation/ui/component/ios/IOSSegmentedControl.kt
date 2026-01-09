@@ -113,7 +113,7 @@ fun IOSSegmentedControl(
                 ) {
                     Text(
                         text = tab,
-                        fontSize = 13.sp,
+                        fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                         fontWeight = if (index == selectedIndex) 
                             FontWeight.SemiBold else FontWeight.Normal,
                         color = Color.Black

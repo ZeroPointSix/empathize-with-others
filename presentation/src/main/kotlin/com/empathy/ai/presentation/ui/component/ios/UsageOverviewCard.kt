@@ -92,7 +92,7 @@ private fun UsageStatColumn(
     ) {
         Text(
             text = value,
-            fontSize = 28.sp,
+            fontSize = dimensions.fontSizeLargeTitle,  // BUG-00055: 使用响应式字体
             fontWeight = FontWeight.Bold,
             color = iOSBlue
         )

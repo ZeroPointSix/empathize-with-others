@@ -89,7 +89,7 @@ fun IOSFloatingSearchBar(
             if (query.isEmpty()) {
                 Text(
                     text = placeholder,
-                    fontSize = 16.sp,
+                    fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                     color = iOSTextTertiary
                 )
             }
@@ -97,7 +97,7 @@ fun IOSFloatingSearchBar(
                 value = query,
                 onValueChange = onQueryChange,
                 textStyle = TextStyle(
-                    fontSize = 16.sp,
+                    fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                     color = iOSTextPrimary
                 ),
                 singleLine = true,

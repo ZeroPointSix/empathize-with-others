@@ -58,8 +58,8 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
 | domain | 40+ | - | UseCase、Model、PromptBuilder |
-| presentation | 47+ | 7+ | ViewModel、Compose UI |
-| data | 24+ | 6+ | Repository、Database |
+| presentation | 36+ | 7+ | ViewModel、Compose UI |
+| data | 23+ | 6+ | Repository、Database |
 | app | 140+ | 26+ | Application初始化、服务测试 |
 
 ## 架构结构
@@ -89,6 +89,7 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - 所有API定义在domain层，data层实现
 - 敏感数据处理使用 `PrivacyEngine`
 - 错误处理统一使用 `Result<T>` 类型
+- Hilt 模块配置：`di/` 目录下的 HiltModule
 
 ### 核心功能流程
 
@@ -101,6 +102,23 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 ```
 应用启动 → 检查跨天 → SummarizeDailyConversationsUseCase → AI生成 → DailySummary保存 → 本地通知
 ```
+
+## 关键系统组件
+
+### 隐私引擎 (PrivacyEngine)
+- **职责**: 敏感数据本地脱敏处理
+- **位置**: `domain/src/main/kotlin/com/empathy/ai/domain/service/PrivacyEngine.kt`
+- **功能**: 数据脱敏、加密存储、密钥硬件级保护
+
+### 版本更新插件
+- **插件**: `VersionUpdatePlugin`
+- **配置位置**: `app/build.gradle.kts`
+- **功能**: 版本更新管理、备份保留（最大50个备份，保留30天）
+
+### 开发者模式
+- **功能**: 系统提示词管理、调试工具
+- **入口**: 设置页面 → 开发者选项
+- **用途**: 调试 AI 响应、查看日志、管理提示词
 
 ## 模块文档
 
@@ -135,10 +153,10 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 
 ## 多AI协作规则
 
-项目使用 Rules/WORKSPACE.md 管理多AI协作状态：
+项目使用 `Rules/workspace-rules.md` 和 `Rules/WORKSPACE.md` 管理多AI协作状态：
 
 **任务开始前必须**：
-1. 读取 Rules/WORKSPACE.md 检查是否有其他AI正在执行相关任务
+1. 读取 `Rules/WORKSPACE.md` 检查是否有其他AI正在执行相关任务
 2. 检查资源锁定状态和待处理冲突
 3. 在 WORKSPACE 中记录任务开始信息
 
@@ -150,3 +168,5 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - 更新 WORKSPACE 任务状态
 - 更新AI工具状态
 - 添加变更日志
+
+详细规则参考: [Rules/workspace-rules.md](./Rules/workspace-rules.md)

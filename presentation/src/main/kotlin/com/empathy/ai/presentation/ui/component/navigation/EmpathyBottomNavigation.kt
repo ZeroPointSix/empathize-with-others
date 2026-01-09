@@ -37,8 +37,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.empathy.ai.presentation.navigation.NavRoutes
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.AddButtonRed
 import com.empathy.ai.presentation.theme.WeChatGreen
 import com.empathy.ai.presentation.theme.iOSTextSecondary
@@ -169,6 +169,9 @@ fun EmpathyBottomNavigation(
  * 1. 增加容器高度，确保字体不被截断
  * 2. 使用 fillMaxHeight 确保内容垂直居中
  * 3. 减小图标尺寸，增加字体空间
+ * 
+ * BUG-00052 修复：
+ * 4. 使用 AdaptiveDimensions 响应式字体替代硬编码 10.sp
  */
 @Composable
 private fun BottomNavItem(
@@ -180,6 +183,7 @@ private fun BottomNavItem(
     modifier: Modifier = Modifier
 ) {
     val color = if (selected) WeChatGreen else iOSTextSecondary
+    val dimensions = AdaptiveDimensions.current
 
     Column(
         modifier = modifier
@@ -202,7 +206,7 @@ private fun BottomNavItem(
         Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = label,
-            fontSize = 10.sp,  // 使用较小字体确保不被截断
+            fontSize = dimensions.fontSizeXSmall,  // BUG-00052: 使用响应式字体替代硬编码 10.sp
             fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
             color = color,
             maxLines = 1,  // 确保单行显示

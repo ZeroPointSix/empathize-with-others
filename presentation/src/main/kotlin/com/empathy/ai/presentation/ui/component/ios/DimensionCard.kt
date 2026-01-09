@@ -142,13 +142,13 @@ fun DimensionCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                     fontWeight = FontWeight.SemiBold,
                     color = iOSTextPrimary
                 )
                 Text(
                     text = description,
-                    fontSize = 13.sp,
+                    fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                     color = iOSTextSecondary
                 )
             }
@@ -180,7 +180,7 @@ fun DimensionCard(
                 if (tags.isNotEmpty()) {
                     Text(
                         text = "已添加",
-                        fontSize = 13.sp,
+                        fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                         color = iOSTextSecondary,
                         modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                     )
@@ -212,7 +212,7 @@ fun DimensionCard(
                     Spacer(modifier = Modifier.height(dimensions.spacingSmall))
                     Text(
                         text = "快速选择",
-                        fontSize = 13.sp,
+                        fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                         color = iOSTextSecondary,
                         modifier = Modifier.padding(bottom = dimensions.spacingSmall)
                     )
