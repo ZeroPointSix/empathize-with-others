@@ -58,7 +58,8 @@
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \".claude/hooks/update-task-log.ps1\"*)",
       "Skill(debug)",
       "Skill(test)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []

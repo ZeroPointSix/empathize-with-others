@@ -57,10 +57,12 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
-| domain | 40+ | - | UseCase、Model、PromptBuilder |
-| presentation | 36+ | 7+ | ViewModel、Compose UI |
-| data | 23+ | 6+ | Repository、Database |
-| app | 140+ | 26+ | Application初始化、服务测试 |
+| domain | 43 | - | UseCase、Model、PromptBuilder |
+| presentation | 45 | 7 | ViewModel、Compose UI |
+| data | 24 | 6 | Repository、Database |
+| app | 140 | 25 | Application初始化、服务测试 |
+
+**最后更新**: 2026-01-09
 
 ## 架构结构
 
@@ -120,6 +122,19 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - **入口**: 设置页面 → 开发者选项
 - **用途**: 调试 AI 响应、查看日志、管理提示词
 
+### 组件复用系统
+
+项目采用 **原子-分子-有机体-模板** 四级组件架构：
+
+| 层级 | 示例 | 说明 |
+|------|------|------|
+| 原子组件 | `IosButton`, `IosTextField`, `AvatarView` | 基础UI单元，无业务逻辑 |
+| 分子组件 | `IosSearchBar`, `ModernPersonaTab` | 组合原子组件，有简单交互 |
+| 有机体组件 | `FactStreamCard`, `EmotionTimelineView` | 复杂业务逻辑，独立功能单元 |
+| 模板组件 | `AiAdvisorChatScreen` | 页面级组合，特定场景使用 |
+
+**组件位置**: `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/`
+
 ## 模块文档
 
 详细架构信息参考各模块文档：
@@ -134,6 +149,38 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - 所有公共API必须有KDoc注释
 - 使用 `Result<T>` 统一处理成功/失败
 - 测试文件命名: `XxxTest.kt` / `XxxSpec.kt`
+
+### 导入分组顺序（必须严格遵守）
+```
+1. Kotlin 标准库
+2. 第三方库（按字母顺序）
+3. AndroidX 库
+4. Jetpack Compose 库
+5. 项目内部模块（按模块依赖顺序）
+6. 当前包的类
+```
+
+### 日志级别规范
+| 级别 | 使用场景 | 示例 |
+|------|----------|------|
+| ERROR | 应用崩溃、关键功能失败 | `Logger.e("AI响应解析失败", e)` |
+| WARN | 可恢复的错误、异常情况 | `Logger.w("网络请求超时，使用缓存")` |
+| INFO | 重要业务状态变化 | `Logger.i("用户登录成功")` |
+| DEBUG | 开发调试信息 | `Logger.d("消息发送: $content")` |
+
+### 协程作用域使用
+| 作用域 | 使用场景 | 禁止场景 |
+|--------|----------|----------|
+| `viewModelScope` | ViewModel 中的业务操作 | 长时间后台任务 |
+| `rememberCoroutineScope()` | Composable 中的一次性操作 | 需要跟随 ViewModel 生命周期 |
+| `GlobalScope` | **禁止使用** | 所有场景 |
+
+### 测试覆盖率目标
+| 模块 | 最低覆盖率 | 建议覆盖率 |
+|------|-----------|-----------|
+| domain | 80% | 90% |
+| data | 70% | 80% |
+| presentation | 60% | 70% |
 
 ## 仓库镜像配置
 

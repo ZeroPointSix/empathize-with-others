@@ -40,9 +40,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.empathy.ai.domain.model.AiAdvisorSession
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
@@ -101,6 +101,7 @@ fun SessionHistoryScreen(
     viewModel: SessionHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val dimensions = AdaptiveDimensions.current
 
     Scaffold(
         containerColor = iOSBackground,
@@ -110,7 +111,7 @@ fun SessionHistoryScreen(
                 title = {
                     Text(
                         text = "会话历史",
-                        fontSize = 17.sp,
+                        fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                         fontWeight = FontWeight.SemiBold,
                         color = iOSTextPrimary
                     )
@@ -129,7 +130,7 @@ fun SessionHistoryScreen(
                         Text(
                             text = "新建",
                             color = iOSBlue,
-                            fontSize = 17.sp
+                            fontSize = dimensions.fontSizeTitle  // BUG-00055: 使用响应式字体
                         )
                     }
                 },
@@ -148,7 +149,7 @@ fun SessionHistoryScreen(
             Text(
                 text = "与 ${uiState.contactName} 的对话",
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                fontSize = 13.sp,
+                fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary,
                 fontWeight = FontWeight.Normal
             )
@@ -214,6 +215,8 @@ private fun SessionListItem(
     session: AiAdvisorSession,
     onClick: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Column {
         Row(
             modifier = Modifier
@@ -250,7 +253,7 @@ private fun SessionListItem(
                 ) {
                     Text(
                         text = session.title,
-                        fontSize = 15.sp,
+                        fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                         fontWeight = FontWeight.Medium,
                         color = iOSTextPrimary,
                         maxLines = 1,
@@ -260,7 +263,7 @@ private fun SessionListItem(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = formatRelativeTime(session.updatedAt),
-                        fontSize = 13.sp,
+                        fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                         color = iOSTextSecondary
                     )
                 }
@@ -270,7 +273,7 @@ private fun SessionListItem(
                 // 最后消息预览
                 Text(
                     text = session.title,
-                    fontSize = 13.sp,
+                    fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                     color = iOSTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -302,6 +305,8 @@ private fun SessionListItem(
  */
 @Composable
 private fun EmptySessionsView(onCreateNewSession: () -> Unit) {
+    val dimensions = AdaptiveDimensions.current
+    
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -329,7 +334,7 @@ private fun EmptySessionsView(onCreateNewSession: () -> Unit) {
 
             Text(
                 text = "暂无历史会话",
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary
             )
 
@@ -337,7 +342,7 @@ private fun EmptySessionsView(onCreateNewSession: () -> Unit) {
 
             Text(
                 text = "点击下方按钮开始新对话",
-                fontSize = 15.sp,
+                fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary.copy(alpha = 0.7f)
             )
 
@@ -347,7 +352,7 @@ private fun EmptySessionsView(onCreateNewSession: () -> Unit) {
                 Text(
                     text = "发起新对话",
                     color = iOSBlue,
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                     fontWeight = FontWeight.Medium
                 )
             }

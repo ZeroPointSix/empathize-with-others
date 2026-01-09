@@ -44,9 +44,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
@@ -103,6 +103,7 @@ fun ContactSelectScreen(
     viewModel: ContactSelectViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val dimensions = AdaptiveDimensions.current
 
     // 监听选择状态，触发导航
     LaunchedEffect(uiState.selectedContactId) {
@@ -119,7 +120,7 @@ fun ContactSelectScreen(
                 title = {
                     Text(
                         text = "选择联系人",
-                        fontSize = 17.sp,
+                        fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                         fontWeight = FontWeight.SemiBold,
                         color = iOSTextPrimary
                     )
@@ -155,7 +156,7 @@ fun ContactSelectScreen(
             Text(
                 text = "联系人",
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                fontSize = 13.sp,
+                fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary,
                 fontWeight = FontWeight.Normal
             )
@@ -196,6 +197,7 @@ private fun SearchBar(
     placeholder: String
 ) {
     val searchBackground = Color(0x1F8E8E93) // rgba(142, 142, 147, 0.12)
+    val dimensions = AdaptiveDimensions.current
 
     Box(
         modifier = Modifier
@@ -211,7 +213,7 @@ private fun SearchBar(
                 .background(searchBackground)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             textStyle = TextStyle(
-                fontSize = 15.sp,
+                fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextPrimary
             ),
             cursorBrush = SolidColor(iOSBlue),
@@ -232,7 +234,7 @@ private fun SearchBar(
                             Text(
                                 text = placeholder,
                                 color = iOSTextSecondary,
-                                fontSize = 15.sp
+                                fontSize = dimensions.fontSizeSubtitle  // BUG-00055: 使用响应式字体
                             )
                         }
                         innerTextField()
@@ -281,6 +283,8 @@ private fun ContactListItem(
     contact: ContactProfile,
     onClick: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     // 头像颜色方案
     val avatarColors = listOf(
         Color(0xFFE8EAF6) to Color(0xFF5C6BC0), // indigo
@@ -313,7 +317,7 @@ private fun ContactListItem(
             ) {
                 Text(
                     text = contact.name.firstOrNull()?.toString() ?: "?",
-                    fontSize = 16.sp,
+                    fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                     fontWeight = FontWeight.SemiBold,
                     color = textColor
                 )
@@ -331,20 +335,20 @@ private fun ContactListItem(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = contact.name,
-                            fontSize = 15.sp,
+                            fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                             fontWeight = FontWeight.Medium,
                             color = iOSTextPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = contact.getRelationshipLevel().displayName,
-                            fontSize = 11.sp,
+                            fontSize = dimensions.fontSizeXSmall,  // BUG-00055: 使用响应式字体
                             color = iOSTextSecondary
                         )
                     }
                     Text(
                         text = contact.lastInteractionDate ?: "未知",
-                        fontSize = 11.sp,
+                        fontSize = dimensions.fontSizeXSmall,  // BUG-00055: 使用响应式字体
                         color = iOSTextSecondary
                     )
                 }
@@ -354,7 +358,7 @@ private fun ContactListItem(
                 // 最后消息预览
                 Text(
                     text = contact.targetGoal.ifEmpty { "暂无消息" },
-                    fontSize = 13.sp,
+                    fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                     color = iOSTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -386,6 +390,8 @@ private fun ContactListItem(
  */
 @Composable
 private fun EmptyContactsView() {
+    val dimensions = AdaptiveDimensions.current
+    
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -413,7 +419,7 @@ private fun EmptyContactsView() {
 
             Text(
                 text = "暂无联系人",
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary
             )
 
@@ -421,7 +427,7 @@ private fun EmptyContactsView() {
 
             Text(
                 text = "请先添加联系人",
-                fontSize = 15.sp,
+                fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary.copy(alpha = 0.7f)
             )
         }
@@ -433,6 +439,8 @@ private fun EmptyContactsView() {
  */
 @Composable
 private fun NoSearchResultsView(query: String) {
+    val dimensions = AdaptiveDimensions.current
+    
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -451,7 +459,7 @@ private fun NoSearchResultsView(query: String) {
 
             Text(
                 text = "未找到 \"$query\"",
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary
             )
 
@@ -459,7 +467,7 @@ private fun NoSearchResultsView(query: String) {
 
             Text(
                 text = "请尝试其他关键词",
-                fontSize = 15.sp,
+                fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary.copy(alpha = 0.7f)
             )
         }

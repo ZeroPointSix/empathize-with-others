@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.PromptScene
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
@@ -99,6 +100,8 @@ private fun PromptEditorContent(
     uiState: PromptEditorUiState,
     onEvent: (PromptEditorUiEvent) -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Scaffold(
         containerColor = iOSBackground,
         topBar = {
@@ -215,7 +218,7 @@ private fun PromptEditorContent(
                                         )
                                         Text(
                                             text = "AI优化",
-                                            fontSize = 14.sp,
+                                            fontSize = dimensions.fontSizeBody,
                                             fontWeight = FontWeight.Medium,
                                             color = iOSBlue
                                         )
@@ -236,7 +239,7 @@ private fun PromptEditorContent(
 
                         Text(
                             text = "提示词将帮助 AI 更好地理解你的需求，请根据场景自定义你的提示词。",
-                            fontSize = 13.sp,
+                            fontSize = dimensions.fontSizeCaption,
                             color = iOSTextSecondary,
                             modifier = Modifier.padding(horizontal = 4.dp)
                         )
@@ -272,6 +275,8 @@ private fun IOSNavigationBar(
     onCancelClick: () -> Unit,
     onSaveClick: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White.copy(alpha = 0.95f),
@@ -287,12 +292,12 @@ private fun IOSNavigationBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(onClick = onCancelClick) {
-                Text(text = "取消", color = iOSBlue, fontSize = 17.sp)
+                Text(text = "取消", color = iOSBlue, fontSize = dimensions.fontSizeTitle)
             }
 
             Text(
                 text = "编辑提示词",
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Black
             )
@@ -311,7 +316,7 @@ private fun IOSNavigationBar(
                     Text(
                         text = "完成",
                         color = if (canSave) iOSBlue else iOSTextSecondary,
-                        fontSize = 17.sp,
+                        fontSize = dimensions.fontSizeTitle,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -332,6 +337,8 @@ private fun BottomButtons(
     onResetClick: () -> Unit,
     onSaveClick: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -357,7 +364,7 @@ private fun BottomButtons(
             Text(
                 text = "重置",
                 color = iOSTextSecondary,
-                fontSize = 15.sp,
+                fontSize = dimensions.fontSizeSubtitle,
                 maxLines = 1,
                 softWrap = false
             )
@@ -390,7 +397,7 @@ private fun BottomButtons(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "保存",
-                    fontSize = 15.sp,
+                    fontSize = dimensions.fontSizeSubtitle,
                     maxLines = 1,
                     softWrap = false
                 )

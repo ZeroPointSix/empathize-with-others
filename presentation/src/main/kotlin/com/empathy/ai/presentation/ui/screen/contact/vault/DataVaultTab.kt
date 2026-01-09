@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.DataStatus
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSSystemGroupedBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
@@ -73,6 +74,8 @@ fun DataVaultTab(
     modifier: Modifier = Modifier,
     onDataSourceClick: ((DataSourceInfo) -> Unit)? = null
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     // 计算总数据量
     val totalCount = dataSources.sumOf { it.count }
     
@@ -115,14 +118,14 @@ fun DataVaultTab(
             // 标题
             Text(
                 text = "数据来源",
-                fontSize = 20.sp,
+                fontSize = dimensions.fontSizeHeadline,
                 color = iOSTextPrimary,
                 modifier = Modifier.padding(top = 8.dp)
             )
             
             Text(
                 text = "管理和查看联系人相关的各类数据",
-                fontSize = 14.sp,
+                fontSize = dimensions.fontSizeBody,
                 color = iOSTextSecondary
             )
             
@@ -151,6 +154,8 @@ fun DataVaultTab(
  */
 @Composable
 private fun EmptyVaultView(modifier: Modifier = Modifier) {
+    val dimensions = AdaptiveDimensions.current
+    
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -172,7 +177,7 @@ private fun EmptyVaultView(modifier: Modifier = Modifier) {
             
             Text(
                 text = "暂无数据",
-                fontSize = 17.sp,
+                fontSize = dimensions.fontSizeTitle,
                 color = iOSTextPrimary
             )
             
@@ -180,7 +185,7 @@ private fun EmptyVaultView(modifier: Modifier = Modifier) {
             
             Text(
                 text = "导入聊天记录或添加备注后，数据将显示在这里",
-                fontSize = 14.sp,
+                fontSize = dimensions.fontSizeBody,
                 color = iOSTextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 32.dp)
