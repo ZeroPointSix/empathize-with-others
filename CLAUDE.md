@@ -21,6 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 常用命令
 
+**注意**: Windows环境下使用 `gradlew.bat` 代替 `./gradlew`
+
 ```bash
 # 构建与测试
 ./gradlew assembleDebug          # Debug构建
@@ -28,6 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew test                   # 所有单元测试
 ./gradlew testDebugUnitTest      # Debug单元测试
 ./gradlew connectedAndroidTest   # 连接设备运行Android测试
+./gradlew clean                  # 清理构建缓存
 
 # 单个模块测试
 ./gradlew :presentation:test     # presentation模块测试
@@ -37,20 +40,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 运行单个测试类
 ./gradlew :domain:test --tests "com.empathy.ai.domain.usecase.SendAdvisorMessageUseCaseTest"
 
+# 运行特定Bug测试
+./gradlew :presentation:test --tests "*BUG00058*"
+./gradlew :presentation:test --tests "*SessionManagement*"
+
 # Lint检查
 ./gradlew lint                   # 全局Lint
 ./gradlew :presentation:lint     # presentation模块Lint
 ./gradlew ktlintCheck            # Kotlin代码风格检查
 
-# 调试脚本
+# 调试脚本 (Windows)
 scripts\logcat.bat -e            # ERROR日志
 scripts\quick-error.bat          # 快速查看最近错误
 scripts\ai-debug.bat             # AI请求调试
+scripts\quick-test.bat           # 快速测试
+scripts\dev-cycle.bat            # 开发循环（构建+测试+安装）
 
 # ADB调试
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.empathy.ai/.ui.MainActivity
 adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈
+adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 ```
 
 ## 测试覆盖
@@ -58,9 +68,15 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
 | domain | 43 | - | UseCase、Model、PromptBuilder |
-| presentation | 50 | 7 | ViewModel、Compose UI |
+| presentation | 54+ | 7 | ViewModel、Compose UI、Bug回归测试 |
 | data | 25 | 6 | Repository、Database |
 | app | 141 | 26 | Application初始化、服务测试 |
+
+**最新Bug回归测试**:
+- `BUG00058CreateNewSessionTest.kt` - 新建会话功能测试
+- `BUG00059RegenerateMessageRoleTest.kt` - 消息重新生成角色测试
+- `BUG00060SessionManagementTest.kt` - 会话管理增强测试
+- `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
 
 ### 模块文件统计（2026-01-09最新扫描）
 
@@ -117,9 +133,11 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 | app/presentation | Kapt | Hilt 依赖注入 |
 
 ### Room 数据库版本
-- **当前版本**: v12
+- **当前版本**: v16
 - **迁移路径**: `data/src/main/kotlin/com/empathy/ai/data/local/MIGRATION_*.kt`
+- **Schema目录**: `data/schemas/com.empathy.ai.data.local.AppDatabase/`
 - **迁移策略**: 每次架构变更添加增量迁移脚本
+- **版本查看**: 检查 `AppDatabase.kt` 中的 `@Database(version = X)` 注解
 
 ### Hilt 模块索引
 | 模块 | 文件 | 职责 |
@@ -176,7 +194,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 ### AI 服务商系统
 - **接口定义**: `domain/src/main/kotlin/com/empathy/ai/domain/model/AiProvider.kt`
 - **仓库实现**: `data/src/main/kotlin/com/empathy/ai/data/repository/AiProviderRepositoryImpl.kt`
-- **支持服务商**: OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火
+- **支持服务商**: OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火（7家主流AI服务商）
 - **模型配置**: 每个服务商支持自定义模型名称和 API 版本
 
 ### 开发者模式
@@ -185,6 +203,10 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - **用途**: 调试 AI 响应、查看日志、管理提示词
 
 ### 最近完成的功能与修复（2026-01-09）
+- **BUG-00057**: AI军师对话界面可读性问题修复
+  - 优化对话界面布局和样式
+  - 提升长文本显示效果
+  - 完善Markdown渲染支持
 - **BUG-00053/54/56**: AI配置与用户画像多项问题修复
   - 修复AI配置保存逻辑，确保配置变更正确持久化
   - 修复用户画像数据加载问题，优化数据初始化流程
@@ -199,6 +221,14 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
   - 新增开发者模式入口，支持调试工具和系统提示词管理
   - 系统提示词管理功能，支持查看和调试AI提示词配置
   - 提供调试日志查看、性能监控等开发者工具
+
+### 进行中的问题修复（2026-01-09）
+- **BUG-00058**: 新建会话功能失效问题（已分析，待实现）
+  - 问题：点击"新建会话"后未创建新会话，而是跳转到旧会话
+  - 修复方案：通过导航参数传递 `createNew=true` 标志
+- **BUG-00059**: 中断生成后重新生成消息角色错乱问题（已分析，待实现）
+- **BUG-00060**: 会话管理增强需求（已识别，待实现）
+- **BUG-00061**: 会话历史跳转失败问题（已识别，待实现）
 
 ### 组件复用系统
 

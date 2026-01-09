@@ -87,7 +87,7 @@
 
 ```
 domain/src/main/kotlin/com/empathy/ai/domain/
-├── model/                    # ✅ 业务实体（174个模型）
+├── model/                    # ✅ 业务实体（183个模型）
 │   ├── ActionType.kt
 │   ├── AiModel.kt
 │   ├── AiProvider.kt
@@ -99,8 +99,9 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 │   ├── ContactProfile.kt
 │   ├── PromptScene.kt        # 提示词场景（已优化为4个核心场景）
 │   ├── GlobalPromptConfig.kt # 全局提示词配置（v3）
-│   └── ...                   # 其他68个模型
-├── repository/               # ✅ 仓库接口（13个）
+│   ├── AiAdvisorSession.kt   # AI军师会话模型（v16新增）
+│   └── ...                   # 其他模型
+├── repository/               # ✅ 仓库接口（13+个）
 │   ├── AiProviderRepository.kt
 │   ├── AiRepository.kt
 │   ├── BrainTagRepository.kt
@@ -113,13 +114,15 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 │   ├── PromptRepository.kt
 │   ├── SettingsRepository.kt
 │   ├── TopicRepository.kt
-│   └── UserProfileRepository.kt
+│   ├── UserProfileRepository.kt
+│   └── AiAdvisorRepository.kt   # AI军师仓库接口（v16新增）
 ├── usecase/                  # ✅ 业务用例（38个）
 │   ├── AnalyzeChatUseCase.kt
 │   ├── PolishDraftUseCase.kt
 │   ├── GenerateReplyUseCase.kt
 │   ├── ManualSummaryUseCase.kt
-│   └── ...                  # 其他37个UseCase
+│   ├── AiAdvisorUseCases.kt    # AI军师相关UseCase（v16新增）
+│   └── ...                  # 其他UseCase
 ├── service/                  # ✅ 领域服务（2个）
 │   ├── PrivacyEngine.kt
 │   └── SessionContextService.kt
@@ -131,7 +134,7 @@ domain/src/main/kotlin/com/empathy/ai/domain/
     ├── PromptVariableResolver.kt
     ├── IdentityPrefixHelper.kt # 身份前缀工具类
     ├── PerformanceMetrics.kt   # 性能指标工具类
-    └── ...                  # 其他28个工具类
+    └── ...                  # 其他工具类
 ```
 
 ### :data 模块 (Android Library)
@@ -147,7 +150,7 @@ data/src/main/kotlin/com/empathy/ai/data/
 │   ├── DispatcherModule.kt
 │   └── Qualifiers.kt
 ├── local/                    # ✅ 本地存储
-│   ├── AppDatabase.kt
+│   ├── AppDatabase.kt        # Room数据库 v16
 │   ├── ApiKeyStorage.kt
 │   ├── FloatingWindowPreferences.kt
 │   ├── PromptFileStorage.kt
@@ -157,22 +160,27 @@ data/src/main/kotlin/com/empathy/ai/data/
 │   ├── converter/
 │   │   ├── FactListConverter.kt
 │   │   └── RoomTypeConverters.kt
-│   ├── dao/                  # ✅ 数据访问对象（7个）
+│   ├── dao/                  # ✅ 数据访问对象（8个）
 │   │   ├── AiProviderDao.kt
 │   │   ├── BrainTagDao.kt
 │   │   ├── ContactDao.kt
 │   │   ├── ConversationLogDao.kt
 │   │   ├── ConversationTopicDao.kt
 │   │   ├── DailySummaryDao.kt
-│   │   └── FailedSummaryTaskDao.kt
-│   └── entity/               # ✅ 数据库实体（7个）
+│   │   ├── FailedSummaryTaskDao.kt
+│   │   └── AiAdvisorDao.kt     # AI军师DAO（v16新增）
+│   └── entity/               # ✅ 数据库实体（11个）
 │       ├── AiProviderEntity.kt
 │       ├── BrainTagEntity.kt
 │       ├── ContactProfileEntity.kt
 │       ├── ConversationLogEntity.kt
 │       ├── ConversationTopicEntity.kt
 │       ├── DailySummaryEntity.kt
-│       └── FailedSummaryTaskEntity.kt
+│       ├── FailedSummaryTaskEntity.kt
+│       ├── AiAdvisorSessionEntity.kt      # AI军师会话实体（v16新增）
+│       ├── AiAdvisorConversationEntity.kt # AI军师对话实体（v16新增）
+│       ├── AiAdvisorMessageBlockEntity.kt # AI军师消息块实体（v16新增）
+│       └── ApiUsageRecordEntity.kt        # API用量统计实体（v12新增）
 ├── remote/                   # ✅ 网络层
 │   ├── api/OpenAiApi.kt
 │   └── model/
@@ -181,7 +189,7 @@ data/src/main/kotlin/com/empathy/ai/data/
 │       ├── MessageDto.kt
 │       ├── ModelsResponseDto.kt
 │       └── AiSummaryResponseDto.kt
-├── repository/               # ✅ 仓库实现（13个）
+├── repository/               # ✅ 仓库实现（14个）
 │   ├── AiProviderRepositoryImpl.kt
 │   ├── AiRepositoryImpl.kt
 │   ├── BrainTagRepositoryImpl.kt
@@ -196,6 +204,8 @@ data/src/main/kotlin/com/empathy/ai/data/
 │   ├── ProviderCompatibility.kt
 │   └── settings/
 │       └── SettingsRepositoryImpl.kt
+│   └── advisor/
+│       └── AiAdvisorRepositoryImpl.kt   # AI军师仓库实现（v16新增）
 ├── parser/                   # ✅ AI响应解析
 │   ├── AiResponseParser.kt
 │   ├── AiSummaryResponseParserImpl.kt
@@ -228,7 +238,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   ├── CategoryColorPalette.kt
 │   ├── RelationshipColors.kt
 │   └── SemanticColors.kt
-├── ui/                       # ✅ UI组件（272个）
+├── ui/                       # ✅ UI组件（280个）
 │   ├── MainActivity.kt
 │   ├── component/            # 可复用组件
 │   │   ├── MaxHeightScrollView.kt
@@ -253,7 +263,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   └── screen/               # 功能屏幕
 │       ├── aiconfig/
 │       ├── chat/
-│       ├── advisor/          # AI军师模块（新增）
+│       ├── advisor/          # AI军师模块（v16新增）
 │       │   ├── AiAdvisorChatScreen.kt
 │       │   ├── AiAdvisorScreen.kt
 │       │   ├── ContactSelectScreen.kt
@@ -271,9 +281,10 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │       ├── settings/
 │       ├── tag/
 │       └── userprofile/
-├── viewmodel/                # ✅ ViewModel（16个）
+├── viewmodel/                # ✅ ViewModel（17个）
 │   ├── BaseViewModel.kt
 │   ├── AiAdvisorEntryViewModel.kt
+│   ├── AiAdvisorChatViewModel.kt      # AI军师聊天ViewModel（v16新增）
 │   ├── AiConfigViewModel.kt
 │   ├── BrainTagViewModel.kt
 │   ├── ChatViewModel.kt
@@ -283,7 +294,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   ├── ContactSelectViewModel.kt
 │   ├── ManualSummaryViewModel.kt
 │   ├── PromptEditorViewModel.kt
-│   ├── SessionHistoryViewModel.kt
+│   ├── SessionHistoryViewModel.kt     # 会话历史ViewModel（v16新增）
 │   ├── SettingsViewModel.kt
 │   ├── TopicViewModel.kt
 │   └── UserProfileViewModel.kt
@@ -421,7 +432,7 @@ class ChatViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
-    
+
     fun onEvent(event: ChatUiEvent) { /* 处理事件 */ }
 }
 ```
@@ -454,7 +465,7 @@ class ChatViewModel @Inject constructor(
   - 工具类
   - 无Android依赖
 - **:data模块**: 100%完成
-  - Room数据库v12
+  - Room数据库v16
   - DI模块
   - DAO
   - Entity
@@ -484,7 +495,25 @@ class ChatViewModel @Inject constructor(
 **项目整体统计**：
 - 总Kotlin文件数：872个
 - 主源码文件：574个
-- 测试文件：298个（259单元 + 39Android）
+- 测试文件：298个（259单元 + 39 Android）
+
+### 数据库版本历史
+
+| 版本 | 更新内容 | 状态 |
+|------|----------|------|
+| v12 | 新增api_usage_records表，AI用量统计 | 已完成 |
+| v13-v15 | 迭代优化 | 已完成 |
+| v16 | 新增AI军师会话相关表（ai_advisor_sessions, ai_advisor_conversations, ai_advisor_message_blocks） | 已完成 |
+
+### AI军师模块（v16新增）
+
+AI军师（心语助手）是一个独立的对话模块，提供：
+
+- **会话管理**：创建、切换、删除会话
+- **对话历史**：支持Markdown渲染的消息展示
+- **流式响应**：支持打字机效果的消息生成
+- **重新生成**：中断后可重新生成消息
+- **联系人关联**：可选择联系人进行针对性对话
 
 ### 架构合规性
 - **Clean Architecture**: ⭐⭐⭐⭐⭐ (A级，完全合规)
@@ -493,6 +522,19 @@ class ChatViewModel @Inject constructor(
 
 ---
 
-**文档版本**: 2.13
+### 🔄 进行中的问题修复（2026-01-09）
+
+| Bug ID | 问题描述 | 状态 |
+|--------|----------|------|
+| BUG-00058 | 新建会话功能失效问题 | 已分析，待实现 |
+| BUG-00059 | 中断生成后重新生成消息角色错乱问题 | 已分析，待实现 |
+| BUG-00060 | 会话管理增强需求 | 已识别，待实现 |
+| BUG-00061 | 会话历史跳转失败问题 | 已识别，待实现 |
+
+**文档版本**: 2.14
 **最后更新**: 2026-01-09
-**更新内容**: 更新模块文件统计（基于实际代码扫描：主源码574，单元测试259，Android测试39）
+**更新内容**:
+- 更新数据库版本至v16
+- 更新AI军师模块相关信息
+- 添加进行中的问题修复列表
+- 更新模块文件统计（基于实际代码扫描）

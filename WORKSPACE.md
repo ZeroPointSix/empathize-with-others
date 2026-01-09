@@ -1,6 +1,6 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-09 | 更新者: Kiro (BUG-00057 AI军师对话界面可读性问题修复)
+> 最后更新: 2026-01-09 | 更新者: Claude (BUG-00058/59/60/61 代码变更分析流水线)
 
 ## 📋 当前工作状态
 
@@ -8,8 +8,13 @@
 | 任务ID | 任务名称 | 负责AI | 状态 | 优先级 | 开始时间 | 预计完成 |
 |--------|---------|--------|------|--------|----------|----------|
 | BUG-00057 | AI军师对话界面可读性问题修复 | Kiro | 代码完成，待验收 | P0 | 2026-01-09 | 2026-01-09 |
+| BUG-00058 | 新建会话功能失效问题 | Kiro | 已实现 | P0 | 2026-01-09 | 2026-01-09 |
+| BUG-00059 | 中断生成后重新生成消息角色错乱 | Kiro | 已实现 | P0 | 2026-01-09 | 2026-01-09 |
+| BUG-00060 | 会话管理增强功能 | Kiro | 已实现 | P1 | 2026-01-09 | 2026-01-09 |
+| BUG-00061 | 会话历史跳转失败问题 | Kiro | 已实现 | P0 | 2026-01-09 | 2026-01-09 |
 
-### 已完成任务（最近3条）
+### 已完成任务（最近7条）
+- [x] 2026-01-09 - **BUG-00058/59/60/61 AI军师会话管理增强** - Claude - 相关文档: [BUG-00058](文档/开发文档/BUG/BUG-00058-新建会话功能失效问题.md), [BUG-00059](文档/开发文档/BUG/BUG-00059-中断生成后重新生成消息角色错乱问题.md), [BUG-00060](文档/开发文档/BUG/BUG-00060-会话管理增强需求.md), [BUG-00061](文档/开发文档/BUG/BUG-00061-会话历史跳转失败问题.md)
 - [x] 2026-01-09 - **BUG-00057 AI军师对话界面可读性问题修复** - Kiro - 相关文档: [BUG-00057](文档/开发文档/BUG/BUG-00057-AI军师对话界面可读性问题.md)
 - [x] 2026-01-09 - **BUG-00056 知识查询超时时间过短修复** - Kiro - 相关文档: [BUG-00056](文档/开发文档/BUG/BUG-00056-知识查询超时时间过短.md)
 - [x] 2026-01-09 - **BUG-00054 AI配置功能多项问题修复** - Kiro - 相关文档: [BUG-00054](文档/开发文档/BUG/BUG-00054-AI配置功能多项问题.md)
@@ -28,6 +33,48 @@
 新增测试：
 - `data/src/test/kotlin/com/empathy/ai/data/repository/AiProviderRepositoryBug00054Test.kt`
 - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/AiConfigViewModelBug00054Test.kt`
+
+### BUG-00058/59/60/61 修复详情
+**AI军师会话管理增强** - 新建会话/重新生成/会话管理/历史跳转 ✅ 已实现
+
+**BUG-00058: 新建会话功能失效**
+- 问题：点击"新建会话"后未创建新会话，而是跳转到旧会话
+- 修复：通过导航参数传递 `createNew=true` 标志
+
+**BUG-00059: 中断生成后重新生成消息角色错乱**
+- 问题：重新生成时错误使用AI生成的内容作为用户输入
+- 修复：增强验证逻辑，新增 `isLikelyAiContent()` 检测方法
+
+**BUG-00060: 会话管理增强**
+- 新增功能：会话置顶/取消置顶
+- 新增功能：会话重命名
+- 新增功能：空会话复用
+- 新增功能：会话自动命名（第一条消息作为标题）
+
+**BUG-00061: 会话历史跳转失败**
+- 问题：从会话历史页面点击会话后无法正确加载
+- 修复：通过导航参数传递 `sessionId` 标识
+
+修改文件：
+- `data/di/DatabaseModule.kt` - 数据库迁移 v15→v16
+- `data/local/AppDatabase.kt` - 版本升级
+- `data/local/dao/AiAdvisorDao.kt` - 新增 DAO 方法
+- `data/local/entity/AiAdvisorSessionEntity.kt` - 添加 isPinned 字段
+- `data/repository/AiAdvisorRepositoryImpl.kt` - 新增方法实现
+- `domain/model/AiAdvisorSession.kt` - 添加 isPinned 字段
+- `domain/repository/AiAdvisorRepository.kt` - 接口扩展
+- `presentation/navigation/NavGraph.kt` - 导航参数
+- `presentation/navigation/NavRoutes.kt` - 路由常量
+- `presentation/ui/screen/advisor/AiAdvisorChatScreen.kt` - 参数处理
+- `presentation/ui/screen/advisor/SessionHistoryScreen.kt` - UI交互增强
+- `presentation/viewmodel/AiAdvisorChatViewModel.kt` - 业务逻辑
+- `presentation/viewmodel/SessionHistoryViewModel.kt` - 状态管理
+
+新增测试：
+- `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00058CreateNewSessionTest.kt`
+- `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00059RegenerateMessageRoleTest.kt`
+- `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00060SessionManagementTest.kt`
+- `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00061SessionHistoryNavigationTest.kt`
 
 ### PRD-00029 完成详情
 **AI军师UI架构优化** - 三页面导航架构实现 ✅ 已完成

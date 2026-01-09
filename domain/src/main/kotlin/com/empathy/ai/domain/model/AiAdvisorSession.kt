@@ -20,6 +20,10 @@ import java.util.UUID
  * - updatedAt用于排序，优先展示最近活跃的会话
  * - 会话与联系人是1:N关系，支持"赛前分析"和"赛后复盘"分开讨论
  *
+ * BUG-00060增强 (2026-01-09):
+ * - 添加isPinned字段支持会话置顶功能
+ * - 置顶会话在列表中优先显示
+ *
  * 任务追踪 (FD-00026/T003): 数据层实现 - 会话模型
  *
  * @property id 会话ID（UUID）
@@ -29,6 +33,7 @@ import java.util.UUID
  * @property updatedAt 最后更新时间戳，消息发送时自动更新
  * @property messageCount 消息数量，用于UI预览显示
  * @property isActive 是否为活跃会话，支持会话归档
+ * @property isPinned 是否置顶，置顶会话优先显示（BUG-00060新增）
  */
 data class AiAdvisorSession(
     val id: String,
@@ -37,7 +42,8 @@ data class AiAdvisorSession(
     val createdAt: Long,
     val updatedAt: Long,
     val messageCount: Int = 0,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val isPinned: Boolean = false
 ) {
     companion object {
         /**

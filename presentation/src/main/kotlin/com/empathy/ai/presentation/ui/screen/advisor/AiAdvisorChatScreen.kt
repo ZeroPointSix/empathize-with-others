@@ -152,6 +152,8 @@ import com.halilibo.richtext.ui.material3.RichText
  */
 @Composable
 fun AiAdvisorChatScreen(
+    createNew: Boolean = false,  // BUG-00058: 是否创建新会话
+    sessionId: String? = null,   // BUG-00061: 要加载的会话ID
     onNavigateBack: () -> Unit,
     onNavigateToContact: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -161,6 +163,23 @@ fun AiAdvisorChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+
+    // BUG-00061: 处理sessionId参数，加载指定会话
+    // BUG-00058: 处理createNew参数，创建新会话
+    // 优先级：createNew > sessionId > 默认行为
+    LaunchedEffect(createNew, sessionId) {
+        when {
+            createNew -> {
+                // 创建新会话（最高优先级）
+                viewModel.createNewSessionFromNavigation()
+            }
+            sessionId != null -> {
+                // 加载指定会话
+                viewModel.loadSessionById(sessionId)
+            }
+            // 否则保持默认行为（加载第一个会话）
+        }
+    }
 
     // Handle navigation
     LaunchedEffect(uiState.shouldNavigateToContact) {

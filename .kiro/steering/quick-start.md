@@ -57,6 +57,10 @@ scripts\quick-test.bat XxxTest   # 运行指定测试类
 ./gradlew :domain:build          # 构建domain模块（纯Kotlin）
 ./gradlew :data:assembleDebug    # 构建data模块
 ./gradlew :presentation:assembleDebug  # 构建presentation模块
+
+# 运行特定Bug测试
+./gradlew :presentation:test --tests "*BUG00058*"
+./gradlew :presentation:test --tests "*SessionManagement*"
 ```
 
 ## 调试命令
@@ -216,6 +220,13 @@ adb logcat > logcat.txt      # 保存到文件
 - 导出Schema文件到$projectDir/schemas目录
 - 为每个Migration编写单元测试
 - 避免使用fallbackToDestructiveMigration()
+- **当前数据库版本**: v16 (包含AI军师会话表)
+
+### AI军师模块最佳实践（v16新增）
+- 使用AiAdvisorSession管理会话
+- 使用AiAdvisorChatViewModel管理对话状态
+- 支持Markdown渲染的消息展示
+- 支持流式响应和重新生成
 
 ## 文档位置
 
@@ -252,3 +263,19 @@ adb logcat > logcat.txt      # 保存到文件
 | **理解Repository** | `文档/项目文档/domain/repository/README.md` |
 | **理解数据库** | `文档/项目文档/data/local/README.md` |
 | **理解API接口** | `文档/项目文档/data/remote/README.md` |
+
+### Bug回归测试
+
+项目维护以下Bug回归测试：
+
+| 测试文件 | 测试内容 |
+|----------|----------|
+| `BUG00058CreateNewSessionTest.kt` | 新建会话功能测试 |
+| `BUG00059RegenerateMessageRoleTest.kt` | 消息重新生成角色测试 |
+| `BUG00060SessionManagementTest.kt` | 会话管理增强测试 |
+| `BUG00061SessionHistoryNavigationTest.kt` | 会话历史导航测试 |
+
+运行测试：
+```bash
+./gradlew :presentation:test --tests "*BUG00058*"
+```

@@ -70,7 +70,10 @@ data class AiAdvisorSessionEntity(
     val messageCount: Int = 0,
 
     @ColumnInfo(name = "is_active", defaultValue = "1")
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+
+    @ColumnInfo(name = "is_pinned", defaultValue = "0")
+    val isPinned: Boolean = false
 ) {
     /**
      * 转换为领域模型
@@ -84,7 +87,8 @@ data class AiAdvisorSessionEntity(
         createdAt = createdAt,
         updatedAt = updatedAt,
         messageCount = messageCount,
-        isActive = isActive
+        isActive = isActive,
+        isPinned = isPinned
     )
 
     companion object {
@@ -102,7 +106,8 @@ data class AiAdvisorSessionEntity(
                 createdAt = session.createdAt,
                 updatedAt = session.updatedAt,
                 messageCount = session.messageCount,
-                isActive = session.isActive
+                isActive = session.isActive,
+                isPinned = session.isPinned
             )
     }
 }

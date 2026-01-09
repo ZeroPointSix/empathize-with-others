@@ -220,11 +220,33 @@ class AiAdvisorChatViewModel @Inject constructor(
      *
      * BUG-044-P0-003修复：先取消旧的流式请求，避免重复请求导致卡住
      * BUG-048修复：记录用户输入到lastUserInput，用于重新生成时避免消息角色混淆
+     * BUG-00060：会话自动命名功能，第一条消息时自动更新会话标题
      */
     private fun sendMessageStreaming(message: String, sessionId: String) {
         // BUG-044-P0-003: 先取消旧的流式请求
         streamingJob?.cancel()
         streamingJob = null
+
+        // BUG-00060: 检查是否需要自动命名（第一条消息）
+        val currentSession = _uiState.value.sessions.find { it.id == sessionId }
+        if (currentSession?.messageCount == 0) {
+            val newTitle = generateSessionTitle(message)
+            viewModelScope.launch {
+                aiAdvisorRepository.updateSessionTitle(sessionId, newTitle)
+                // 更新本地会话列表中的标题
+                _uiState.update { state ->
+                    state.copy(
+                        sessions = state.sessions.map { session ->
+                            if (session.id == sessionId) {
+                                session.copy(title = newTitle)
+                            } else {
+                                session
+                            }
+                        }
+                    )
+                }
+            }
+        }
 
         // BUG-048修复：记录用户输入，用于重新生成时使用
         _uiState.update {
@@ -526,12 +548,14 @@ class AiAdvisorChatViewModel @Inject constructor(
     }
 
     /**
-     * BUG-048-V4: 三重保障获取用户输入
+     * BUG-048-V4 + BUG-00059修复: 获取重新生成时的用户输入
      *
+     * BUG-00059修复：增强验证逻辑，确保不会错误地使用AI生成的内容
+     * 
      * 优先级：
-     * 1. 内存中的lastUserInput（最快，但应用重启后丢失）
-     * 2. 通过relatedUserMessageId查找关联的用户消息（持久化，最可靠）
-     * 3. 时间戳回退查找（兼容旧数据）
+     * 1. 通过relatedUserMessageId查找关联的用户消息（最可靠，持久化）
+     * 2. 内存中的lastUserInput（需要验证不是AI内容）
+     * 3. 时间戳回退查找（兼容旧数据，需要验证消息类型）
      *
      * @param lastAiMessage 最后一条AI消息
      * @param conversations 当前对话列表
@@ -541,29 +565,32 @@ class AiAdvisorChatViewModel @Inject constructor(
         lastAiMessage: AiAdvisorConversation,
         conversations: List<AiAdvisorConversation>
     ): Pair<String, String?> {
-        // 优先级1：使用内存中的lastUserInput
-        val fromMemory = _uiState.value.lastUserInput
-        if (fromMemory.isNotEmpty()) {
-            // 尝试找到对应的用户消息ID
-            val relatedId = lastAiMessage.relatedUserMessageId
-                ?: conversations
-                    .filter { 
-                        it.messageType == MessageType.USER && 
-                        it.sendStatus == SendStatus.SUCCESS &&
-                        it.timestamp < lastAiMessage.timestamp
-                    }
-                    .maxByOrNull { it.timestamp }
-                    ?.id
-            return Pair(fromMemory, relatedId)
-        }
-        
-        // 优先级2：通过relatedUserMessageId查找
+        // BUG-00059修复：优先级1 - 通过relatedUserMessageId查找（最可靠）
         val relatedUserMessageId = lastAiMessage.relatedUserMessageId
         if (!relatedUserMessageId.isNullOrEmpty()) {
             val relatedMessage = conversations.find { it.id == relatedUserMessageId }
-            if (relatedMessage != null && relatedMessage.content.isNotEmpty()) {
+            // 验证关联的消息确实是USER类型
+            if (relatedMessage != null && 
+                relatedMessage.messageType == MessageType.USER &&
+                relatedMessage.content.isNotEmpty() &&
+                !isLikelyAiContent(relatedMessage.content)) {
                 return Pair(relatedMessage.content, relatedUserMessageId)
             }
+        }
+        
+        // 优先级2：使用内存中的lastUserInput（需要验证）
+        val fromMemory = _uiState.value.lastUserInput
+        if (fromMemory.isNotEmpty() && !isLikelyAiContent(fromMemory)) {
+            // 尝试找到对应的用户消息ID
+            val relatedId = conversations
+                .filter { 
+                    it.messageType == MessageType.USER && 
+                    it.sendStatus == SendStatus.SUCCESS &&
+                    it.timestamp < lastAiMessage.timestamp
+                }
+                .maxByOrNull { it.timestamp }
+                ?.id
+            return Pair(fromMemory, relatedId)
         }
         
         // 优先级3：时间戳回退查找（兼容旧数据）
@@ -571,11 +598,42 @@ class AiAdvisorChatViewModel @Inject constructor(
             .filter { 
                 it.messageType == MessageType.USER && 
                 it.sendStatus == SendStatus.SUCCESS &&
-                it.timestamp < lastAiMessage.timestamp
+                it.timestamp < lastAiMessage.timestamp &&
+                !isLikelyAiContent(it.content)  // BUG-00059: 验证不是AI内容
             }
             .maxByOrNull { it.timestamp }
         
         return Pair(fallbackMessage?.content ?: "", fallbackMessage?.id)
+    }
+
+    /**
+     * BUG-00059: 检测内容是否可能是AI生成的
+     * 
+     * 通过以下特征判断：
+     * 1. 包含停止生成标记
+     * 2. 内容过长（用户输入通常较短）
+     * 3. 包含AI特有的格式标记
+     */
+    private fun isLikelyAiContent(content: String): Boolean {
+        // 检查停止生成标记
+        if (content.contains("[用户已停止生成]")) return true
+        
+        // 检查AI特有的格式标记
+        val aiMarkers = listOf(
+            "核心策略",
+            "## ",  // Markdown标题
+            "**",   // Markdown加粗
+            "1. ",  // 有序列表
+            "- ",   // 无序列表
+            "ENFJ", "INFP", "INTJ", "ENTP"  // MBTI类型（AI分析常用）
+        )
+        val markerCount = aiMarkers.count { content.contains(it) }
+        if (markerCount >= 2) return true
+        
+        // 检查内容长度（用户输入通常不超过200字符）
+        if (content.length > 300) return true
+        
+        return false
     }
 
     /**
@@ -771,6 +829,130 @@ class AiAdvisorChatViewModel @Inject constructor(
     }
 
     /**
+     * BUG-00058: 从导航参数触发创建新会话
+     * BUG-00060: 空会话复用功能
+     * 
+     * 当用户从会话历史页面点击"新建会话"时调用此方法。
+     * 与createNewSession的区别是：此方法会先检查是否存在空会话可复用。
+     * 
+     * 业务规则：
+     * - 如果存在空会话（messageCount=0），复用该会话
+     * - 如果不存在空会话，创建新会话
+     */
+    fun createNewSessionFromNavigation() {
+        viewModelScope.launch {
+            // 先清空当前对话状态
+            _uiState.update { currentState ->
+                currentState.copy(
+                    conversations = emptyList(),
+                    currentSessionId = null,
+                    streamingContent = "",
+                    thinkingContent = "",
+                    currentStreamingMessageId = null,
+                    isLoading = true
+                )
+            }
+            
+            // BUG-00060: 先检查是否存在空会话可复用
+            aiAdvisorRepository.getLatestEmptySession(contactId).onSuccess { emptySession ->
+                if (emptySession != null) {
+                    // 复用空会话
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            currentSessionId = emptySession.id,
+                            isLoading = false
+                        )
+                    }
+                    // 重新加载会话列表以确保UI同步
+                    loadSessions(contactId)
+                } else {
+                    // 创建新会话
+                    createAdvisorSessionUseCase(contactId).onSuccess { session ->
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                sessions = listOf(session) + currentState.sessions,
+                                currentSessionId = session.id,
+                                isLoading = false
+                            )
+                        }
+                        // 加载新会话的对话（应该是空的）
+                        loadConversations(session.id)
+                    }.onFailure { error ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = error.message ?: "创建会话失败"
+                            )
+                        }
+                    }
+                }
+            }.onFailure { error ->
+                // 查询失败时降级为创建新会话
+                createAdvisorSessionUseCase(contactId).onSuccess { session ->
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            sessions = listOf(session) + currentState.sessions,
+                            currentSessionId = session.id,
+                            isLoading = false
+                        )
+                    }
+                    loadConversations(session.id)
+                }.onFailure { createError ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = createError.message ?: "创建会话失败"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * BUG-00061: 根据sessionId加载指定会话
+     * 
+     * 当用户从会话历史页面点击某个会话时调用此方法。
+     * 
+     * @param sessionId 要加载的会话ID
+     */
+    fun loadSessionById(sessionId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            aiAdvisorRepository.getSessionById(sessionId).onSuccess { session ->
+                if (session != null) {
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            currentSessionId = session.id,
+                            isLoading = false
+                        )
+                    }
+                    // 加载该会话的对话内容
+                    loadConversations(session.id)
+                    // 同时加载会话列表以保持UI同步
+                    loadSessions(contactId)
+                } else {
+                    // 会话不存在，显示错误
+                    _uiState.update { 
+                        it.copy(
+                            error = "会话不存在或已被删除",
+                            isLoading = false
+                        ) 
+                    }
+                }
+            }.onFailure { error ->
+                _uiState.update { 
+                    it.copy(
+                        error = error.message ?: "加载会话失败",
+                        isLoading = false
+                    ) 
+                }
+            }
+        }
+    }
+
+    /**
      * 显示联系人选择器
      */
     fun showContactSelector() {
@@ -852,6 +1034,29 @@ class AiAdvisorChatViewModel @Inject constructor(
      */
     fun clearNavigationState() {
         _uiState.update { it.copy(shouldNavigateToContact = null) }
+    }
+
+    /**
+     * BUG-00060: 生成会话标题
+     *
+     * 根据用户消息生成会话标题，用于会话自动命名功能。
+     *
+     * 规则：
+     * - 取用户消息的前20个字符
+     * - 去除换行符，替换为空格
+     * - 超过20字符时添加"..."后缀
+     *
+     * @param userMessage 用户消息内容
+     * @return 生成的会话标题
+     */
+    private fun generateSessionTitle(userMessage: String): String {
+        val maxLength = 20
+        val cleaned = userMessage.trim().replace("\n", " ").replace("\r", "")
+        return if (cleaned.length > maxLength) {
+            cleaned.take(maxLength) + "..."
+        } else {
+            cleaned.ifEmpty { "新对话" }
+        }
     }
 }
 

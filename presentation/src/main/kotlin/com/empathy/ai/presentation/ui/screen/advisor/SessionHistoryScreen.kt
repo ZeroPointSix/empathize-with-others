@@ -1,7 +1,9 @@
 package com.empathy.ai.presentation.ui.screen.advisor
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +21,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +43,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,11 +77,15 @@ import java.util.Locale
  * - 查看历史会话列表
  * - 点击会话进入对话界面
  * - 新建会话
+ * - 长按会话显示操作菜单（BUG-00060新增）
+ * - 重命名会话（BUG-00060新增）
+ * - 置顶/取消置顶会话（BUG-00060新增）
  *
  * ## 关联文档
  * - PRD-00029: AI军师UI架构优化需求
  * - TDD-00029: AI军师UI架构优化技术设计
  * - FD-00029: AI军师UI架构优化功能设计
+ * - BUG-00060: 会话管理增强需求
  *
  * ## 页面布局
  * ```
@@ -77,8 +94,8 @@ import java.util.Locale
  * ├─────────────────────────────────────┤
  * │ 与 张三 的对话                      │  ← 分组标题
  * ├─────────────────────────────────────┤
- * │ [💬] 关于工作安排的讨论      昨天 > │  ← 会话列表项
- * │      最后一条消息预览...            │
+ * │ [📌💬] 关于工作安排的讨论   昨天 > │  ← 置顶会话
+ * │        最后一条消息预览...          │
  * ├─────────────────────────────────────┤
  * │ [💬] 周末计划              3天前 > │
  * │      最后一条消息预览...            │
@@ -102,6 +119,18 @@ fun SessionHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dimensions = AdaptiveDimensions.current
+
+    // BUG-00060: 重命名对话框
+    if (uiState.showRenameDialog && uiState.sessionToRename != null) {
+        RenameSessionDialog(
+            currentTitle = uiState.sessionToRename!!.title,
+            onConfirm = { newTitle ->
+                viewModel.renameSession(uiState.sessionToRename!!.id, newTitle)
+                viewModel.hideRenameDialog()
+            },
+            onDismiss = { viewModel.hideRenameDialog() }
+        )
+    }
 
     Scaffold(
         containerColor = iOSBackground,
@@ -169,7 +198,12 @@ fun SessionHistoryScreen(
                 else -> {
                     SessionList(
                         sessions = uiState.sessions,
-                        onSessionClick = onNavigateToChat
+                        onSessionClick = onNavigateToChat,
+                        onRenameSession = { session -> viewModel.showRenameDialog(session) },
+                        onTogglePin = { session -> 
+                            viewModel.togglePinSession(session.id, !session.isPinned) 
+                        },
+                        onDeleteSession = { session -> viewModel.deleteSession(session.id) }
                     )
                 }
             }
@@ -179,11 +213,16 @@ fun SessionHistoryScreen(
 
 /**
  * 会话列表
+ *
+ * BUG-00060: 支持长按操作菜单
  */
 @Composable
 private fun SessionList(
     sessions: List<AiAdvisorSession>,
-    onSessionClick: (sessionId: String) -> Unit
+    onSessionClick: (sessionId: String) -> Unit,
+    onRenameSession: (AiAdvisorSession) -> Unit,
+    onTogglePin: (AiAdvisorSession) -> Unit,
+    onDeleteSession: (AiAdvisorSession) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -194,7 +233,10 @@ private fun SessionList(
         ) { session ->
             SessionListItem(
                 session = session,
-                onClick = { onSessionClick(session.id) }
+                onClick = { onSessionClick(session.id) },
+                onRename = { onRenameSession(session) },
+                onTogglePin = { onTogglePin(session) },
+                onDelete = { onDeleteSession(session) }
             )
         }
     }
@@ -209,86 +251,158 @@ private fun SessionList(
  * - 时间: 13sp, 灰色
  * - 预览: 13sp, 灰色, 单行截断
  * - 右箭头: 灰色
+ * - 置顶图标: 蓝色图钉（BUG-00060新增）
+ *
+ * BUG-00060: 支持长按显示操作菜单
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SessionListItem(
     session: AiAdvisorSession,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onRename: () -> Unit,
+    onTogglePin: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val dimensions = AdaptiveDimensions.current
+    var showMenu by remember { mutableStateOf(false) }
     
     Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .background(iOSCardBackground)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 会话图标
-            Box(
+        Box {
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(iOSBlue.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = { showMenu = true }
+                    )
+                    .background(iOSCardBackground)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // 会话图标（带置顶标识）
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(iOSBlue.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.ChatBubbleOutline,
+                        contentDescription = null,
+                        tint = iOSBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                // BUG-00060: 置顶图标
+                if (session.isPinned) {
+                    Icon(
+                        imageVector = Icons.Filled.PushPin,
+                        contentDescription = "已置顶",
+                        tint = iOSBlue,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .size(14.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(if (session.isPinned) 8.dp else 12.dp))
+
+                // 信息区域
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = session.title,
+                            fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
+                            fontWeight = FontWeight.Medium,
+                            color = iOSTextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = formatRelativeTime(session.updatedAt),
+                            fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
+                            color = iOSTextSecondary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // 消息数量预览
+                    Text(
+                        text = if (session.messageCount > 0) "${session.messageCount}条消息" else "暂无消息",
+                        fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
+                        color = iOSTextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 右箭头
                 Icon(
-                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = iOSBlue,
+                    tint = Color(0xFFC7C7CC),
                     modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // 信息区域
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = session.title,
-                        fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
-                        fontWeight = FontWeight.Medium,
-                        color = iOSTextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = formatRelativeTime(session.updatedAt),
-                        fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
-                        color = iOSTextSecondary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // 最后消息预览
-                Text(
-                    text = session.title,
-                    fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
-                    color = iOSTextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+            // BUG-00060: 长按菜单
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("重命名") },
+                    onClick = {
+                        showMenu = false
+                        onRename()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = null
+                        )
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(if (session.isPinned) "取消置顶" else "置顶") },
+                    onClick = {
+                        showMenu = false
+                        onTogglePin()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (session.isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = null
+                        )
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("删除", color = Color.Red) },
+                    onClick = {
+                        showMenu = false
+                        onDelete()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null,
+                            tint = Color.Red
+                        )
+                    }
                 )
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // 右箭头
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = Color(0xFFC7C7CC),
-                modifier = Modifier.size(20.dp)
-            )
         }
 
         // 分隔线
@@ -405,4 +519,54 @@ private fun formatRelativeTime(timestamp: Long): String {
             sdf.format(Date(timestamp))
         }
     }
+}
+
+/**
+ * BUG-00060: 重命名会话对话框
+ *
+ * @param currentTitle 当前会话标题
+ * @param onConfirm 确认回调，传入新标题
+ * @param onDismiss 取消回调
+ */
+@Composable
+private fun RenameSessionDialog(
+    currentTitle: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newTitle by remember { mutableStateOf(currentTitle) }
+    val dimensions = AdaptiveDimensions.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "重命名会话",
+                fontSize = dimensions.fontSizeTitle,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = newTitle,
+                onValueChange = { newTitle = it },
+                label = { Text("会话名称") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(newTitle) },
+                enabled = newTitle.isNotBlank()
+            ) {
+                Text("确定", color = iOSBlue)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", color = iOSTextSecondary)
+            }
+        }
+    )
 }
