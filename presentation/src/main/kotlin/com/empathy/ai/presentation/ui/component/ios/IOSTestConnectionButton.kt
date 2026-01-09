@@ -131,7 +131,7 @@ fun IOSTestConnectionButton(
                 isSuccess == false -> "连接失败"
                 else -> "测试连接"
             },
-            fontSize = 17.sp,
+            fontSize = dimensions.fontSizeTitle,  // BUG-00055: 使用响应式字体
             color = when {
                 isLoading -> iOSTextSecondary
                 isSuccess == true -> iOSGreen

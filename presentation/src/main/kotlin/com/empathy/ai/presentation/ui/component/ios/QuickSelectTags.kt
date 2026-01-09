@@ -72,7 +72,7 @@ private fun QuickSelectTagItem(
     
     Text(
         text = text,
-        fontSize = 14.sp,
+        fontSize = dimensions.fontSizeBody,  // BUG-00055: 使用响应式字体
         color = iOSTextSecondary,
         modifier = modifier
             .clip(RoundedCornerShape(dimensions.cornerRadiusSmall))

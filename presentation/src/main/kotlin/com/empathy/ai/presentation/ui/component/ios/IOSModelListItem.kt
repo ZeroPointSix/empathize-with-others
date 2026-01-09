@@ -24,7 +24,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +33,7 @@ import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.component.text.AutoSizeText
 
 /**
  * iOS风格模型列表项
@@ -105,13 +105,12 @@ fun IOSModelListItem(
             .padding(horizontal = dimensions.spacingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 模型名称
-        Text(
+        // 模型名称 - BUG-00054: 使用AutoSizeText自动缩小字体以适应长文本
+        AutoSizeText(
             text = displayName.ifBlank { modelId },
-            fontSize = 17.sp,
+            maxFontSize = dimensions.fontSizeBody,
+            minFontSize = 10.sp,  // 最小字体10sp，保持可读性
             color = iOSTextPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
 
@@ -127,7 +126,7 @@ fun IOSModelListItem(
             ) {
                 Text(
                     text = "默认",
-                    fontSize = 12.sp,
+                    fontSize = dimensions.fontSizeCaption,  // BUG-00052: 使用响应式字体替代固定12.sp
                     fontWeight = FontWeight.Medium,
                     color = Color.White
                 )

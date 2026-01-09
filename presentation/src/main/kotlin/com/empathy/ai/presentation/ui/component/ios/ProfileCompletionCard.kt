@@ -74,13 +74,13 @@ fun ProfileCompletionCard(
         ) {
             Text(
                 text = "画像完整度",
-                fontSize = 13.sp,
+                fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = "$tagCount 个标签",
-                fontSize = 11.sp,
+                fontSize = dimensions.fontSizeXSmall,  // BUG-00055: 使用响应式字体
                 color = iOSTextSecondary
             )
         }
@@ -90,7 +90,7 @@ fun ProfileCompletionCard(
         // 百分比
         Text(
             text = "$completeness%",
-            fontSize = 28.sp,
+            fontSize = dimensions.fontSizeLargeTitle,  // BUG-00055: 使用响应式字体
             fontWeight = FontWeight.Bold,
             color = iOSBlue
         )

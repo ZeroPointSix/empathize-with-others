@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,6 +41,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,13 +62,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.empathy.ai.domain.model.AiAdvisorConversation
 import com.empathy.ai.domain.model.AiAdvisorSession
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
@@ -192,60 +194,65 @@ fun AiAdvisorChatScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(iOSBackground)
-            .imePadding()
-    ) {
-        // iOS导航栏
-        // PRD-00029: 修改导航栏，左侧☰→会话历史，右侧👤→联系人选择
-        IOSChatNavigationBar(
-            contactName = uiState.contactName,
-            onMenuClick = onNavigateToSessionHistory,
-            onContactClick = onNavigateToContactSelect
-        )
+    // BUG-00052修复：使用Scaffold正确处理系统栏padding
+    Scaffold(
+        containerColor = iOSBackground
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)  // 使用Scaffold提供的paddingValues处理状态栏
+                .background(iOSBackground)
+                .imePadding()
+        ) {
+            // iOS导航栏
+            // PRD-00029: 修改导航栏，左侧☰→会话历史，右侧👤→联系人选择
+            IOSChatNavigationBar(
+                contactName = uiState.contactName,
+                onMenuClick = onNavigateToSessionHistory,
+                onContactClick = onNavigateToContactSelect
+            )
 
-        // BUG-00049修复: 移除SessionChips组件
-        // PRD-00029要求: 会话历史应通过左上角☰图标进入独立的会话历史页面
-        // 不应在对话界面直接显示会话选择器
+            // BUG-00049修复: 移除SessionChips组件
+            // PRD-00029要求: 会话历史应通过左上角☰图标进入独立的会话历史页面
+            // 不应在对话界面直接显示会话选择器
 
-        // 对话内容
-        Box(modifier = Modifier.weight(1f)) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = iOSBlue
-                    )
-                }
-                uiState.conversations.isEmpty() && !uiState.isStreaming -> {
-                    EmptyChatState(modifier = Modifier.align(Alignment.Center))
-                }
-                else -> {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // 已完成的对话消息
-                        items(
-                            items = uiState.conversations,
-                            key = { it.id }
-                        ) { conversation ->
-                            ChatBubble(
-                                conversation = conversation,
-                                onRetry = { viewModel.retryMessage(conversation) },
-                                onDelete = { viewModel.deleteMessage(conversation.id) },
-                                onRegenerate = { viewModel.regenerateLastMessage() },
-                                isLastAiMessage = conversation == uiState.conversations.lastOrNull { it.messageType == MessageType.AI }
-                            )
-                        }
+            // 对话内容
+            Box(modifier = Modifier.weight(1f)) {
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = iOSBlue
+                        )
+                    }
+                    uiState.conversations.isEmpty() && !uiState.isStreaming -> {
+                        EmptyChatState(modifier = Modifier.align(Alignment.Center))
+                    }
+                    else -> {
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // 已完成的对话消息
+                            items(
+                                items = uiState.conversations,
+                                key = { it.id }
+                            ) { conversation ->
+                                ChatBubble(
+                                    conversation = conversation,
+                                    onRetry = { viewModel.retryMessage(conversation) },
+                                    onDelete = { viewModel.deleteMessage(conversation.id) },
+                                    onRegenerate = { viewModel.regenerateLastMessage() },
+                                    isLastAiMessage = conversation == uiState.conversations.lastOrNull { it.messageType == MessageType.AI }
+                                )
+                            }
 
-                        // 流式响应中的消息
-                        // BUG-044-P0-001/P0-005修复：添加更严格的渲染条件
-                        // BUG-045-P0-NEW-001修复：完成后也继续显示，直到内容被清空
-                        // BUG-047-P0-V5-001修复：检查消息是否已在conversations列表中且有内容，避免双气泡
+                            // 流式响应中的消息
+                            // BUG-044-P0-001/P0-005修复：添加更严格的渲染条件
+                            // BUG-045-P0-NEW-001修复：完成后也继续显示，直到内容被清空
+                            // BUG-047-P0-V5-001修复：检查消息是否已在conversations列表中且有内容，避免双气泡
                         // BUG-048-V4修复：增强检测逻辑，检查消息状态不是PENDING或有内容
                         val messageAlreadyInList = uiState.currentStreamingMessageId?.let { messageId ->
                             uiState.conversations.any { conv ->
@@ -294,7 +301,8 @@ fun AiAdvisorChatScreen(
             onSend = viewModel::sendMessage,
             onStopGeneration = viewModel::stopGeneration
         )
-    }
+        }  // Column结束
+    }  // Scaffold结束
 
     // 联系人选择对话框
     if (uiState.showContactSelector) {
@@ -321,6 +329,8 @@ fun AiAdvisorChatScreen(
  * - 左侧：☰ 菜单图标 → 点击进入会话历史页面
  * - 中间：标题 "AI 军师" + 联系人名称
  * - 右侧：👤 联系人图标 → 点击进入联系人选择页面
+ * 
+ * BUG-00052修复：使用AdaptiveDimensions响应式字体
  */
 @Composable
 private fun IOSChatNavigationBar(
@@ -328,6 +338,8 @@ private fun IOSChatNavigationBar(
     onMenuClick: () -> Unit,
     onContactClick: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = iOSCardBackground,
@@ -363,7 +375,7 @@ private fun IOSChatNavigationBar(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "心语助手",
-                        fontSize = 17.sp,
+                        fontSize = dimensions.fontSizeTitle,  // BUG-00052: 使用响应式字体替代 17.sp
                         fontWeight = FontWeight.SemiBold,
                         color = iOSTextPrimary
                     )
@@ -371,7 +383,7 @@ private fun IOSChatNavigationBar(
                 if (contactName.isNotEmpty()) {
                     Text(
                         text = "与 $contactName 的对话",
-                        fontSize = 12.sp,
+                        fontSize = dimensions.fontSizeCaption,  // BUG-00052: 使用响应式字体替代 12.sp
                         color = iOSTextSecondary
                     )
                 }
@@ -440,6 +452,7 @@ private fun SessionChip(
         label = "chipBackground"
     )
     val textColor = if (isSelected) Color.White else iOSTextPrimary
+    val dimensions = AdaptiveDimensions.current
 
     Surface(
         onClick = onClick,
@@ -461,7 +474,7 @@ private fun SessionChip(
             }
             Text(
                 text = text,
-                fontSize = 14.sp,
+                fontSize = dimensions.fontSizeBody,  // BUG-00052: 使用响应式字体替代 14.sp
                 color = textColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -483,6 +496,7 @@ private fun ChatBubble(
     val isCancelled = conversation.sendStatus == SendStatus.CANCELLED
     val isPending = conversation.sendStatus == SendStatus.PENDING
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val dimensions = AdaptiveDimensions.current
 
     // BUG-045-P0-NEW-003修复：不渲染空内容的PENDING状态AI消息
     // 这些消息由StreamingMessageBubbleSimple组件显示
@@ -538,8 +552,8 @@ private fun ChatBubble(
                         text = conversation.content,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         color = Color.White,
-                        fontSize = 16.sp,
-                        lineHeight = 22.sp
+                        fontSize = dimensions.fontSizeSubtitle,  // BUG-00052: 使用响应式字体替代 16.sp
+                        lineHeight = dimensions.fontSizeSubtitle * 1.375f  // BUG-00052: 使用响应式行高替代 22.sp
                     )
                 } else {
                     // AI消息：Markdown渲染
@@ -570,7 +584,7 @@ private fun ChatBubble(
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("重试", fontSize = 12.sp, color = iOSBlue)
+                        Text("重试", fontSize = dimensions.fontSizeCaption, color = iOSBlue)  // BUG-00052: 使用响应式字体替代 12.sp
                     }
                     Row(
                         modifier = Modifier.clickable(onClick = onDelete),
@@ -583,7 +597,7 @@ private fun ChatBubble(
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("删除", fontSize = 12.sp, color = iOSRed)
+                        Text("删除", fontSize = dimensions.fontSizeCaption, color = iOSRed)  // BUG-00052: 使用响应式字体替代 12.sp
                     }
                 }
             }
@@ -603,7 +617,7 @@ private fun ChatBubble(
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("重新生成", fontSize = 12.sp, color = iOSBlue)
+                    Text("重新生成", fontSize = dimensions.fontSizeCaption, color = iOSBlue)  // BUG-00052: 使用响应式字体替代 12.sp
                 }
             }
         }
@@ -637,6 +651,8 @@ private fun ChatInputBar(
     onSend: () -> Unit,
     onStopGeneration: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = iOSCardBackground,
@@ -662,7 +678,7 @@ private fun ChatInputBar(
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     enabled = !isSending && !isStreaming,
                     textStyle = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = dimensions.fontSizeSubtitle,  // BUG-00052: 使用响应式字体替代 16.sp
                         color = iOSTextPrimary
                     ),
                     cursorBrush = SolidColor(iOSBlue),
@@ -671,7 +687,7 @@ private fun ChatInputBar(
                             if (inputText.isEmpty()) {
                                 Text(
                                     text = if (isStreaming) "AI正在回复..." else "输入你的问题...",
-                                    fontSize = 16.sp,
+                                    fontSize = dimensions.fontSizeSubtitle,  // BUG-00052: 使用响应式字体替代 16.sp
                                     color = iOSTextSecondary
                                 )
                             }
@@ -740,6 +756,8 @@ private fun ErrorBanner(
     message: String,
     onDismiss: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -755,12 +773,12 @@ private fun ErrorBanner(
             Text(
                 text = message,
                 modifier = Modifier.weight(1f),
-                fontSize = 14.sp,
+                fontSize = dimensions.fontSizeBody,  // BUG-00052: 使用响应式字体替代 14.sp
                 color = iOSRed
             )
             Text(
                 text = "关闭",
-                fontSize = 14.sp,
+                fontSize = dimensions.fontSizeBody,  // BUG-00052: 使用响应式字体替代 14.sp
                 color = iOSBlue
             )
         }
@@ -773,6 +791,8 @@ private fun ContactSelectorDialog(
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -813,7 +833,7 @@ private fun ContactSelectorDialog(
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = contact.name,
-                                fontSize = 17.sp,
+                                fontSize = dimensions.fontSizeTitle,  // BUG-00052: 使用响应式字体替代 17.sp
                                 color = iOSTextPrimary
                             )
                         }
@@ -877,6 +897,7 @@ private fun SwitchConfirmDialog(
  * 空状态欢迎区域
  *
  * BUG-00049修复: 按PRD-00029要求显示共情Logo和标语
+ * BUG-00052修复: 使用AdaptiveDimensions响应式字体
  *
  * PRD-00029要求:
  * - 显示共情Logo（渐变心形，从#FF6B6B到#FF8E53）
@@ -890,6 +911,7 @@ private fun EmptyChatState(modifier: Modifier = Modifier) {
     // 共情Logo渐变色
     val gradientStart = Color(0xFFFF6B6B)
     val gradientEnd = Color(0xFFFF8E53)
+    val dimensions = AdaptiveDimensions.current
     
     Column(
         modifier = modifier
@@ -921,7 +943,7 @@ private fun EmptyChatState(modifier: Modifier = Modifier) {
         // "共情"标题
         Text(
             text = "共情",
-            fontSize = 22.sp,
+            fontSize = dimensions.fontSizeHeadline,  // BUG-00052: 使用响应式字体替代 22.sp
             fontWeight = FontWeight.SemiBold,
             color = iOSTextPrimary
         )
@@ -929,7 +951,7 @@ private fun EmptyChatState(modifier: Modifier = Modifier) {
         // "懂你所想，助你表达"标语
         Text(
             text = "懂你所想，助你表达",
-            fontSize = 14.sp,
+            fontSize = dimensions.fontSizeBody,  // BUG-00052: 使用响应式字体替代 14.sp
             color = iOSTextSecondary
         )
     }
