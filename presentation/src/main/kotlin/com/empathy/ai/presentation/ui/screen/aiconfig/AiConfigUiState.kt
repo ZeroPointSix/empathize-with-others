@@ -42,6 +42,9 @@ data class AiConfigUiState(
     // TD-00025: 高级选项表单字段
     val formTemperature: Float = 0.7f,
     val formMaxTokens: Int = 4096,
+    
+    // BUG-00054 第二轮修复：表单超时设置（毫秒）
+    val formTimeoutMs: Long = 30000L,
 
     // 表单验证错误
     val formNameError: String? = null,

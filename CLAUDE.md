@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Kotlin 2.0.21 + K2编译器
 - Gradle 8.13 + AGP 8.7.3
 - Jetpack Compose BOM 2024.12.01
-- Hilt 2.52 + Room v11
+- Hilt 2.52 + Room v12
 - 最低SDK: 24, 目标SDK: 35
 
 ## 常用命令
@@ -62,25 +62,41 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 | data | 24 | 6 | Repository、Database |
 | app | 140 | 25 | Application初始化、服务测试 |
 
+### 模块文件统计（2026-01-09最新扫描）
+
+| 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
+|------|--------|---------|------------|------|
+| **:domain** | 183 | 43 | 0 | 226 |
+| **:data** | 84 | 24 | 6 | 114 |
+| **:presentation** | 279 | 45 | 7 | 331 |
+| **:app** | 27 | 140 | 25 | 192 |
+| **总计** | **573** | **252** | **38** | **863** |
+
 **最后更新**: 2026-01-09
 
 ## 架构结构
 
 ```
 共情AI助手 (根)
-├── app/           应用入口、DI配置、Android服务
-├── domain/        纯Kotlin业务层，无Android依赖
-│   ├── model/     业务模型
-│   ├── repository 仓库接口
-│   └── usecase/   业务用例
-├── data/          数据层实现
-│   ├── local/     Room数据库、SharedPreferences
-│   ├── remote/    Retrofit网络请求
-│   └── repository 仓库实现
-└── presentation/  UI层
-    ├── ui/        Compose组件
-    ├── viewmodel/ ViewModel
-    └── navigation 导航系统
+├── app/              应用入口、DI配置、Android服务
+├── build/            自定义Gradle插件
+├── domain/           纯Kotlin业务层，无Android依赖
+│   ├── model/        业务模型
+│   ├── repository    仓库接口
+│   ├── usecase/      业务用例
+│   ├── service/      领域服务
+│   └── util/         工具类
+├── data/             数据层实现
+│   ├── local/        Room数据库、SharedPreferences
+│   ├── remote/       Retrofit网络请求
+│   ├── repository/   仓库实现
+│   └── parser/       AI响应解析器
+├── presentation/     UI层
+│   ├── ui/           Compose组件
+│   ├── viewmodel/    ViewModel
+│   ├── navigation/   导航系统
+│   └── theme/        主题配置
+└── Rules/            多AI协作规则
 ```
 
 ### 依赖方向
@@ -99,11 +115,22 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 ```
 用户选择文本 → 无障碍服务捕获 → FloatingWindowService → ChatViewModel → AI分析 → 结果悬浮窗显示
 ```
+- **悬浮窗服务**: `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
+- **无障碍服务**: 捕获用户选中的文本并传递给悬浮窗服务
 
 **每日总结流程**
 ```
 应用启动 → 检查跨天 → SummarizeDailyConversationsUseCase → AI生成 → DailySummary保存 → 本地通知
 ```
+- **触发条件**: 跨天或首次运行
+- **清理策略**: 每7天清理90天前的对话记录
+
+**AI 请求流程**
+```
+ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
+```
+- **多服务商支持**: OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火
+- **响应解析**: 增强型 JSON 解析 + 多级降级策略
 
 ## 关键系统组件
 
@@ -112,10 +139,23 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - **位置**: `domain/src/main/kotlin/com/empathy/ai/domain/service/PrivacyEngine.kt`
 - **功能**: 数据脱敏、加密存储、密钥硬件级保护
 
+### 数据清理系统
+- **管理类**: `DataCleanupManager`
+- **清理周期**: 每7天执行一次
+- **清理范围**: 90天前的对话记录和每日总结
+- **保留数据**: 联系人画像、大脑标签、用户配置等核心数据
+
 ### 版本更新插件
 - **插件**: `VersionUpdatePlugin`
 - **配置位置**: `app/build.gradle.kts`
 - **功能**: 版本更新管理、备份保留（最大50个备份，保留30天）
+- **实现**: `build/src/main/kotlin/com/empathy/ai/build/VersionUpdatePlugin.kt`
+
+### AI 服务商系统
+- **接口定义**: `domain/src/main/kotlin/com/empathy/ai/domain/model/AiProvider.kt`
+- **仓库实现**: `data/src/main/kotlin/com/empathy/ai/data/repository/AiProviderRepositoryImpl.kt`
+- **支持服务商**: OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火
+- **模型配置**: 每个服务商支持自定义模型名称和 API 版本
 
 ### 开发者模式
 - **功能**: 系统提示词管理、调试工具
@@ -203,9 +243,10 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 项目使用 `Rules/workspace-rules.md` 和 `Rules/WORKSPACE.md` 管理多AI协作状态：
 
 **任务开始前必须**：
-1. 读取 `Rules/WORKSPACE.md` 检查是否有其他AI正在执行相关任务
-2. 检查资源锁定状态和待处理冲突
-3. 在 WORKSPACE 中记录任务开始信息
+1. 尝试读取 `Rules/WORKSPACE.md`（如不存在则跳过）
+2. 检查是否有其他AI正在执行相关任务
+3. 检查资源锁定状态和待处理冲突
+4. 在 WORKSPACE 中记录任务开始信息
 
 **任务执行中必须**：
 - 重要里程碑实时更新到 WORKSPACE

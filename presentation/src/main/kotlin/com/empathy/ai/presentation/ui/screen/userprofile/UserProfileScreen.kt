@@ -86,8 +86,11 @@ private fun UserProfileScreenContent(
 ) {
     val dimensions = AdaptiveDimensions.current
     
-    // 维度展开状态管理
-    var expandedDimensions by remember { mutableStateOf(setOf<String>()) }
+    // BUG-00053 P2修复：维度展开状态管理
+    // 初始化时所有基础维度默认展开，避免空集合导致的逻辑问题
+    var expandedDimensions by remember { 
+        mutableStateOf(UserProfileDimension.entries.map { it.name }.toSet()) 
+    }
     
     Box(
         modifier = modifier
@@ -389,6 +392,7 @@ private fun IOSUserProfileTopBar(
  * 
  * BUG-00037 修复：使用uiState.getTagsForDimension()获取标签（包含待保存的变更）
  * 使用LocalAddTag等本地操作事件，避免每次操作都刷新列表
+ * BUG-00053 P2修复：修复闭包捕获问题和默认展开逻辑
  */
 @Composable
 private fun IOSBaseDimensionsContent(
@@ -405,10 +409,12 @@ private fun IOSBaseDimensionsContent(
         verticalArrangement = Arrangement.spacedBy(dimensions.spacingMediumSmall)
     ) {
         UserProfileDimension.entries.forEach { dimension ->
+            // BUG-00053 P2修复：捕获当前迭代值，避免闭包捕获问题
+            val currentDimensionName = dimension.name
             val dimensionIcon = getDimensionIcon(dimension)
             val dimensionColor = getDimensionColor(dimension)
             // BUG-00037: 使用uiState.getTagsForDimension()获取标签（包含待保存的变更）
-            val currentTags = uiState.getTagsForDimension(dimension.name)
+            val currentTags = uiState.getTagsForDimension(currentDimensionName)
             
             DimensionCard(
                 icon = dimensionIcon,
@@ -417,12 +423,14 @@ private fun IOSBaseDimensionsContent(
                 description = dimension.description,
                 tags = currentTags,
                 presetTags = dimension.presetTags.filter { it !in currentTags },
-                isExpanded = dimension.name in expandedDimensions || expandedDimensions.isEmpty(),
-                onToggleExpand = { onToggleExpand(dimension.name) },
-                onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(dimension.name)) },
-                onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(dimension.name, tag)) },
+                // BUG-00053 P2修复：移除 expandedDimensions.isEmpty() 的默认展开逻辑
+                isExpanded = currentDimensionName in expandedDimensions,
+                // BUG-00053 P2修复：使用捕获的当前值
+                onToggleExpand = { onToggleExpand(currentDimensionName) },
+                onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(currentDimensionName)) },
+                onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(currentDimensionName, tag)) },
                 // BUG-00037: 使用LocalAddTag本地操作，避免每次操作都刷新列表
-                onSelectPresetTag = { tag -> onEvent(UserProfileUiEvent.LocalAddTag(dimension.name, tag)) }
+                onSelectPresetTag = { tag -> onEvent(UserProfileUiEvent.LocalAddTag(currentDimensionName, tag)) }
             )
         }
     }
@@ -462,6 +470,7 @@ private fun getDimensionColor(dimension: UserProfileDimension): Color {
  * 自定义维度内容 - iOS风格
  * 
  * BUG-00037 修复：使用uiState获取自定义维度标签（包含待保存的变更）
+ * BUG-00053 P2修复：修复闭包捕获问题和默认展开逻辑
  */
 @Composable
 private fun IOSCustomDimensionsContent(
@@ -496,15 +505,19 @@ private fun IOSCustomDimensionsContent(
         // 自定义维度列表
         // BUG-00037: 使用uiState.getCustomDimensionTags()获取标签（包含待保存的变更）
         profile.customDimensions.forEach { (name, _) ->
-            val currentTags = uiState.getCustomDimensionTags(name)
+            // BUG-00053 P2修复：捕获当前迭代值，避免闭包捕获问题
+            val currentDimensionName = name
+            val currentTags = uiState.getCustomDimensionTags(currentDimensionName)
             IOSCustomDimensionCard(
-                name = name,
+                name = currentDimensionName,
                 tags = currentTags,
-                isExpanded = name in expandedDimensions || expandedDimensions.isEmpty(),
-                onToggleExpand = { onToggleExpand(name) },
-                onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(name)) },
-                onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(name, tag)) },
-                onDeleteDimension = { onEvent(UserProfileUiEvent.ShowDeleteDimensionConfirm(name)) }
+                // BUG-00053 P2修复：移除 expandedDimensions.isEmpty() 的默认展开逻辑
+                isExpanded = currentDimensionName in expandedDimensions,
+                // BUG-00053 P2修复：使用捕获的当前值
+                onToggleExpand = { onToggleExpand(currentDimensionName) },
+                onAddTag = { onEvent(UserProfileUiEvent.ShowAddTagDialog(currentDimensionName)) },
+                onEditTag = { tag -> onEvent(UserProfileUiEvent.ShowEditTagDialog(currentDimensionName, tag)) },
+                onDeleteDimension = { onEvent(UserProfileUiEvent.ShowDeleteDimensionConfirm(currentDimensionName)) }
             )
         }
 

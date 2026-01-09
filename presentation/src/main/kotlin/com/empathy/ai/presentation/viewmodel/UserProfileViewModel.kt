@@ -588,6 +588,7 @@ class UserProfileViewModel @Inject constructor(
      * 本地删除标签（不立即保存到Repository）
      * 
      * BUG-00038 P5修复：区分基础维度和自定义维度
+     * BUG-00053 P1修复：删除标签后关闭编辑对话框
      */
     private fun localDeleteTag(dimensionKey: String, tag: String) {
         if (isBaseDimension(dimensionKey)) {
@@ -601,6 +602,8 @@ class UserProfileViewModel @Inject constructor(
                     pendingChanges = newPendingChanges,
                     hasUnsavedChanges = true,
                     showDeleteConfirmDialog = false,
+                    showEditTagDialog = false,  // BUG-00053: 关闭编辑对话框
+                    currentEditTag = null,      // BUG-00053: 清除当前编辑标签
                     currentEditDimension = null,
                     pendingDeleteTag = null
                 )
@@ -616,6 +619,8 @@ class UserProfileViewModel @Inject constructor(
                     pendingCustomDimensions = newPendingCustomDimensions,
                     hasUnsavedChanges = true,
                     showDeleteConfirmDialog = false,
+                    showEditTagDialog = false,  // BUG-00053: 关闭编辑对话框
+                    currentEditTag = null,      // BUG-00053: 清除当前编辑标签
                     currentEditDimension = null,
                     pendingDeleteTag = null
                 )
