@@ -41,12 +41,15 @@ interface AiAdvisorDao {
     suspend fun insertSession(session: AiAdvisorSessionEntity)
 
     /**
-     * 获取联系人的所有会话（按更新时间倒序）
+     * 获取联系人的所有会话（按置顶和更新时间排序）
+     *
+     * BUG-00060: 置顶会话优先显示
+     * 排序规则：置顶会话在前，然后按更新时间倒序
      */
     @Query("""
         SELECT * FROM ai_advisor_sessions 
         WHERE contact_id = :contactId 
-        ORDER BY updated_at DESC
+        ORDER BY is_pinned DESC, updated_at DESC
     """)
     suspend fun getSessionsByContact(contactId: String): List<AiAdvisorSessionEntity>
 
@@ -105,6 +108,41 @@ interface AiAdvisorDao {
      */
     @Query("DELETE FROM ai_advisor_sessions WHERE contact_id = :contactId")
     suspend fun deleteSessionsByContact(contactId: String)
+
+    /**
+     * 获取联系人的最新空会话
+     *
+     * BUG-00060: 空会话复用功能
+     * 业务规则:
+     * - 空会话定义：message_count == 0 的会话
+     * - 返回最近更新的空会话
+     *
+     * @param contactId 联系人ID
+     * @return 最新的空会话Entity，不存在则返回null
+     */
+    @Query("""
+        SELECT * FROM ai_advisor_sessions 
+        WHERE contact_id = :contactId AND message_count = 0
+        ORDER BY updated_at DESC
+        LIMIT 1
+    """)
+    suspend fun getLatestEmptySession(contactId: String): AiAdvisorSessionEntity?
+
+    /**
+     * 更新会话置顶状态
+     *
+     * BUG-00060: 会话置顶功能
+     *
+     * @param sessionId 会话ID
+     * @param isPinned 是否置顶
+     * @param updatedAt 更新时间
+     */
+    @Query("""
+        UPDATE ai_advisor_sessions 
+        SET is_pinned = :isPinned, updated_at = :updatedAt 
+        WHERE id = :sessionId
+    """)
+    suspend fun updateSessionPinned(sessionId: String, isPinned: Boolean, updatedAt: Long)
 
     // ============================================================================
     // 对话操作

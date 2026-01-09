@@ -91,7 +91,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         AiAdvisorConversationEntity::class,
         AiAdvisorMessageBlockEntity::class  // FD-00028: 流式对话消息块
     ],
-    version = 15,  // BUG-00048-V4: 版本升级（添加related_user_message_id字段）
+    version = 16,  // BUG-00060: 版本升级（添加is_pinned字段）
     exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)

@@ -144,10 +144,16 @@ object NavRoutes {
     /**
      * AI军师对话页面
      * TD-00026: 添加AI_ADVISOR_CHAT路由常量
+     * BUG-00058: 添加createNew参数支持新建会话
+     * BUG-00061: 添加sessionId参数支持加载指定会话
      * 参数: contactId (String) - 联系人ID
+     * 参数: createNew (Boolean) - 是否创建新会话，默认false
+     * 参数: sessionId (String?) - 要加载的会话ID，可选
      */
-    const val AI_ADVISOR_CHAT = "ai_advisor_chat/{contactId}"
+    const val AI_ADVISOR_CHAT = "ai_advisor_chat/{contactId}?createNew={createNew}&sessionId={sessionId}"
     const val AI_ADVISOR_CHAT_ARG_ID = "contactId"
+    const val AI_ADVISOR_CHAT_ARG_CREATE_NEW = "createNew"
+    const val AI_ADVISOR_CHAT_ARG_SESSION_ID = "sessionId"  // BUG-00061: 新增
 
     /**
      * AI军师会话历史页面
@@ -209,9 +215,24 @@ object NavRoutes {
     /**
      * 创建AI军师对话路由
      * TD-00026: 添加aiAdvisorChat辅助函数
+     * BUG-00058: 添加createNew参数支持新建会话
+     * BUG-00061: 添加sessionId参数支持加载指定会话
+     * 
+     * @param contactId 联系人ID
+     * @param createNew 是否创建新会话，默认false
+     * @param sessionId 要加载的会话ID，可选。当从会话历史点击时传入
      */
-    fun aiAdvisorChat(contactId: String): String {
-        return "ai_advisor_chat/$contactId"
+    fun aiAdvisorChat(
+        contactId: String, 
+        createNew: Boolean = false,
+        sessionId: String? = null
+    ): String {
+        val base = "ai_advisor_chat/$contactId?createNew=$createNew"
+        return if (sessionId != null) {
+            "$base&sessionId=$sessionId"
+        } else {
+            base
+        }
     }
 
     /**

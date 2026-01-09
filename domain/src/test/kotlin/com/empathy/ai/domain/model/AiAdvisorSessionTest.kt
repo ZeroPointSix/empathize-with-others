@@ -85,6 +85,20 @@ class AiAdvisorSessionTest {
         assertTrue(session.isActive)
     }
 
+    /**
+     * BUG-00060: 验证工厂方法默认值：新创建的会话isPinned为false
+     *
+     * 业务规则:
+     * - 新会话默认不置顶
+     * - 置顶状态由用户手动设置
+     */
+    @Test
+    fun `create should set isPinned to false by default`() {
+        val session = AiAdvisorSession.create(contactId = "contact1")
+
+        assertFalse(session.isPinned)
+    }
+
     @Test
     fun `create should set createdAt and updatedAt`() {
         val beforeCreate = System.currentTimeMillis()
@@ -97,32 +111,35 @@ class AiAdvisorSessionTest {
     }
 
     @Test
-    fun `session with same id should be equal`() {
+    fun `session with same id should be equal when all fields match`() {
         val id = "test-session-id"
+        val timestamp = 1000L
         val session1 = AiAdvisorSession(
             id = id,
             contactId = "contact1",
             title = "Title 1",
-            createdAt = 1000L,
-            updatedAt = 1000L,
+            createdAt = timestamp,
+            updatedAt = timestamp,
             messageCount = 0,
-            isActive = true
+            isActive = true,
+            isPinned = false
         )
         val session2 = AiAdvisorSession(
             id = id,
-            contactId = "contact2",
-            title = "Title 2",
-            createdAt = 2000L,
-            updatedAt = 2000L,
-            messageCount = 5,
-            isActive = false
+            contactId = "contact1",
+            title = "Title 1",
+            createdAt = timestamp,
+            updatedAt = timestamp,
+            messageCount = 0,
+            isActive = true,
+            isPinned = false
         )
 
         assertEquals(session1, session2)
     }
 
     @Test
-    fun `session with different id should not be equal`() {
+    fun `sessions with different id should not be equal`() {
         val session1 = AiAdvisorSession.create(contactId = "contact1")
         val session2 = AiAdvisorSession.create(contactId = "contact1")
 

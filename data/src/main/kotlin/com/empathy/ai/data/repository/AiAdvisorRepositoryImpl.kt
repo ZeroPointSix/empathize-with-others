@@ -128,6 +128,38 @@ class AiAdvisorRepositoryImpl @Inject constructor(
             }
         }
 
+    /**
+     * 获取联系人的最新空会话
+     *
+     * BUG-00060: 空会话复用功能
+     * 用于检查是否存在可复用的空会话，避免重复创建。
+     *
+     * @param contactId 联系人ID
+     * @return 最新的空会话，不存在则返回null
+     */
+    override suspend fun getLatestEmptySession(contactId: String): Result<AiAdvisorSession?> =
+        withContext(ioDispatcher) {
+            runCatching {
+                aiAdvisorDao.getLatestEmptySession(contactId)?.toDomain()
+            }
+        }
+
+    /**
+     * 更新会话置顶状态
+     *
+     * BUG-00060: 会话置顶功能
+     *
+     * @param sessionId 会话ID
+     * @param isPinned 是否置顶
+     * @return 更新结果
+     */
+    override suspend fun updateSessionPinned(sessionId: String, isPinned: Boolean): Result<Unit> =
+        withContext(ioDispatcher) {
+            runCatching {
+                aiAdvisorDao.updateSessionPinned(sessionId, isPinned, System.currentTimeMillis())
+            }
+        }
+
     override suspend fun deleteSessionsByContact(contactId: String): Result<Unit> =
         withContext(ioDispatcher) {
             runCatching {

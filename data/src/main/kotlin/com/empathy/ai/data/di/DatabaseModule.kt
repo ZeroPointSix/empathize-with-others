@@ -740,10 +740,39 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移 v15 → v16
+     *
+     * BUG-00060: 会话管理增强功能
+     *
+     * 变更内容：
+     * 1. ai_advisor_sessions表添加is_pinned字段
+     *    用于支持会话置顶功能，置顶会话在列表中优先显示
+     *
+     * 功能说明：
+     * - 空会话复用：避免重复创建空会话
+     * - 会话自动命名：用第一条消息作为标题
+     * - 会话重命名：支持手动修改会话名称
+     * - 会话置顶：支持置顶重要会话
+     */
+    @Suppress("ClassName")
+    internal val MIGRATION_15_16 = object : Migration(15, 16) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // BUG-00060: 添加is_pinned字段，支持会话置顶功能
+            // Entity定义: @ColumnInfo(name = "is_pinned", defaultValue = "0")
+            db.execSQL(
+                """
+                ALTER TABLE ai_advisor_sessions 
+                ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
-     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5→v6→v7→v8→v9→v10→v11）
+     * - 使用完整的迁移脚本链（v1→v2→v3→v4→v5→v6→v7→v8→v9→v10→v11→v12→v13→v14→v15→v16）
      * - 已移除fallbackToDestructiveMigration()，确保数据安全
      * - 如果迁移失败，应用会抛出异常而不是删除数据
      *
@@ -762,6 +791,7 @@ object DatabaseModule {
      * - v12→v13: 添加AI军师对话功能表（TD-00026）
      * - v13→v14: 添加AI军师消息块表（FD-00028流式对话升级）
      * - v14→v15: 添加related_user_message_id字段（BUG-00048-V4修复）
+     * - v15→v16: 添加is_pinned字段（BUG-00060会话管理增强）
      */
     @Provides
     @Singleton
@@ -785,7 +815,8 @@ object DatabaseModule {
                 MIGRATION_11_12,
                 MIGRATION_12_13,
                 MIGRATION_13_14,  // FD-00028: 流式对话升级
-                MIGRATION_14_15   // BUG-00048-V4: 终止后重新生成消息角色错误修复
+                MIGRATION_14_15,  // BUG-00048-V4: 终止后重新生成消息角色错误修复
+                MIGRATION_15_16   // BUG-00060: 会话管理增强（置顶功能）
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据

@@ -241,11 +241,28 @@ fun NavGraph(
             arguments = listOf(
                 navArgument(NavRoutes.AI_ADVISOR_CHAT_ARG_ID) {
                     type = NavType.StringType
+                },
+                // BUG-00058: 添加createNew参数
+                navArgument(NavRoutes.AI_ADVISOR_CHAT_ARG_CREATE_NEW) {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+                // BUG-00061: 添加sessionId参数，支持加载指定会话
+                navArgument(NavRoutes.AI_ADVISOR_CHAT_ARG_SESSION_ID) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
                 }
             )
         ) { backStackEntry ->
             val contactId = backStackEntry.arguments?.getString(NavRoutes.AI_ADVISOR_CHAT_ARG_ID) ?: ""
+            // BUG-00058: 获取createNew参数
+            val createNew = backStackEntry.arguments?.getBoolean(NavRoutes.AI_ADVISOR_CHAT_ARG_CREATE_NEW) ?: false
+            // BUG-00061: 获取sessionId参数
+            val sessionId = backStackEntry.arguments?.getString(NavRoutes.AI_ADVISOR_CHAT_ARG_SESSION_ID)
             AiAdvisorChatScreen(
+                createNew = createNew,  // BUG-00058: 传递createNew参数
+                sessionId = sessionId,  // BUG-00061: 传递sessionId参数
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToContact = { newContactId ->
                     navController.navigate(NavRoutes.aiAdvisorChat(newContactId)) {
@@ -279,14 +296,14 @@ fun NavGraph(
                 contactId = contactId,
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToChat = { sessionId ->
-                    // 加载指定会话并返回对话界面
-                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                    // BUG-00061修复：传递sessionId参数，加载指定会话
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId, sessionId = sessionId)) {
                         popUpTo(NavRoutes.AI_ADVISOR_SESSIONS) { inclusive = true }
                     }
                 },
                 onCreateNewSession = {
-                    // 创建新会话并返回对话界面
-                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                    // BUG-00058修复：传递createNew=true，触发新会话创建
+                    navController.navigate(NavRoutes.aiAdvisorChat(contactId, createNew = true)) {
                         popUpTo(NavRoutes.AI_ADVISOR_SESSIONS) { inclusive = true }
                     }
                 }

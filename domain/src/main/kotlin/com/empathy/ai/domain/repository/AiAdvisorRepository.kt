@@ -109,6 +109,34 @@ interface AiAdvisorRepository {
     suspend fun deleteSession(sessionId: String): Result<Unit>
 
     /**
+     * 获取联系人的最新空会话
+     *
+     * BUG-00060: 空会话复用功能
+     * 业务规则:
+     * - 空会话定义：messageCount == 0 的会话
+     * - 返回最近更新的空会话，用于复用
+     * - 如果不存在空会话，返回null
+     *
+     * @param contactId 联系人ID
+     * @return 最新的空会话，不存在则返回null
+     */
+    suspend fun getLatestEmptySession(contactId: String): Result<AiAdvisorSession?>
+
+    /**
+     * 更新会话置顶状态
+     *
+     * BUG-00060: 会话置顶功能
+     * 业务规则:
+     * - 置顶会话在列表中优先显示
+     * - 多个置顶会话按更新时间排序
+     *
+     * @param sessionId 会话ID
+     * @param isPinned 是否置顶
+     * @return 更新结果
+     */
+    suspend fun updateSessionPinned(sessionId: String, isPinned: Boolean): Result<Unit>
+
+    /**
      * 删除联系人的所有会话
      *
      * @param contactId 联系人ID

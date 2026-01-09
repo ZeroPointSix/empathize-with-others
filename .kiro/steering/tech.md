@@ -101,7 +101,7 @@
 - **模拟**：MockK 1.13.13
 - **协程测试**：kotlinx-coroutines-test 1.9.0
 - **UI 测试**：Compose UI Test + Espresso 3.6.1
-- **Room 测试**：androidx-room-testing 2.6.1
+- **Room 测试**：androidx.room-testing 2.6.1
 
 ## 常用命令
 
@@ -221,11 +221,12 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 新增AppDispatcherModule：统一协程调度器管理
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
-  - 数据库版本v12，完整Migration链（1→12）
+  - 数据库版本v16，完整Migration链（1→16）
   - Flow响应式数据流
   - 提示词模板和备份表完整实现
   - 记忆系统表：conversation_logs, daily_summaries, failed_summary_tasks
   - API用量统计表：api_usage_records（TD-00025新增）
+  - AI军师会话表：ai_advisor_sessions, ai_advisor_conversations, ai_advisor_message_blocks（v16新增）
   - Paging 3.3.5分页加载支持
   - PromptFileStorage迁移逻辑优化（TD-00015已完成）
 - **网络通信**: Retrofit + OkHttp + Moshi 完整实现
@@ -233,7 +234,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - OkHttp 4.12.0 + Logging拦截器
   - OkHttpClientFactory：动态代理切换机制（TD-00025新增）
   - Moshi 1.15.1 Kotlin代码生成
-  - 支持多种AI服务商：OpenAI、DeepSeek等
+  - 支持多种AI服务商：OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火
   - 网络代理支持：HTTP/HTTPS/SOCKS4/SOCKS5（TD-00025新增）
   - ProxyPreferences：加密存储代理配置（TD-00025新增）
 - **异步编程**: Kotlin Coroutines + Flow 完整实现
@@ -268,6 +269,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 悬浮球状态指示与拖动相关测试
   - MaxHeightScrollView相关测试
   - 提示词设置优化相关测试（TD-00015已完成）
+  - AI军师功能测试套件（BUG-00058/59/60/61）
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
@@ -400,3 +402,26 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ✅ 新增开发者模式入口，支持调试工具和系统提示词管理
   - ✅ 系统提示词管理功能，支持查看和调试AI提示词配置
   - ✅ 提供调试日志查看、性能监控等开发者工具
+
+- **AI军师对话界面可读性问题**: 已完成BUG-00057修复
+  - ✅ 优化对话界面布局和样式
+  - ✅ 提升长文本显示效果
+  - ✅ 完善Markdown渲染支持
+
+### 🔄 进行中的问题修复
+
+- **BUG-00058**: 新建会话功能失效问题
+  - 问题：点击"新建会话"后未创建新会话，而是跳转到旧会话
+  - 修复方案：通过导航参数传递 `createNew=true` 标志
+
+- **BUG-00059**: 中断生成后重新生成消息角色错乱问题
+  - 问题：流式对话终止后重新生成，消息角色显示错误
+  - 状态：已分析，待实现
+
+- **BUG-00060**: 会话管理增强需求
+  - 问题：会话管理功能不完善
+  - 状态：已识别需求，待实现
+
+- **BUG-00061**: 会话历史跳转失败问题
+  - 问题：从会话历史跳转到聊天页面失败
+  - 状态：已识别问题，待实现
