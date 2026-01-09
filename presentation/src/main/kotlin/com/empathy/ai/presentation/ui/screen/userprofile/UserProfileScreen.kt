@@ -332,7 +332,7 @@ private fun IOSUserProfileTopBar(
                 }
                 Text(
                     text = "个人画像",
-                    fontSize = 17.sp,
+                    fontSize = dimensions.fontSizeTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = iOSTextPrimary
                 )
@@ -348,7 +348,7 @@ private fun IOSUserProfileTopBar(
                         Text(
                             text = "保存",
                             color = iOSBlue,
-                            fontSize = 17.sp,
+                            fontSize = dimensions.fontSizeTitle,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -487,7 +487,7 @@ private fun IOSCustomDimensionsContent(
         } else {
             Text(
                 text = "已达到自定义维度上限（最多10个）",
-                fontSize = 13.sp,
+                fontSize = dimensions.fontSizeCaption,
                 color = iOSRed,
                 modifier = Modifier.padding(vertical = dimensions.spacingSmall)
             )
@@ -544,7 +544,7 @@ private fun IOSAddDimensionButton(
         Spacer(modifier = Modifier.width(dimensions.spacingSmall))
         Text(
             text = "添加自定义维度",
-            fontSize = 15.sp,
+            fontSize = dimensions.fontSizeSubtitle,
             color = iOSBlue,
             fontWeight = FontWeight.Medium
         )
@@ -607,12 +607,12 @@ private fun IOSEmptyCustomDimensionCard(
         Spacer(modifier = Modifier.height(dimensions.spacingSmall))
         Text(
             text = "暂无自定义维度",
-            fontSize = 15.sp,
+            fontSize = dimensions.fontSizeSubtitle,
             color = iOSTextPrimary
         )
         Text(
             text = "点击上方按钮添加您的专属维度",
-            fontSize = 13.sp,
+            fontSize = dimensions.fontSizeCaption,
             color = iOSTextSecondary
         )
     }
