@@ -21,8 +21,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.BrandWarmGold
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSTextPrimary
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 import kotlinx.coroutines.launch
 
 /**
@@ -43,6 +46,7 @@ fun PromptInputField(
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    val dimensions = AdaptiveDimensions.current
 
     // 自定义选中颜色
     val customTextSelectionColors = TextSelectionColors(
@@ -65,20 +69,22 @@ fun PromptInputField(
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 200.dp)
                     .bringIntoViewRequester(bringIntoViewRequester),
+                // BUG-00057修复：使用iOSTextPrimary深灰色，行高1.5倍
                 textStyle = TextStyle(
-                    fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-                    lineHeight = 24.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontSize = dimensions.fontSizeSubtitle,  // 16sp
+                    lineHeight = dimensions.fontSizeSubtitle * 1.5f,  // 24sp (1.5倍行高)
+                    color = iOSTextPrimary  // 深灰色，对比度充足
                 ),
                 cursorBrush = SolidColor(BrandWarmGold),
                 decorationBox = { innerTextField ->
                     Box {
                         if (value.isEmpty()) {
+                            // BUG-00057修复：占位符使用iOSTextSecondary，不用透明度
                             Text(
                                 text = placeholder,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                lineHeight = 24.sp
+                                fontSize = dimensions.fontSizeSubtitle,
+                                lineHeight = dimensions.fontSizeSubtitle * 1.5f,
+                                color = iOSTextSecondary  // 使用辅助文字颜色
                             )
                         }
                         innerTextField()

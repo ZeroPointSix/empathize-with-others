@@ -28,9 +28,11 @@ import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.AiAdvisorMessageBlock
 import com.empathy.ai.domain.model.MessageBlockStatus
 import com.empathy.ai.domain.model.MessageBlockType
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSTextPrimary
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.halilibo.richtext.commonmark.Markdown
 import com.halilibo.richtext.ui.material3.RichText
 
@@ -140,6 +142,8 @@ private fun MainTextBubble(
     content: String,
     isStreaming: Boolean
 ) {
+    val dimensions = AdaptiveDimensions.current
+    
     Surface(
         shape = RoundedCornerShape(
             topStart = 18.dp,
@@ -154,11 +158,12 @@ private fun MainTextBubble(
             if (content.isEmpty() && isStreaming) {
                 // 等待内容时显示占位
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // BUG-00057修复：使用iOSTextSecondary替代透明度，行高改为1.5倍
                     Text(
                         text = "正在生成",
-                        fontSize = 16.sp,
-                        lineHeight = 22.sp,
-                        color = iOSTextPrimary.copy(alpha = 0.5f)
+                        fontSize = dimensions.fontSizeSubtitle,  // 16sp
+                        lineHeight = dimensions.fontSizeSubtitle * 1.5f,  // 24sp (1.5倍行高)
+                        color = iOSTextSecondary  // 使用辅助文字颜色，不用透明度
                     )
                     StreamingCursor()
                 }

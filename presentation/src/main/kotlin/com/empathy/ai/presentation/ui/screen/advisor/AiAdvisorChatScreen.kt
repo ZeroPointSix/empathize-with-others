@@ -548,21 +548,31 @@ private fun ChatBubble(
                 // FD-00030: AI消息使用Markdown渲染，用户消息使用普通Text
                 if (isUser) {
                     // 用户消息：普通文本
+                    // BUG-00057修复：行高改为1.5倍
                     Text(
                         text = conversation.content,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         color = Color.White,
-                        fontSize = dimensions.fontSizeSubtitle,  // BUG-00052: 使用响应式字体替代 16.sp
-                        lineHeight = dimensions.fontSizeSubtitle * 1.375f  // BUG-00052: 使用响应式行高替代 22.sp
+                        fontSize = dimensions.fontSizeSubtitle,  // 16sp
+                        lineHeight = dimensions.fontSizeSubtitle * 1.5f  // 24sp (1.5倍行高)
                     )
                 } else {
                     // AI消息：Markdown渲染
-                    RichText(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
-                    ) {
-                        Markdown(
-                            content = conversation.content
+                    // BUG-00057修复：为RichText配置默认样式（颜色、字号、行高）
+                    androidx.compose.material3.ProvideTextStyle(
+                        value = TextStyle(
+                            color = iOSTextPrimary,  // 使用深色文字
+                            fontSize = dimensions.fontSizeSubtitle,  // 16sp
+                            lineHeight = dimensions.fontSizeSubtitle * 1.5f  // 24sp (1.5倍行高)
                         )
+                    ) {
+                        RichText(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Markdown(
+                                content = conversation.content
+                            )
+                        }
                     }
                 }
             }

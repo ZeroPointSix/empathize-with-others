@@ -271,12 +271,12 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 573个Kotlin主源码文件 + 290个测试文件
+- **代码统计**: 574个Kotlin主源码文件 + 298个测试文件
   - domain模块：226个文件（183主源码 + 43测试，业务模型 + Repository接口 + UseCase + Service + Util）
-  - data模块：114个文件（84主源码 + 24测试 + 6 Android测试，Room + Retrofit + Repository实现 + Parser + DI模块）
-  - presentation模块：331个文件（279主源码 + 45测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
-  - app模块：192个文件（27主源码 + 140测试 + 25 Android测试，应用入口 + Android服务 + DI聚合）
-  - **总计**: 863个文件（573主源码 + 252单元测试 + 38 Android测试 + 未跟踪文件）
+  - data模块：115个文件（84主源码 + 25测试 + 6 Android测试，Room + Retrofit + Repository实现 + Parser + DI模块）
+  - presentation模块：337个文件（280主源码 + 50测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
+  - app模块：194个文件（27主源码 + 141测试 + 26 Android测试，应用入口 + Android服务 + DI聚合）
+  - **总计**: 872个文件（574主源码 + 259单元测试 + 39 Android测试）
 
 ### ⚠️ 部分实现/待完善功能
 

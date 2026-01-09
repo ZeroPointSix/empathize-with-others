@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.BlockMetadata
+import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 
@@ -75,6 +76,7 @@ fun ThinkingSection(
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    val dimensions = AdaptiveDimensions.current
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -136,10 +138,11 @@ fun ThinkingSection(
                 Column {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row {
+                        // BUG-00057修复：字号从14sp改为16sp，行高改为1.5倍
                         Text(
                             text = content,
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp,
+                            fontSize = dimensions.fontSizeSubtitle,  // 16sp
+                            lineHeight = dimensions.fontSizeSubtitle * 1.5f,  // 24sp (1.5倍行高)
                             color = iOSTextSecondary
                         )
                         if (isStreaming) {

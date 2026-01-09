@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.empathy.ai.presentation.theme.BrandWarmOrange
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.ui.screen.prompt.PromptEditorUiState
 
 /**
@@ -41,8 +42,9 @@ fun CharacterCounter(
         Text(
             text = "$charCount/$maxLength",
             style = MaterialTheme.typography.bodySmall,
+            // BUG-00057修复：使用iOSTextSecondary替代透明度
             color = if (color == Color.Unspecified) {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                iOSTextSecondary
             } else {
                 color
             }
