@@ -1,6 +1,7 @@
 package com.empathy.ai.presentation.ui.screen.aiconfig
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,13 +12,22 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +38,7 @@ import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSGreen
 import com.empathy.ai.presentation.theme.iOSSeparator
+import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.ui.component.ios.DraggableModelItem
 import com.empathy.ai.presentation.ui.component.ios.DraggableModelList
 import com.empathy.ai.presentation.ui.component.ios.IOSFormField
@@ -37,6 +48,7 @@ import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
 import com.empathy.ai.presentation.ui.component.ios.IOSTestConnectionButton
 import com.empathy.ai.presentation.ui.component.ios.TemperatureSlider
+import com.empathy.ai.presentation.ui.component.ios.TimeoutInput
 import com.empathy.ai.presentation.ui.component.ios.TokenLimitInput
 import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
 
@@ -95,6 +107,7 @@ fun AddProviderScreen(
  * 
  * BUG-00037 P4修复：添加底部安全区域处理
  * BUG-00040修复：支持编辑模式
+ * BUG-00054修复：添加手动添加模型对话框
  */
 @Composable
 private fun AddProviderScreenContent(
@@ -105,6 +118,9 @@ private fun AddProviderScreenContent(
     isEditMode: Boolean = false
 ) {
     val dimensions = AdaptiveDimensions.current
+    
+    // BUG-00054: 添加模型对话框状态
+    var showAddModelDialog by remember { mutableStateOf(false) }
     
     Column(
         modifier = modifier
@@ -186,14 +202,14 @@ private fun AddProviderScreenContent(
                         showDivider = true,
                         onClick = { onEvent(AiConfigUiEvent.FetchModels) }
                     )
-                    // 手动添加按钮
+                    // 手动添加按钮 - BUG-00054修复：添加点击事件
                     IOSSettingsItem(
                         icon = Icons.Default.Add,
                         iconBackgroundColor = iOSBlue,
                         title = "手动添加模型",
                         showArrow = false,
                         showDivider = uiState.formModels.isNotEmpty(),
-                        onClick = { /* TODO: 显示添加模型对话框 */ }
+                        onClick = { showAddModelDialog = true }
                     )
                     // TD-00025 T4-03: 使用DraggableModelList替换原有模型列表
                     if (uiState.formModels.isNotEmpty()) {
@@ -221,6 +237,7 @@ private fun AddProviderScreenContent(
             }
 
             // 高级选项分组 - TD-00025 T3-04: 集成TemperatureSlider和TokenLimitInput
+            // BUG-00054: 添加TimeoutInput
             item {
                 IOSSettingsSection(
                     title = "高级选项",
@@ -248,8 +265,35 @@ private fun AddProviderScreenContent(
                         onValueChange = { onEvent(AiConfigUiEvent.UpdateFormMaxTokens(it)) },
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
+                    
+                    // 分隔线
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(1.dp)
+                            .background(iOSSeparator)
+                    )
+                    
+                    // BUG-00054: 超时设置输入
+                    TimeoutInput(
+                        valueMs = uiState.formTimeoutMs,
+                        onValueChange = { onEvent(AiConfigUiEvent.UpdateFormTimeoutMs(it)) },
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                 }
             }
+        }
+        
+        // BUG-00054: 添加模型对话框
+        if (showAddModelDialog) {
+            AddModelDialog(
+                onDismiss = { showAddModelDialog = false },
+                onConfirm = { modelId, displayName ->
+                    onEvent(AiConfigUiEvent.AddFormModel(modelId, displayName))
+                    showAddModelDialog = false
+                }
+            )
         }
     }
 }
@@ -336,4 +380,88 @@ private fun AddProviderScreenEditModePreview() {
             onNavigateBack = {}
         )
     }
+}
+
+// ============================================================
+// 添加模型对话框
+// ============================================================
+
+/**
+ * 添加模型对话框
+ * 
+ * BUG-00054修复：从 ProviderFormDialog 复制并适配
+ */
+@Composable
+private fun AddModelDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (modelId: String, displayName: String) -> Unit
+) {
+    var modelId by remember { mutableStateOf("") }
+    var displayName by remember { mutableStateOf("") }
+    var modelIdError by remember { mutableStateOf<String?>(null) }
+
+    val focusManager = LocalFocusManager.current
+
+    IOSInputDialog(
+        title = "添加模型",
+        content = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = modelId,
+                    onValueChange = {
+                        modelId = it
+                        modelIdError = null
+                    },
+                    label = { Text("模型 ID *") },
+                    placeholder = { Text("例如：gpt-4") },
+                    isError = modelIdError != null,
+                    supportingText = modelIdError?.let { { Text(it) } },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = displayName,
+                    onValueChange = { displayName = it },
+                    label = { Text("显示名称") },
+                    placeholder = { Text("例如：GPT-4") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (modelId.isBlank()) {
+                                modelIdError = "模型 ID 不能为空"
+                            } else {
+                                onConfirm(modelId.trim(), displayName.trim())
+                            }
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmText = "添加",
+        dismissText = "取消",
+        onConfirm = {
+            if (modelId.isBlank()) {
+                modelIdError = "模型 ID 不能为空"
+                return@IOSInputDialog
+            }
+            onConfirm(modelId.trim(), displayName.trim())
+        },
+        onDismiss = onDismiss,
+        confirmEnabled = modelId.isNotBlank()
+    )
 }

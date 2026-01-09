@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.QueryStats
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -288,21 +287,6 @@ private fun ProviderListContent(
                     title = "用量统计",
                     showDivider = false,
                     onClick = { onEvent(AiConfigUiEvent.NavigateToUsageStats) }
-                )
-            }
-        }
-
-        // 高级设置分组
-        // BUG-00040修复：移除"最大Token数"（这是服务商级别配置，不是全局配置）
-        item {
-            IOSSettingsSection(title = "高级设置") {
-                IOSSettingsItem(
-                    icon = Icons.Default.Timer,
-                    iconBackgroundColor = iOSPurple,
-                    title = "请求超时",
-                    value = "${uiState.requestTimeout}秒",
-                    showDivider = false,
-                    onClick = { /* TODO: 实现请求超时设置 */ }
                 )
             }
         }
