@@ -54,9 +54,16 @@ import com.empathy.ai.presentation.viewmodel.AiAdvisorEntryViewModel
 fun AiAdvisorScreen(
     onNavigateToChat: (String) -> Unit,
     onNavigateToContactSelect: () -> Unit,
+    isVisible: Boolean = true,
     viewModel: AiAdvisorEntryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            viewModel.refreshNavigationTarget()
+        }
+    }
 
     // 根据偏好设置决定导航目标
     LaunchedEffect(uiState.navigationTarget) {

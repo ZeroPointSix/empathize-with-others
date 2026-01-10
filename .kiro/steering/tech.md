@@ -212,6 +212,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 悬浮球状态指示与拖动UI：流畅交互体验完整实现
   - MaxHeightScrollView：自适应高度滚动视图组件
   - PromptSettingsSection：提示词设置界面组件（TD-00015新增）
+  - **页面缓存机制**：BottomNavScaffold实现Tab页面内存缓存，消除切换黑屏（2026-01-10新增）
 - **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
   - 严格的层级分离和依赖规则
   - Hilt 2.52依赖注入完整配置
@@ -219,6 +220,8 @@ implementation("androidx.core:core-ktx:1.15.0")
   - ContactDetailTabViewModel：四标签页状态管理
   - SettingsViewModel：已更新，添加promptScenesOrdered属性（TD-00015）
   - 新增AppDispatcherModule：统一协程调度器管理
+  - **新增导航组件**：BottomNavTab、NonTabNavGraph、BottomNavScaffold（2026-01-10新增）
+  - **新增AI军师入口**：AiAdvisorScreen、AiAdvisorEntryViewModel（PRD-00029新增）
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
   - 数据库版本v16，完整Migration链（1→16）
@@ -279,6 +282,7 @@ implementation("androidx.core:core-ktx:1.15.0")
   - presentation模块：344个文件（280主源码 + 57测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
   - app模块：194个文件（27主源码 + 141测试 + 26 Android测试，应用入口 + Android服务 + DI聚合）
   - **总计**: 879个文件（574主源码 + 266单元测试 + 39 Android测试）
+  - **测试框架更新**: Compose UI Test + Espresso 3.6.1完整集成，35+个Android测试文件覆盖核心页面
 
 ### ⚠️ 部分实现/待完善功能
 
@@ -437,9 +441,21 @@ implementation("androidx.core:core-ktx:1.15.0")
 
 - **BUG-00063**: 联系人搜索功能优化
   - 问题：联系人搜索功能需要优化
+  - 状态：已修复，测试用例已验证，新增SearchModeContent组件（2026-01-10）
+
+- **BUG-00067**: 提示词功能优化（2026-01-10新增）
+  - 问题：提示词相关功能需要优化
   - 状态：已识别，待实现
 
-**文档版本**: 2.17
+- **BUG-00068**: AI对话输入框与配置回退及非Tab功能屏幕展示问题（2026-01-10新增）
+  - 问题：AI对话输入框与配置回退及非Tab功能屏幕展示存在问题
+  - 状态：已识别，待实现
+
+**文档版本**: 2.18
 **最后更新**: 2026-01-10
 **更新内容**:
-- 添加BUG-00064 AI手动总结功能修复到已解决列表
+- 添加页面缓存机制（BottomNavScaffold）到已实现列表
+- 添加新增导航组件（BottomNavTab、NonTabNavGraph、BottomNavScaffold）
+- 添加新增AI军师入口组件（AiAdvisorScreen、AiAdvisorEntryViewModel）
+- 更新BUG-00063状态为已修复
+- 添加BUG-00067/68新问题记录

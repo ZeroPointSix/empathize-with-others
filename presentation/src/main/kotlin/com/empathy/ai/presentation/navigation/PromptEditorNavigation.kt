@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.empathy.ai.domain.model.PromptScene
+import com.empathy.ai.presentation.navigation.NavRoutes
 import com.empathy.ai.presentation.ui.screen.prompt.PromptEditorScreen
 import java.net.URLEncoder
 
@@ -18,12 +19,14 @@ object PromptEditorRoutes {
     const val ARG_SCENE = "scene"
     const val ARG_CONTACT_ID = "contactId"
     const val ARG_CONTACT_NAME = "contactName"
+    const val ARG_SOURCE = "source"
 
     val FULL_ROUTE = "$ROUTE?" +
         "$ARG_MODE={$ARG_MODE}&" +
         "$ARG_SCENE={$ARG_SCENE}&" +
         "$ARG_CONTACT_ID={$ARG_CONTACT_ID}&" +
-        "$ARG_CONTACT_NAME={$ARG_CONTACT_NAME}"
+        "$ARG_CONTACT_NAME={$ARG_CONTACT_NAME}&" +
+        "$ARG_SOURCE={$ARG_SOURCE}"
 
     /**
      * 构建全局场景编辑路由
@@ -33,6 +36,16 @@ object PromptEditorRoutes {
      */
     fun globalScene(scene: PromptScene): String {
         return "$ROUTE?$ARG_MODE=global&$ARG_SCENE=${scene.name}"
+    }
+
+    /**
+     * 构建全局场景编辑路由（带来源标记）
+     *
+     * @param scene 场景类型
+     * @param source 来源标记
+     */
+    fun globalSceneWithSource(scene: PromptScene, source: String): String {
+        return "$ROUTE?$ARG_MODE=global&$ARG_SCENE=${scene.name}&$ARG_SOURCE=$source"
     }
 
     /**
@@ -77,11 +90,26 @@ fun NavGraphBuilder.promptEditorNavigation(
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
+            },
+            navArgument(PromptEditorRoutes.ARG_SOURCE) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             }
         )
-    ) {
+    ) { backStackEntry ->
+        val source = backStackEntry.arguments?.getString(PromptEditorRoutes.ARG_SOURCE)
         PromptEditorScreen(
-            onNavigateBack = { navController.popBackStack() }
+            onNavigateBack = {
+                if (source == NavRoutes.SOURCE_SETTINGS) {
+                    navController.navigate(NavRoutes.SETTINGS) {
+                        popUpTo(PromptEditorRoutes.FULL_ROUTE) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                } else {
+                    navController.popBackStack()
+                }
+            }
         )
     }
 }

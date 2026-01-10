@@ -116,6 +116,14 @@ class AiAdvisorEntryViewModel @Inject constructor(
     fun resetNavigationState() {
         _uiState.update { it.copy(navigationTarget = null) }
     }
+
+    /**
+     * 外部触发刷新导航目标
+     * 用于Tab缓存场景下重新进入页面时刷新导航。
+     */
+    fun refreshNavigationTarget() {
+        checkNavigationTarget()
+    }
 }
 
 /**

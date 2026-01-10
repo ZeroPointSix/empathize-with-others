@@ -93,6 +93,7 @@ import com.empathy.ai.presentation.viewmodel.ContactListViewModel
  * @param onNavigate 底部导航栏导航回调
  * @param onAddClick 添加按钮点击回调
  * @param currentRoute 当前路由（用于底部导航栏高亮）
+ * @param showBottomBar 是否显示底部导航栏
  * @param viewModel 联系人列表ViewModel
  * @param modifier Modifier
  * @see ContactListViewModel 管理页面状态和业务逻辑
@@ -105,6 +106,7 @@ fun ContactListScreen(
     onNavigate: (String) -> Unit = {},
     onAddClick: () -> Unit = { },
     currentRoute: String = NavRoutes.CONTACT_LIST,
+    showBottomBar: Boolean = true,
     viewModel: ContactListViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -118,6 +120,7 @@ fun ContactListScreen(
         onNavigate = onNavigate,
         onAddClick = onAddClick,  // 修复BUG-00031: 使用外部传入的回调，不要覆盖
         currentRoute = currentRoute,
+        showBottomBar = showBottomBar,
         modifier = modifier
     )
 }
@@ -137,22 +140,25 @@ private fun ContactListScreenContent(
     onNavigate: (String) -> Unit = {},
     onAddClick: () -> Unit = {},
     currentRoute: String = NavRoutes.CONTACT_LIST,
+    showBottomBar: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
         modifier = modifier,
         containerColor = iOSBackground,
         bottomBar = {
-            EmpathyBottomNavigation(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    when (route) {
-                        NavRoutes.SETTINGS -> onNavigateToSettings()
-                        else -> onNavigate(route)
-                    }
-                },
-                onAddClick = onAddClick
-            )
+            if (showBottomBar) {
+                EmpathyBottomNavigation(
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        when (route) {
+                            NavRoutes.SETTINGS -> onNavigateToSettings()
+                            else -> onNavigate(route)
+                        }
+                    },
+                    onAddClick = onAddClick
+                )
+            }
         }
     ) { paddingValues ->
         Box(

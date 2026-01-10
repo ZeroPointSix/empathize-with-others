@@ -103,6 +103,8 @@ object NavRoutes {
      * AI服务商配置页面
      */
     const val AI_CONFIG = "ai_config"
+    const val AI_CONFIG_ARG_SOURCE = "source"
+    const val AI_CONFIG_ROUTE = "ai_config?source={source}"
 
     /**
      * 用户画像页面
@@ -183,6 +185,9 @@ object NavRoutes {
     const val SYSTEM_PROMPT_EDIT = "system_prompt_edit/{scene}"
     const val SYSTEM_PROMPT_EDIT_ARG_SCENE = "scene"
 
+    const val SOURCE_SETTINGS = "settings_tab"
+    const val SOURCE_ADVISOR_CHAT = "advisor_chat"
+
     /**
      * 创建联系人详情路由
      */
@@ -241,6 +246,19 @@ object NavRoutes {
      */
     fun aiAdvisorSessions(contactId: String): String {
         return "ai_advisor_sessions/$contactId"
+    }
+
+    /**
+     * 创建AI配置路由
+     *
+     * @param source 进入来源，可选
+     */
+    fun aiConfig(source: String? = null): String {
+        return if (source.isNullOrEmpty()) {
+            AI_CONFIG
+        } else {
+            "ai_config?source=$source"
+        }
     }
 
     /**

@@ -138,7 +138,14 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 | data | `RepositoryModule.kt` | Repository 实现绑定 |
 | presentation | `ViewModelModule.kt` | ViewModel Factory |
 
-### 核心功能流程
+### 导航系统结构（2026-01-10更新）
+- **NavGraph.kt** - 主导航图，定义所有导航路由和导航图组合（支持Tab页面和非Tab页面分离）
+- **NavRoutes.kt** - 路由常量定义（contactList, contactDetail, chat, settings 等）
+- **BottomNavTab.kt** - 底部导航标签枚举（CONTACTS, AI_ADVISOR, SETTINGS）
+- **NonTabNavGraph.kt** - 非Tab页面导航容器，用于承载详情页等非Tab路由
+- **BottomNavScaffold.kt** - 带页面缓存的底部导航Scaffold（2026-01-10新增，解决Tab切换黑屏问题）
+- **PromptEditorNavigation.kt** - 提示词编辑器导航配置
+- **屏幕级导航**: `ContactDetailNavigation`, `PromptEditorNavigation` 等
 
 **悬浮窗+无障碍服务交互**
 ```
@@ -193,7 +200,8 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 ### 进行中的问题修复（2026-01-10）
 - **BUG-00062**: AI军师会话管理功能增强（已识别，待实现）
-- **BUG-00063**: 联系人搜索功能优化（已识别，待实现）
+- **BUG-00067**: 提示词功能优化（已识别，待实现）
+- **BUG-00068**: AI对话输入框与配置回退及非Tab功能屏幕展示问题（已识别，待实现）
 
 ### 组件复用系统
 
@@ -208,15 +216,21 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 **组件位置**: `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/`
 
-## Rules 工作区目录
+## Rules 多AI协作规则目录
 
-项目使用 `Rules/` 目录管理多AI协作状态：
+项目使用 `Rules/` 目录管理多AI协作状态（主目录）：
 
-| 文件/目录 | 用途 |
-|-----------|------|
-| `Rules/workspace-rules.md` | 多AI协作核心规则 |
-| `Rules/WORKSPACE.md` | 当前任务状态追踪 |
-| `Rules/ai-status.md` | AI工具状态监控 |
+| 目录 | 用途 | 规则内容 |
+|------|------|----------|
+| `Rules/` | 主协作规则目录 | 工作流规则、项目开发规范 |
+| `.kiro/steering/` | 项目决策文档 | 产品概览、技术栈、项目结构、快速开始 |
+| `.kiro/specs/` | 功能规格文档 | 需求、设计、任务分解文档 |
+| `.kiro/test/` | 测试用例文档 | 测试用例和测试指南 |
+
+**核心规则文件**:
+- `Rules/workspace-rules.md` - 多AI协作核心规则（强制执行）
+- `Rules/WORKSPACE.md` - 当前任务状态追踪
+- `Rules/项目开发规范.md` - 代码规范、命名约定
 
 **协作流程**:
 1. 任务开始前 → 读取 `Rules/WORKSPACE.md` 检查冲突
@@ -225,25 +239,30 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 ## 功能规格文档
 
-项目使用 `.kiro/specs/` 目录存储功能规格文档：
+项目使用 `.kiro/specs/` 目录存储功能规格文档，`.kiro/test/` 存储测试用例：
 
 | 目录 | 内容 |
 |------|------|
 | `.kiro/specs/` | 需求、设计、任务分解文档 |
 | `.kiro/specs/_archived/` | 已归档的历史文档 |
+| `.kiro/steering/` | 产品决策、quick-start 指南 |
+| `.kiro/commands/` | 命令模板（QuickBuild, QuickTest 等） |
+| `.kiro/test/` | 测试用例和测试指南 |
 
-典型规格文档结构：
+**典型规格文档结构**:
 - `requirements.md` - 需求定义
 - `design.md` - 设计方案
 - `tasks.md` - 任务分解
 
+**当前分支**: `PRD34`（基于 Git）
+
 ## 模块文档
 
 详细架构信息参考各模块文档：
-- [domain/CLAUDE.md](./domain/CLAUDE.md) - 领域层详细文档
-- [data/CLAUDE.md](./data/CLAUDE.md) - 数据层详细文档
-- [presentation/CLAUDE.md](./presentation/CLAUDE.md) - 表现层详细文档
-- [app/src/main/java/com/empathy/ai/app/CLAUDE.md](./app/src/main/java/com/empathy/ai/app/CLAUDE.md) - 应用层详细文档
+- [domain/CLAUDE.md](./domain/CLAUDE.md) - 领域层详细文档（纯Kotlin业务逻辑）
+- [data/CLAUDE.md](./data/CLAUDE.md) - 数据层详细文档（Room/Retrofit实现）
+- [presentation/CLAUDE.md](./presentation/CLAUDE.md) - 表现层详细文档（Compose UI/ViewModel）
+- [app/src/main/java/com/empathy/ai/app/CLAUDE.md](./app/src/main/java/com/empathy/ai/app/CLAUDE.md) - 应用层详细文档（Application/Service）
 
 ## 编码规范
 
