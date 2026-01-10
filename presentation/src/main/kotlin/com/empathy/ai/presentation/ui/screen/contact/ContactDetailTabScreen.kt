@@ -501,6 +501,19 @@ private fun FactStreamTabContent(
             }
         )
     }
+
+    // BUG-00066: 编辑标签对话框
+    if (uiState.showEditBrainTagDialog && uiState.editingBrainTag != null) {
+        com.empathy.ai.presentation.ui.component.dialog.EditBrainTagDialog(
+            tag = uiState.editingBrainTag,
+            onConfirm = { tagId, newContent, newType ->
+                onEvent(ContactDetailUiEvent.ConfirmEditBrainTag(tagId, newContent, newType))
+            },
+            onDismiss = {
+                onEvent(ContactDetailUiEvent.CancelEditBrainTag)
+            }
+        )
+    }
     
     // TD-00012: 编辑事实对话框
     if (uiState.showEditFactDialog && uiState.editingFact != null) {
@@ -563,6 +576,24 @@ private fun PersonaTabContent(
             onEvent(ContactDetailUiEvent.DeleteFactById(fact.id))
         }
     )
+    
+    // BUG-00066: 编辑事实对话框（画像标签页）
+    if (uiState.showEditFactDialog && uiState.editingFact != null) {
+        com.empathy.ai.presentation.ui.component.dialog.EditFactDialog(
+            fact = uiState.editingFact,
+            onDismiss = { onEvent(ContactDetailUiEvent.CancelEditFact) },
+            onSave = { newKey, newValue ->
+                onEvent(ContactDetailUiEvent.ConfirmEditFact(
+                    uiState.editingFact.id,
+                    newKey,
+                    newValue
+                ))
+            },
+            onDelete = {
+                onEvent(ContactDetailUiEvent.DeleteFactById(uiState.editingFact.id))
+            }
+        )
+    }
 }
 
 /**

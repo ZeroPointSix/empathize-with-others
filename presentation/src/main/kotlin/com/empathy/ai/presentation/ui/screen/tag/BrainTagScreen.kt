@@ -19,6 +19,7 @@ import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.AppSpacing
 import com.empathy.ai.presentation.ui.component.chip.TagChip
+import com.empathy.ai.presentation.ui.component.dialog.EditBrainTagDialog
 import com.empathy.ai.presentation.ui.component.dialog.IOSAlertDialog
 import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
@@ -166,7 +167,8 @@ private fun BrainTagScreenContent(
                     TagList(
                         tags = uiState.displayTags,
                         searchQuery = uiState.searchQuery,
-                        onDeleteTag = { tagId -> onEvent(BrainTagUiEvent.DeleteTag(tagId)) }
+                        onDeleteTag = { tagId -> onEvent(BrainTagUiEvent.DeleteTag(tagId)) },
+                        onEditTag = { tag -> onEvent(BrainTagUiEvent.StartEditTag(tag)) }
                     )
                 }
             }
@@ -185,6 +187,17 @@ private fun BrainTagScreenContent(
         )
     }
 
+    // 编辑标签对话框 (BUG-00066)
+    if (uiState.showEditDialog && uiState.editingTag != null) {
+        EditBrainTagDialog(
+            tag = uiState.editingTag,
+            onConfirm = { tagId, newContent, newType ->
+                onEvent(BrainTagUiEvent.ConfirmEditTag(tagId, newContent, newType))
+            },
+            onDismiss = { onEvent(BrainTagUiEvent.CancelEditTag) }
+        )
+    }
+
     // 错误提示 - iOS风格
     uiState.error?.let { error ->
         IOSAlertDialog(
@@ -200,12 +213,19 @@ private fun BrainTagScreenContent(
 
 /**
  * 标签列表
+ *
+ * @param tags 标签列表
+ * @param searchQuery 搜索关键词
+ * @param onDeleteTag 删除标签回调
+ * @param onEditTag 编辑标签回调 (BUG-00066)
+ * @param modifier Modifier
  */
 @Composable
 private fun TagList(
     tags: List<BrainTag>,
     searchQuery: String,
     onDeleteTag: (Long) -> Unit,
+    onEditTag: (BrainTag) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 过滤标签
@@ -242,6 +262,7 @@ private fun TagList(
                     text = tag.content,
                     tagType = tag.type,
                     onDelete = { onDeleteTag(tag.id) },
+                    onClick = { onEditTag(tag) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -269,6 +290,7 @@ private fun TagList(
                     text = tag.content,
                     tagType = tag.type,
                     onDelete = { onDeleteTag(tag.id) },
+                    onClick = { onEditTag(tag) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

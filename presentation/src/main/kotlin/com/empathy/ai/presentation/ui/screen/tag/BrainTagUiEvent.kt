@@ -1,5 +1,6 @@
 package com.empathy.ai.presentation.ui.screen.tag
 
+import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
 
 /**
@@ -44,6 +45,31 @@ sealed interface BrainTagUiEvent {
      * @param tagId 标签ID
      */
     data class DeleteTag(val tagId: Long) : BrainTagUiEvent
+
+    // === 编辑标签事件 (BUG-00066) ===
+
+    /**
+     * 开始编辑标签（显示编辑对话框）
+     * @param tag 要编辑的标签
+     */
+    data class StartEditTag(val tag: BrainTag) : BrainTagUiEvent
+
+    /**
+     * 确认编辑标签
+     * @param tagId 标签ID
+     * @param newContent 新的标签内容
+     * @param newType 新的标签类型
+     */
+    data class ConfirmEditTag(
+        val tagId: Long,
+        val newContent: String,
+        val newType: TagType
+    ) : BrainTagUiEvent
+
+    /**
+     * 取消编辑标签（隐藏编辑对话框）
+     */
+    data object CancelEditTag : BrainTagUiEvent
 
     // === 添加标签对话框事件 ===
 
