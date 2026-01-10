@@ -273,12 +273,12 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 574个Kotlin主源码文件 + 298个测试文件
+- **代码统计**: 574个Kotlin主源码文件 + 305个测试文件
   - domain模块：226个文件（183主源码 + 43测试，业务模型 + Repository接口 + UseCase + Service + Util）
   - data模块：115个文件（84主源码 + 25测试 + 6 Android测试，Room + Retrofit + Repository实现 + Parser + DI模块）
-  - presentation模块：337个文件（280主源码 + 50测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
+  - presentation模块：344个文件（280主源码 + 57测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
   - app模块：194个文件（27主源码 + 141测试 + 26 Android测试，应用入口 + Android服务 + DI聚合）
-  - **总计**: 872个文件（574主源码 + 259单元测试 + 39 Android测试）
+  - **总计**: 879个文件（574主源码 + 266单元测试 + 39 Android测试）
 
 ### ⚠️ 部分实现/待完善功能
 
@@ -435,9 +435,8 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 问题：联系人搜索功能需要优化
   - 状态：已识别，待实现
 
-**文档版本**: 2.15
+**文档版本**: 2.16
 **最后更新**: 2026-01-10
 **更新内容**:
-- 更新进行中的问题修复列表（BUG-00058/59/60/61已修复）
-- 更新模块文件统计（基于2026-01-10最新扫描）
-- 添加新识别的BUG-00062/63
+- 更新模块文件统计（presentation测试57个，总计879个文件）
+- 添加BUG-00064测试用例

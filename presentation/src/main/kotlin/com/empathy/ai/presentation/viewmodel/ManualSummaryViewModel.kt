@@ -7,9 +7,11 @@ import com.empathy.ai.domain.model.ConflictResult
 import com.empathy.ai.domain.model.DateRange
 import com.empathy.ai.domain.model.SummaryError
 import com.empathy.ai.domain.model.SummaryTask
+import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.usecase.ManualSummaryUseCase
 import com.empathy.ai.domain.usecase.SummaryException
 import com.empathy.ai.domain.util.DateRangeValidator
+import com.empathy.ai.domain.util.Logger
 import com.empathy.ai.domain.util.SummaryConflictChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -34,11 +36,17 @@ import javax.inject.Inject
  *
  * ## 关联文档
  * - PRD-00003: 联系人画像记忆系统需求
+ * - BUG-00064: AI总结功能未生效修复
  *
  * ## 核心数据流
  * ```
  * SelectConversation → LoadHistory → UserEdit → [AIAssist] → Save → UpdateProfile
  * ```
+ *
+ * ## BUG-00064 修复内容
+ * - 添加调试日志：追踪关键操作便于问题定位
+ * - 前置检查：在showDatePicker时检查AI服务商配置，避免静默失败
+ * - 友好提示：未配置AI服务商时显示明确的用户引导
  *
  * ## 关键业务概念
  * - **DateRange**: 日期范围选择，支持快捷选项和自定义范围
@@ -51,21 +59,30 @@ import javax.inject.Inject
  * - **草稿保护**: 未保存退出时提示用户保存
  * - **冲突检测**: 自动检测已存在的总结，避免重复
  * - **进度展示**: 长时间AI生成过程显示进度条
+ * - **前置检查**: 在功能入口处验证前置条件，提升用户体验
  *
  * ## 业务规则
  * - 总结必须关联具体联系人
  * - 敏感信息自动脱敏处理
  * - 保存后自动更新关系分数
  * - 日期范围有最大天数限制（防止Token超限）
+ * - 未配置AI服务商时禁止发起总结请求
  *
  * @see com.empathy.ai.presentation.ui.screen.ManualSummaryScreen
+ * @see BUG-00064-AI总结功能未生效-修复方案.md
  */
 @HiltViewModel
 class ManualSummaryViewModel @Inject constructor(
     private val manualSummaryUseCase: ManualSummaryUseCase,
     private val conflictChecker: SummaryConflictChecker,
-    private val dateRangeValidator: DateRangeValidator
+    private val dateRangeValidator: DateRangeValidator,
+    private val aiProviderRepository: AiProviderRepository,
+    private val logger: Logger
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "ManualSummaryViewModel"
+    }
 
     private val _uiState = MutableStateFlow(ManualSummaryUiState())
     val uiState: StateFlow<ManualSummaryUiState> = _uiState.asStateFlow()
@@ -95,20 +112,57 @@ class ManualSummaryViewModel @Inject constructor(
             is ManualSummaryUiEvent.DismissError -> dismissError()
             is ManualSummaryUiEvent.Reset -> reset()
             is ManualSummaryUiEvent.ClearNavigation -> clearNavigation()
+            is ManualSummaryUiEvent.DismissNoProviderWarning -> dismissNoProviderWarning()
         }
     }
 
     /**
      * 显示日期选择器
+     *
+     * BUG-00064修复：添加调试日志和AI服务商检查
      */
     private fun showDatePicker(contactId: String) {
+        logger.d(TAG, "showDatePicker called with contactId: $contactId")
+
+        viewModelScope.launch {
+            // 检查AI服务商配置
+            val provider = aiProviderRepository.getDefaultProvider().getOrNull()
+            if (provider == null) {
+                logger.w(TAG, "No default AI provider configured")
+                _uiState.update {
+                    it.copy(
+                        showNoProviderWarning = true,
+                        noProviderWarningMessage = "请先在设置中配置AI服务商"
+                    )
+                }
+                return@launch
+            }
+
+            logger.d(TAG, "AI provider found: ${provider.name}")
+
+            _uiState.update {
+                it.copy(
+                    contactId = contactId,
+                    showDatePicker = true,
+                    selectedDateRange = DateRange.lastSevenDays(),
+                    selectedQuickOption = QuickDateOption.LAST_7_DAYS,
+                    validationError = null
+                )
+            }
+
+            logger.d(TAG, "showDatePicker state updated, showDatePicker=${_uiState.value.showDatePicker}")
+        }
+    }
+
+    /**
+     * 关闭无AI服务商警告
+     */
+    private fun dismissNoProviderWarning() {
+        logger.d(TAG, "dismissNoProviderWarning called")
         _uiState.update {
             it.copy(
-                contactId = contactId,
-                showDatePicker = true,
-                selectedDateRange = DateRange.lastSevenDays(),
-                selectedQuickOption = QuickDateOption.LAST_7_DAYS,
-                validationError = null
+                showNoProviderWarning = false,
+                noProviderWarningMessage = null
             )
         }
     }
@@ -148,16 +202,28 @@ class ManualSummaryViewModel @Inject constructor(
 
     /**
      * 确认日期范围
+     *
+     * BUG-00064修复：添加调试日志
      */
     private fun confirmDateRange() {
         val state = _uiState.value
-        val contactId = state.contactId ?: return
-        val dateRange = state.selectedDateRange ?: return
+        val contactId = state.contactId ?: run {
+            logger.e(TAG, "confirmDateRange: contactId is null")
+            return
+        }
+        val dateRange = state.selectedDateRange ?: run {
+            logger.e(TAG, "confirmDateRange: dateRange is null")
+            return
+        }
+
+        logger.d(TAG, "confirmDateRange: contactId=$contactId, dateRange=${dateRange.getDisplayText()}")
 
         viewModelScope.launch {
             // 验证日期范围
+            logger.d(TAG, "Validating date range...")
             val validationResult = dateRangeValidator.validate(dateRange, contactId)
             if (validationResult.isFailure) {
+                logger.e(TAG, "Date range validation failed: ${validationResult.exceptionOrNull()?.message}")
                 _uiState.update {
                     it.copy(validationError = "验证失败，请重试")
                 }
@@ -166,12 +232,14 @@ class ManualSummaryViewModel @Inject constructor(
 
             when (val result = validationResult.getOrNull()) {
                 is DateRangeValidator.ValidationResult.Invalid -> {
+                    logger.w(TAG, "Date range invalid: ${result.message}")
                     _uiState.update {
                         it.copy(validationError = result.message)
                     }
                     return@launch
                 }
                 is DateRangeValidator.ValidationResult.Warning -> {
+                    logger.d(TAG, "Date range warning: ${result.message}")
                     _uiState.update {
                         it.copy(
                             showRangeWarning = true,
@@ -180,10 +248,13 @@ class ManualSummaryViewModel @Inject constructor(
                     }
                     return@launch
                 }
-                else -> {}
+                else -> {
+                    logger.d(TAG, "Date range validation passed")
+                }
             }
 
             // 检测冲突
+            logger.d(TAG, "Checking conflicts...")
             checkConflictAndProceed(contactId, dateRange)
         }
     }
@@ -273,12 +344,16 @@ class ManualSummaryViewModel @Inject constructor(
 
     /**
      * 开始总结
+     *
+     * BUG-00064修复：添加调试日志
      */
     private fun startSummary(
         contactId: String,
         dateRange: DateRange,
         conflictResolution: ConflictResolution?
     ) {
+        logger.d(TAG, "startSummary: contactId=$contactId, dateRange=${dateRange.getDisplayText()}, resolution=$conflictResolution")
+
         currentJob?.cancel()
         currentJob = viewModelScope.launch {
             _uiState.update {
@@ -293,11 +368,13 @@ class ManualSummaryViewModel @Inject constructor(
                 )
             }
 
+            logger.d(TAG, "Calling manualSummaryUseCase...")
             val result = manualSummaryUseCase(
                 contactId = contactId,
                 dateRange = dateRange,
                 conflictResolution = conflictResolution
             ) { progress, step ->
+                logger.d(TAG, "Progress: $progress, Step: $step")
                 _uiState.update {
                     it.copy(
                         task = it.task?.withProgress(progress, step)
@@ -307,6 +384,7 @@ class ManualSummaryViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { summaryResult ->
+                    logger.d(TAG, "Summary completed successfully: ${summaryResult.conversationCount} conversations")
                     _uiState.update {
                         it.copy(
                             showProgressDialog = false,
@@ -317,6 +395,7 @@ class ManualSummaryViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
+                    logger.e(TAG, "Summary failed: ${error.message}", error)
                     val summaryError = when (error) {
                         is SummaryException -> error.error
                         else -> SummaryError.Unknown(error.message ?: "未知错误")
