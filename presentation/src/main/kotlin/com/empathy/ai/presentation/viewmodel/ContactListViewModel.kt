@@ -216,7 +216,17 @@ class ContactListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 开始搜索模式
+     * 
+     * BUG-00063修复：先设置isSearching=true展开搜索框，
+     * 然后如果已有搜索词则执行搜索
+     */
     private fun startSearch() {
+        // 先设置搜索模式为true，展开搜索框
+        _uiState.update { it.copy(isSearching = true) }
+        
+        // 如果已有搜索词，执行搜索
         val currentState = _uiState.value
         if (currentState.searchQuery.isNotBlank()) {
             performSearch(currentState.searchQuery)
