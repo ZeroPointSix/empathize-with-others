@@ -72,24 +72,12 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 | data | 25 | 6 | Repository、Database |
 | app | 141 | 26 | Application初始化、服务测试 |
 
-**最新Bug回归测试**:
+**Bug回归测试**:
 - `BUG00058CreateNewSessionTest.kt` - 新建会话功能测试
 - `BUG00059RegenerateMessageRoleTest.kt` - 消息重新生成角色测试
 - `BUG00060SessionManagementTest.kt` - 会话管理增强测试
 - `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
 - `BUG00064ManualSummaryTest.kt` - AI手动总结功能测试
-
-### 模块文件统计（2026-01-10最新扫描）
-
-| 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
-|------|--------|---------|------------|------|
-| **:domain** | 183 | 43 | 0 | 226 |
-| **:data** | 84 | 25 | 6 | 115 |
-| **:presentation** | 280 | 57 | 7 | 344 |
-| **:app** | 27 | 141 | 26 | 194 |
-| **总计** | **574** | **266** | **39** | **879** |
-
-**最后更新**: 2026-01-10
 
 ## 架构结构
 
@@ -203,37 +191,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - **入口**: 设置页面 → 开发者选项
 - **用途**: 调试 AI 响应、查看日志、管理提示词
 
-### 最近完成的功能与修复（2026-01-09）
-- **BUG-00057**: AI军师对话界面可读性问题修复
-  - 优化对话界面布局和样式
-  - 提升长文本显示效果
-  - 完善Markdown渲染支持
-- **BUG-00053/54/56**: AI配置与用户画像多项问题修复
-  - 修复AI配置保存逻辑，确保配置变更正确持久化
-  - 修复用户画像数据加载问题，优化数据初始化流程
-  - 完善错误处理机制，提升系统稳定性
-- **BUG-00055**: 全局字体响应式适配问题修复
-  - 修复字体大小自适应问题，确保不同设备上字体显示正确
-  - 优化布局响应式适配，提升多设备兼容性
-- **BUG-00052**: 界面布局与字体自适应问题修复
-  - 修复界面布局在不同屏幕尺寸上的显示问题
-  - 优化字体自适应逻辑，确保阅读体验一致
-- **PRD-00033**: 开发者模式与系统提示词管理功能
-  - 新增开发者模式入口，支持调试工具和系统提示词管理
-  - 系统提示词管理功能，支持查看和调试AI提示词配置
-  - 提供调试日志查看、性能监控等开发者工具
-
 ### 进行中的问题修复（2026-01-10）
-- **BUG-00058**: 新建会话功能失效问题（已修复）
-  - 问题：点击"新建会话"后未创建新会话，而是跳转到旧会话
-  - 修复方案：通过导航参数传递 `createNew=true` 标志
-  - 测试用例：`BUG00058CreateNewSessionTest.kt` 已验证
-- **BUG-00059**: 中断生成后重新生成消息角色错乱问题（已修复）
-  - 测试用例：`BUG00059RegenerateMessageRoleTest.kt` 已验证
-- **BUG-00060**: 会话管理增强需求（已修复）
-  - 测试用例：`BUG00060SessionManagementTest.kt` 已验证
-- **BUG-00061**: 会话历史跳转失败问题（已修复）
-  - 测试用例：`BUG00061SessionHistoryNavigationTest.kt` 和 `BUG00061PromptEditorSceneSwitchTest.kt` 已验证
 - **BUG-00062**: AI军师会话管理功能增强（已识别，待实现）
 - **BUG-00063**: 联系人搜索功能优化（已识别，待实现）
 
@@ -249,6 +207,35 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | 模板组件 | `AiAdvisorChatScreen` | 页面级组合，特定场景使用 |
 
 **组件位置**: `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/`
+
+## Rules 工作区目录
+
+项目使用 `Rules/` 目录管理多AI协作状态：
+
+| 文件/目录 | 用途 |
+|-----------|------|
+| `Rules/workspace-rules.md` | 多AI协作核心规则 |
+| `Rules/WORKSPACE.md` | 当前任务状态追踪 |
+| `Rules/ai-status.md` | AI工具状态监控 |
+
+**协作流程**:
+1. 任务开始前 → 读取 `Rules/WORKSPACE.md` 检查冲突
+2. 任务进行中 → 实时更新里程碑和发现问题
+3. 任务完成后 → 更新任务状态并记录变更日志
+
+## 功能规格文档
+
+项目使用 `.kiro/specs/` 目录存储功能规格文档：
+
+| 目录 | 内容 |
+|------|------|
+| `.kiro/specs/` | 需求、设计、任务分解文档 |
+| `.kiro/specs/_archived/` | 已归档的历史文档 |
+
+典型规格文档结构：
+- `requirements.md` - 需求定义
+- `design.md` - 设计方案
+- `tasks.md` - 任务分解
 
 ## 模块文档
 
@@ -314,22 +301,5 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | 测试用例 | `XxxTest` | `SendAdvisorMessageUseCaseTest` |
 
 ## 多AI协作规则
-
-项目使用 `Rules/workspace-rules.md` 和 `Rules/WORKSPACE.md` 管理多AI协作状态：
-
-**任务开始前必须**：
-1. 尝试读取 `Rules/WORKSPACE.md`（如不存在则跳过）
-2. 检查是否有其他AI正在执行相关任务
-3. 检查资源锁定状态和待处理冲突
-4. 在 WORKSPACE 中记录任务开始信息
-
-**任务执行中必须**：
-- 重要里程碑实时更新到 WORKSPACE
-- 发现的问题立即记录
-
-**任务完成后必须**：
-- 更新 WORKSPACE 任务状态
-- 更新AI工具状态
-- 添加变更日志
 
 详细规则参考: [Rules/workspace-rules.md](./Rules/workspace-rules.md)
