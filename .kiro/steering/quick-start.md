@@ -274,6 +274,7 @@ adb logcat > logcat.txt      # 保存到文件
 | `BUG00059RegenerateMessageRoleTest.kt` | 消息重新生成角色测试 |
 | `BUG00060SessionManagementTest.kt` | 会话管理增强测试 |
 | `BUG00061SessionHistoryNavigationTest.kt` | 会话历史导航测试 |
+| `BUG00064ManualSummaryTest.kt` | AI手动总结功能测试 |
 
 运行测试：
 ```bash
