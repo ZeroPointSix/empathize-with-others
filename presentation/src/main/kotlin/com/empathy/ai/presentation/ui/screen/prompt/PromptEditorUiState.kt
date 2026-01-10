@@ -7,12 +7,18 @@ import com.empathy.ai.domain.model.PromptScene
 /**
  * 提示词编辑器UI状态
  *
+ * ## BUG-00061 修复说明
+ * 分离加载状态，避免场景切换时触发全屏刷新：
+ * - isInitialLoading: 首次进入页面时的全屏加载
+ * - isSceneSwitching: 场景切换时的内容区域加载（Tab保持可见）
+ *
  * @property editMode 编辑模式（全局场景/联系人专属）
  * @property currentScene 当前选中的场景（用于场景Tab切换）
  * @property originalPrompt 原始提示词（用于检测修改）
  * @property currentPrompt 当前编辑的提示词
  * @property placeholderText 动态占位符文案
- * @property isLoading 初始加载状态
+ * @property isInitialLoading 首次进入页面的全屏加载状态
+ * @property isSceneSwitching 场景切换时的内容区域加载状态
  * @property isSaving 保存状态
  * @property showDiscardDialog 显示放弃修改对话框
  * @property errorMessage 错误信息
@@ -23,7 +29,8 @@ data class PromptEditorUiState(
     val originalPrompt: String = "",
     val currentPrompt: String = "",
     val placeholderText: String = "",
-    val isLoading: Boolean = false,
+    val isInitialLoading: Boolean = true,
+    val isSceneSwitching: Boolean = false,
     val isSaving: Boolean = false,
     val showDiscardDialog: Boolean = false,
     val errorMessage: String? = null
@@ -35,6 +42,14 @@ data class PromptEditorUiState(
         /** 警告长度阈值 */
         const val WARN_PROMPT_LENGTH = 800
     }
+
+    /**
+     * 兼容性属性：返回是否处于全屏加载状态
+     * 
+     * 注意：只有 isInitialLoading 会触发全屏加载指示器，
+     * isSceneSwitching 只会在内容区域显示加载状态
+     */
+    val isLoading: Boolean get() = isInitialLoading
 
     /** 当前字符数 */
     val charCount: Int get() = currentPrompt.length
@@ -49,7 +64,7 @@ data class PromptEditorUiState(
     val hasUnsavedChanges: Boolean get() = currentPrompt != originalPrompt
 
     /** 是否可以保存 */
-    val canSave: Boolean get() = !isOverLimit && !isSaving && !isLoading
+    val canSave: Boolean get() = !isOverLimit && !isSaving && !isInitialLoading && !isSceneSwitching
 
     /**
      * 获取标题资源ID

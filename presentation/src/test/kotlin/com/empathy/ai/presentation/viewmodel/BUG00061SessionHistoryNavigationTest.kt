@@ -2,7 +2,7 @@ package com.empathy.ai.presentation.viewmodel
 
 import com.empathy.ai.domain.model.AiAdvisorConversation
 import com.empathy.ai.domain.model.AiAdvisorSession
-import com.empathy.ai.domain.model.MessageRole
+import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.ContactRepository
@@ -70,19 +70,21 @@ class BUG00061SessionHistoryNavigationTest {
     private val testConversations = listOf(
         AiAdvisorConversation(
             id = "conv-001",
+            contactId = testContactId,
             sessionId = "session-002",
-            role = MessageRole.USER,
+            messageType = MessageType.USER,
             content = "你好",
             timestamp = System.currentTimeMillis() - 3600000,
-            sendStatus = SendStatus.SENT
+            sendStatus = SendStatus.SUCCESS
         ),
         AiAdvisorConversation(
             id = "conv-002",
+            contactId = testContactId,
             sessionId = "session-002",
-            role = MessageRole.ASSISTANT,
+            messageType = MessageType.AI,
             content = "你好！有什么可以帮助你的吗？",
             timestamp = System.currentTimeMillis() - 3500000,
-            sendStatus = SendStatus.SENT
+            sendStatus = SendStatus.SUCCESS
         )
     )
 

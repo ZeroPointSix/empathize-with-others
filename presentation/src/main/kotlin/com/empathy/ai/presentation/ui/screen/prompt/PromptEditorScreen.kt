@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -94,6 +95,11 @@ fun PromptEditorScreen(
 
 /**
  * 提示词编辑器内容（无状态组件，便于预览和测试）
+ * 
+ * BUG-00061 修复：
+ * - 只在 isInitialLoading 时显示全屏加载
+ * - Tab 区域始终可见，不受加载状态影响
+ * - 内容区域支持局部加载状态（isSceneSwitching）
  */
 @Composable
 private fun PromptEditorContent(
@@ -120,7 +126,8 @@ private fun PromptEditorContent(
                 .imePadding()
                 .navigationBarsPadding()
         ) {
-            if (uiState.isLoading) {
+            // 只在首次加载时显示全屏加载
+            if (uiState.isInitialLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -129,7 +136,7 @@ private fun PromptEditorContent(
                 }
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // Tab区域 - 白色背景填满整行
+                    // Tab区域 - 始终显示，不受加载状态影响
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         color = iOSCardBackground
@@ -148,102 +155,12 @@ private fun PromptEditorContent(
                         onDismiss = { onEvent(PromptEditorUiEvent.ClearError) }
                     )
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(16.dp)
-                    ) {
-                        // 编辑区域卡片（带边框）
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = iOSCardBackground,
-                            border = BorderStroke(1.dp, iOSSeparator)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                            ) {
-                                // 输入区域
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .verticalScroll(rememberScrollState())
-                                ) {
-                                    PromptInputField(
-                                        value = uiState.currentPrompt,
-                                        onValueChange = { onEvent(PromptEditorUiEvent.UpdatePrompt(it)) },
-                                        placeholder = uiState.placeholderText,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-
-                                // 分隔线
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(top = 12.dp),
-                                    color = iOSSeparator,
-                                    thickness = 0.5.dp
-                                )
-
-                                // 工具栏：AI优化按钮 + 字数统计
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // AI优化按钮
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null
-                                            ) {
-                                                // TODO: AI优化功能
-                                            }
-                                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = "AI优化",
-                                            tint = iOSBlue,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Text(
-                                            text = "AI优化",
-                                            fontSize = dimensions.fontSizeBody,
-                                            fontWeight = FontWeight.Medium,
-                                            color = iOSBlue
-                                        )
-                                    }
-
-                                    // 字数统计
-                                    CharacterCounter(
-                                        charCount = uiState.charCount,
-                                        maxLength = PromptEditorUiState.MAX_PROMPT_LENGTH,
-                                        isOverLimit = uiState.isOverLimit,
-                                        isNearLimit = uiState.isNearLimit
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "提示词将帮助 AI 更好地理解你的需求，请根据场景自定义你的提示词。",
-                            fontSize = dimensions.fontSizeCaption,
-                            color = iOSTextSecondary,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
+                    // 内容区域 - 支持局部加载状态
+                    PromptEditorContentSection(
+                        uiState = uiState,
+                        onEvent = onEvent,
+                        isLoading = uiState.isSceneSwitching
+                    )
 
                     BottomButtons(
                         canSave = uiState.canSave,
@@ -258,6 +175,140 @@ private fun PromptEditorContent(
                 DiscardConfirmDialog(
                     onConfirm = { onEvent(PromptEditorUiEvent.ConfirmDiscard) },
                     onDismiss = { onEvent(PromptEditorUiEvent.DismissDiscardDialog) }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 内容区域组件
+ * 
+ * BUG-00061 修复：支持局部加载状态，不影响 Tab 区域
+ */
+@Composable
+private fun ColumnScope.PromptEditorContentSection(
+    uiState: PromptEditorUiState,
+    onEvent: (PromptEditorUiEvent) -> Unit,
+    isLoading: Boolean
+) {
+    val dimensions = AdaptiveDimensions.current
+    
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()
+    ) {
+        // 主内容
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            // 编辑区域卡片（带边框）
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                color = iOSCardBackground,
+                border = BorderStroke(1.dp, iOSSeparator)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    // 输入区域
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        PromptInputField(
+                            value = uiState.currentPrompt,
+                            onValueChange = { if (!isLoading) onEvent(PromptEditorUiEvent.UpdatePrompt(it)) },
+                            placeholder = uiState.placeholderText,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    // 分隔线
+                    HorizontalDivider(
+                        modifier = Modifier.padding(top = 12.dp),
+                        color = iOSSeparator,
+                        thickness = 0.5.dp
+                    )
+
+                    // 工具栏：AI优化按钮 + 字数统计
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // AI优化按钮
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    enabled = !isLoading
+                                ) {
+                                    // TODO: AI优化功能
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "AI优化",
+                                tint = if (isLoading) iOSTextSecondary else iOSBlue,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "AI优化",
+                                fontSize = dimensions.fontSizeBody,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isLoading) iOSTextSecondary else iOSBlue
+                            )
+                        }
+
+                        // 字数统计
+                        CharacterCounter(
+                            charCount = uiState.charCount,
+                            maxLength = PromptEditorUiState.MAX_PROMPT_LENGTH,
+                            isOverLimit = uiState.isOverLimit,
+                            isNearLimit = uiState.isNearLimit
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "提示词将帮助 AI 更好地理解你的需求，请根据场景自定义你的提示词。",
+                fontSize = dimensions.fontSizeCaption,
+                color = iOSTextSecondary,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+        }
+        
+        // 加载指示器覆盖层（场景切换时显示）
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(iOSCardBackground.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = iOSBlue,
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }
@@ -417,19 +468,36 @@ private fun PromptEditorScreenPreview() {
             uiState = PromptEditorUiState(
                 editMode = PromptEditMode.GlobalScene(PromptScene.ANALYZE),
                 currentScene = PromptScene.ANALYZE,
-                placeholderText = "例如：请帮我分析她这句话的潜台词..."
+                placeholderText = "例如：请帮我分析她这句话的潜台词...",
+                isInitialLoading = false
             ),
             onEvent = {}
         )
     }
 }
 
-@Preview(showBackground = true, name = "加载状态")
+@Preview(showBackground = true, name = "首次加载状态")
 @Composable
 private fun PromptEditorScreenLoadingPreview() {
     EmpathyTheme {
         PromptEditorContent(
-            uiState = PromptEditorUiState(isLoading = true),
+            uiState = PromptEditorUiState(isInitialLoading = true),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "场景切换加载状态")
+@Composable
+private fun PromptEditorScreenSceneSwitchingPreview() {
+    EmpathyTheme {
+        PromptEditorContent(
+            uiState = PromptEditorUiState(
+                currentPrompt = "分析时请特别注意对方的情绪变化",
+                currentScene = PromptScene.ANALYZE,
+                isInitialLoading = false,
+                isSceneSwitching = true
+            ),
             onEvent = {}
         )
     }
@@ -443,6 +511,7 @@ private fun PromptEditorScreenSavingPreview() {
             uiState = PromptEditorUiState(
                 currentPrompt = "分析时请特别注意对方的情绪变化",
                 currentScene = PromptScene.ANALYZE,
+                isInitialLoading = false,
                 isSaving = true
             ),
             onEvent = {}
@@ -459,7 +528,8 @@ private fun PromptEditorScreenPolishPreview() {
                 editMode = PromptEditMode.GlobalScene(PromptScene.POLISH),
                 currentScene = PromptScene.POLISH,
                 currentPrompt = "润色时保持原意，让表达更加委婉得体",
-                placeholderText = "例如：润色时请保持原意..."
+                placeholderText = "例如：润色时请保持原意...",
+                isInitialLoading = false
             ),
             onEvent = {}
         )
