@@ -1,16 +1,33 @@
 package com.empathy.ai.ui
 
 import android.os.Bundle
+import dagger.hilt.android.AndroidEntryPoint
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
-import com.empathy.ai.presentation.navigation.NavGraph
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.pointerInput
+import com.empathy.ai.presentation.navigation.BottomNavTab
+import com.empathy.ai.presentation.navigation.NonTabNavGraph
+import com.empathy.ai.presentation.navigation.NavRoutes
+import com.empathy.ai.presentation.ui.component.navigation.BottomNavScaffold
+import com.empathy.ai.presentation.ui.component.navigation.EmpathyBottomNavigation
+import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
+import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
+import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.ui.theme.AppTheme
-import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * 应用主Activity
@@ -46,15 +63,126 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // 创建导航控制器
-                    val navController = rememberNavController()
-                    
-                    // 导航图
-                    NavGraph(
-                        navController = navController
-                    )
+                    MainScreen()
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MainScreen() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val isInMainTab = currentRoute == null || currentRoute in NavRoutes.BOTTOM_NAV_ROUTES
+    val initialTab = BottomNavTab.fromRoute(currentRoute) ?: BottomNavTab.CONTACTS
+    var currentTab by rememberSaveable { mutableStateOf(initialTab) }
+
+    LaunchedEffect(currentRoute) {
+        BottomNavTab.fromRoute(currentRoute)?.let { currentTab = it }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        NonTabNavGraph(
+            navController = navController,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(if (isInMainTab) 0f else 1f)
+                .pointerInput(isInMainTab) {
+                    if (isInMainTab) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                }
+        )
+
+        if (isInMainTab) {
+            BottomNavScaffold(
+                currentTab = currentTab,
+                contactsContent = {
+                    ContactListScreen(
+                        onNavigateToDetail = { contactId ->
+                            if (contactId.isNotEmpty()) {
+                                navController.navigate(NavRoutes.createContactDetailTabRoute(contactId))
+                            } else {
+                                navController.navigate(NavRoutes.CREATE_CONTACT)
+                            }
+                        },
+                        onNavigateToSettings = { currentTab = BottomNavTab.SETTINGS },
+                        onNavigate = { route ->
+                            handleBottomNavRoute(route) { tab -> currentTab = tab }
+                                ?: navController.navigate(route)
+                        },
+                        onAddClick = { navController.navigate(NavRoutes.CREATE_CONTACT) },
+                        currentRoute = currentTab.route,
+                        showBottomBar = false
+                    )
+                },
+                aiAdvisorContent = {
+                    AiAdvisorScreen(
+                        onNavigateToChat = { contactId ->
+                            navController.navigate(NavRoutes.aiAdvisorChat(contactId))
+                        },
+                        onNavigateToContactSelect = {
+                            navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS)
+                        },
+                        isVisible = currentTab == BottomNavTab.AI_ADVISOR
+                    )
+                },
+                settingsContent = {
+                    SettingsScreen(
+                        onNavigateBack = { currentTab = BottomNavTab.CONTACTS },
+                        onNavigateToAiConfig = {
+                            navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_SETTINGS))
+                        },
+                        onNavigateToPromptEditor = { route -> navController.navigate(route) },
+                        onNavigateToUserProfile = { navController.navigate(NavRoutes.USER_PROFILE) },
+                        onNavigateToSystemPromptList = { navController.navigate(NavRoutes.SYSTEM_PROMPT_LIST) },
+                        onNavigate = { route ->
+                            handleBottomNavRoute(route) { tab -> currentTab = tab }
+                                ?: navController.navigate(route)
+                        },
+                        onAddClick = { navController.navigate(NavRoutes.CREATE_CONTACT) },
+                        currentRoute = currentTab.route,
+                        showBottomBar = false
+                    )
+                },
+                bottomBar = {
+                    EmpathyBottomNavigation(
+                        currentRoute = currentTab.route,
+                        onNavigate = { route ->
+                            BottomNavTab.fromRoute(route)?.let { currentTab = it }
+                        },
+                        onAddClick = { navController.navigate(NavRoutes.CREATE_CONTACT) }
+                    )
+                }
+            )
+        }
+    }
+}
+
+private fun handleBottomNavRoute(
+    route: String,
+    onTabChange: (BottomNavTab) -> Unit
+): Unit? {
+    return when (route) {
+        NavRoutes.CONTACT_LIST -> {
+            onTabChange(BottomNavTab.CONTACTS)
+            Unit
+        }
+        NavRoutes.AI_ADVISOR -> {
+            onTabChange(BottomNavTab.AI_ADVISOR)
+            Unit
+        }
+        NavRoutes.SETTINGS -> {
+            onTabChange(BottomNavTab.SETTINGS)
+            Unit
+        }
+        else -> null
     }
 }

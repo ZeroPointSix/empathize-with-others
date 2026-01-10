@@ -110,14 +110,14 @@ object AnimationSpec {
     // ========== Phase 2: 交互动效系统扩展 ==========
 
     /**
-     * 页面进入动画时长 (300ms)
+     * 页面进入动画时长 (200ms)
      */
-    const val DurationPageEnter = 300
+    const val DurationPageEnter = 200
 
     /**
-     * 页面退出动画时长 (250ms)
+     * 页面退出动画时长 (150ms)
      */
-    const val DurationPageExit = 250
+    const val DurationPageExit = 150
 
     /**
      * 弹簧阻尼比 (0.8f)
@@ -132,46 +132,38 @@ object AnimationSpec {
 
     /**
      * 页面进入转场 (Forward Enter)
-     * 从右侧滑入 + 淡入
+     * 从右侧滑入
      */
     val PageEnterTransition = androidx.compose.animation.slideInHorizontally(
         initialOffsetX = { fullWidth -> fullWidth },
         animationSpec = tween(DurationPageEnter, easing = EasingStandard)
-    ) + androidx.compose.animation.fadeIn(
-        animationSpec = tween(DurationPageEnter)
     )
 
     /**
      * 页面退出转场 (Forward Exit)
-     * 向左侧滑出1/3 + 淡出
+     * 向左侧滑出1/4
      */
     val PageExitTransition = androidx.compose.animation.slideOutHorizontally(
-        targetOffsetX = { fullWidth -> -fullWidth / 3 },
+        targetOffsetX = { fullWidth -> -fullWidth / 4 },
         animationSpec = tween(DurationPageExit, easing = EasingStandard)
-    ) + androidx.compose.animation.fadeOut(
-        animationSpec = tween(DurationPageExit)
     )
 
     /**
      * 页面返回进入转场 (Back Enter)
-     * 从左侧1/3滑入 + 淡入
+     * 从左侧1/4滑入
      */
     val PagePopEnterTransition = androidx.compose.animation.slideInHorizontally(
-        initialOffsetX = { fullWidth -> -fullWidth / 3 },
+        initialOffsetX = { fullWidth -> -fullWidth / 4 },
         animationSpec = tween(DurationPageEnter, easing = EasingStandard)
-    ) + androidx.compose.animation.fadeIn(
-        animationSpec = tween(DurationPageEnter)
     )
 
     /**
      * 页面返回退出转场 (Back Exit)
-     * 向右侧滑出 + 淡出
+     * 向右侧滑出
      */
     val PagePopExitTransition = androidx.compose.animation.slideOutHorizontally(
         targetOffsetX = { fullWidth -> fullWidth },
         animationSpec = tween(DurationPageExit, easing = EasingStandard)
-    ) + androidx.compose.animation.fadeOut(
-        animationSpec = tween(DurationPageExit)
     )
 
     /**

@@ -115,6 +115,7 @@ import com.empathy.ai.presentation.viewmodel.SettingsViewModel
  * @param onNavigate 底部导航栏导航回调
  * @param onAddClick 添加按钮点击回调
  * @param currentRoute 当前路由（用于底部导航栏高亮）
+ * @param showBottomBar 是否显示底部导航栏
  * @param viewModel 设置ViewModel
  * @param modifier Modifier
  * @see SettingsViewModel 管理设置状态和业务逻辑
@@ -131,6 +132,7 @@ fun SettingsScreen(
     onNavigate: (String) -> Unit = {},
     onAddClick: () -> Unit = {},
     currentRoute: String = NavRoutes.SETTINGS,
+    showBottomBar: Boolean = true,
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -201,6 +203,7 @@ fun SettingsScreen(
         onNavigate = onNavigate,
         onAddClick = onAddClick,
         currentRoute = currentRoute,
+        showBottomBar = showBottomBar,
         promptScenes = viewModel.promptScenesOrdered,
         modifier = modifier
     )
@@ -224,6 +227,7 @@ private fun SettingsScreenContent(
     onNavigate: (String) -> Unit,
     onAddClick: () -> Unit,
     currentRoute: String,
+    showBottomBar: Boolean,
     promptScenes: List<PromptScene>,
     modifier: Modifier = Modifier
 ) {
@@ -231,11 +235,13 @@ private fun SettingsScreenContent(
         modifier = modifier,
         containerColor = iOSBackground,
         bottomBar = {
-            EmpathyBottomNavigation(
-                currentRoute = currentRoute,
-                onNavigate = onNavigate,
-                onAddClick = onAddClick
-            )
+            if (showBottomBar) {
+                EmpathyBottomNavigation(
+                    currentRoute = currentRoute,
+                    onNavigate = onNavigate,
+                    onAddClick = onAddClick
+                )
+            }
         },
         snackbarHost = {
             uiState.error?.let { error ->
@@ -286,7 +292,14 @@ private fun SettingsScreenContent(
                         iconBackgroundColor = iOSPurple,
                         title = "提示词设置",
                         showDivider = false,
-                        onClick = { onNavigateToPromptEditor(PromptEditorRoutes.globalScene(PromptScene.ANALYZE)) }
+                        onClick = {
+                            onNavigateToPromptEditor(
+                                PromptEditorRoutes.globalSceneWithSource(
+                                    PromptScene.ANALYZE,
+                                    NavRoutes.SOURCE_SETTINGS
+                                )
+                            )
+                        }
                     )
                 }
             }
@@ -522,6 +535,7 @@ private fun SettingsScreenPreview() {
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,
+            showBottomBar = true,
             promptScenes = PromptScene.SETTINGS_SCENE_ORDER
         )
     }
@@ -549,6 +563,7 @@ private fun SettingsScreenConfiguredPreview() {
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,
+            showBottomBar = true,
             promptScenes = PromptScene.SETTINGS_SCENE_ORDER
         )
     }
@@ -576,6 +591,7 @@ private fun SettingsScreenDeveloperModePreview() {
             onNavigate = {},
             onAddClick = {},
             currentRoute = NavRoutes.SETTINGS,
+            showBottomBar = true,
             promptScenes = PromptScene.SETTINGS_SCENE_ORDER
         )
     }

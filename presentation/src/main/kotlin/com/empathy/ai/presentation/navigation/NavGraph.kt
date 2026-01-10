@@ -7,6 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -73,11 +75,11 @@ import com.empathy.ai.presentation.theme.AnimationSpec
  * ```
  *
  * ## 页面转场动画
- * - **进入动画**: 从右侧滑入，淡入效果
- * - **退出动画**: 向右滑出，淡出效果
+ * - **进入动画**: 从右侧滑入
+ * - **退出动画**: 向左滑出
  * - **弹出进入**: 从左侧滑入（返回时）
- * - **弹出退出**: 向左滑出（返回时）
- * - 动画时长: 300ms，缓动曲线: cubic-bezier(0.4, 0, 0.2, 1)
+ * - **弹出退出**: 向右滑出（返回时）
+ * - 动画时长: 200ms/150ms，缓动曲线: FastOutSlowInEasing
  *
  * ## 设计决策
  * 1. **底部导航路由**: BOTTOM_NAV_ROUTES定义底部Tab页，支持单例启动
@@ -93,55 +95,70 @@ import com.empathy.ai.presentation.theme.AnimationSpec
  *
  * @param navController 导航控制器，由MainActivity创建并传入
  * @param modifier 组合修饰符
+ * @param includeTabScreens 是否渲染底部Tab页面（用于区分主Tab缓存与非Tab导航）
  * @see NavRoutes 路由常量定义
  * @see AnimationSpec 转场动画定义
  */
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    includeTabScreens: Boolean = true,
+    useTransition: Boolean = true
 ) {
     NavHost(
         navController = navController,
         startDestination = NavRoutes.CONTACT_LIST,
         modifier = modifier,
-        enterTransition = { AnimationSpec.PageEnterTransition },
-        exitTransition = { AnimationSpec.PageExitTransition },
-        popEnterTransition = { AnimationSpec.PagePopEnterTransition },
-        popExitTransition = { AnimationSpec.PagePopExitTransition }
+        enterTransition = {
+            if (useTransition) AnimationSpec.PageEnterTransition else EnterTransition.None
+        },
+        exitTransition = {
+            if (useTransition) AnimationSpec.PageExitTransition else ExitTransition.None
+        },
+        popEnterTransition = {
+            if (useTransition) AnimationSpec.PagePopEnterTransition else EnterTransition.None
+        },
+        popExitTransition = {
+            if (useTransition) AnimationSpec.PagePopExitTransition else ExitTransition.None
+        }
     ) {
         // 联系人列表页面
         composable(route = NavRoutes.CONTACT_LIST) {
-            ContactListScreen(
-                onNavigateToDetail = { contactId ->
-                    // 使用新的联系人详情标签页UI
-                    if (contactId.isNotEmpty()) {
-                        navController.navigate(NavRoutes.createContactDetailTabRoute(contactId))
-                    } else {
-                        // 新建联系人使用iOS风格新页面
+            if (includeTabScreens) {
+                ContactListScreen(
+                    onNavigateToDetail = { contactId ->
+                        // 使用新的联系人详情标签页UI
+                        if (contactId.isNotEmpty()) {
+                            navController.navigate(NavRoutes.createContactDetailTabRoute(contactId))
+                        } else {
+                            // 新建联系人使用iOS风格新页面
+                            navController.navigate(NavRoutes.CREATE_CONTACT)
+                        }
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(NavRoutes.SETTINGS)
+                    },
+                    // 修复BUG-00031: 添加底部导航栏的导航回调
+                    onNavigate = { route ->
+                        if (route != NavRoutes.CONTACT_LIST) {
+                            navController.navigate(route) {
+                                popUpTo(NavRoutes.CONTACT_LIST) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                // 移除restoreState，避免状态恢复问题
+                            }
+                        }
+                    },
+                    // 修复: 添加加号按钮点击回调 - 使用iOS风格新页面
+                    onAddClick = {
                         navController.navigate(NavRoutes.CREATE_CONTACT)
                     }
-                },
-                onNavigateToSettings = {
-                    navController.navigate(NavRoutes.SETTINGS)
-                },
-                // 修复BUG-00031: 添加底部导航栏的导航回调
-                onNavigate = { route ->
-                    if (route != NavRoutes.CONTACT_LIST) {
-                        navController.navigate(route) {
-                            popUpTo(NavRoutes.CONTACT_LIST) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            // 移除restoreState，避免状态恢复问题
-                        }
-                    }
-                },
-                // 修复: 添加加号按钮点击回调 - 使用iOS风格新页面
-                onAddClick = {
-                    navController.navigate(NavRoutes.CREATE_CONTACT)
-                }
-            )
+                )
+            } else {
+                EmptyScreen()
+            }
         }
 
         // 联系人详情页面
@@ -185,54 +202,62 @@ fun NavGraph(
 
         // 设置页面
         composable(route = NavRoutes.SETTINGS) {
-            SettingsScreen(
-                onNavigateBack = { navController.navigateUp() },
-                onNavigateToAiConfig = {
-                    navController.navigate(NavRoutes.AI_CONFIG)
-                },
-                onNavigateToPromptEditor = { route ->
-                    navController.navigate(route)
-                },
-                onNavigateToUserProfile = {
-                    navController.navigate(NavRoutes.USER_PROFILE)
-                },
-                onNavigateToSystemPromptList = {
-                    navController.navigate(NavRoutes.SYSTEM_PROMPT_LIST)
-                },
-                // 修复BUG-001: 添加底部导航栏的导航回调
-                onNavigate = { route ->
-                    if (route != NavRoutes.SETTINGS) {
-                        navController.navigate(route) {
-                            popUpTo(NavRoutes.CONTACT_LIST) {
-                                saveState = true
+            if (includeTabScreens) {
+                SettingsScreen(
+                    onNavigateBack = { navController.navigateUp() },
+                    onNavigateToAiConfig = {
+                        navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_SETTINGS))
+                    },
+                    onNavigateToPromptEditor = { route ->
+                        navController.navigate(route)
+                    },
+                    onNavigateToUserProfile = {
+                        navController.navigate(NavRoutes.USER_PROFILE)
+                    },
+                    onNavigateToSystemPromptList = {
+                        navController.navigate(NavRoutes.SYSTEM_PROMPT_LIST)
+                    },
+                    // 修复BUG-001: 添加底部导航栏的导航回调
+                    onNavigate = { route ->
+                        if (route != NavRoutes.SETTINGS) {
+                            navController.navigate(route) {
+                                popUpTo(NavRoutes.CONTACT_LIST) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                // 移除restoreState，避免状态恢复问题
                             }
-                            launchSingleTop = true
-                            // 移除restoreState，避免状态恢复问题
                         }
+                    },
+                    // 修复: 添加加号按钮点击回调 - 使用iOS风格新页面
+                    onAddClick = {
+                        navController.navigate(NavRoutes.CREATE_CONTACT)
                     }
-                },
-                // 修复: 添加加号按钮点击回调 - 使用iOS风格新页面
-                onAddClick = {
-                    navController.navigate(NavRoutes.CREATE_CONTACT)
-                }
-            )
+                )
+            } else {
+                EmptyScreen()
+            }
         }
 
         // AI军师入口页面
         // PRD-00029: 修改为入口路由页面，检查偏好设置决定导航目标
         composable(route = NavRoutes.AI_ADVISOR) {
-            AiAdvisorScreen(
-                onNavigateToChat = { contactId ->
-                    navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
-                        popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+            if (includeTabScreens) {
+                AiAdvisorScreen(
+                    onNavigateToChat = { contactId ->
+                        navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                            popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                        }
+                    },
+                    onNavigateToContactSelect = {
+                        navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
+                            popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                        }
                     }
-                },
-                onNavigateToContactSelect = {
-                    navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
-                        popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
-                    }
-                }
-            )
+                )
+            } else {
+                EmptyScreen()
+            }
         }
 
         // AI军师对话页面
@@ -260,7 +285,7 @@ fun NavGraph(
             val createNew = backStackEntry.arguments?.getBoolean(NavRoutes.AI_ADVISOR_CHAT_ARG_CREATE_NEW) ?: false
             // BUG-00061: 获取sessionId参数
             val sessionId = backStackEntry.arguments?.getString(NavRoutes.AI_ADVISOR_CHAT_ARG_SESSION_ID)
-            AiAdvisorChatScreen(
+                AiAdvisorChatScreen(
                 createNew = createNew,  // BUG-00058: 传递createNew参数
                 sessionId = sessionId,  // BUG-00061: 传递sessionId参数
                 onNavigateBack = { navController.navigateUp() },
@@ -269,9 +294,9 @@ fun NavGraph(
                         popUpTo(NavRoutes.AI_ADVISOR)
                     }
                 },
-                onNavigateToSettings = {
-                    navController.navigate(NavRoutes.AI_CONFIG)
-                },
+                    onNavigateToSettings = {
+                    navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_ADVISOR_CHAT))
+                    },
                 onNavigateToSessionHistory = {
                     navController.navigate(NavRoutes.aiAdvisorSessions(contactId))
                 },
@@ -332,9 +357,28 @@ fun NavGraph(
         }
 
         // AI服务商配置页面
-        composable(route = NavRoutes.AI_CONFIG) {
+        composable(
+            route = NavRoutes.AI_CONFIG_ROUTE,
+            arguments = listOf(
+                navArgument(NavRoutes.AI_CONFIG_ARG_SOURCE) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val source = backStackEntry.arguments?.getString(NavRoutes.AI_CONFIG_ARG_SOURCE)
             AiConfigScreen(
-                onNavigateBack = { navController.navigateUp() },
+                onNavigateBack = {
+                    if (source == NavRoutes.SOURCE_SETTINGS) {
+                        navController.navigate(NavRoutes.SETTINGS) {
+                            popUpTo(NavRoutes.AI_CONFIG_ROUTE) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    } else {
+                        navController.navigateUp()
+                    }
+                },
                 onNavigateToAddProvider = {
                     navController.navigate(NavRoutes.ADD_PROVIDER)
                 },
@@ -457,5 +501,15 @@ fun NavGraph(
                 onNavigateBack = { navController.navigateUp() }
             )
         }
+    }
+}
+
+@Composable
+private fun EmptyScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = "", style = MaterialTheme.typography.bodySmall)
     }
 }

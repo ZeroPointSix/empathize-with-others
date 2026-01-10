@@ -189,11 +189,12 @@ adb logcat > logcat.txt      # 保存到文件
 - **:presentation模块**：Android Library，包含Compose UI、ViewModel、Navigation
   - UI组件、ViewModel、Navigation系统
   - Theme配置
+  - 新增导航组件：BottomNavTab、NonTabNavGraph、BottomNavScaffold（2026-01-10）
 - **:app模块**：Application，包含应用入口、Android服务、应用级DI模块
   - 应用入口、Android服务
   - DI聚合模块
 
-### DI模块分布
+### DI模块分布（2026-01-10更新）
 - **:data模块**：DatabaseModule、NetworkModule、RepositoryModule、MemoryModule、PromptModule、DispatcherModule
 - **:app模块**：LoggerModule、AppDispatcherModule、ServiceModule、FloatingWindowModule、NotificationModule、SummaryModule、EditModule、PersonaModule、TopicModule、UserProfileModule
 
@@ -215,6 +216,12 @@ adb logcat > logcat.txt      # 保存到文件
 - 使用MaxHeightScrollView防止内容过长导致按钮不可见
 - 通过FloatingBubbleState管理悬浮球状态显示
 
+### 页面缓存机制最佳实践（2026-01-10新增）
+- 使用BottomNavScaffold实现Tab页面内存缓存
+- 使用SaveableStateProvider保持页面状态
+- 使用zIndex和alpha控制页面叠加显示
+- 不可见页面阻止触摸事件穿透
+
 ### 数据库迁移最佳实践
 - 使用Room的Migration API进行增量式迁移
 - 导出Schema文件到$projectDir/schemas目录
@@ -225,6 +232,7 @@ adb logcat > logcat.txt      # 保存到文件
 ### AI军师模块最佳实践（v16新增）
 - 使用AiAdvisorSession管理会话
 - 使用AiAdvisorChatViewModel管理对话状态
+- 使用AiAdvisorEntryViewModel实现智能路由决策（PRD-00029新增）
 - 支持Markdown渲染的消息展示
 - 支持流式响应和重新生成
 
@@ -274,9 +282,12 @@ adb logcat > logcat.txt      # 保存到文件
 | `BUG00059RegenerateMessageRoleTest.kt` | 消息重新生成角色测试 |
 | `BUG00060SessionManagementTest.kt` | 会话管理增强测试 |
 | `BUG00061SessionHistoryNavigationTest.kt` | 会话历史导航测试 |
+| `BUG00061PromptEditorSceneSwitchTest.kt` | 提示词编辑器场景切换测试 |
 | `BUG00064ManualSummaryTest.kt` | AI手动总结功能测试 |
+| `ContactListScreenTest.kt` | 联系人列表搜索功能测试（BUG-00063） |
 
 运行测试：
 ```bash
 ./gradlew :presentation:test --tests "*BUG00058*"
+./gradlew :presentation:test --tests "*ContactListScreen*"
 ```

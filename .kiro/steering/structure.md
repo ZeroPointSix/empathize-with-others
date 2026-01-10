@@ -225,10 +225,12 @@ data/src/main/kotlin/com/empathy/ai/data/
 presentation/src/main/kotlin/com/empathy/ai/presentation/
 ├── di/                       # ✅ DI模块（1个）
 │   └── (Hilt组件级模块)
-├── navigation/               # ✅ 导航系统
-│   ├── NavGraph.kt
-│   ├── NavRoutes.kt
-│   └── PromptEditorNavigation.kt
+├── navigation/               # ✅ 导航系统（2026-01-10新增组件）
+│   ├── NavGraph.kt           # 主导航图（含includeTabScreens参数）
+│   ├── NavRoutes.kt          # 路由定义（含AI军师相关路由）
+│   ├── PromptEditorNavigation.kt  # 提示词编辑器导航
+│   ├── BottomNavTab.kt       # 底部导航Tab枚举（2026-01-10新增）
+│   └── NonTabNavGraph.kt     # 非Tab页面导航容器（2026-01-10新增）
 ├── theme/                    # ✅ Compose主题
 │   ├── Color.kt
 │   ├── Theme.kt
@@ -240,7 +242,7 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   └── SemanticColors.kt
 ├── ui/                       # ✅ UI组件（280个）
 │   ├── MainActivity.kt
-│   ├── component/            # 可复用组件
+│   ├── component/            # 可复用组件（2026-01-10新增导航组件）
 │   │   ├── MaxHeightScrollView.kt
 │   │   ├── button/
 │   │   ├── card/
@@ -253,7 +255,9 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   │   ├── message/
 │   │   ├── relationship/
 │   │   ├── state/
-│   │   └── topic/
+│   │   ├── topic/
+│   │   └── navigation/
+│   │       └── BottomNavScaffold.kt  # 带缓存的底部导航Scaffold（2026-01-10新增）
 │   ├── floating/             # 悬浮窗组件
 │   │   ├── FloatingBubbleView.kt
 │   │   ├── FloatingViewV2.kt
@@ -281,9 +285,9 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │       ├── settings/
 │       ├── tag/
 │       └── userprofile/
-├── viewmodel/                # ✅ ViewModel（17个）
+├── viewmodel/                # ✅ ViewModel（17个，2026-01-10更新）
 │   ├── BaseViewModel.kt
-│   ├── AiAdvisorEntryViewModel.kt
+│   ├── AiAdvisorEntryViewModel.kt     # AI军师入口ViewModel（PRD-00029新增）
 │   ├── AiAdvisorChatViewModel.kt      # AI军师聊天ViewModel（v16新增）
 │   ├── AiConfigViewModel.kt
 │   ├── BrainTagViewModel.kt
@@ -531,9 +535,15 @@ AI军师（心语助手）是一个独立的对话模块，提供：
 | BUG-00060 | 会话管理增强需求 | 已修复，测试用例已验证 |
 | BUG-00061 | 会话历史跳转失败问题 | 已修复，测试用例已验证 |
 | BUG-00062 | AI军师会话管理功能增强 | 已识别，待实现 |
-| BUG-00063 | 联系人搜索功能优化 | 已识别，待实现 |
+| BUG-00063 | 联系人搜索功能优化 | 已修复，新增SearchModeContent组件 |
+| BUG-00067 | 提示词功能优化 | 已识别，待实现 |
+| BUG-00068 | AI对话输入框与配置回退及非Tab功能屏幕展示问题 | 已识别，待实现 |
 
-**文档版本**: 2.17
+**文档版本**: 2.18
 **最后更新**: 2026-01-10
 **更新内容**:
-- 添加BUG-00064 AI手动总结功能修复到已解决列表
+- 添加页面缓存机制（BottomNavScaffold）
+- 添加新增导航组件（BottomNavTab、NonTabNavGraph、BottomNavScaffold）
+- 添加新增AI军师入口组件（AiAdvisorScreen、AiAdvisorEntryViewModel）
+- 更新BUG-00063状态为已修复
+- 添加BUG-00067/68新问题记录
