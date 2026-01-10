@@ -68,7 +68,7 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
 | domain | 43 | - | UseCase、Model、PromptBuilder |
-| presentation | 57 | 7 | ViewModel、Compose UI、Bug回归测试 |
+| presentation | 59 | 7 | ViewModel、Compose UI、Bug回归测试 |
 | data | 25 | 6 | Repository、Database |
 | app | 141 | 26 | Application初始化、服务测试 |
 
@@ -192,8 +192,29 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - **用途**: 调试 AI 响应、查看日志、管理提示词
 
 ### 进行中的问题修复（2026-01-10）
-- **BUG-00062**: AI军师会话管理功能增强（已识别，待实现）
-- **BUG-00063**: 联系人搜索功能优化（已识别，待实现）
+| BUG编号 | 问题描述 | 状态 |
+|---------|----------|------|
+| BUG-00065 | 联系人搜索功能优化 | 进行中 |
+
+详细修复方案见: [文档/开发文档/BUG/](./文档/开发文档/BUG/)
+
+### 多AI协作规则（关键规则）
+
+项目使用多 AI 工具协作开发：
+- **Roo**: 代码审查（Review）
+- **Kiro**: 代码实现与调试
+- **Claude**: 功能设计与文档编写
+
+**任务执行前必须**:
+1. 读取 `Rules/WORKSPACE.md` 检查是否有冲突任务
+2. 如有其他 AI 正在执行相关任务，**必须停止并询问用户**
+3. 在 WORKSPACE 中记录任务开始信息
+
+**强制优先级**: `Rules/workspace-rules.md` 中的规则 > 所有其他规则
+
+**MCP 服务器配置**:
+- `sequentialthinking`: 复杂问题分步推理
+- `context7`: 项目文档实时查询
 
 ### 组件复用系统
 
@@ -214,14 +235,20 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 | 文件/目录 | 用途 |
 |-----------|------|
-| `Rules/workspace-rules.md` | 多AI协作核心规则 |
+| `Rules/workspace-rules.md` | 多AI协作核心规则（强制执行） |
 | `Rules/WORKSPACE.md` | 当前任务状态追踪 |
 | `Rules/ai-status.md` | AI工具状态监控 |
+| `Rules/项目开发规范.md` | 完整开发规范（900+行，包含编码、测试、调试规范） |
 
 **协作流程**:
 1. 任务开始前 → 读取 `Rules/WORKSPACE.md` 检查冲突
 2. 任务进行中 → 实时更新里程碑和发现问题
 3. 任务完成后 → 更新任务状态并记录变更日志
+
+**关键规则（必须遵守）**:
+- 每次任务执行前读取 `Rules/workspace-rules.md`
+- 如发现其他AI正在执行相关任务，**必须停止并询问用户**
+- 所有回答和文档使用中文编写
 
 ## 功能规格文档
 

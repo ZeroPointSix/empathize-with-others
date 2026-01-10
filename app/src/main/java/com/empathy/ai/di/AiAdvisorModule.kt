@@ -3,6 +3,7 @@ package com.empathy.ai.di
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
@@ -144,6 +145,7 @@ object AiAdvisorModule {
      *
      * 🆕 FD-00028: 流式对话升级
      * 🆕 FD-00030: 会话上下文隔离和联系人画像增强
+     * 🆕 BUG-00062: 添加用量统计支持
      *
      * [核心编排用例] 流式消息发送的完整流程:
      *   1. 创建用户消息记录
@@ -152,6 +154,7 @@ object AiAdvisorModule {
      *   4. 调用AI Repository获取流式响应
      *   5. 实时更新Block内容
      *   6. 完成后更新消息状态
+     *   7. 🆕 记录用量统计（BUG-00062）
      *
      * 与非流式版本的区别:
      *   - 返回Flow<StreamingState>而非Result<Unit>
@@ -164,8 +167,14 @@ object AiAdvisorModule {
      *   - 联系人画像增强：添加标签（雷区/策略）和事实流信息
      *   - 依赖BrainTagRepository获取联系人标签
      *
+     * BUG-00062新增功能:
+     *   - 流式响应完成时记录用量统计
+     *   - 支持成功/失败两种状态的用量记录
+     *   - 依赖ApiUsageRepository记录用量
+     *
      * @see FD-00028 AI军师流式对话升级功能设计
      * @see FD-00030 AI军师Markdown渲染与会话隔离功能设计
+     * @see BUG-00062 AI用量统计统一问题修复
      * @see StreamingState 流式状态定义
      */
     @Provides
@@ -176,6 +185,7 @@ object AiAdvisorModule {
         contactRepository: ContactRepository,
         aiProviderRepository: AiProviderRepository,
         brainTagRepository: BrainTagRepository,  // FD-00030: 新增标签仓库依赖
+        apiUsageRepository: ApiUsageRepository,  // BUG-00062: 新增用量统计仓库依赖
         logger: Logger  // CR-001: 新增日志记录器依赖
     ): SendAdvisorMessageStreamingUseCase {
         return SendAdvisorMessageStreamingUseCase(
@@ -184,6 +194,7 @@ object AiAdvisorModule {
             contactRepository,
             aiProviderRepository,
             brainTagRepository,
+            apiUsageRepository,
             logger
         )
     }

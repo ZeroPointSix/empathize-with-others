@@ -273,12 +273,12 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 574个Kotlin主源码文件 + 305个测试文件
+- **代码统计**: 574个Kotlin主源码文件 + 307个测试文件
   - domain模块：226个文件（183主源码 + 43测试，业务模型 + Repository接口 + UseCase + Service + Util）
   - data模块：115个文件（84主源码 + 25测试 + 6 Android测试，Room + Retrofit + Repository实现 + Parser + DI模块）
-  - presentation模块：344个文件（280主源码 + 57测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
+  - presentation模块：346个文件（280主源码 + 59测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
   - app模块：194个文件（27主源码 + 141测试 + 26 Android测试，应用入口 + Android服务 + DI聚合）
-  - **总计**: 879个文件（574主源码 + 266单元测试 + 39 Android测试）
+  - **总计**: 881个文件（574主源码 + 268单元测试 + 39 Android测试）
 
 ### ⚠️ 部分实现/待完善功能
 
@@ -431,15 +431,12 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 问题：从会话历史跳转到聊天页面失败
   - 状态：已修复，测试用例 `BUG00061SessionHistoryNavigationTest.kt` 和 `BUG00061PromptEditorSceneSwitchTest.kt` 已验证
 
-- **BUG-00062**: AI军师会话管理功能增强
-  - 问题：会话管理功能需要增强
-  - 状态：已识别，待实现
-
-- **BUG-00063**: 联系人搜索功能优化
+- **BUG-00065**: 联系人搜索功能优化
   - 问题：联系人搜索功能需要优化
-  - 状态：已识别，待实现
+  - 状态：进行中
 
-**文档版本**: 2.17
+**文档版本**: 2.18
 **最后更新**: 2026-01-10
 **更新内容**:
-- 添加BUG-00064 AI手动总结功能修复到已解决列表
+- 更新模块测试文件统计（presentation测试：57→59，总计：266→268）
+- 更新BUG-00065联系人搜索功能优化状态为"进行中"

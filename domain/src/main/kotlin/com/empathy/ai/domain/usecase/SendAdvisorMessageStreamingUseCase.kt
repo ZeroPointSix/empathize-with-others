@@ -2,7 +2,9 @@ package com.empathy.ai.domain.usecase
 
 import com.empathy.ai.domain.model.AiAdvisorConversation
 import com.empathy.ai.domain.model.AiAdvisorMessageBlock
+import com.empathy.ai.domain.model.AiProvider
 import com.empathy.ai.domain.model.AiStreamChunk
+import com.empathy.ai.domain.model.ApiUsageRecord
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
@@ -16,6 +18,7 @@ import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.util.Logger
@@ -53,6 +56,7 @@ import javax.inject.Inject
  * @see FD-00028 AI军师流式对话升级功能设计
  * @see FD-00030 AI军师Markdown渲染与会话隔离功能设计
  * @see StreamingState 流式状态定义
+ * @see BUG-00062 AI用量统计统一问题修复
  */
 class SendAdvisorMessageStreamingUseCase @Inject constructor(
     private val aiAdvisorRepository: AiAdvisorRepository,
@@ -60,6 +64,7 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
     private val contactRepository: ContactRepository,
     private val aiProviderRepository: AiProviderRepository,
     private val brainTagRepository: BrainTagRepository,  // FD-00030: 添加标签仓库
+    private val apiUsageRepository: ApiUsageRepository,  // BUG-00062: 添加用量统计仓库
     private val logger: Logger  // CR-001: 添加日志记录器
 ) {
     companion object {
@@ -185,6 +190,9 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
         // 注意：AI_ADVISOR场景不返回JSON，直接返回自然语言
         val systemInstruction = SystemPrompts.getHeaderAsync(PromptScene.AI_ADVISOR)
 
+        // BUG-00062: 记录请求开始时间，用于计算请求耗时
+        val requestStartTime = System.currentTimeMillis()
+
         // 5. 调用流式API并处理响应
         var thinkingBlockId: String? = null
         val contentBuilder = StringBuilder()
@@ -251,6 +259,17 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
                             status = SendStatus.SUCCESS
                         )
                         
+                        // BUG-00062: 记录成功的用量统计
+                        val requestTimeMs = System.currentTimeMillis() - requestStartTime
+                        recordUsageForAdvisor(
+                            provider = provider,
+                            prompt = prompt,
+                            response = finalContent,
+                            usage = chunk.usage,
+                            requestTimeMs = requestTimeMs,
+                            isSuccess = true
+                        )
+                        
                         emit(StreamingState.Completed(finalContent, chunk.usage))
                     }
 
@@ -262,6 +281,19 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
                             content = errorContent,
                             status = SendStatus.FAILED
                         )
+                        
+                        // BUG-00062: 记录失败的用量统计
+                        val requestTimeMs = System.currentTimeMillis() - requestStartTime
+                        recordUsageForAdvisor(
+                            provider = provider,
+                            prompt = prompt,
+                            response = null,
+                            usage = null,
+                            requestTimeMs = requestTimeMs,
+                            isSuccess = false,
+                            errorMessage = chunk.error.message
+                        )
+                        
                         emit(StreamingState.Error(chunk.error))
                     }
                 }
@@ -354,5 +386,73 @@ class SendAdvisorMessageStreamingUseCase @Inject constructor(
         sb.appendLine(userMessage)
 
         return sb.toString()
+    }
+
+    /**
+     * 记录AI军师的用量统计
+     *
+     * BUG-00062: 统一AI用量统计
+     * 在流式响应完成或失败时记录用量，用于用量统计页面展示
+     *
+     * @param provider AI服务商配置
+     * @param prompt 提示词内容
+     * @param response 响应内容（成功时）
+     * @param usage Token使用情况（从流式响应获取）
+     * @param requestTimeMs 请求耗时
+     * @param isSuccess 是否成功
+     * @param errorMessage 错误信息（失败时）
+     */
+    private suspend fun recordUsageForAdvisor(
+        provider: AiProvider,
+        prompt: String,
+        response: String?,
+        usage: TokenUsage?,
+        requestTimeMs: Long,
+        isSuccess: Boolean,
+        errorMessage: String? = null
+    ) {
+        try {
+            // 优先使用API返回的token数，否则使用估算值
+            val promptTokens = usage?.promptTokens ?: estimateTokens(prompt)
+            val completionTokens = usage?.completionTokens ?: (response?.let { estimateTokens(it) } ?: 0)
+            
+            val record = ApiUsageRecord(
+                id = UUID.randomUUID().toString(),
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = provider.models.firstOrNull()?.id ?: provider.defaultModelId,
+                modelName = provider.models.firstOrNull()?.displayName 
+                    ?: provider.models.firstOrNull()?.id 
+                    ?: provider.defaultModelId,
+                promptTokens = promptTokens,
+                completionTokens = completionTokens,
+                totalTokens = promptTokens + completionTokens,
+                requestTimeMs = requestTimeMs,
+                isSuccess = isSuccess,
+                errorMessage = errorMessage,
+                createdAt = System.currentTimeMillis()
+            )
+            
+            apiUsageRepository.recordUsage(record)
+            logger.d(TAG, "AI军师用量记录成功: tokens=${record.totalTokens}, success=$isSuccess")
+        } catch (e: Exception) {
+            // 记录失败不影响主流程
+            logger.w(TAG, "记录AI军师用量失败: ${e.message}")
+        }
+    }
+
+    /**
+     * 估算Token数量
+     *
+     * BUG-00062: 当API未返回token信息时使用估算值
+     * 算法：中文字符约1.5字符/token，英文约4字符/token
+     *
+     * @param text 文本内容
+     * @return 估算的token数量
+     */
+    private fun estimateTokens(text: String): Int {
+        val chineseCount = text.count { it.code in 0x4E00..0x9FFF }
+        val otherCount = text.length - chineseCount
+        return (chineseCount / 1.5 + otherCount / 4.0).toInt().coerceAtLeast(1)
     }
 }
