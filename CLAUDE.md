@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Kotlin 2.0.21 + K2编译器
 - Gradle 8.13 + AGP 8.7.3
 - Jetpack Compose BOM 2024.12.01
-- Hilt 2.52 + Room v12
+- Hilt 2.52 + Room v16
 - 最低SDK: 24, 目标SDK: 35
 
 ## 常用命令
@@ -68,7 +68,7 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
 | domain | 43 | - | UseCase、Model、PromptBuilder |
-| presentation | 54+ | 7 | ViewModel、Compose UI、Bug回归测试 |
+| presentation | 57 | 7 | ViewModel、Compose UI、Bug回归测试 |
 | data | 25 | 6 | Repository、Database |
 | app | 141 | 26 | Application初始化、服务测试 |
 
@@ -77,16 +77,17 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 - `BUG00059RegenerateMessageRoleTest.kt` - 消息重新生成角色测试
 - `BUG00060SessionManagementTest.kt` - 会话管理增强测试
 - `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
+- `BUG00064ManualSummaryTest.kt` - AI手动总结功能测试
 
-### 模块文件统计（2026-01-09最新扫描）
+### 模块文件统计（2026-01-10最新扫描）
 
 | 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
 |------|--------|---------|------------|------|
 | **:domain** | 183 | 43 | 0 | 226 |
 | **:data** | 84 | 25 | 6 | 115 |
-| **:presentation** | 280 | 50 | 7 | 337 |
+| **:presentation** | 280 | 57 | 7 | 344 |
 | **:app** | 27 | 141 | 26 | 194 |
-| **总计** | **574** | **259** | **39** | **872** |
+| **总计** | **574** | **266** | **39** | **879** |
 
 **最后更新**: 2026-01-10
 

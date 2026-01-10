@@ -6,6 +6,36 @@ import com.empathy.ai.domain.model.ConflictResolution
  * 手动总结UI事件
  *
  * 定义用户在手动总结功能中可能触发的所有事件
+ *
+ * ## 关联文档
+ * - TDD-00011: 手动触发AI总结功能技术设计
+ * - BUG-00064: AI总结功能未生效修复
+ *
+ * ## 事件分类
+ * - **日期选择事件**: ShowDatePicker, ConfirmDateRange, DismissDatePicker
+ * - **冲突处理事件**: SelectConflictResolution, ConfirmConflictResolution
+ * - **进度控制事件**: CancelSummary, RetryFailed
+ * - **结果处理事件**: ViewResult, DismissResult, DismissSummaryDetail
+ * - **通用事件**: Reset, ClearNavigation
+ * - **前置检查事件**: DismissNoProviderWarning (BUG-00064新增)
+ *
+ * ## BUG-00064 事件变更
+ * 新增 `DismissNoProviderWarning` 事件，用于关闭AI服务商未配置的警告对话框
+ * 这是UI状态 `showNoProviderWarning` 的配套事件
+ *
+ * ## 设计决策
+ * - **密封类**: 使用 sealed class 保证事件类型安全
+ * - **分区组织**: 按功能模块分区，便于理解和扩展
+ * - **数据类 vs 对象**: 带参数的事件使用 data class，纯操作使用 data object
+ *
+ * ## 事件流
+ * ```
+ * ShowDatePicker → ConfirmDateRange → [冲突检测] → startSummary → [ViewResult|DismissResult]
+ * ```
+ *
+ * @see ManualSummaryUiState
+ * @see TDD-00011-手动触发AI总结功能技术设计.md
+ * @see BUG-00064-AI总结功能未生效-修复方案.md
  */
 sealed class ManualSummaryUiEvent {
 
@@ -117,4 +147,9 @@ sealed class ManualSummaryUiEvent {
      * 清除导航状态
      */
     data object ClearNavigation : ManualSummaryUiEvent()
+
+    /**
+     * 关闭无AI服务商警告
+     */
+    data object DismissNoProviderWarning : ManualSummaryUiEvent()
 }

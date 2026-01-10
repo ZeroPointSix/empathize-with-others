@@ -35,6 +35,41 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * 手动总结业务用例
+ *
+ * ## 业务职责
+ * 协调对话记录获取、AI总结生成、数据持久化的完整流程
+ *
+ * ## 关联文档
+ * - TDD-00011: 手动触发AI总结功能技术设计
+ * - BUG-00064: AI总结功能未生效修复
+ *
+ * ## 核心流程
+ * ```
+ * 验证日期范围 → 获取联系人 → 加载对话 → AI生成总结 → 数据同步 → 保存结果
+ * ```
+ *
+ * ## BUG-00064 修复内容
+ * - 添加调试日志：追踪每个步骤的执行状态，便于问题定位
+ * - 错误日志增强：捕获异常时记录完整的错误信息和堆栈
+ * - 降级日志：当AI总结失败时，记录降级方案的使用情况
+ *
+ * ## 设计决策
+ * - **进度回调**：通过ProgressCallback报告执行进度
+ * - **降级策略**：AI请求失败时使用本地统计作为兜底方案
+ * - **数据同步**：总结完成后自动同步事实和标签到联系人
+ * - **关系分数**：根据对话数量自动调整关系分数
+ *
+ * ## 业务规则
+ * - 日期范围必须有效（开始日期 <= 结束日期）
+ * - 必须存在对话记录才能生成总结
+ * - AI服务商未配置时返回ApiError
+ * - 总结保存后自动标记对话为已总结状态
+ *
+ * @see TDD-00011-手动触发AI总结功能技术设计.md
+ * @see BUG-00064-AI总结功能未生效-修复方案.md
+ */
 @Singleton
 class ManualSummaryUseCase @Inject constructor(
     private val conversationRepository: ConversationRepository,
@@ -75,18 +110,25 @@ class ManualSummaryUseCase @Inject constructor(
         progressCallback: ProgressCallback? = null
     ): Result<SummaryResult> = withContext(dispatchers.io) {
         try {
+            logger.d(TAG, "ManualSummaryUseCase.invoke() started")
+            logger.d(TAG, "Parameters: contactId=$contactId, dateRange=${dateRange.getDisplayText()}, resolution=$conflictResolution")
+
             progressCallback?.onProgress(0.05f, "验证日期范围...")
             val validationResult = dateRangeValidator.validate(dateRange, contactId)
             if (validationResult.isFailure) {
+                logger.e(TAG, "Date range validation failed: ${validationResult.exceptionOrNull()?.message}")
                 return@withContext Result.failure(validationResult.exceptionOrNull()!!)
             }
             when (val validation = validationResult.getOrNull()) {
                 is DateRangeValidator.ValidationResult.Invalid -> {
+                    logger.w(TAG, "Date range invalid: ${validation.message}")
                     return@withContext Result.failure(
                         SummaryException(SummaryError.Unknown(validation.message))
                     )
                 }
-                else -> { }
+                else -> {
+                    logger.d(TAG, "Date range validation passed")
+                }
             }
 
             progressCallback?.onProgress(0.1f, "获取联系人信息...")
@@ -94,9 +136,11 @@ class ManualSummaryUseCase @Inject constructor(
                 ?: return@withContext Result.failure(
                     SummaryException(SummaryError.Unknown("联系人不存在"))
                 )
+            logger.d(TAG, "Contact profile loaded: ${profile.name}")
 
             if (conflictResolution == ConflictResolution.OVERWRITE) {
                 progressCallback?.onProgress(0.15f, "清理已有总结...")
+                logger.d(TAG, "Deleting existing summaries in range...")
                 dailySummaryRepository.deleteSummariesInRange(
                     contactId, dateRange.startDate, dateRange.endDate
                 )
@@ -104,18 +148,22 @@ class ManualSummaryUseCase @Inject constructor(
 
             progressCallback?.onProgress(0.2f, "获取对话记录...")
             val conversations = loadConversations(contactId, dateRange, conflictResolution)
+            logger.d(TAG, "Loaded ${conversations.size} conversations")
 
             if (conversations.isEmpty()) {
+                logger.w(TAG, "No conversations found in date range")
                 return@withContext Result.failure(SummaryException(SummaryError.NoConversations))
             }
 
             progressCallback?.onProgress(0.4f, "AI正在分析对话内容...")
+            logger.d(TAG, "Generating AI summary...")
             val aiResult = generateAiSummary(profile, conversations, dateRange)
 
             val summary = if (aiResult.isSuccess) {
+                logger.d(TAG, "AI summary generated successfully")
                 aiResult.getOrThrow()
             } else {
-                logger.w(TAG, "AI总结失败，使用降级方案")
+                logger.w(TAG, "AI总结失败，使用降级方案: ${aiResult.exceptionOrNull()?.message}")
                 progressCallback?.onProgress(0.7f, "使用本地分析...")
                 generateLocalSummary(profile, conversations, dateRange)
             }
@@ -131,7 +179,9 @@ class ManualSummaryUseCase @Inject constructor(
             )
 
             progressCallback?.onProgress(0.90f, "保存结果...")
+            logger.d(TAG, "Saving summary...")
             val savedId = dailySummaryRepository.saveSummary(finalSummary).getOrThrow()
+            logger.d(TAG, "Summary saved with id: $savedId")
 
             progressCallback?.onProgress(0.93f, "同步数据...")
             syncSummaryDataToContact(profile, finalSummary)
@@ -141,6 +191,7 @@ class ManualSummaryUseCase @Inject constructor(
 
             progressCallback?.onProgress(1f, "完成")
 
+            logger.d(TAG, "ManualSummaryUseCase.invoke() completed successfully")
             Result.success(
                 SummaryResult(
                     summary = finalSummary.copy(id = savedId),
@@ -151,8 +202,10 @@ class ManualSummaryUseCase @Inject constructor(
                 )
             )
         } catch (e: CancellationException) {
+            logger.d(TAG, "Summary cancelled by user")
             Result.failure(SummaryException(SummaryError.Cancelled))
         } catch (e: SummaryException) {
+            logger.e(TAG, "Summary failed with SummaryException: ${e.error.userMessage}", e)
             Result.failure(e)
         } catch (e: Exception) {
             logger.e(TAG, "手动总结失败", e)

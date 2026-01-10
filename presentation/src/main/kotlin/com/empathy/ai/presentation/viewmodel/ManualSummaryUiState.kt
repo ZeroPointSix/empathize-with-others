@@ -10,6 +10,31 @@ import com.empathy.ai.domain.usecase.ManualSummaryUseCase
  * 手动总结UI状态
  *
  * 管理手动触发AI总结功能的所有UI状态
+ *
+ * ## 关联文档
+ * - TDD-00011: 手动触发AI总结功能技术设计
+ * - BUG-00064: AI总结功能未生效修复
+ *
+ * ## 状态分组
+ * - **日期选择状态**: showDatePicker, selectedDateRange, validationError
+ * - **冲突处理状态**: showConflictDialog, conflictResult
+ * - **进度状态**: showProgressDialog, task
+ * - **结果状态**: showResultDialog, showSummaryDetailDialog
+ * - **错误状态**: showErrorDialog
+ * - **前置检查状态**: showNoProviderWarning (BUG-00064新增)
+ *
+ * ## BUG-00064 状态变更
+ * 新增 `showNoProviderWarning` 和 `noProviderWarningMessage` 字段
+ * 用于在用户未配置AI服务商时显示友好提示，避免静默失败
+ *
+ * ## 设计决策
+ * - **状态分区**: 按功能模块分区组织，便于理解和维护
+ * - **派生属性**: 提供 isProcessing, hasError, progressPercent 等派生属性
+ * - **不可变性**: 使用 data class 保证状态不可变性
+ *
+ * @see ManualSummaryUiEvent
+ * @see TDD-00011-手动触发AI总结功能技术设计.md
+ * @see BUG-00064-AI总结功能未生效-修复方案.md
  */
 data class ManualSummaryUiState(
     /** 当前联系人ID */
@@ -73,7 +98,15 @@ data class ManualSummaryUiState(
     // ==================== 导航状态 ====================
 
     /** 是否导航到时光轴 */
-    val navigateToTimeline: Boolean = false
+    val navigateToTimeline: Boolean = false,
+
+    // ==================== 前置检查状态 ====================
+
+    /** 是否显示无AI服务商警告 */
+    val showNoProviderWarning: Boolean = false,
+
+    /** 无AI服务商警告信息 */
+    val noProviderWarningMessage: String? = null
 ) {
     /**
      * 是否正在处理中

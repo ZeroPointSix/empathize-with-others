@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.VideoFile
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -25,6 +26,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,11 +76,30 @@ import com.empathy.ai.presentation.viewmodel.ManualSummaryViewModel
  *
  * 新的四标签页UI，包含：概览、事实流、标签画像、资料库
  *
+ * ## 关联文档
+ * - PRD-00003: 联系人画像记忆系统需求
+ * - BUG-00064: AI总结功能未生效修复
+ *
+ * ## 标签页结构
+ * - **概览 (Overview)**: 关系分数、关键事实、顶部标签
+ * - **事实流 (FactStream)**: 时间线形式展示所有事实记录
+ * - **标签画像 (Persona)**: 已确认和AI推测标签管理
+ * - **资料库 (Vault)**: 数据源管理和导入记录
+ *
+ * ## BUG-00064 UI变更
+ * 在 ManualSummaryDialogs 中新增无AI服务商警告对话框
+ * 当用户未配置AI服务商时，点击AI总结FAB会显示友好提示
+ *
+ * ## 设计决策
+ * - **标签导航**: 使用 PrimaryTabRow 实现Material3风格的标签页
+ * - **状态提升**: 标签状态提升到顶层，跨标签页保持
+ * - **动画过渡**: 使用 AnimatedContent 实现标签切换动画
+ *
  * @param contactId 联系人ID
  * @param onNavigateBack 返回回调
- * @param viewModel ViewModel
- * @param manualSummaryViewModel 手动总结ViewModel
- * @param modifier Modifier
+ *
+ * @see ManualSummaryDialogs
+ * @see BUG-00064-AI总结功能未生效-修复方案.md
  */
 @Composable
 fun ContactDetailTabScreen(
@@ -621,6 +642,22 @@ private fun ManualSummaryDialogs(
     summaryUiState: ManualSummaryUiState,
     onSummaryEvent: (ManualSummaryUiEvent) -> Unit
 ) {
+    // 无AI服务商警告对话框（BUG-00064新增）
+    if (summaryUiState.showNoProviderWarning) {
+        AlertDialog(
+            onDismissRequest = { onSummaryEvent(ManualSummaryUiEvent.DismissNoProviderWarning) },
+            title = { Text("配置提示") },
+            text = {
+                Text(summaryUiState.noProviderWarningMessage ?: "请先在设置中配置AI服务商")
+            },
+            confirmButton = {
+                TextButton(onClick = { onSummaryEvent(ManualSummaryUiEvent.DismissNoProviderWarning) }) {
+                    Text("知道了")
+                }
+            }
+        )
+    }
+
     // 日期选择对话框
     if (summaryUiState.showDatePicker) {
         DateRangePickerDialog(
