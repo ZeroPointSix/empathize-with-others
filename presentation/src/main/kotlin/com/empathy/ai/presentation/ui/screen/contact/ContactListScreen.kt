@@ -16,6 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,8 @@ import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
+import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.ui.component.ios.IOSSearchBar
 import com.empathy.ai.presentation.ui.component.list.ContactListItem
 import com.empathy.ai.presentation.ui.component.navigation.EmpathyBottomNavigation
 import com.empathy.ai.presentation.ui.component.state.ContactListSkeleton
@@ -169,6 +173,16 @@ private fun ContactListScreenContent(
                             icon = Icons.Default.Warning
                         ),
                         onAction = { onEvent(ContactListUiEvent.LoadContacts) }
+                    )
+                }
+                uiState.isSearching -> {
+                    // BUG-00063修复：搜索模式UI
+                    SearchModeContent(
+                        searchQuery = uiState.searchQuery,
+                        searchResults = uiState.displayContacts,
+                        onQueryChange = { onEvent(ContactListUiEvent.UpdateSearchQuery(it)) },
+                        onSearchClose = { onEvent(ContactListUiEvent.CancelSearch) },
+                        onContactClick = onNavigateToDetail
                     )
                 }
                 uiState.isEmptyState -> {
@@ -336,6 +350,171 @@ private fun ContactList(
     }
 }
 
+// ==================== 搜索模式组件 (BUG-00063) ====================
+
+/**
+ * 搜索模式内容
+ * 
+ * BUG-00063修复：实现联系人搜索功能
+ * 
+ * 包含：
+ * 1. iOS风格搜索栏
+ * 2. 搜索结果列表
+ * 3. 空结果提示
+ * 
+ * @param searchQuery 当前搜索关键词
+ * @param searchResults 搜索结果列表
+ * @param onQueryChange 搜索词变化回调
+ * @param onSearchClose 关闭搜索回调
+ * @param onContactClick 联系人点击回调
+ * @param modifier Modifier
+ */
+@Composable
+private fun SearchModeContent(
+    searchQuery: String,
+    searchResults: List<ContactProfile>,
+    onQueryChange: (String) -> Unit,
+    onSearchClose: () -> Unit,
+    onContactClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimensions = AdaptiveDimensions.current
+    val focusRequester = remember { FocusRequester() }
+    
+    // 自动聚焦搜索框
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+    
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(iOSBackground)
+    ) {
+        // 搜索栏
+        SearchHeader(
+            searchQuery = searchQuery,
+            onQueryChange = onQueryChange,
+            onSearchClose = onSearchClose,
+            focusRequester = focusRequester
+        )
+        
+        // 搜索结果
+        when {
+            searchResults.isEmpty() && searchQuery.isNotBlank() -> {
+                // 无结果提示
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    EmptyView(
+                        message = "未找到匹配的联系人",
+                        actionText = null,
+                        onAction = {}
+                    )
+                }
+            }
+            searchResults.isNotEmpty() -> {
+                // 搜索结果列表
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    item {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = dimensions.spacingMedium),
+                            shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
+                            color = iOSCardBackground,
+                            shadowElevation = 1.dp
+                        ) {
+                            Column {
+                                searchResults.forEachIndexed { index, contact ->
+                                    ContactListItem(
+                                        contact = contact,
+                                        onClick = { onContactClick(contact.id) },
+                                        showDivider = index < searchResults.size - 1
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(dimensions.spacingLarge))
+                    }
+                }
+            }
+            else -> {
+                // 搜索词为空，显示提示
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "输入关键词搜索联系人",
+                        color = iOSTextSecondary,
+                        fontSize = dimensions.fontSizeBody
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 搜索头部
+ * 
+ * 包含搜索输入框和取消按钮
+ * 
+ * @param searchQuery 当前搜索关键词
+ * @param onQueryChange 搜索词变化回调
+ * @param onSearchClose 关闭搜索回调
+ * @param focusRequester 焦点请求器
+ * @param modifier Modifier
+ */
+@Composable
+private fun SearchHeader(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    onSearchClose: () -> Unit,
+    focusRequester: FocusRequester,
+    modifier: Modifier = Modifier
+) {
+    val dimensions = AdaptiveDimensions.current
+    
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(iOSBackground)
+            .padding(
+                horizontal = dimensions.spacingMedium,
+                vertical = dimensions.spacingSmall
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 搜索输入框
+        IOSSearchBar(
+            query = searchQuery,
+            onQueryChange = onQueryChange,
+            placeholder = "搜索联系人",
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+        )
+        
+        Spacer(modifier = Modifier.width(dimensions.spacingSmall))
+        
+        // 取消按钮
+        TextButton(onClick = onSearchClose) {
+            Text(
+                text = "取消",
+                color = iOSBlue,
+                fontSize = dimensions.fontSizeBody
+            )
+        }
+    }
+}
+
 // ==================== Previews ====================
 
 @Preview(name = "联系人列表 - 默认", showBackground = true)
@@ -483,6 +662,106 @@ private fun ContactListScreenDarkPreview() {
                         )
                     )
                 )
+            ),
+            onEvent = {},
+            onNavigateToDetail = {},
+            onNavigate = {},
+            onAddClick = {}
+        )
+    }
+}
+
+@Preview(name = "联系人列表 - 搜索模式", showBackground = true)
+@Composable
+private fun ContactListScreenSearchPreview() {
+    EmpathyTheme {
+        ContactListScreenContent(
+            uiState = ContactListUiState(
+                contacts = listOf(
+                    ContactProfile(
+                        id = "1",
+                        name = "张三",
+                        targetGoal = "建立良好的合作关系",
+                        contextDepth = 10,
+                        facts = listOf(
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
+                    ),
+                    ContactProfile(
+                        id = "2",
+                        name = "李四",
+                        targetGoal = "成为好朋友",
+                        contextDepth = 15,
+                        facts = emptyList()
+                    )
+                ),
+                filteredContacts = listOf(
+                    ContactProfile(
+                        id = "1",
+                        name = "张三",
+                        targetGoal = "建立良好的合作关系",
+                        contextDepth = 10,
+                        facts = listOf(
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
+                    ),
+                    ContactProfile(
+                        id = "2",
+                        name = "李四",
+                        targetGoal = "成为好朋友",
+                        contextDepth = 15,
+                        facts = emptyList()
+                    )
+                ),
+                isSearching = true,
+                searchQuery = "张",
+                searchResults = listOf(
+                    ContactProfile(
+                        id = "1",
+                        name = "张三",
+                        targetGoal = "建立良好的合作关系",
+                        contextDepth = 10,
+                        facts = listOf(
+                            Fact(key = "职业", value = "产品经理", timestamp = System.currentTimeMillis(), source = com.empathy.ai.domain.model.FactSource.MANUAL)
+                        )
+                    )
+                )
+            ),
+            onEvent = {},
+            onNavigateToDetail = {},
+            onNavigate = {},
+            onAddClick = {}
+        )
+    }
+}
+
+@Preview(name = "联系人列表 - 搜索无结果", showBackground = true)
+@Composable
+private fun ContactListScreenSearchEmptyPreview() {
+    EmpathyTheme {
+        ContactListScreenContent(
+            uiState = ContactListUiState(
+                contacts = listOf(
+                    ContactProfile(
+                        id = "1",
+                        name = "张三",
+                        targetGoal = "建立良好的合作关系",
+                        contextDepth = 10,
+                        facts = emptyList()
+                    )
+                ),
+                filteredContacts = listOf(
+                    ContactProfile(
+                        id = "1",
+                        name = "张三",
+                        targetGoal = "建立良好的合作关系",
+                        contextDepth = 10,
+                        facts = emptyList()
+                    )
+                ),
+                isSearching = true,
+                searchQuery = "不存在的联系人",
+                searchResults = emptyList()
             ),
             onEvent = {},
             onNavigateToDetail = {},
