@@ -60,13 +60,15 @@ import kotlinx.coroutines.delay
  * 
  * @param items 时间线项目列表
  * @param onItemClick 项目点击回调
+ * @param onFactEdit 事实编辑回调（BUG-00065：点击UserFact类型时触发）
  * @param modifier 修饰符
  */
 @Composable
 fun ModernTimelineView(
     items: List<TimelineItem>,
     modifier: Modifier = Modifier,
-    onItemClick: ((TimelineItem) -> Unit)? = null
+    onItemClick: ((TimelineItem) -> Unit)? = null,
+    onFactEdit: ((String) -> Unit)? = null
 ) {
     if (items.isEmpty()) {
         EmptyTimelineState(modifier = modifier)
@@ -111,7 +113,8 @@ fun ModernTimelineView(
                         item = item,
                         index = index,
                         isLast = index == dayItems.lastIndex,
-                        onClick = { onItemClick?.invoke(item) }
+                        onClick = { onItemClick?.invoke(item) },
+                        onFactEdit = onFactEdit
                     )
                 }
             }
@@ -121,13 +124,20 @@ fun ModernTimelineView(
 
 /**
  * 现代化时光轴行组件
+ * 
+ * @param item 时间线项目
+ * @param index 项目索引（用于动画延迟）
+ * @param isLast 是否是最后一项
+ * @param onClick 通用点击回调
+ * @param onFactEdit 事实编辑回调（BUG-00065）
  */
 @Composable
 private fun ModernTimelineRow(
     item: TimelineItem,
     index: Int,
     isLast: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onFactEdit: ((String) -> Unit)? = null
 ) {
     // 淡入动画状态
     var visible by remember { mutableStateOf(false) }
@@ -171,7 +181,14 @@ private fun ModernTimelineRow(
                     aiSuggestion = getAiSuggestion(item),
                     scoreChange = getScoreChange(item),
                     tags = getTags(item),
-                    onClick = onClick
+                    onClick = {
+                        // BUG-00065: 区分事实类型的点击
+                        if (item is TimelineItem.UserFact && onFactEdit != null) {
+                            onFactEdit(item.fact.id)  // 事实类型：触发编辑
+                        } else {
+                            onClick()  // 其他类型：通用点击
+                        }
+                    }
                 )
                 
                 if (!isLast) {

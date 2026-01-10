@@ -71,6 +71,7 @@ import com.empathy.ai.presentation.ui.component.state.EmptyView
  * @param selectedItems 已选中的项目ID集合
  * @param onItemClick 项目点击回调
  * @param onItemSelect 项目选中/取消选中回调
+ * @param onFactEdit 事实编辑回调（BUG-00065：点击UserFact类型时触发）
  * @param isSelectionMode 是否处于选择模式
  * @param modifier 修饰符
  */
@@ -81,6 +82,7 @@ fun ModernListView(
     selectedItems: Set<String> = emptySet(),
     onItemClick: ((TimelineItem) -> Unit)? = null,
     onItemSelect: ((String, Boolean) -> Unit)? = null,
+    onFactEdit: ((String) -> Unit)? = null,
     isSelectionMode: Boolean = false
 ) {
     if (items.isEmpty()) {
@@ -100,7 +102,19 @@ fun ModernListView(
                 item = item,
                 isSelected = item.id in selectedItems,
                 isSelectionMode = isSelectionMode,
-                onClick = { onItemClick?.invoke(item) },
+                onClick = {
+                    // BUG-00065: 区分事实类型的点击
+                    if (isSelectionMode) {
+                        // 选择模式：切换选中状态
+                        onItemSelect?.invoke(item.id, item.id !in selectedItems)
+                    } else if (item is TimelineItem.UserFact && onFactEdit != null) {
+                        // 非选择模式 + 事实类型：触发编辑
+                        onFactEdit(item.fact.id)
+                    } else {
+                        // 其他情况：通用点击
+                        onItemClick?.invoke(item)
+                    }
+                },
                 onSelect = { selected -> onItemSelect?.invoke(item.id, selected) }
             )
             
@@ -115,6 +129,18 @@ fun ModernListView(
 
 /**
  * 现代化清单行组件
+ *
+ * 设计规范 (BUG-00065):
+ * - 紧凑列表项布局，类似iOS文件管理风格
+ * - 左侧圆形勾选框（选择模式下显示）
+ * - 选中时背景色变化 (Color 0xFFF2F2F7)
+ * - 情绪指示点根据情感类型显示不同颜色
+ *
+ * @param item 时间线项目数据
+ * @param isSelected 是否被选中（用于选择模式下的高亮）
+ * @param isSelectionMode 是否处于批量选择模式
+ * @param onClick 行点击事件（根据模式分发到选择/编辑/通用点击）
+ * @param onSelect 选择状态变更回调
  */
 @Composable
 private fun ModernListRow(

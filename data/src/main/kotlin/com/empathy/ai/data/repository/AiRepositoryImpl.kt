@@ -569,18 +569,31 @@ $COMMON_JSON_RULES""".trim()
     }
 
 
+    /**
+     * generateText 通用文本生成方法
+     *
+     * BUG-00062: 添加用量统计支持
+     * 该方法被 AiSummaryProcessor 调用，用于 AI 总结功能
+     *
+     * @param provider AI服务商配置
+     * @param prompt 用户提示词
+     * @param systemInstruction 系统指令
+     * @return 生成的文本内容
+     */
     override suspend fun generateText(
         provider: AiProvider,
         prompt: String,
         systemInstruction: String
     ): Result<String> {
+        val startTime = System.currentTimeMillis()  // BUG-00062: 记录开始时间
+        val model = selectModel(provider)  // BUG-00062: 移到外层以便错误时也能记录
+        
         return try {
             val url = buildChatCompletionsUrl(provider.baseUrl)
             val headers = mapOf(
                 "Authorization" to "Bearer ${provider.apiKey}",
                 "Content-Type" to "application/json"
             )
-            val model = selectModel(provider)
             val messages = listOf(
                 MessageDto(role = "system", content = systemInstruction),
                 MessageDto(role = "user", content = prompt)
@@ -595,13 +608,50 @@ $COMMON_JSON_RULES""".trim()
             val response = withRetry { api.chatCompletion(url, headers, request) }
             val content = response.choices.firstOrNull()?.message?.content
                 ?: return Result.failure(Exception("Empty response from AI"))
+            
+            // BUG-00062: 记录成功的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + prompt),
+                completionTokens = estimateTokens(content),
+                requestTimeMs = requestTimeMs,
+                isSuccess = true
+            )
+            
             Result.success(content)
 
         } catch (e: HttpException) {
             val errorBody = try { e.response()?.errorBody()?.string() ?: "No error body" } catch (ex: Exception) { "Failed to read error body" }
+            // BUG-00062: 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + prompt),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = "HTTP ${e.code()}"
+            )
             Result.failure(Exception("HTTP ${e.code()}: $errorBody"))
         } catch (e: Exception) {
             Log.e("AiRepositoryImpl", "文本生成失败", e)
+            // BUG-00062: 记录失败的用量
+            val requestTimeMs = System.currentTimeMillis() - startTime
+            recordUsage(
+                providerId = provider.id,
+                providerName = provider.name,
+                modelId = model,
+                promptTokens = estimateTokens(systemInstruction + prompt),
+                completionTokens = 0,
+                requestTimeMs = requestTimeMs,
+                isSuccess = false,
+                errorMessage = e.message
+            )
             Result.failure(e)
         }
     }
