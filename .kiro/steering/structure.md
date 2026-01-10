@@ -17,7 +17,7 @@
 
 **Clean Architecture + MVVM** with strict layer separation and dependency rules.
 
-## 🆕 多模块架构 (TD-00017 Clean Architecture模块化改造)
+## 多模块架构 (TD-00017 Clean Architecture模块化改造)
 
 > 2025-12-25 更新 - 项目已完成Clean Architecture多模块改造
 
@@ -78,6 +78,11 @@
 | PersonaModule | :app | 画像功能 |
 | TopicModule | :app | 主题功能 |
 | UserProfileModule | :app | 用户画像功能 |
+| AiAdvisorModule | :app | AI军师模块 |
+| ProxyModule | :app | 代理配置 |
+| ApiUsageModule | :app | API用量统计 |
+| SystemPromptModule | :app | 系统提示词 |
+| FloatingWindowManagerModule | :app | 悬浮窗管理器 |
 
 ---
 
@@ -87,7 +92,7 @@
 
 ```
 domain/src/main/kotlin/com/empathy/ai/domain/
-├── model/                    # ✅ 业务实体（183个模型）
+├── model/                    # 业务实体
 │   ├── ActionType.kt
 │   ├── AiModel.kt
 │   ├── AiProvider.kt
@@ -97,91 +102,99 @@ domain/src/main/kotlin/com/empathy/ai/domain/
 │   ├── BrainTag.kt
 │   ├── ChatMessage.kt
 │   ├── ContactProfile.kt
-│   ├── PromptScene.kt        # 提示词场景（已优化为4个核心场景）
+│   ├── PromptScene.kt        # 提示词场景（4个核心场景）
 │   ├── GlobalPromptConfig.kt # 全局提示词配置（v3）
-│   ├── AiAdvisorSession.kt   # AI军师会话模型（v16新增）
-│   └── ...                   # 其他模型
-├── repository/               # ✅ 仓库接口（13+个）
+│   ├── AiAdvisorSession.kt   # AI军师会话模型
+│   ├── AiAdvisorConversation.kt  # AI军师对话模型
+│   ├── AiAdvisorMessageBlock.kt  # AI军师消息块模型
+│   └── ...
+├── repository/               # 仓库接口
 │   ├── AiProviderRepository.kt
 │   ├── AiRepository.kt
 │   ├── BrainTagRepository.kt
 │   ├── ContactRepository.kt
 │   ├── ConversationRepository.kt
 │   ├── DailySummaryRepository.kt
-│   ├── FailedTaskRepository.kt
-│   ├── FloatingWindowPreferencesRepository.kt
-│   ├── PrivacyRepository.kt
 │   ├── PromptRepository.kt
-│   ├── SettingsRepository.kt
-│   ├── TopicRepository.kt
-│   ├── UserProfileRepository.kt
-│   └── AiAdvisorRepository.kt   # AI军师仓库接口（v16新增）
-├── usecase/                  # ✅ 业务用例（38个）
+│   ├── AiAdvisorRepository.kt
+│   └── ...                   # 其他仓库接口
+├── usecase/                  # 业务用例
 │   ├── AnalyzeChatUseCase.kt
 │   ├── PolishDraftUseCase.kt
 │   ├── GenerateReplyUseCase.kt
 │   ├── ManualSummaryUseCase.kt
-│   ├── AiAdvisorUseCases.kt    # AI军师相关UseCase（v16新增）
-│   └── ...                  # 其他UseCase
-├── service/                  # ✅ 领域服务（2个）
+│   ├── SendAdvisorMessageUseCase.kt
+│   ├── CreateAdvisorSessionUseCase.kt
+│   ├── GetAdvisorSessionsUseCase.kt
+│   ├── GetAdvisorConversationsUseCase.kt
+│   ├── DeleteAdvisorConversationUseCase.kt
+│   └── ...                   # 其他UseCase
+├── service/                  # 领域服务
 │   ├── PrivacyEngine.kt
 │   └── SessionContextService.kt
-└── util/                     # ✅ 领域工具类（29个）
-    ├── Logger.kt             # 日志接口（无Android依赖）
+└── util/                     # 领域工具类
+    ├── Logger.kt
     ├── PromptBuilder.kt
     ├── PromptSanitizer.kt
     ├── PromptValidator.kt
     ├── PromptVariableResolver.kt
-    ├── IdentityPrefixHelper.kt # 身份前缀工具类
-    ├── PerformanceMetrics.kt   # 性能指标工具类
-    └── ...                  # 其他工具类
+    ├── IdentityPrefixHelper.kt
+    ├── PerformanceMetrics.kt
+    └── ...                   # 其他工具类
 ```
 
 ### :data 模块 (Android Library)
 
 ```
 data/src/main/kotlin/com/empathy/ai/data/
-├── di/                       # ✅ DI模块（7个）
+├── di/                       # DI模块
 │   ├── DatabaseModule.kt
 │   ├── NetworkModule.kt
 │   ├── RepositoryModule.kt
 │   ├── MemoryModule.kt
 │   ├── PromptModule.kt
 │   ├── DispatcherModule.kt
+│   ├── OkHttpClientFactory.kt
 │   └── Qualifiers.kt
-├── local/                    # ✅ 本地存储
+├── local/                    # 本地存储
 │   ├── AppDatabase.kt        # Room数据库 v16
 │   ├── ApiKeyStorage.kt
 │   ├── FloatingWindowPreferences.kt
+│   ├── PrivacyPreferences.kt
 │   ├── PromptFileStorage.kt
 │   ├── PromptFileBackup.kt
-│   ├── UserProfileBackupManager.kt
-│   ├── UserProfileCache.kt
-│   ├── converter/
-│   │   ├── FactListConverter.kt
-│   │   └── RoomTypeConverters.kt
-│   ├── dao/                  # ✅ 数据访问对象（8个）
+│   ├── AiAdvisorPreferences.kt
+│   ├── ProxyPreferences.kt
+│   ├── DeveloperModePreferences.kt
+│   ├── SystemPromptStorage.kt
+│   ├── DefaultPrompts.kt
+│   ├── dao/                  # 数据访问对象
 │   │   ├── AiProviderDao.kt
 │   │   ├── BrainTagDao.kt
 │   │   ├── ContactDao.kt
 │   │   ├── ConversationLogDao.kt
-│   │   ├── ConversationTopicDao.kt
 │   │   ├── DailySummaryDao.kt
 │   │   ├── FailedSummaryTaskDao.kt
-│   │   └── AiAdvisorDao.kt     # AI军师DAO（v16新增）
-│   └── entity/               # ✅ 数据库实体（11个）
-│       ├── AiProviderEntity.kt
-│       ├── BrainTagEntity.kt
-│       ├── ContactProfileEntity.kt
-│       ├── ConversationLogEntity.kt
-│       ├── ConversationTopicEntity.kt
-│       ├── DailySummaryEntity.kt
-│       ├── FailedSummaryTaskEntity.kt
-│       ├── AiAdvisorSessionEntity.kt      # AI军师会话实体（v16新增）
-│       ├── AiAdvisorConversationEntity.kt # AI军师对话实体（v16新增）
-│       ├── AiAdvisorMessageBlockEntity.kt # AI军师消息块实体（v16新增）
-│       └── ApiUsageRecordEntity.kt        # API用量统计实体（v12新增）
-├── remote/                   # ✅ 网络层
+│   │   ├── AiAdvisorDao.kt
+│   │   ├── AiAdvisorMessageBlockDao.kt
+│   │   ├── ConversationTopicDao.kt
+│   │   └── ApiUsageDao.kt
+│   ├── entity/               # 数据库实体
+│   │   ├── AiProviderEntity.kt
+│   │   ├── BrainTagEntity.kt
+│   │   ├── ContactProfileEntity.kt
+│   │   ├── ConversationLogEntity.kt
+│   │   ├── DailySummaryEntity.kt
+│   │   ├── FailedSummaryTaskEntity.kt
+│   │   ├── AiAdvisorSessionEntity.kt
+│   │   ├── AiAdvisorConversationEntity.kt
+│   │   ├── AiAdvisorMessageBlockEntity.kt
+│   │   ├── ConversationTopicEntity.kt
+│   │   └── ApiUsageEntity.kt
+│   └── converter/
+│       ├── FactListConverter.kt
+│       └── RoomTypeConverters.kt
+├── remote/                   # 网络层
 │   ├── api/OpenAiApi.kt
 │   └── model/
 │       ├── ChatRequestDto.kt
@@ -189,56 +202,62 @@ data/src/main/kotlin/com/empathy/ai/data/
 │       ├── MessageDto.kt
 │       ├── ModelsResponseDto.kt
 │       └── AiSummaryResponseDto.kt
-├── repository/               # ✅ 仓库实现（14个）
+├── repository/               # 仓库实现
 │   ├── AiProviderRepositoryImpl.kt
 │   ├── AiRepositoryImpl.kt
 │   ├── BrainTagRepositoryImpl.kt
 │   ├── ContactRepositoryImpl.kt
 │   ├── ConversationRepositoryImpl.kt
 │   ├── DailySummaryRepositoryImpl.kt
-│   ├── FailedTaskRepositoryImpl.kt
-│   ├── PrivacyRepositoryImpl.kt
 │   ├── PromptRepositoryImpl.kt
+│   ├── AiAdvisorRepositoryImpl.kt
+│   ├── ApiUsageRepositoryImpl.kt
+│   ├── PrivacyRepositoryImpl.kt
 │   ├── TopicRepositoryImpl.kt
 │   ├── UserProfileRepositoryImpl.kt
-│   ├── ProviderCompatibility.kt
+│   ├── SystemPromptRepositoryImpl.kt
+│   ├── DeveloperModeRepositoryImpl.kt
+│   ├── FailedTaskRepositoryImpl.kt
 │   └── settings/
 │       └── SettingsRepositoryImpl.kt
-│   └── advisor/
-│       └── AiAdvisorRepositoryImpl.kt   # AI军师仓库实现（v16新增）
-├── parser/                   # ✅ AI响应解析
+├── parser/                   # AI响应解析
 │   ├── AiResponseParser.kt
 │   ├── AiSummaryResponseParserImpl.kt
 │   ├── EnhancedJsonCleaner.kt
 │   ├── FallbackHandler.kt
 │   ├── FieldMapper.kt
 │   └── JsonCleaner.kt
-└── util/                     # ✅ 数据层工具（3个）
-    ├── AndroidLogger.kt      # Logger接口实现
+└── util/                     # 数据层工具
+    ├── AndroidLogger.kt
     ├── DebugLogger.kt
-    └── AiResponseCleaner.kt
+    ├── AiResponseCleaner.kt
+    ├── ApiErrorHandler.kt
+    └── BlockUpdateManager.kt
 ```
 
 ### :presentation 模块 (Android Library)
 
 ```
 presentation/src/main/kotlin/com/empathy/ai/presentation/
-├── di/                       # ✅ DI模块（1个）
-│   └── (Hilt组件级模块)
-├── navigation/               # ✅ 导航系统
+├── navigation/               # 导航系统
 │   ├── NavGraph.kt
 │   ├── NavRoutes.kt
 │   └── PromptEditorNavigation.kt
-├── theme/                    # ✅ Compose主题
+├── theme/                    # Compose主题
 │   ├── Color.kt
 │   ├── Theme.kt
 │   ├── Type.kt
 │   ├── AnimationSpec.kt
 │   ├── Dimensions.kt
+│   ├── Spacing.kt
 │   ├── CategoryColorPalette.kt
 │   ├── RelationshipColors.kt
-│   └── SemanticColors.kt
-├── ui/                       # ✅ UI组件（280个）
+│   ├── SemanticColors.kt
+│   ├── AvatarColors.kt
+│   ├── EmotionColors.kt
+│   ├── MacaronTagColors.kt
+│   └── CategoryBarColors.kt
+├── ui/                       # UI组件
 │   ├── MainActivity.kt
 │   ├── component/            # 可复用组件
 │   │   ├── MaxHeightScrollView.kt
@@ -253,7 +272,19 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   │   ├── message/
 │   │   ├── relationship/
 │   │   ├── state/
-│   │   └── topic/
+│   │   ├── topic/
+│   │   ├── filter/
+│   │   ├── tag/
+│   │   ├── chart/
+│   │   ├── timeline/
+│   │   ├── persona/
+│   │   ├── vault/
+│   │   ├── animation/
+│   │   ├── text/
+│   │   ├── contact/
+│   │   ├── factstream/
+│   │   ├── ios/
+│   │   └── navigation/
 │   ├── floating/             # 悬浮窗组件
 │   │   ├── FloatingBubbleView.kt
 │   │   ├── FloatingViewV2.kt
@@ -261,9 +292,10 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   │   ├── ResultCard.kt
 │   │   └── RefinementOverlay.kt
 │   └── screen/               # 功能屏幕
+│       ├── MainScreen.kt
 │       ├── aiconfig/
 │       ├── chat/
-│       ├── advisor/          # AI军师模块（v16新增）
+│       ├── advisor/          # AI军师模块
 │       │   ├── AiAdvisorChatScreen.kt
 │       │   ├── AiAdvisorScreen.kt
 │       │   ├── ContactSelectScreen.kt
@@ -281,10 +313,10 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │       ├── settings/
 │       ├── tag/
 │       └── userprofile/
-├── viewmodel/                # ✅ ViewModel（17个）
+├── viewmodel/                # ViewModel
 │   ├── BaseViewModel.kt
 │   ├── AiAdvisorEntryViewModel.kt
-│   ├── AiAdvisorChatViewModel.kt      # AI军师聊天ViewModel（v16新增）
+│   ├── AiAdvisorChatViewModel.kt
 │   ├── AiConfigViewModel.kt
 │   ├── BrainTagViewModel.kt
 │   ├── ChatViewModel.kt
@@ -294,15 +326,19 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 │   ├── ContactSelectViewModel.kt
 │   ├── ManualSummaryViewModel.kt
 │   ├── PromptEditorViewModel.kt
-│   ├── SessionHistoryViewModel.kt     # 会话历史ViewModel（v16新增）
+│   ├── SessionHistoryViewModel.kt
 │   ├── SettingsViewModel.kt
 │   ├── TopicViewModel.kt
-│   └── UserProfileViewModel.kt
-└── util/                     # ✅ 表现层工具（3个）
+│   ├── UserProfileViewModel.kt
+│   ├── UsageStatsViewModel.kt
+│   └── DeveloperModeViewModel.kt
+└── util/                     # 表现层工具
     ├── FilterTypeIcons.kt
     ├── FloatingWindowManagerStub.kt
     ├── ImageLoaderConfig.kt
-    └── DebugLogger.kt
+    ├── DebugLogger.kt
+    ├── ErrorMessageMapper.kt
+    └── AdaptiveAnimationConfig.kt
 ```
 
 ### :app 模块 (Application)
@@ -310,10 +346,11 @@ presentation/src/main/kotlin/com/empathy/ai/presentation/
 ```
 app/src/main/java/com/empathy/ai/
 ├── app/
-│   └── EmpathyApplication.kt # Hilt应用类
-├── di/                       # ✅ 应用级DI模块（9个）
+│   └── EmpathyApplication.kt  # Hilt应用类
+│   └── SystemPromptConfigProvider.kt
+├── di/                       # 应用级DI模块
 │   ├── AppDispatcherModule.kt
-│   ├── LoggerModule.kt       # Logger绑定
+│   ├── LoggerModule.kt
 │   ├── ServiceModule.kt
 │   ├── FloatingWindowModule.kt
 │   ├── NotificationModule.kt
@@ -321,19 +358,24 @@ app/src/main/java/com/empathy/ai/
 │   ├── EditModule.kt
 │   ├── PersonaModule.kt
 │   ├── TopicModule.kt
-│   └── UserProfileModule.kt
+│   ├── UserProfileModule.kt
+│   ├── AiAdvisorModule.kt
+│   ├── ProxyModule.kt
+│   ├── ApiUsageModule.kt
+│   ├── SystemPromptModule.kt
+│   └── FloatingWindowManagerModule.kt
 ├── notification/
 │   └── AiResultNotificationManager.kt
 ├── service/
 │   └── FloatingWindowService.kt
-├── domain/
-│   ├── service/
-│   │   └── FloatingWindowService.kt
-│   └── util/
-│       ├── ErrorHandler.kt
-│       ├── FloatingView.kt
-│       ├── FloatingViewDebugLogger.kt
-│       └── PerformanceMonitor.kt
+└── domain/
+    ├── service/
+    │   └── FloatingWindowService.kt
+    └── util/
+        ├── ErrorHandler.kt
+        ├── FloatingView.kt
+        ├── FloatingViewDebugLogger.kt
+        └── PerformanceMonitor.kt
 └── util/
     └── AndroidFloatingWindowManager.kt
 ```
@@ -343,52 +385,52 @@ app/src/main/java/com/empathy/ai/
 ## 层级职责
 
 ### 领域层（:domain - 纯业务逻辑）
-- **✅ 无 Android 依赖** - 纯Kotlin模块，可独立测试
-- **✅ 包含业务模型、仓库接口、用例、领域服务和工具类**
-- **✅ 所有用例返回 `Result<T>` 以实现一致的错误处理**
-- **✅ 所有 IO 操作都是 `suspend` 函数**
+- **无 Android 依赖** - 纯Kotlin模块，可独立测试
+- **包含业务模型、仓库接口、用例、领域服务和工具类**
+- **所有用例返回 `Result<T>` 以实现一致的错误处理**
+- **所有 IO 操作都是 `suspend` 函数**
 
 ### 数据层（:data - 数据访问）
-- **✅ 实现领域层的仓库接口**
-- **✅ Room 数据库用于本地存储，支持 Flow**
-- **✅ Retrofit 用于网络调用，使用 Moshi JSON 解析**
-- **✅ EncryptedSharedPreferences 用于敏感数据（API 密钥）**
-- **✅ 包含数据层DI模块（DatabaseModule、NetworkModule、RepositoryModule等）**
+- **实现领域层的仓库接口**
+- **Room 数据库用于本地存储，支持 Flow**
+- **Retrofit 用于网络调用，使用 Moshi JSON 解析**
+- **EncryptedSharedPreferences 用于敏感数据（API 密钥）**
+- **包含数据层DI模块**
 
 ### 表现层（:presentation - UI和交互）
-- **✅ Jetpack Compose 用于声明式 UI**
-- **✅ 使用 Hilt 注入的 ViewModel**
-- **✅ StateFlow 用于 UI 状态管理**
-- **✅ UiState 和 UiEvent 密封类用于类型安全的状态/事件处理**
-- **✅ 只依赖:domain模块，不依赖:data模块**
+- **Jetpack Compose 用于声明式 UI**
+- **使用 Hilt 注入的 ViewModel**
+- **StateFlow 用于 UI 状态管理**
+- **UiState 和 UiEvent 密封类用于类型安全的状态/事件处理**
+- **只依赖:domain模块，不依赖:data模块**
 
 ### 应用层（:app - 应用入口）
-- **✅ Hilt Application入口**
-- **✅ Android服务（FloatingWindowService）**
-- **✅ 应用级DI模块（ServiceModule、NotificationModule等）**
-- **✅ 聚合所有模块依赖**
+- **Hilt Application入口**
+- **Android服务（FloatingWindowService）**
+- **应用级DI模块**
+- **聚合所有模块依赖**
 
 ---
 
 ## 命名规范
 
 ### 文件
-- **PascalCase** 用于所有 Kotlin 文件：`ContactProfile.kt`
-- **Entity 后缀** 用于数据库实体：`ContactProfileEntity.kt`
-- **ViewModel 后缀**：`ChatViewModel.kt`
-- **UiState 后缀**：`ChatUiState.kt`
-- **UiEvent 后缀**：`ChatUiEvent.kt`
-- **UseCase 后缀**：`AnalyzeChatUseCase.kt`
+- **PascalCase** 用于所有 Kotlin 文件
+- **Entity 后缀** 用于数据库实体
+- **ViewModel 后缀**
+- **UiState 后缀**
+- **UiEvent 后缀**
+- **UseCase 后缀**
 
 ### 数据库
-- **表名**：`snake_case` 复数形式：`contact_profiles`、`brain_tags`
-- **列名**：`snake_case`：`contact_id`、`tag_type`
+- **表名**：`snake_case` 复数形式
+- **列名**：`snake_case`
 - **始终使用 `@ColumnInfo(name = "...")` 来解耦 Kotlin 名称和 SQL**
 
 ### Kotlin
-- **属性**：`camelCase`：`contactId`、`tagType`
-- **常量**：`UPPER_SNAKE_CASE`：`MAX_RETRY_COUNT`
-- **Composable**：`PascalCase`：`ChatScreen`、`MessageBubble`
+- **属性**：`camelCase`
+- **常量**：`UPPER_SNAKE_CASE`
+- **Composable**：`PascalCase`
 
 ---
 
@@ -450,13 +492,13 @@ class ChatViewModel @Inject constructor(
 :app/src/androidTest/       # 集成测试和UI测试
 ```
 
-测试文件镜像源代码结构，使用 `Test` 后缀：`AnalyzeChatUseCaseTest.kt`
+测试文件镜像源代码结构，使用 `Test` 后缀
 
 ---
 
 ## 当前实现状态
 
-### ✅ 完全实现的模块
+### 完全实现的模块
 - **:domain模块**: 100%完成
   - 业务模型
   - Repository接口
@@ -503,7 +545,7 @@ class ChatViewModel @Inject constructor(
 |------|----------|------|
 | v12 | 新增api_usage_records表，AI用量统计 | 已完成 |
 | v13-v15 | 迭代优化 | 已完成 |
-| v16 | 新增AI军师会话相关表（ai_advisor_sessions, ai_advisor_conversations, ai_advisor_message_blocks） | 已完成 |
+| v16 | 新增AI军师会话相关表 | 已完成 |
 
 ### AI军师模块（v16新增）
 
@@ -522,7 +564,7 @@ AI军师（心语助手）是一个独立的对话模块，提供：
 
 ---
 
-### 🔄 进行中的问题修复（2026-01-10）
+### 进行中的问题修复（2026-01-10）
 
 | Bug ID | 问题描述 | 状态 |
 |--------|----------|------|
@@ -530,10 +572,12 @@ AI军师（心语助手）是一个独立的对话模块，提供：
 | BUG-00059 | 中断生成后重新生成消息角色错乱问题 | 已修复，测试用例已验证 |
 | BUG-00060 | 会话管理增强需求 | 已修复，测试用例已验证 |
 | BUG-00061 | 会话历史跳转失败问题 | 已修复，测试用例已验证 |
+| BUG-00064 | AI手动总结功能未生效问题 | 已修复，测试用例已验证 |
 | BUG-00065 | 联系人搜索功能优化 | 进行中 |
 
-**文档版本**: 2.18
+**文档版本**: 2.19
 **最后更新**: 2026-01-10
 **更新内容**:
-- 更新模块测试文件统计（presentation测试：57→59，总计：266→268）
-- 更新BUG-00065联系人搜索功能优化状态为"进行中"
+- 更新模块测试文件统计（基于实际代码架构扫描）
+- 更新BUG-00064状态为已修复
+- 更新进行中的BUG修复列表

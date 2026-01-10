@@ -92,4 +92,32 @@ interface BrainTagDao {
      */
     @Query("DELETE FROM brain_tags WHERE contact_id = :contactId")
     suspend fun deleteTagsByContactId(contactId: String)
+
+    /**
+     * 根据ID获取单个标签
+     *
+     * 【编辑前查询】用于编辑标签前验证标签存在：
+     * - BUG-00066: 画像标签编辑功能
+     * - 返回 null 表示标签不存在
+     *
+     * @param id 标签ID
+     * @return 标签实体，如果不存在返回 null
+     */
+    @Query("SELECT * FROM brain_tags WHERE id = :id")
+    suspend fun getTagById(id: Long): BrainTagEntity?
+
+    /**
+     * 更新标签内容和类型
+     *
+     * 【部分更新】只更新 content 和 tag_type 字段：
+     * - BUG-00066: 画像标签编辑功能
+     * - 保留 contact_id、source 等字段不变
+     * - 用于用户编辑已添加的标签
+     *
+     * @param id 标签ID
+     * @param content 新的标签内容
+     * @param type 新的标签类型（RISK_RED 或 STRATEGY_GREEN）
+     */
+    @Query("UPDATE brain_tags SET content = :content, tag_type = :type WHERE id = :id")
+    suspend fun updateTag(id: Long, content: String, type: String)
 }

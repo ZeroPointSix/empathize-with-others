@@ -78,6 +78,7 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 - `BUG00060SessionManagementTest.kt` - 会话管理增强测试
 - `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
 - `BUG00064ManualSummaryTest.kt` - AI手动总结功能测试
+- `BUG00066EditBrainTagTest.kt` - 大脑标签编辑功能测试
 
 ## 架构结构
 
@@ -194,6 +195,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 ### 进行中的问题修复（2026-01-10）
 | BUG编号 | 问题描述 | 状态 |
 |---------|----------|------|
+| BUG-00064 | AI手动总结功能未生效问题 | 已修复 |
 | BUG-00065 | 联系人搜索功能优化 | 进行中 |
 
 详细修复方案见: [文档/开发文档/BUG/](./文档/开发文档/BUG/)
@@ -206,9 +208,9 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - **Claude**: 功能设计与文档编写
 
 **任务执行前必须**:
-1. 读取 `Rules/WORKSPACE.md` 检查是否有冲突任务
+1. 读取 `Rules/workspace-rules.md` 检查协作规则
 2. 如有其他 AI 正在执行相关任务，**必须停止并询问用户**
-3. 在 WORKSPACE 中记录任务开始信息
+3. 在 Rules/WORKSPACE.md 中记录任务开始信息（如存在）
 
 **强制优先级**: `Rules/workspace-rules.md` 中的规则 > 所有其他规则
 
@@ -236,12 +238,13 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | 文件/目录 | 用途 |
 |-----------|------|
 | `Rules/workspace-rules.md` | 多AI协作核心规则（强制执行） |
-| `Rules/WORKSPACE.md` | 当前任务状态追踪 |
 | `Rules/ai-status.md` | AI工具状态监控 |
-| `Rules/项目开发规范.md` | 完整开发规范（900+行，包含编码、测试、调试规范） |
+| `Rules/项目开发规范.md` | 完整开发规范 |
+
+**注意**: `Rules/WORKSPACE.md` 可能不存在，如需使用请先创建。
 
 **协作流程**:
-1. 任务开始前 → 读取 `Rules/WORKSPACE.md` 检查冲突
+1. 任务开始前 → 读取 `Rules/workspace-rules.md` 检查协作规则
 2. 任务进行中 → 实时更新里程碑和发现问题
 3. 任务完成后 → 更新任务状态并记录变更日志
 
