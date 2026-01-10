@@ -88,11 +88,19 @@ class PromptEditorViewModel @Inject constructor(
         is PromptEditMode.ContactCustom -> PromptScene.ANALYZE
     }
 
+    /**
+     * BUG-00061 修复：提示词缓存
+     * 
+     * 缓存已加载过的场景提示词，避免重复加载导致的全屏刷新
+     */
+    private val promptCache = mutableMapOf<PromptScene, String>()
+
     private val _uiState = MutableStateFlow(
         PromptEditorUiState(
             editMode = editMode,
             currentScene = initialScene,
-            placeholderText = getPlaceholderText(editMode)
+            placeholderText = getPlaceholderText(editMode),
+            isInitialLoading = true
         )
     )
     val uiState: StateFlow<PromptEditorUiState> = _uiState.asStateFlow()
@@ -146,35 +154,58 @@ class PromptEditorViewModel @Inject constructor(
 
     /**
      * 处理场景切换
+     * 
+     * BUG-00061 修复：
+     * 1. 立即更新场景（UI立即响应）
+     * 2. 检查缓存，命中则直接使用
+     * 3. 未命中时只设置 isSceneSwitching（不是全屏加载）
+     * 4. 加载完成后更新缓存
      */
     private fun handleSwitchScene(scene: PromptScene) {
-        // 更新当前场景
+        // 立即更新当前场景（UI立即响应）
         _uiState.update { it.copy(currentScene = scene) }
         
-        // 重新加载该场景的提示词
+        // 检查缓存
+        promptCache[scene]?.let { cachedPrompt ->
+            // 缓存命中，直接使用，无需加载
+            _uiState.update {
+                it.copy(
+                    editMode = PromptEditMode.GlobalScene(scene),
+                    originalPrompt = cachedPrompt,
+                    currentPrompt = cachedPrompt,
+                    placeholderText = getPlaceholderText(PromptEditMode.GlobalScene(scene))
+                )
+            }
+            return
+        }
+        
+        // 缓存未命中，设置场景切换状态（不是全屏加载）
+        _uiState.update { it.copy(isSceneSwitching = true) }
+        
+        // 异步加载该场景的提示词
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
             try {
                 val promptResult = promptRepository.getGlobalPrompt(scene)
                 
                 promptResult.fold(
                     onSuccess = { prompt ->
                         val actualPrompt = prompt ?: ""
+                        // 缓存加载结果
+                        promptCache[scene] = actualPrompt
                         _uiState.update {
                             it.copy(
                                 editMode = PromptEditMode.GlobalScene(scene),
                                 originalPrompt = actualPrompt,
                                 currentPrompt = actualPrompt,
                                 placeholderText = getPlaceholderText(PromptEditMode.GlobalScene(scene)),
-                                isLoading = false
+                                isSceneSwitching = false
                             )
                         }
                     },
                     onFailure = { e ->
                         _uiState.update {
                             it.copy(
-                                isLoading = false,
+                                isSceneSwitching = false,
                                 errorMessage = "加载失败: ${e.message}"
                             )
                         }
@@ -183,7 +214,7 @@ class PromptEditorViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        isSceneSwitching = false,
                         errorMessage = "加载失败: ${e.message}"
                     )
                 }
@@ -226,10 +257,12 @@ class PromptEditorViewModel @Inject constructor(
 
     /**
      * 加载提示词
+     * 
+     * BUG-00061 修复：使用 isInitialLoading 而不是 isLoading
      */
     private fun loadPrompt() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isInitialLoading = true) }
 
             try {
                 val promptResult = when (val mode = editMode) {
@@ -242,18 +275,22 @@ class PromptEditorViewModel @Inject constructor(
                 promptResult.fold(
                     onSuccess = { prompt ->
                         val actualPrompt = prompt ?: ""
+                        // 缓存初始加载的提示词
+                        if (editMode is PromptEditMode.GlobalScene) {
+                            promptCache[editMode.scene] = actualPrompt
+                        }
                         _uiState.update {
                             it.copy(
                                 originalPrompt = actualPrompt,
                                 currentPrompt = actualPrompt,
-                                isLoading = false
+                                isInitialLoading = false
                             )
                         }
                     },
                     onFailure = { e ->
                         _uiState.update {
                             it.copy(
-                                isLoading = false,
+                                isInitialLoading = false,
                                 errorMessage = "加载失败: ${e.message}"
                             )
                         }
@@ -262,7 +299,7 @@ class PromptEditorViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        isInitialLoading = false,
                         errorMessage = "加载失败: ${e.message}"
                     )
                 }
