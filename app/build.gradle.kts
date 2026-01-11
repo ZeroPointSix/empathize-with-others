@@ -13,10 +13,14 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = (project.findProperty("RELEASE_KEY_ALIAS") as? String) ?: "empathy-key"
-            keyPassword = (project.findProperty("RELEASE_KEY_PASSWORD") as? String) ?: "empathy123"
-            storeFile = file((project.findProperty("RELEASE_STORE_FILE") as? String) ?: "../empathy-release-key.jks")
-            storePassword = (project.findProperty("RELEASE_STORE_PASSWORD") as? String) ?: "empathy123"
+            keyAlias = project.findProperty("RELEASE_KEY_ALIAS") as? String
+                ?: error("Missing RELEASE_KEY_ALIAS")
+            keyPassword = project.findProperty("RELEASE_KEY_PASSWORD") as? String
+                ?: error("Missing RELEASE_KEY_PASSWORD")
+            storeFile = file(project.findProperty("RELEASE_STORE_FILE") as? String
+                ?: "../empathy-release-key.jks")
+            storePassword = project.findProperty("RELEASE_STORE_PASSWORD") as? String
+                ?: error("Missing RELEASE_STORE_PASSWORD")
         }
     }
 
