@@ -156,6 +156,7 @@ jobs:
       - name: 推送更改
         if: github.event.inputs.dry_run != 'true'
         run: |
+          git pull --rebase origin ${{ github.ref_name }}
           git push origin ${{ github.ref_name }}
           echo "✅ 已推送到远程仓库"
       
