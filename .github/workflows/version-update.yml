@@ -163,6 +163,10 @@ jobs:
         if: github.event.inputs.dry_run != 'true' && steps.stage.outputs.stage == 'production'
         run: |
           VERSION=$(grep "APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2)
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "🏷️ 标签已存在: v$VERSION"
+            exit 0
+          fi
           git tag -a "v$VERSION" -m "Release v$VERSION"
           git push origin "v$VERSION"
           echo "🏷️ 已创建标签: v$VERSION"
