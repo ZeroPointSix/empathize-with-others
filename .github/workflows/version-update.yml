@@ -75,7 +75,18 @@ jobs:
       
       - name: 授予Gradle执行权限
         run: chmod +x ./gradlew
-      
+
+      - name: 注入签名参数（避免解析阶段报错）
+        run: |
+          if [ -n "${{ secrets.RELEASE_KEY_ALIAS }}" ]; then
+            {
+              echo "RELEASE_STORE_FILE=empathy-release-key.jks"
+              echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+              echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+              echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+            } >> gradle.properties
+          fi
+
       - name: 分析Git提交
         id: analyze
         run: |
