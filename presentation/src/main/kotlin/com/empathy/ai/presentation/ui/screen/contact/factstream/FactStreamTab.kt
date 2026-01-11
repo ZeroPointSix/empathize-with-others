@@ -167,7 +167,8 @@ fun FactStreamTab(
             when (mode) {
                 ViewMode.Timeline -> ModernTimelineView(
                     items = filteredItems,
-                    onItemClick = onItemClick
+                    onItemClick = onItemClick,
+                    onFactEdit = onFactEdit  // BUG-00065: 传递事实编辑回调
                 )
                 ViewMode.List -> ModernListView(
                     items = filteredItems,
@@ -190,7 +191,8 @@ fun FactStreamTab(
                         } else {
                             selectedItems - id
                         }
-                    }
+                    },
+                    onFactEdit = onFactEdit  // BUG-00065: 传递事实编辑回调
                 )
             }
         }

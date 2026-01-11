@@ -52,6 +52,10 @@ data class BrainTagUiState(
     val newTagContent: String = "",
     val selectedTagType: String = "STRATEGY_GREEN",
 
+    // 编辑对话框状态 (BUG-00066)
+    val showEditDialog: Boolean = false,
+    val editingTag: BrainTag? = null,
+
     // 导航状态
     val shouldNavigateBack: Boolean = false
 ) {

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
+import com.empathy.ai.domain.usecase.EditBrainTagUseCase
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
 import com.empathy.ai.presentation.ui.screen.tag.BrainTagUiEvent
@@ -25,12 +26,16 @@ import javax.inject.Inject
  * 2. 处理用户交互事件
  * 3. 调用 UseCase 执行业务逻辑
  * 4. 标签的增删查改操作
+ *
+ * ## 更新记录
+ * - BUG-00066: 添加编辑标签功能
  */
 @HiltViewModel
 class BrainTagViewModel @Inject constructor(
     private val getBrainTagsUseCase: GetBrainTagsUseCase,
     private val saveBrainTagUseCase: SaveBrainTagUseCase,
-    private val deleteBrainTagUseCase: DeleteBrainTagUseCase
+    private val deleteBrainTagUseCase: DeleteBrainTagUseCase,
+    private val editBrainTagUseCase: EditBrainTagUseCase
 ) : ViewModel() {
 
     // 私有可变状态（只能内部修改）
@@ -63,6 +68,11 @@ class BrainTagViewModel @Inject constructor(
 
             // === 标签操作事件 ===
             is BrainTagUiEvent.DeleteTag -> deleteTag(event.tagId)
+
+            // === 编辑标签事件 (BUG-00066) ===
+            is BrainTagUiEvent.StartEditTag -> startEditTag(event.tag)
+            is BrainTagUiEvent.ConfirmEditTag -> confirmEditTag(event.tagId, event.newContent, event.newType)
+            is BrainTagUiEvent.CancelEditTag -> cancelEditTag()
 
             // === 添加标签对话框事件 ===
             is BrainTagUiEvent.ShowAddDialog -> showAddDialog()
@@ -181,6 +191,73 @@ class BrainTagViewModel @Inject constructor(
                     it.copy(error = e.message ?: "删除标签失败")
                 }
             }
+        }
+    }
+
+    // === 编辑标签方法 (BUG-00066) ===
+
+    /**
+     * 开始编辑标签
+     * 显示编辑对话框并设置当前编辑的标签
+     */
+    private fun startEditTag(tag: BrainTag) {
+        _uiState.update {
+            it.copy(
+                showEditDialog = true,
+                editingTag = tag
+            )
+        }
+    }
+
+    /**
+     * 确认编辑标签
+     * 调用 EditBrainTagUseCase 更新标签
+     */
+    private fun confirmEditTag(tagId: Long, newContent: String, newType: TagType) {
+        val content = newContent.trim()
+
+        // 验证标签内容
+        if (content.isEmpty()) {
+            _uiState.update { it.copy(error = "标签内容不能为空") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                editBrainTagUseCase(tagId, content, newType)
+                    .onSuccess {
+                        // 编辑成功，隐藏对话框
+                        _uiState.update {
+                            it.copy(
+                                showEditDialog = false,
+                                editingTag = null
+                            )
+                        }
+                        // Flow 会自动更新 UI
+                    }
+                    .onFailure { error ->
+                        _uiState.update {
+                            it.copy(error = error.message ?: "编辑标签失败")
+                        }
+                    }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "编辑标签失败")
+                }
+            }
+        }
+    }
+
+    /**
+     * 取消编辑标签
+     * 隐藏编辑对话框
+     */
+    private fun cancelEditTag() {
+        _uiState.update {
+            it.copy(
+                showEditDialog = false,
+                editingTag = null
+            )
         }
     }
 

@@ -127,6 +127,30 @@ sealed class ContactDetailUiEvent {
     
     // Feature Flag
     data class SetUsePersonaTabV2(val enabled: Boolean) : ContactDetailUiEvent()
+
+    // ========== 标签编辑事件（BUG-00066） ==========
+    /**
+     * 开始编辑标签
+     * @param tag 要编辑的标签
+     */
+    data class StartEditBrainTag(val tag: com.empathy.ai.domain.model.BrainTag) : ContactDetailUiEvent()
+
+    /**
+     * 确认编辑标签
+     * @param tagId 标签ID
+     * @param newContent 新的标签内容
+     * @param newType 新的标签类型
+     */
+    data class ConfirmEditBrainTag(
+        val tagId: Long,
+        val newContent: String,
+        val newType: TagType
+    ) : ContactDetailUiEvent()
+
+    /**
+     * 取消编辑标签
+     */
+    data object CancelEditBrainTag : ContactDetailUiEvent()
     
     // ========== 字段验证事件 ==========
     data object ValidateName : ContactDetailUiEvent()
