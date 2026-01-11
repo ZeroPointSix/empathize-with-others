@@ -84,7 +84,7 @@ jobs:
         run: |
           if [ -n "${{ secrets.RELEASE_KEY_ALIAS }}" ]; then
             {
-              echo "RELEASE_STORE_FILE=app/empathy-release-key.jks"
+              echo "RELEASE_STORE_FILE=empathy-release-key.jks"
               echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
               echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
               echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
@@ -259,7 +259,7 @@ jobs:
           printf "%s" "$RAW_KEYSTORE_CLEAN" | base64 --decode > app/empathy-release-key.jks
 
           {
-            echo "RELEASE_STORE_FILE=app/empathy-release-key.jks"
+            echo "RELEASE_STORE_FILE=empathy-release-key.jks"
             echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
             echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
             echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
