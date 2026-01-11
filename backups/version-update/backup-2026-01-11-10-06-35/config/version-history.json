@@ -1,23 +1,11 @@
 {
     "currentVersion": {
-        "version": "1.2.4",
-        "versionCode": 10204,
-        "stage": "production",
-        "updatedAt": "2026-01-11T10:06:35.715802507Z"
+        "version": "1.2.3",
+        "versionCode": 10203,
+        "stage": "dev",
+        "updatedAt": "2026-01-11T10:02:36.954266050Z"
     },
     "history": [
-        {
-            "version": "1.2.4",
-            "versionCode": 10204,
-            "stage": "production",
-            "date": "2026-01-11T10:06:35.715802507Z",
-            "commits": [
-                "serialize version update runs",
-                "更新版本号到 1.2.3 [skip ci]",
-                "re-encode launcher foreground mipmap pngs"
-            ],
-            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground mipmap pngs\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.3 [skip ci]\n- 👷 serialize version update runs"
-        },
         {
             "version": "1.2.3",
             "versionCode": 10203,
