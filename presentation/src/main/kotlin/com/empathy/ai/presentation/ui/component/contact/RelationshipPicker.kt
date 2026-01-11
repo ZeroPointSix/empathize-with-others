@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -109,8 +109,8 @@ fun RelationshipPicker(
                     color = if (selectedType != null) iOSTextPrimary else iOSTextSecondary
                 )
                 
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "选择",
                     tint = iOSTextSecondary
                 )

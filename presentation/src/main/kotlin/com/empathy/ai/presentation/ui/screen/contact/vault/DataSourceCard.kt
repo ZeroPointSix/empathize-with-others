@@ -32,7 +32,7 @@ import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.state.StatusBadge
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.VideoFile
@@ -140,7 +140,7 @@ private fun PreviewDataSourceCardChat() {
     EmpathyTheme {
         DataSourceCard(
             title = "聊天记录",
-            icon = Icons.Default.Chat,
+            icon = Icons.AutoMirrored.Filled.Chat,
             count = 128,
             status = DataStatus.COMPLETED,
             modifier = Modifier

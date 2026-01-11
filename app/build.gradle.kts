@@ -1,6 +1,8 @@
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import java.io.File
+import java.io.FileInputStream
+import java.security.KeyStore
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,11 +10,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)  // 保留KSP用于Room和Moshi
-    alias(libs.plugins.kotlin.kapt)  // 使用KAPT处理Hilt
 }
 
-val releaseSigning = project.loadReleaseSigningCredentials()
 val releaseSigningRequired = project.requiresReleaseSigning()
+val releaseSigning = if (releaseSigningRequired) {
+    project.loadReleaseSigningCredentials()
+} else {
+    null
+}
 
 if (releaseSigningRequired && releaseSigning == null) {
     throw GradleException(
@@ -117,15 +122,8 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
         arg("room.incremental", "true")
         arg("room.generateKotlin", "true")
-    }
-
-    // KAPT配置 - 用于Hilt，解决多模块兼容性问题
-    kapt {
-        correctErrorTypes = true
-        arguments {
-            arg("dagger.fastInit", "enabled")
-            arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-        }
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
 
     // 单元测试配置
@@ -196,7 +194,7 @@ dependencies {
 
     // Hilt (依赖注入) - 使用KAPT替代KSP，解决多模块兼容性问题
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
     // Room (本地数据库) - app模块需要Room用于DI配置
@@ -245,7 +243,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.compiler)
+    kspAndroidTest(libs.hilt.compiler)
 }
 
 data class SigningCredentials(
@@ -265,24 +263,11 @@ fun Project.loadReleaseSigningCredentials(): SigningCredentials? {
     val keyAlias = resolve("RELEASE_KEY_ALIAS") ?: return null
     val keyPassword = resolve("RELEASE_KEY_PASSWORD") ?: return null
     val storePassword = resolve("RELEASE_STORE_PASSWORD") ?: return null
-    val storeFile = resolve("RELEASE_STORE_FILE")
-        ?.let { path ->
-            val file = rootProject.file(path)
-            if (file.exists()) file else file.absoluteFile
-        }
-        ?: defaultReleaseStoreFile()
-        ?: return null
-
-    return SigningCredentials(storeFile.absolutePath, keyAlias, keyPassword, storePassword)
-}
-
-fun Project.defaultReleaseStoreFile(): File? {
-    val rootKeystore = rootProject.file("empathy-release-key.jks")
-    if (rootKeystore.exists()) {
-        return rootKeystore
-    }
-    val appKeystore = rootProject.file("app/empathy-release-key.jks")
-    return appKeystore.takeIf { it.exists() }
+    val storePath = resolve("RELEASE_STORE_FILE") ?: return null
+    val storeFile = rootProject.file(storePath)
+    val credentials = SigningCredentials(storeFile.absolutePath, keyAlias, keyPassword, storePassword)
+    credentials.validate()
+    return credentials
 }
 
 fun Project.requiresReleaseSigning(): Boolean {
@@ -297,5 +282,23 @@ fun Project.requiresReleaseSigning(): Boolean {
             normalized.contains("bundle") ||
             normalized.contains("publish") ||
             normalized.contains("upload")
+    }
+}
+
+fun SigningCredentials.validate() {
+    val file = File(storeFilePath)
+    if (!file.exists()) {
+        throw GradleException("Release keystore not found at $storeFilePath")
+    }
+    try {
+        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+        FileInputStream(file).use { input ->
+            keyStore.load(input, storePassword.toCharArray())
+        }
+        if (!keyStore.containsAlias(keyAlias)) {
+            throw GradleException("Release keystore is missing alias '$keyAlias'")
+        }
+    } catch (e: Exception) {
+        throw GradleException("Invalid release keystore configuration: ${e.message}", e)
     }
 }

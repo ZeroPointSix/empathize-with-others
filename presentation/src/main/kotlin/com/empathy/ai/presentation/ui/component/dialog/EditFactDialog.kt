@@ -22,7 +22,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -310,7 +310,7 @@ fun EditFactDialog(
                 }
                 
                 // 分隔线
-                Divider(
+                HorizontalDivider(
                     color = Color.Black.copy(alpha = 0.1f),
                     thickness = 0.5.dp
                 )

@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Summarize
@@ -84,7 +84,7 @@ private fun getSceneIcon(scene: PromptScene): ImageVector {
     return when (scene) {
         PromptScene.ANALYZE -> Icons.Default.Search
         PromptScene.POLISH -> Icons.Default.EditNote
-        PromptScene.REPLY -> Icons.Default.Chat
+        PromptScene.REPLY -> Icons.AutoMirrored.Filled.Chat
         PromptScene.SUMMARY -> Icons.Default.Summarize
         else -> Icons.Default.Search // 默认图标
     }
