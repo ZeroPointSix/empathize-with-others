@@ -245,7 +245,7 @@ fun AiAdvisorChatScreen(
                             color = iOSBlue
                         )
                     }
-                    uiState.conversations.isEmpty() && !uiState.isStreaming -> {
+                    uiState.conversations.isEmpty() && !uiState.isStreaming && uiState.hasLoadedConversations -> {
                         EmptyChatState(modifier = Modifier.align(Alignment.Center))
                     }
                     else -> {

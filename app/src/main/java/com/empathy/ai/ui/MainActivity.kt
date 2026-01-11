@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.background
 import com.empathy.ai.presentation.navigation.BottomNavTab
 import com.empathy.ai.presentation.navigation.NonTabNavGraph
 import com.empathy.ai.presentation.navigation.NavRoutes
@@ -28,6 +29,7 @@ import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
 import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.ui.theme.AppTheme
+import com.empathy.ai.presentation.theme.iOSBackground
 import android.util.Log
 
 /**
@@ -98,6 +100,7 @@ private fun MainScreen() {
             navController = navController,
             modifier = Modifier
                 .fillMaxSize()
+                .background(iOSBackground)
                 .alpha(if (isInMainTab) 0f else 1f)
                 .pointerInput(isInMainTab) {
                     if (isInMainTab) {
