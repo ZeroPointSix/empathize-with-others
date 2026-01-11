@@ -1,21 +1,11 @@
 {
     "currentVersion": {
-        "version": "1.2.3",
-        "versionCode": 10203,
-        "stage": "dev",
-        "updatedAt": "2026-01-11T10:02:36.954266050Z"
+        "version": "1.2.2",
+        "versionCode": 10202,
+        "stage": "production",
+        "updatedAt": "2026-01-11T09:44:55.098020243Z"
     },
     "history": [
-        {
-            "version": "1.2.3",
-            "versionCode": 10203,
-            "stage": "dev",
-            "date": "2026-01-11T10:02:36.954266050Z",
-            "commits": [
-                "re-encode launcher foreground mipmap pngs"
-            ],
-            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground mipmap pngs"
-        },
         {
             "version": "1.2.2",
             "versionCode": 10202,
