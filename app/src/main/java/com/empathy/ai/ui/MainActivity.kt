@@ -34,23 +34,28 @@ import android.util.Log
 
 /**
  * 应用主Activity
- * 
- * 职责:
+ *
+ * ## 职责
  * 1. 设置Compose内容
  * 2. 应用主题
  * 3. 初始化导航
  * 4. 依赖注入入口
- * 
- * 注意: 此Activity必须放在app模块（Application模块）中，
- * 因为Hilt的@AndroidEntryPoint注解需要AGP的字节码转换支持，
- * 而字节码转换只在Application模块中生效。
- * 
- * 主题说明: 使用app模块本地的AppTheme而非presentation模块的EmpathyTheme，
- * 以解决多模块架构下ThemeKt类在运行时无法被找到的问题。
- * 
- * 开发者模式: DeveloperModeViewModel使用Activity作为ViewModelStoreOwner，
- * 在SettingsScreen中通过hiltViewModel()获取同一个实例
- * @see BUG-00050 开发者模式导航时意外退出
+ * 5. 管理底部Tab状态和AI军师返回逻辑（BUG-00068/BUG-00069）
+ *
+ * ## 架构说明 (BUG-00068/BUG-00069)
+ * - **Tab缓存策略**: 使用 BottomNavScaffold 实现三大Tab页面内存缓存
+ * - **双层NavHost**: NonTabNavGraph始终挂载 + BottomNavScaffold条件渲染
+ * - **AI军师返回优化**: 检测从AI军师子栈返回Tab时自动恢复上一个非AI Tab
+ *
+ * ## 关联文档
+ * - BUG-00068: AI军师入口与设置回退及非Tab性能覆盖问题
+ * - BUG-00069: 切屏回退与联系人错误闪现问题
+ * - PRD-00034: 界面切换性能优化-页面缓存方案
+ * - TDD-00034: 界面切换性能优化-页面缓存方案技术设计
+ *
+ * ## 注意事项
+ * - 此Activity必须放在app模块中，因为Hilt的@AndroidEntryPoint需要AGP字节码转换
+ * - 使用AppTheme而非EmpathyTheme，避免多模块运行时ThemeKt类找不到（BUG-00050）
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -73,6 +78,25 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * 主屏幕容器
+ *
+ * ## BUG-00069修复: AI军师返回自动恢复上一个非AI Tab
+ *
+ * ### 问题场景
+ * - 用户在联系人Tab → AI军师Tab → 进入对话 → 返回
+ * - 期望: 一次返回回到联系人Tab
+ * - 实际: 需要返回两次（对话 → AI军师入口 → 联系人）
+ *
+ * ### 解决方案
+ * 1. **lastNonAiTab**: 记录上一个非AI军师Tab，用于返回恢复
+ * 2. **wasInMainTab**: 检测从AI军师子栈回到Tab区域的状态变化
+ * 3. **自动恢复逻辑**: 检测到 `!wasInMainTab && isInMainTab && currentTab == AI_ADVISOR` 时恢复
+ *
+ * ### 设计权衡 (BUG-00069)
+ * - 选择状态变量追踪而非导航栈清理，避免破坏现有导航结构
+ * - 原因: 导航栈清理可能影响其他返回路径，风险较高
+ */
 @Composable
 private fun MainScreen() {
     val navController = rememberNavController()
@@ -81,9 +105,41 @@ private fun MainScreen() {
     val isInMainTab = currentRoute == null || currentRoute in NavRoutes.BOTTOM_NAV_ROUTES
     val initialTab = BottomNavTab.fromRoute(currentRoute) ?: BottomNavTab.CONTACTS
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
+    var lastNonAiTab by rememberSaveable { mutableStateOf(BottomNavTab.CONTACTS) }
+    var wasInMainTab by rememberSaveable { mutableStateOf(isInMainTab) }
 
+    // [Route监听] 排除CONTACT_LIST避免首次加载时Tab切换导致子页面重建
+    // BUG-00069: CONTACT_LIST是启动路由，首次加载时不应该更新currentTab
     LaunchedEffect(currentRoute) {
-        BottomNavTab.fromRoute(currentRoute)?.let { currentTab = it }
+        if (currentRoute != null && currentRoute != NavRoutes.CONTACT_LIST) {
+            BottomNavTab.fromRoute(currentRoute)?.let {
+                Log.d("MainActivity", "RouteChanged -> update currentTab=${it.route}")
+                currentTab = it
+            }
+        } else {
+            Log.d("MainActivity", "RouteChanged ignored route=$currentRoute")
+        }
+    }
+
+    // [非AI Tab记录] 持续追踪上一个非AI Tab，用于AI军师返回恢复
+    LaunchedEffect(currentTab) {
+        if (currentTab != BottomNavTab.AI_ADVISOR) {
+            lastNonAiTab = currentTab
+        }
+    }
+
+    // [AI军师返回恢复] BUG-00069: 检测从AI军师子栈回到Tab区域时自动恢复上一个非AI Tab
+    // 触发条件: 之前不在Tab区域 + 现在在Tab区域 + 当前Tab是AI军师
+    // 效果: 将currentTab切换回lastNonAiTab，避免需要二次返回
+    LaunchedEffect(isInMainTab, currentTab, lastNonAiTab) {
+        if (!wasInMainTab && isInMainTab && currentTab == BottomNavTab.AI_ADVISOR) {
+            Log.d(
+                "MainActivity",
+                "AiAdvisorFlowClosed -> restore lastNonAiTab=${lastNonAiTab.route}"
+            )
+            currentTab = lastNonAiTab
+        }
+        wasInMainTab = isInMainTab
     }
 
     // [调试日志] BUG-00063: 添加导航状态日志用于排查白屏问题
@@ -111,7 +167,12 @@ private fun MainScreen() {
                             }
                         }
                     }
-                }
+                },
+            // BUG-00069: AI军师对话关闭时恢复上一个非AI Tab
+            // 与NavGraph.kt中的onNavigateBack回调配合，实现自动Tab恢复
+            onAiAdvisorChatClosed = {
+                currentTab = lastNonAiTab
+            }
         )
 
         if (isInMainTab) {

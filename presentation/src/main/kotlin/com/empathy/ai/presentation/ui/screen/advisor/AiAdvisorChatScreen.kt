@@ -1,5 +1,7 @@
 package com.empathy.ai.presentation.ui.screen.advisor
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -164,10 +166,22 @@ fun AiAdvisorChatScreen(
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
 
+    // BUG-00069: 系统返回键拦截，统一走onNavigateBack逻辑
+    // 目的: 避免系统返回手势绕过自定义返回逻辑，导致返回异常
+    BackHandler {
+        Log.d("AiAdvisorChatScreen", "BackHandler triggered")
+        onNavigateBack()
+    }
+
     // BUG-00061: 处理sessionId参数，加载指定会话
     // BUG-00058: 处理createNew参数，创建新会话
-    // 优先级：createNew > sessionId > 默认行为
+    // 优先级: createNew > sessionId > 默认行为
+    // 设计权衡: 使用LaunchedEffect监听参数变化，确保导航参数变化时重新触发加载
     LaunchedEffect(createNew, sessionId) {
+        Log.d(
+            "AiAdvisorChatScreen",
+            "LaunchedEffect createNew=$createNew sessionId=$sessionId currentContact=${uiState.contactName}"
+        )
         when {
             createNew -> {
                 // 创建新会话（最高优先级）
@@ -177,7 +191,11 @@ fun AiAdvisorChatScreen(
                 // 加载指定会话
                 viewModel.loadSessionById(sessionId)
             }
-            // 否则保持默认行为（加载第一个会话）
+            else -> {
+                Log.d("AiAdvisorChatScreen", "LaunchedEffect use default session")
+                // BUG-00069: 默认行为由ViewModel自动加载第一个会话
+                // 原因: 首次进入时AiAdvisorEntryViewModel已经决定导航目标
+            }
         }
     }
 

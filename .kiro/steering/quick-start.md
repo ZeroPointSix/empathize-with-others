@@ -8,7 +8,10 @@
 
 ## 🆕 多模块架构 (TD-00017)
 
-> 2025-12-25 更新 - 项目已完成Clean Architecture多模块改造
+> 2026-01-11 更新 - 项目已完成Clean Architecture多模块改造
+>
+> 当前分支: BUG63-qieping（导航副作用可见性保护优化分支）
+> 当前版本: v1.1.0 (versionCode: 10100, dev阶段)
 
 项目采用Clean Architecture多模块架构：
 ```
@@ -283,11 +286,17 @@ adb logcat > logcat.txt      # 保存到文件
 | `BUG00060SessionManagementTest.kt` | 会话管理增强测试 |
 | `BUG00061SessionHistoryNavigationTest.kt` | 会话历史导航测试 |
 | `BUG00061PromptEditorSceneSwitchTest.kt` | 提示词编辑器场景切换测试 |
+| `BUG00063VisibilityGateTest.kt` | 导航副作用可见性保护测试 |
+| `BUG00063ContactSearchTest.kt` | 联系人列表搜索功能测试 |
 | `BUG00064ManualSummaryTest.kt` | AI手动总结功能测试 |
+| `BUG00066EditBrainTagTest.kt` | 大脑标签编辑功能测试 |
+| `BUG00068NavigationStackTest.kt` | 导航栈治理与返回语义测试 |
+| `BUG00068AiAdvisorEntryRefreshTest.kt` | AI军师入口刷新测试 |
 | `ContactListScreenTest.kt` | 联系人列表搜索功能测试（BUG-00063） |
 
 运行测试：
 ```bash
 ./gradlew :presentation:test --tests "*BUG00058*"
 ./gradlew :presentation:test --tests "*ContactListScreen*"
+./gradlew :presentation:test --tests "*BUG00068*"
 ```

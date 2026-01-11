@@ -20,6 +20,8 @@
 ## 多模块架构 (TD-00017 Clean Architecture模块化改造)
 
 > 2026-01-11 更新 - 基于实际代码架构扫描
+>
+> 当前分支: BUG63-qieping（导航副作用可见性保护优化分支）
 
 ### 模块结构
 
@@ -57,6 +59,10 @@
 | `:data` | Android Library | Room数据库、Retrofit网络、Repository实现、DI模块 | :domain |
 | `:presentation` | Android Library | Compose UI、ViewModel、Navigation、Theme | :domain |
 | `:app` | Application | 应用入口、Android服务、应用级DI模块 | :domain, :data, :presentation |
+
+**当前版本**: v1.1.0 (versionCode: 10100)
+**发布阶段**: dev
+**数据库版本**: Room v16
 
 ### DI模块分布（基于实际代码）
 
@@ -445,10 +451,12 @@ class ChatViewModel @Inject constructor(
 
 ---
 
-**文档版本**: 3.0
+**文档版本**: 3.1
 **最后更新**: 2026-01-11
 **更新内容**:
-- 基于实际代码架构扫描完整更新项目结构
+- 添加当前分支信息（BUG63-qieping）
+- 更新当前版本信息（v1.1.0, versionCode: 10100, dev阶段）
+- 更新数据库版本信息（Room v16）
 - 更新模块文件统计：domain(198+27)、data(79+25+6)、presentation(310+62+7)、app(28+141+8)
 - 更新项目总文件数：615个主源码 + 255个单元测试 + 21个Android测试 = 891个文件
 - 添加详细的路由系统说明（23个路由）
