@@ -805,11 +805,11 @@ class AiAdvisorChatViewModelTest {
             "正常内容" to false,
             "部分内容...[用户已停止生成]" to true,
             "没有标记的长文本内容" to false,
-            "核心策略：..." to true,
-            "## 标题\n内容" to true,
-            "ENFJ类型分析" to true,
-            "1. 第一点\n2. 第二点" to true,
-            "**加粗文本**" to true,
+            "核心策略：..." to false,  // 单个标记不算
+            "## 标题\n**加粗**" to true,  // 2个Markdown标记
+            "ENFJ类型分析，核心策略" to true,  // MBTI+关键词
+            "1. 第一点\n- 第二点" to true,  // 2个列表标记
+            "**加粗**和*斜体*" to true,  // 2个Markdown标记
             "正常用户输入比较短" to false,
             "a".repeat(350) to true,  // 超长内容
         )
@@ -833,14 +833,14 @@ class AiAdvisorChatViewModelTest {
         setupSuccessfulInit()
 
         // 测试数据来源: BUG-00059/AC-002
+        data class TestCase(val messageType: MessageType, val sendStatus: SendStatus, val shouldRetry: Boolean)
         val testData = listOf(
-            // (消息类型, 发送状态, 预期可重试)
-            (MessageType.USER, SendStatus.FAILED, true),
-            (MessageType.USER, SendStatus.CANCELLED, false),
-            (MessageType.USER, SendStatus.SUCCESS, false),
-            (MessageType.AI, SendStatus.FAILED, false),
-            (MessageType.AI, SendStatus.CANCELLED, false),
-            (MessageType.AI, SendStatus.SUCCESS, false),
+            TestCase(MessageType.USER, SendStatus.FAILED, true),
+            TestCase(MessageType.USER, SendStatus.CANCELLED, false),
+            TestCase(MessageType.USER, SendStatus.SUCCESS, false),
+            TestCase(MessageType.AI, SendStatus.FAILED, false),
+            TestCase(MessageType.AI, SendStatus.CANCELLED, false),
+            TestCase(MessageType.AI, SendStatus.SUCCESS, false),
         )
 
         testData.forEach { (messageType, sendStatus, shouldRetry) ->
