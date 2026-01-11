@@ -834,13 +834,12 @@ class AiAdvisorChatViewModelTest {
 
         // 测试数据来源: BUG-00059/AC-002
         val testData = listOf(
-            // (消息类型, 发送状态, 预期可重试)
-            (MessageType.USER, SendStatus.FAILED, true),
-            (MessageType.USER, SendStatus.CANCELLED, false),
-            (MessageType.USER, SendStatus.SUCCESS, false),
-            (MessageType.AI, SendStatus.FAILED, false),
-            (MessageType.AI, SendStatus.CANCELLED, false),
-            (MessageType.AI, SendStatus.SUCCESS, false),
+            Triple(MessageType.USER, SendStatus.FAILED, true),
+            Triple(MessageType.USER, SendStatus.CANCELLED, false),
+            Triple(MessageType.USER, SendStatus.SUCCESS, false),
+            Triple(MessageType.AI, SendStatus.FAILED, false),
+            Triple(MessageType.AI, SendStatus.CANCELLED, false),
+            Triple(MessageType.AI, SendStatus.SUCCESS, false),
         )
 
         testData.forEach { (messageType, sendStatus, shouldRetry) ->
