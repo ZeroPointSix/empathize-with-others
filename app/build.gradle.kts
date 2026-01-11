@@ -1,3 +1,6 @@
+import org.gradle.api.GradleException
+import org.gradle.api.Project
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,20 +10,27 @@ plugins {
     alias(libs.plugins.kotlin.kapt)  // 使用KAPT处理Hilt
 }
 
+val releaseSigning = project.loadReleaseSigningCredentials()
+val releaseSigningRequired = project.requiresReleaseSigning()
+
+if (releaseSigningRequired && releaseSigning == null) {
+    throw GradleException(
+        "Release signing config is missing. Configure RELEASE_* properties via local gradle.properties or environment variables."
+    )
+}
+
 android {
     namespace = "com.empathy.ai"
     compileSdk = 35
 
     signingConfigs {
-        create("release") {
-            keyAlias = project.findProperty("RELEASE_KEY_ALIAS") as? String
-                ?: error("Missing RELEASE_KEY_ALIAS")
-            keyPassword = project.findProperty("RELEASE_KEY_PASSWORD") as? String
-                ?: error("Missing RELEASE_KEY_PASSWORD")
-            storeFile = file(project.findProperty("RELEASE_STORE_FILE") as? String
-                ?: "../empathy-release-key.jks")
-            storePassword = project.findProperty("RELEASE_STORE_PASSWORD") as? String
-                ?: error("Missing RELEASE_STORE_PASSWORD")
+        if (releaseSigning != null) {
+            create("release") {
+                keyAlias = releaseSigning.keyAlias
+                keyPassword = releaseSigning.keyPassword
+                storeFile = file(releaseSigning.storeFilePath)
+                storePassword = releaseSigning.storePassword
+            }
         }
     }
 
@@ -50,7 +60,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (releaseSigning != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -233,4 +245,52 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.hilt.android.testing)
     kaptAndroidTest(libs.hilt.compiler)
+}
+
+data class SigningCredentials(
+    val storeFilePath: String,
+    val keyAlias: String,
+    val keyPassword: String,
+    val storePassword: String
+)
+
+fun Project.loadReleaseSigningCredentials(): SigningCredentials? {
+    fun resolve(name: String): String? {
+        val projectValue = (findProperty(name) as? String)?.takeIf { it.isNotBlank() }
+        val envValue = System.getenv(name)?.takeIf { it.isNotBlank() }
+        return projectValue ?: envValue
+    }
+
+    val keyAlias = resolve("RELEASE_KEY_ALIAS") ?: return null
+    val keyPassword = resolve("RELEASE_KEY_PASSWORD") ?: return null
+    val storePassword = resolve("RELEASE_STORE_PASSWORD") ?: return null
+    val storeFile = resolve("RELEASE_STORE_FILE")
+        ?: defaultReleaseStoreFile()
+        ?: return null
+
+    return SigningCredentials(storeFile, keyAlias, keyPassword, storePassword)
+}
+
+fun Project.defaultReleaseStoreFile(): String? {
+    val rootKeystore = rootProject.file("empathy-release-key.jks")
+    if (rootKeystore.exists()) {
+        return rootKeystore.absolutePath
+    }
+    val appKeystore = rootProject.file("app/empathy-release-key.jks")
+    return appKeystore.takeIf { it.exists() }?.absolutePath
+}
+
+fun Project.requiresReleaseSigning(): Boolean {
+    val requestedTasks = gradle.startParameter.taskNames
+    if (requestedTasks.isEmpty()) {
+        return false
+    }
+
+    return requestedTasks.any { task ->
+        val normalized = task.lowercase()
+        normalized.contains("release") ||
+            normalized.contains("bundle") ||
+            normalized.contains("publish") ||
+            normalized.contains("upload")
+    }
 }

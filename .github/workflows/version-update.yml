@@ -80,17 +80,6 @@ jobs:
       - name: 授予Gradle执行权限
         run: chmod +x ./gradlew
 
-      - name: 注入签名参数（避免解析阶段报错）
-        run: |
-          if [ -n "${{ secrets.RELEASE_KEY_ALIAS }}" ]; then
-            {
-              echo "RELEASE_STORE_FILE=empathy-release-key.jks"
-              echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
-              echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
-              echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
-            } >> gradle.properties
-          fi
-
       - name: 分析Git提交
         id: analyze
         run: |
@@ -119,7 +108,7 @@ jobs:
           PARAMS="--stage=${{ steps.stage.outputs.stage }}"
           
           if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-            PARAMS="$PARAMS --dry-run"
+            PARAMS="$PARAMS --preview"
           fi
           
           if [ "${{ github.event.inputs.force }}" == "true" ]; then
@@ -259,11 +248,11 @@ jobs:
           printf "%s" "$RAW_KEYSTORE_CLEAN" | base64 --decode > app/empathy-release-key.jks
 
           {
-            echo "RELEASE_STORE_FILE=empathy-release-key.jks"
-            echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
-            echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
-            echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
-          } >> gradle.properties
+            echo "ORG_GRADLE_PROJECT_RELEASE_STORE_FILE=app/empathy-release-key.jks"
+            echo "ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+            echo "ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+            echo "ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+          } >> "$GITHUB_ENV"
 
       - name: 授予Gradle执行权限
         run: chmod +x ./gradlew
