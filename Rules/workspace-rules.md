@@ -9,10 +9,10 @@
 ## 📋 任务开始前的强制检查
 
 ### 1. 读取 WORKSPACE 状态
-在开始任何任务之前，**必须**先读取 `Rules/WORKSPACE.md` 文件：
+在开始任何任务之前，**必须**先读取 `WORKSPACE.md` 文件：
 
 ```
-读取 Rules/WORKSPACE.md
+读取 WORKSPACE.md
 ```
 
 ### 2. 检查冲突
@@ -114,7 +114,7 @@
 每次任务执行时，AI工具应自我检查：
 
 **任务开始前：**
-- [ ] 已读取 Rules/WORKSPACE.md
+- [ ] 已读取 WORKSPACE.md
 - [ ] 已检查是否有冲突
 - [ ] 已在 WORKSPACE 中记录任务开始
 

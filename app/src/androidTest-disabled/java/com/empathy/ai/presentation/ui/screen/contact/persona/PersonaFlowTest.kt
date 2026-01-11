@@ -8,7 +8,8 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performLongClick
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.empathy.ai.domain.model.CategoryColor
@@ -17,7 +18,7 @@ import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactCategory
 import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.PersonaSearchState
-import com.empathy.ai.presentation.theme.EmpathyAiTheme
+import com.empathy.ai.presentation.theme.EmpathyTheme
 import org.junit.Rule
 import org.junit.Test
 
@@ -86,12 +87,13 @@ class PersonaFlowTest {
         )
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = searchState,
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = { query ->
                         searchState = searchState.updateQuery(query)
                         // 模拟搜索过滤
@@ -128,9 +130,9 @@ class PersonaFlowTest {
                         )
                     },
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -177,20 +179,21 @@ class PersonaFlowTest {
         )
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = editModeState,
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = { factId ->
+                    onFactClick = {},
+                    onFactLongClick = { factId ->
                         editModeState = EditModeState.activated(factId)
                     },
-                    onToggleSelection = { factId ->
+                    onToggleFactSelection = { factId ->
                         editModeState = editModeState.toggleSelection(factId)
                     },
                     onExitEditMode = {
@@ -234,7 +237,7 @@ class PersonaFlowTest {
         }
 
         // 步骤1：长按标签进入编辑模式
-        composeTestRule.onNodeWithText("开朗").performLongClick()
+        composeTestRule.onNodeWithText("开朗").performTouchInput { longClick() }
         composeTestRule.onNodeWithText("已选择 1 项").assertIsDisplayed()
 
         // 步骤2：选择更多标签
@@ -274,20 +277,21 @@ class PersonaFlowTest {
         )
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = editModeState,
                     availableCategories = listOf("性格特点", "兴趣爱好"),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = { factId ->
+                    onFactClick = {},
+                    onFactLongClick = { factId ->
                         editModeState = EditModeState.activated(factId)
                     },
-                    onToggleSelection = { factId ->
+                    onToggleFactSelection = { factId ->
                         editModeState = editModeState.toggleSelection(factId)
                     },
                     onExitEditMode = {
@@ -332,7 +336,7 @@ class PersonaFlowTest {
         }
 
         // 步骤1：长按标签进入编辑模式
-        composeTestRule.onNodeWithText("开朗").performLongClick()
+        composeTestRule.onNodeWithText("开朗").performTouchInput { longClick() }
         composeTestRule.onNodeWithText("已选择 1 项").assertIsDisplayed()
 
         // 步骤2：点击移动按钮
@@ -364,12 +368,13 @@ class PersonaFlowTest {
         )
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = { categoryKey ->
@@ -381,9 +386,9 @@ class PersonaFlowTest {
                             }
                         }
                     },
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -418,23 +423,24 @@ class PersonaFlowTest {
 
     @Test
     fun 与现有功能兼容性_标签点击触发详情() {
-        var clickedFact: Fact? = null
+        var clickedFactId: String? = null
         val fact = createFact("1", "性格特点", "开朗")
         val categories = listOf(createCategory("性格特点", listOf(fact)))
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = { clickedFact = it },
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = { clickedFactId = it },
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -452,7 +458,8 @@ class PersonaFlowTest {
         composeTestRule.onNodeWithText("开朗").performClick()
 
         // 验证回调
-        assert(clickedFact?.id == "1")
-        assert(clickedFact?.value == "开朗")
+        assert(clickedFactId == "1")
     }
 }
+
+

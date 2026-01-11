@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.empathy.ai.domain.model.UserProfile
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -23,11 +25,15 @@ class UserProfilePreferencesIntegrationTest {
 
     private lateinit var context: Context
     private lateinit var preferences: UserProfilePreferences
+    private lateinit var moshi: Moshi
 
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        preferences = UserProfilePreferences(context)
+        moshi = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
+        preferences = UserProfilePreferences(context, moshi)
         
         // 清理测试数据
         runTest {

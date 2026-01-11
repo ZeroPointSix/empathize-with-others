@@ -172,8 +172,7 @@ class UserProfileFlowTest {
         var showAddDimensionDialog = false
         val uiState = UserProfileUiState(
             profile = UserProfile(),
-            selectedTabIndex = 1,
-            canAddCustomDimension = true
+            selectedTabIndex = 1
         )
 
         composeTestRule.setContent {

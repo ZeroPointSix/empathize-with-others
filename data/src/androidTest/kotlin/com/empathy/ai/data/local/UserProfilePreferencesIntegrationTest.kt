@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.empathy.ai.domain.model.UserProfile
-import kotlinx.coroutines.test.runTest
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -27,10 +29,13 @@ class UserProfilePreferencesIntegrationTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        preferences = UserProfilePreferences(context)
+        preferences = UserProfilePreferences(
+            context,
+            Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+        )
         
         // 清理测试数据
-        runTest {
+        runBlocking {
             preferences.clearUserProfile()
         }
     }
@@ -38,7 +43,7 @@ class UserProfilePreferencesIntegrationTest {
     @After
     fun tearDown() {
         // 清理测试数据
-        runTest {
+        runBlocking {
             preferences.clearUserProfile()
         }
     }
@@ -46,7 +51,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 基本保存和加载测试 ==========
 
     @Test
-    fun saveAndLoad_basicProfile() = runTest {
+    fun saveAndLoad_basicProfile() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("内向", "理性"),
@@ -70,7 +75,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun saveAndLoad_profileWithCustomDimensions() = runTest {
+    fun saveAndLoad_profileWithCustomDimensions() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("内向"),
@@ -98,7 +103,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun saveAndLoad_emptyProfile() = runTest {
+    fun saveAndLoad_emptyProfile() = runBlocking {
         // Given
         val profile = UserProfile()
 
@@ -118,7 +123,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 数据更新测试 ==========
 
     @Test
-    fun update_overwritesPreviousData() = runTest {
+    fun update_overwritesPreviousData() = runBlocking {
         // Given
         val originalProfile = UserProfile(
             personalityTraits = listOf("内向")
@@ -139,7 +144,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun update_preservesOtherDimensions() = runTest {
+    fun update_preservesOtherDimensions() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("内向"),
@@ -169,7 +174,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 清除数据测试 ==========
 
     @Test
-    fun clear_removesAllData() = runTest {
+    fun clear_removesAllData() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("内向", "理性"),
@@ -192,7 +197,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 导入导出测试 ==========
 
     @Test
-    fun export_returnsValidJson() = runTest {
+    fun export_returnsValidJson() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("内向", "理性"),
@@ -213,7 +218,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun importExport_dataConsistency() = runTest {
+    fun importExport_dataConsistency() = runBlocking {
         // Given
         val originalProfile = UserProfile(
             personalityTraits = listOf("内向", "理性", "细心"),
@@ -255,7 +260,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun import_invalidJson_returnsError() = runTest {
+    fun import_invalidJson_returnsError() = runBlocking {
         // Given
         val invalidJson = "这不是有效的JSON"
 
@@ -267,7 +272,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun import_emptyJson_returnsError() = runTest {
+    fun import_emptyJson_returnsError() = runBlocking {
         // Given
         val emptyJson = ""
 
@@ -281,7 +286,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 加密存储测试 ==========
 
     @Test
-    fun encryption_dataIsEncrypted() = runTest {
+    fun encryption_dataIsEncrypted() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("敏感信息测试")
@@ -304,7 +309,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 边界情况测试 ==========
 
     @Test
-    fun save_largeProfile() = runTest {
+    fun save_largeProfile() = runBlocking {
         // Given - 创建一个大型画像
         val profile = UserProfile(
             personalityTraits = (1..20).map { "性格特点$it" },
@@ -331,7 +336,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun save_specialCharacters() = runTest {
+    fun save_specialCharacters() = runBlocking {
         // Given
         val profile = UserProfile(
             personalityTraits = listOf("包含特殊字符：<>&\"'", "中文测试", "emoji😀")
@@ -350,7 +355,7 @@ class UserProfilePreferencesIntegrationTest {
     }
 
     @Test
-    fun load_whenNoDataSaved_returnsEmptyProfile() = runTest {
+    fun load_whenNoDataSaved_returnsEmptyProfile() = runBlocking {
         // Given - 确保没有保存任何数据
         preferences.clearUserProfile()
 
@@ -367,7 +372,7 @@ class UserProfilePreferencesIntegrationTest {
     // ========== 并发访问测试 ==========
 
     @Test
-    fun concurrentAccess_noDataCorruption() = runTest {
+    fun concurrentAccess_noDataCorruption() = runBlocking {
         // Given
         val profile1 = UserProfile(personalityTraits = listOf("版本1"))
         val profile2 = UserProfile(personalityTraits = listOf("版本2"))

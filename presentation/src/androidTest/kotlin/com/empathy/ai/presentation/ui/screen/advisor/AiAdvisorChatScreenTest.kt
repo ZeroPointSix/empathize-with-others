@@ -35,11 +35,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -161,6 +163,7 @@ class AiAdvisorChatScreenTest {
         val conversations = listOf(
             AiAdvisorConversation.createUserMessage(
                 sessionId = "session-1",
+                contactId = "contact-1",
                 content = "你好，我想咨询一下"
             )
         )
@@ -197,6 +200,7 @@ class AiAdvisorChatScreenTest {
         val conversations = listOf(
             AiAdvisorConversation.createAiMessage(
                 sessionId = "session-1",
+                contactId = "contact-1",
                 content = "你好！我是AI军师，很高兴为你服务。"
             )
         )
@@ -267,7 +271,7 @@ class AiAdvisorChatScreenTest {
         }
 
         // 发送中时应该显示加载指示器
-        composeTestRule.onNodeWithContentDescription("发送").assertExists()
+        composeTestRule.onNodeWithTag("send_loading").assertExists()
     }
 
     /**
@@ -645,7 +649,7 @@ private fun ChatInputBarForTest(
                 ) {
                     if (isSending) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(20.dp).testTag("send_loading"),
                             strokeWidth = 2.dp,
                             color = Color.White
                         )

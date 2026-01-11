@@ -257,14 +257,13 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 574个Kotlin主源码文件 + 305个测试文件
-  - domain模块：226个文件（183主源码 + 43测试，业务模型 + Repository接口 + UseCase + Service + Util）
+- **代码统计**: 580个Kotlin主源码文件 + 276个测试文件
+  - domain模块：211个文件（184主源码 + 27测试，业务模型 + Repository接口 + UseCase + Service + Util）
   - data模块：115个文件（84主源码 + 25测试 + 6 Android测试，Room + Retrofit + Repository实现 + Parser + DI模块）
-  - presentation模块：344个文件（280主源码 + 57测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
-  - app模块：194个文件（27主源码 + 141测试 + 26 Android测试，应用入口 + Android服务 + DI聚合）
-  - **总计**: 879个文件（574主源码 + 266单元测试 + 39 Android测试）
-  - **测试框架更新**: Compose UI Test + Espresso 3.6.1完整集成，35+个Android测试文件覆盖核心页面
-- **代码统计**: 574个Kotlin主源码文件 + 307个测试文件
+  - presentation模块：353个文件（284主源码 + 62测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
+  - app模块：177个文件（28主源码 + 141测试 + 8 Android测试，应用入口 + Android服务 + DI聚合）
+  - **总计**: 856个文件（580主源码 + 255单元测试 + 21 Android测试）
+  - **测试框架更新**: Compose UI Test + Espresso 3.6.1完整集成，21个Android测试文件覆盖核心页面
 
 ### 部分实现/待完善功能
 
@@ -366,9 +365,8 @@ implementation("androidx.core:core-ktx:1.15.0")
 | BUG-00064 | AI手动总结功能未生效问题 | 已修复，测试用例已验证 |
 | BUG-00065 | 联系人搜索功能优化 | 进行中 |
 
-**文档版本**: 2.19
-**最后更新**: 2026-01-10
+**文档版本**: 2.20
+**最后更新**: 2026-01-11
 **更新内容**:
-- 更新模块测试文件统计（基于实际代码架构扫描）
-- 更新BUG-00064状态为已修复
-- 更新进行中的BUG修复列表
+- 更新模块文件统计（基于实际代码架构扫描）：domain(184+27)、data(84+25+6)、presentation(284+62+7)、app(28+141+8)
+- 更新项目总文件数：580个主源码 + 255个单元测试 + 21个Android测试 = 856个文件

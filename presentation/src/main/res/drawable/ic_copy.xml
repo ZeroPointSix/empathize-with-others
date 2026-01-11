@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    复制功能图标 - 剪贴板
+
+    业务背景 (PRD-00001/AC-008):
+    - AI分析结果支持复制到剪贴板
+    - 便于用户将建议直接粘贴到聊天应用
+
+    设计决策:
+    - 标准 Material Design 剪贴板图标
+    - 使用 ?attr/colorControlNormal 支持主题着色
+    - 覆盖层图标，下层为原始文档
+
+    任务: FD-00001/T002
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M16,1L4,1c-1.1,0 -2,0.9 -2,2v14h2L4,3h12L16,1zM19,5L8,5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h11c1.1,0 2,-0.9 2,-2L21,7c0,-1.1 -0.9,-2 -2,-2zM19,21L8,21L8,7h11v14z"/>
+</vector>

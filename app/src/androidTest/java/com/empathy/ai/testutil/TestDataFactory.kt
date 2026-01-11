@@ -2,6 +2,7 @@ package com.empathy.ai.testutil
 
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.model.DailySummary
 import com.empathy.ai.domain.model.DataStatus
 import com.empathy.ai.domain.model.EmotionType
@@ -92,14 +93,14 @@ object TestDataFactory {
         id: String = "photo_test_1",
         timestamp: Long = System.currentTimeMillis(),
         emotionType: EmotionType = EmotionType.SWEET,
-        imageUrl: String = "https://example.com/photo.jpg",
-        caption: String = "测试照片描述"
+        photoUrl: String = "https://example.com/photo.jpg",
+        description: String = "测试照片描述"
     ) = TimelineItem.PhotoMoment(
         id = id,
         timestamp = timestamp,
         emotionType = emotionType,
-        imageUrl = imageUrl,
-        caption = caption
+        photoUrl = photoUrl,
+        description = description
     )
 
     fun createAiSummary(
@@ -148,14 +149,19 @@ object TestDataFactory {
         id: String = "conv_test_1",
         timestamp: Long = System.currentTimeMillis(),
         emotionType: EmotionType = EmotionType.NEUTRAL,
-        preview: String = "你好，最近怎么样？",
-        messageCount: Int = 10
+        userInput: String = "你好，最近怎么样？",
+        aiResponse: String? = "最近挺好，你呢？"
     ) = TimelineItem.Conversation(
         id = id,
         timestamp = timestamp,
         emotionType = emotionType,
-        preview = preview,
-        messageCount = messageCount
+        log = ConversationLog(
+            id = 1L,
+            contactId = "contact_test_1",
+            userInput = userInput,
+            aiResponse = aiResponse,
+            timestamp = timestamp
+        )
     )
 
     // ==================== BrainTag ====================

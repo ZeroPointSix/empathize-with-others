@@ -53,6 +53,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 scripts\logcat.bat -e            # ERROR日志
 scripts\quick-error.bat          # 快速查看最近错误
 scripts\ai-debug.bat             # AI请求调试
+scripts\ai-debug.bat -h          # 获取最近100条AI日志
+scripts\ai-debug.bat -h -n 200   # 获取最近200条AI日志
+scripts\ai-debug.bat -d 127.0.0.1:7555  # 指定MuMu模拟器
+scripts\ai-debug-full.bat        # 获取完整AI请求日志（包含提示词）
 scripts\quick-test.bat           # 快速测试
 scripts\dev-cycle.bat            # 开发循环（构建+测试+安装）
 
@@ -61,16 +65,21 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.empathy.ai/.ui.MainActivity
 adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈
 adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
+
+# 设备连接
+adb devices -l                      # 列出所有连接设备
+adb -s 127.0.0.1:7555 install ...   # 向指定设备安装（MuMu模拟器）
+adb -s emulator-5556 install ...    # 向指定模拟器安装
 ```
 
 ## 测试覆盖
 
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
-| domain | 43 | - | UseCase、Model、PromptBuilder |
-| presentation | 59 | 7 | ViewModel、Compose UI、Bug回归测试 |
+| domain | 27 | - | UseCase、Model、PromptBuilder |
+| presentation | 62 | 7 | ViewModel、Compose UI、Bug回归测试 |
 | data | 25 | 6 | Repository、Database |
-| app | 141 | 26 | Application初始化、服务测试 |
+| app | 141 | 8 | Application初始化、服务测试 |
 
 **Bug回归测试**:
 - `BUG00058CreateNewSessionTest.kt` - 新建会话功能测试
@@ -79,6 +88,11 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 - `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
 - `BUG00064ManualSummaryTest.kt` - AI手动总结功能测试
 - `BUG00066EditBrainTagTest.kt` - 大脑标签编辑功能测试
+
+**连接测试注意事项**:
+- 部分 androidTest 已隔离到 `app/src/androidTest-disabled/` 目录
+- 迁移测试需要历史 schema 文件（位于 `data/schemas/`）
+- 当前存在 27 个既有用例失败（与导航改动无直接关联）
 
 ## 架构结构
 
@@ -139,7 +153,7 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 | data | `RepositoryModule.kt` | Repository 实现绑定 |
 | presentation | `ViewModelModule.kt` | ViewModel Factory |
 
-### 导航系统结构（2026-01-10更新）
+### 导航系统结构（2026-01-11更新）
 - **NavGraph.kt** - 主导航图，定义所有导航路由和导航图组合（支持Tab页面和非Tab页面分离）
 - **NavRoutes.kt** - 路由常量定义（contactList, contactDetail, chat, settings 等）
 - **BottomNavTab.kt** - 底部导航标签枚举（CONTACTS, AI_ADVISOR, SETTINGS）
@@ -147,6 +161,11 @@ adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 - **BottomNavScaffold.kt** - 带页面缓存的底部导航Scaffold（2026-01-10新增，解决Tab切换黑屏问题）
 - **PromptEditorNavigation.kt** - 提示词编辑器导航配置
 - **屏幕级导航**: `ContactDetailNavigation`, `PromptEditorNavigation` 等
+
+**导航栈治理（PRD-00035）**:
+- AI军师子页面使用 `popUpTo` 清理返回栈，防止栈堆积
+- AI军师联系人切换以 `CONTACT_LIST` 为稳定锚点
+- 入口跳转增加 `launchSingleTop` 防止重复入栈
 
 **悬浮窗+无障碍服务交互**
 ```
@@ -199,16 +218,44 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - **入口**: 设置页面 → 开发者选项
 - **用途**: 调试 AI 响应、查看日志、管理提示词
 
-### 进行中的问题修复（2026-01-10）
-- **BUG-00062**: AI军师会话管理功能增强（已识别，待实现）
-- **BUG-00067**: 提示词功能优化（已识别，待实现）
-- **BUG-00068**: AI对话输入框与配置回退及非Tab功能屏幕展示问题（已识别，待实现）
+### 进行中的问题修复（2026-01-11）
 | BUG编号 | 问题描述 | 状态 |
 |---------|----------|------|
-| BUG-00064 | AI手动总结功能未生效问题 | 已修复 |
-| BUG-00065 | 联系人搜索功能优化 | 进行中 |
+| BUG-00057 | AI军师对话界面可读性问题 | 代码完成，待验收 |
+| BUG-00058 | 新建会话功能失效问题 | 已实现 |
+| BUG-00059 | 中断生成后重新生成消息角色错乱 | 已实现 |
+| BUG-00060 | 会话管理增强功能 | 已实现 |
+| BUG-00061 | 会话历史跳转失败问题 | 已实现 |
+| BUG-00062 | AI用量统计统一问题 | 已完成 |
+| BUG-00063 | 联系人搜索功能缺失 | 代码完成，待人工验收 |
+| BUG-00064 | AI总结功能未生效 | 已完成 |
+| BUG-00067 | 全局字体可读性问题复盘与修复方案 | 待人工验收 |
+| BUG-00068 | 导航栈治理与返回语义规范 | 进行中 |
+| PRD-00035 | 导航栈治理与返回语义规范 | 进行中 |
 
 详细修复方案见: [文档/开发文档/BUG/](./文档/开发文档/BUG/)
+
+### 最近修复详情（2026-01-09 ~ 2026-01-11）
+
+**BUG-00058/59/60/61: AI军师会话管理增强**
+- 新建会话功能修复（通过导航参数传递 `createNew=true`）
+- 重新生成消息角色错乱修复（新增 `isLikelyAiContent()` 检测）
+- 会话置顶/重命名/空会话复用功能
+- 会话历史跳转修复
+- 数据库迁移 v15→v16
+
+**BUG-00062: AI用量统计统一**
+- `generateText` 和 `generateTextStream` 方法添加用量统计
+- 修改 `AiRepositoryImpl` 和 `SendAdvisorMessageStreamingUseCase`
+
+**BUG-00067: 全局字体可读性**
+- 更新悬浮窗文本色
+- 清理旧灰色硬编码（多个UI组件）
+
+**BUG-00068/PRD-00035: 导航栈治理**
+- AI军师子页面去栈与设置链路防重复入栈
+- 联系人切换以 `CONTACT_LIST` 为稳定锚点
+- 连接测试资源补齐与 androidTest 隔离
 
 ### 多AI协作规则（关键规则）
 
@@ -220,7 +267,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 **任务执行前必须**:
 1. 读取 `Rules/workspace-rules.md` 检查协作规则
 2. 如有其他 AI 正在执行相关任务，**必须停止并询问用户**
-3. 在 Rules/WORKSPACE.md 中记录任务开始信息（如存在）
+3. 在 WORKSPACE.md 中记录任务开始信息（如存在）
 
 **强制优先级**: `Rules/workspace-rules.md` 中的规则 > 所有其他规则
 
@@ -262,7 +309,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | `Rules/ai-status.md` | AI工具状态监控 |
 | `Rules/项目开发规范.md` | 完整开发规范 |
 
-**注意**: `Rules/WORKSPACE.md` 可能不存在，如需使用请先创建。
+**注意**: `WORKSPACE.md` 可能不存在，如需使用请先创建。
 
 **协作流程**:
 1. 任务开始前 → 读取 `Rules/workspace-rules.md` 检查协作规则
@@ -291,7 +338,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - `design.md` - 设计方案
 - `tasks.md` - 任务分解
 
-**当前分支**: `PRD34`（基于 Git）
+**当前分支**: `master`（基于 Git，最近提交：ca93275 - merge: master into PRD34）
 
 ## 模块文档
 
@@ -339,6 +386,12 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | domain | 80% | 90% |
 | data | 70% | 80% |
 | presentation | 60% | 70% |
+
+### 测试框架说明
+- **单元测试**: JUnit 4 + Mockk + Coroutines Test
+- **Android测试**: AndroidX Test Runner + Espresso
+- **Compose UI测试**: Compose Testing（部分用例）
+- **Room迁移测试**: MigrationTestHelper + 历史Schema验证
 
 ## 仓库镜像配置
 
