@@ -3,19 +3,9 @@
         "version": "1.2.4",
         "versionCode": 10204,
         "stage": "production",
-        "updatedAt": "2026-01-11T10:23:00.417350890Z"
+        "updatedAt": "2026-01-11T10:06:35.715802507Z"
     },
     "history": [
-        {
-            "version": "1.2.4",
-            "versionCode": 10204,
-            "stage": "production",
-            "date": "2026-01-11T10:23:00.417350890Z",
-            "commits": [
-                "write keystore under app for release"
-            ],
-            "changelog": "### 🔧 其他变更\n- 👷 write keystore under app for release"
-        },
         {
             "version": "1.2.4",
             "versionCode": 10204,
