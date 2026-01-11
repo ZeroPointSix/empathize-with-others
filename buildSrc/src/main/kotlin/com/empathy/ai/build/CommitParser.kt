@@ -56,11 +56,17 @@ class CommitParser(private val projectDir: File) {
      */
     fun parseCommitsSinceLastTag(): List<ParsedCommit> {
         val lastTag = getLastTag()
-        val commits = if (lastTag != null) {
-            getCommitsSince(lastTag)
-        } else {
-            // 没有标签时，获取所有提交
-            getAllCommits()
+        val commits = when {
+            lastTag != null -> getCommitsSince(lastTag)
+            else -> {
+                val lastVersionCommit = getLastVersionUpdateCommit()
+                if (lastVersionCommit != null) {
+                    getCommitsSinceCommit(lastVersionCommit)
+                } else {
+                    // 没有版本提交记录时，读取最近提交
+                    getAllCommits()
+                }
+            }
         }
         return commits.mapNotNull { parseCommitLine(it) }
     }
@@ -134,6 +140,27 @@ class CommitParser(private val projectDir: File) {
             emptyList()
         }
     }
+
+    /**
+     * 获取指定提交之后的所有提交
+     */
+    private fun getCommitsSinceCommit(commit: String): List<String> {
+        return try {
+            val process = ProcessBuilder(
+                "git", "log", "$commit..HEAD", "--oneline", "--no-merges"
+            )
+                .directory(projectDir)
+                .redirectErrorStream(true)
+                .start()
+
+            val output = process.inputStream.bufferedReader().readLines()
+            process.waitFor()
+
+            output.filter { it.isNotBlank() }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
     
     /**
      * 获取两个引用之间的提交
@@ -174,6 +201,28 @@ class CommitParser(private val projectDir: File) {
             output.filter { it.isNotBlank() }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    /**
+     * 获取最近一次版本号更新的提交（基于APP_VERSION_NAME修改记录）
+     */
+    private fun getLastVersionUpdateCommit(): String? {
+        return try {
+            val process = ProcessBuilder(
+                "git", "log", "-1", "--pretty=format:%H",
+                "-G", "^APP_VERSION_NAME=", "--", "gradle.properties"
+            )
+                .directory(projectDir)
+                .redirectErrorStream(true)
+                .start()
+
+            val output = process.inputStream.bufferedReader().readText().trim()
+            val exitCode = process.waitFor()
+
+            if (exitCode == 0 && output.isNotEmpty()) output else null
+        } catch (e: Exception) {
+            null
         }
     }
     
