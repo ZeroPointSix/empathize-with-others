@@ -67,6 +67,36 @@ class BrainTagRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    /**
+     * 更新脑标签
+     *
+     * 【BUG-00066】画像标签编辑功能
+     * - 只更新 content 和 type 字段
+     * - 保留 contactId、source、isConfirmed 等字段不变
+     * - 先验证标签存在，再执行更新
+     *
+     * @param tag 更新后的标签（只使用 id、content、type 字段）
+     * @return 操作结果
+     */
+    override suspend fun updateTag(tag: BrainTag): Result<Unit> {
+        return try {
+            // 验证标签存在
+            val existingTag = dao.getTagById(tag.id)
+                ?: return Result.failure(IllegalArgumentException("标签不存在"))
+
+            // 更新标签（只更新 content 和 type）
+            dao.updateTag(
+                id = tag.id,
+                content = tag.content,
+                type = tag.type.name
+            )
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 // ============================================================================

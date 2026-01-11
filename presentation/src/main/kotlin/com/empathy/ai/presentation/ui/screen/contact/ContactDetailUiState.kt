@@ -458,7 +458,19 @@ data class ContactDetailUiState(
     /**
      * 是否使用PersonaTabV2
      */
-    val usePersonaTabV2: Boolean = false
+    val usePersonaTabV2: Boolean = false,
+
+    // ========== 标签编辑相关（BUG-00066） ==========
+
+    /**
+     * 是否显示编辑标签对话框
+     */
+    val showEditBrainTagDialog: Boolean = false,
+
+    /**
+     * 当前编辑的标签
+     */
+    val editingBrainTag: BrainTag? = null
 ) {
     // ========== 派生状态 ==========
     

@@ -387,6 +387,7 @@ private fun SimpleCategoryCard(
  * 
  * 莫兰迪色系：浅色背景 + 深色文字
  * BUG-00036 修复：使用响应式字体尺寸
+ * BUG-00066 修复：确保点击事件正确触发
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -400,6 +401,7 @@ private fun SimpleTagChip(
     // 使用响应式尺寸
     val dimensions = AdaptiveDimensions.current
     
+    // BUG-00066: 直接在 Surface 上应用 combinedClickable
     Surface(
         modifier = modifier
             .combinedClickable(

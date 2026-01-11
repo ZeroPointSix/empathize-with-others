@@ -12,6 +12,7 @@
 | BUG-00059 | 中断生成后重新生成消息角色错乱 | Kiro | 已实现 | P0 | 2026-01-09 | 2026-01-09 |
 | BUG-00060 | 会话管理增强功能 | Kiro | 已实现 | P1 | 2026-01-09 | 2026-01-09 |
 | BUG-00061 | 会话历史跳转失败问题 | Kiro | 已实现 | P0 | 2026-01-09 | 2026-01-09 |
+| BUG-00062 | AI用量统计统一问题 | Kiro | ✅ 已完成 | P1 | 2026-01-10 | 2026-01-10 |
 | BUG-00063 | 联系人搜索功能缺失 | Kiro | 代码完成，待人工验收 | P2 | 2026-01-10 | 2026-01-10 |
 | BUG-00064 | AI总结功能未生效 | Kiro | 已完成 | P2 | 2026-01-10 | 2026-01-10 |
 
@@ -105,6 +106,30 @@
 - ✅ iOS风格UI设计，参考PRD29原型
 - ✅ 完整的单元测试覆盖
 - ✅ Debug APK构建成功
+
+### BUG-00062 修复详情
+**AI用量统计统一问题** - AI军师对话和AI总结功能纳入用量统计 ✅ 已完成
+
+**问题描述**：
+- `generateText` 方法（AI总结）缺少用量统计
+- `generateTextStream` 方法（AI军师对话）缺少用量统计
+
+**修复内容**：
+- [x] 修改 `AiRepositoryImpl.generateText` 添加用量统计
+- [x] 修改 `SendAdvisorMessageStreamingUseCase` 添加 `ApiUsageRepository` 依赖
+- [x] 在流式响应 Complete/Error 时记录用量
+- [x] 更新 `AiAdvisorModule.kt` DI配置
+- [x] 更新 `SendAdvisorMessageStreamingUseCaseTest.kt` 测试文件
+
+**修改文件**：
+- `data/src/main/kotlin/com/empathy/ai/data/repository/AiRepositoryImpl.kt`
+- `domain/src/main/kotlin/com/empathy/ai/domain/usecase/SendAdvisorMessageStreamingUseCase.kt`
+- `app/src/main/java/com/empathy/ai/di/AiAdvisorModule.kt`
+- `domain/src/test/kotlin/com/empathy/ai/domain/usecase/SendAdvisorMessageStreamingUseCaseTest.kt`
+
+**相关文档**：
+- [BUG-00062-AI用量统计统一问题-修复方案.md](文档/开发文档/BUG/BUG-00062-AI用量统计统一问题-修复方案.md)
+- [TE-00062-AI用量统计统一问题测试用例.md](文档/开发文档/TE/TE-00062-AI用量统计统一问题测试用例.md)
 
 ### 待办任务队列
 

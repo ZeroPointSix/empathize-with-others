@@ -17,6 +17,7 @@ import com.empathy.ai.domain.model.TokenUsage
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
+import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.util.Logger
@@ -47,6 +48,7 @@ class SendAdvisorMessageStreamingUseCaseTest {
     private lateinit var contactRepository: ContactRepository
     private lateinit var aiProviderRepository: AiProviderRepository
     private lateinit var brainTagRepository: BrainTagRepository  // FD-00030: 新增标签仓库
+    private lateinit var apiUsageRepository: ApiUsageRepository  // BUG-00062: 新增用量统计仓库
     private lateinit var logger: Logger  // CR-001: 新增日志记录器
 
     private val testContactId = "contact-123"
@@ -70,6 +72,7 @@ class SendAdvisorMessageStreamingUseCaseTest {
         contactRepository = mockk(relaxed = true)
         aiProviderRepository = mockk(relaxed = true)
         brainTagRepository = mockk(relaxed = true)  // FD-00030: 初始化标签仓库Mock
+        apiUsageRepository = mockk(relaxed = true)  // BUG-00062: 初始化用量统计仓库Mock
         logger = mockk(relaxed = true)  // CR-001: 初始化日志记录器Mock
 
         useCase = SendAdvisorMessageStreamingUseCase(
@@ -78,6 +81,7 @@ class SendAdvisorMessageStreamingUseCaseTest {
             contactRepository,
             aiProviderRepository,
             brainTagRepository,  // FD-00030: 新增依赖
+            apiUsageRepository,  // BUG-00062: 新增依赖
             logger  // CR-001: 新增依赖
         )
 
@@ -293,5 +297,82 @@ class SendAdvisorMessageStreamingUseCaseTest {
         // Then
         val completed = result.last() as StreamingState.Completed
         assertEquals(usage, completed.usage)
+    }
+
+    // ==================== BUG-00062: 用量统计测试 ====================
+
+    @Test
+    fun `流式响应成功时应调用recordUsage记录用量`() = runTest {
+        // Given
+        val usage = TokenUsage(100, 50, 150)
+        coEvery { aiRepository.generateTextStream(any(), any(), any()) } returns flowOf(
+            AiStreamChunk.Started,
+            AiStreamChunk.TextDelta("Response"),
+            AiStreamChunk.Complete("Response", usage)
+        )
+
+        // When
+        useCase(testContactId, testSessionId, testMessage).toList()
+
+        // Then - BUG-00062: 验证recordUsage被调用
+        coVerify { apiUsageRepository.recordUsage(match {
+            it.providerId == testProvider.id &&
+            it.isSuccess == true &&
+            it.promptTokens == 100 &&
+            it.completionTokens == 50
+        }) }
+    }
+
+    @Test
+    fun `流式响应失败时应调用recordUsage记录失败用量`() = runTest {
+        // Given
+        val error = IOException("Connection failed")
+        coEvery { aiRepository.generateTextStream(any(), any(), any()) } returns flowOf(
+            AiStreamChunk.Started,
+            AiStreamChunk.Error(error)
+        )
+
+        // When
+        useCase(testContactId, testSessionId, testMessage).toList()
+
+        // Then - BUG-00062: 验证recordUsage被调用且isSuccess为false
+        coVerify { apiUsageRepository.recordUsage(match {
+            it.providerId == testProvider.id &&
+            it.isSuccess == false &&
+            it.errorMessage?.contains("Connection failed") == true
+        }) }
+    }
+
+    @Test
+    fun `API未返回token时应使用估算token数`() = runTest {
+        // Given - Complete时不返回usage
+        coEvery { aiRepository.generateTextStream(any(), any(), any()) } returns flowOf(
+            AiStreamChunk.Started,
+            AiStreamChunk.TextDelta("Hello"),
+            AiStreamChunk.Complete("Hello", null)  // null usage
+        )
+
+        // When
+        useCase(testContactId, testSessionId, testMessage).toList()
+
+        // Then - BUG-00062: 验证recordUsage被调用，token为估算值
+        coVerify { apiUsageRepository.recordUsage(match {
+            it.promptTokens > 0 && it.completionTokens > 0
+        }) }
+    }
+
+    @Test
+    fun `recordUsage失败不应影响主流程`() = runTest {
+        // Given
+        coEvery { aiRepository.generateTextStream(any(), any(), any()) } returns flowOf(
+            AiStreamChunk.Started,
+            AiStreamChunk.TextDelta("Response"),
+            AiStreamChunk.Complete("Response", TokenUsage(100, 50, 150))
+        )
+        coEvery { apiUsageRepository.recordUsage(any()) } throws RuntimeException("Database error")
+
+        // When & Then - 不应抛出异常，主流程继续执行
+        useCase(testContactId, testSessionId, testMessage).toList()
+        // 如果执行到这里没有抛出异常，测试通过
     }
 }

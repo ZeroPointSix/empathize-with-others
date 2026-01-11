@@ -69,4 +69,18 @@ interface BrainTagRepository {
      * @return 操作结果
      */
     suspend fun deleteTag(id: Long): Result<Unit>
+
+    /**
+     * 更新脑标签
+     *
+     * 业务规则:
+     * - 支持修改标签内容（content）和类型（type）
+     * - source 字段保持不变（不改变标签来源）
+     * - isConfirmed 字段保持不变
+     * - 用于 BUG-00066 画像标签编辑功能
+     *
+     * @param tag 更新后的脑标签（只使用 id、content、type 字段）
+     * @return 操作结果
+     */
+    suspend fun updateTag(tag: BrainTag): Result<Unit>
 }

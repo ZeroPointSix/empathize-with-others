@@ -98,7 +98,9 @@ class ContactDetailTabViewModel @Inject constructor(
     private val groupFactsByCategoryUseCase: GroupFactsByCategoryUseCase,
     private val batchDeleteFactsUseCase: BatchDeleteFactsUseCase,
     private val batchMoveFactsUseCase: BatchMoveFactsUseCase,
-    private val factSearchFilter: FactSearchFilter
+    private val factSearchFilter: FactSearchFilter,
+    // BUG-00066: 标签编辑UseCase
+    private val editBrainTagUseCase: com.empathy.ai.domain.usecase.EditBrainTagUseCase
 ) : ViewModel() {
 
     companion object {
@@ -218,6 +220,14 @@ class ContactDetailTabViewModel @Inject constructor(
             confirmBatchMove(event.targetCategory)
         } else if (event is ContactDetailUiEvent.SetUsePersonaTabV2) {
             setUsePersonaTabV2(event.enabled)
+        }
+        // BUG-00066: 标签编辑事件
+        else if (event is ContactDetailUiEvent.StartEditBrainTag) {
+            startEditBrainTag(event.tag)
+        } else if (event is ContactDetailUiEvent.ConfirmEditBrainTag) {
+            confirmEditBrainTag(event.tagId, event.newContent, event.newType)
+        } else if (event is ContactDetailUiEvent.CancelEditBrainTag) {
+            cancelEditBrainTag()
         }
         // 其他事件不在此ViewModel处理
     }
@@ -1537,5 +1547,80 @@ class ContactDetailTabViewModel @Inject constructor(
         // TODO: 从系统设置获取深色模式状态
         val isDarkMode = false
         return groupFactsByCategoryUseCase(facts, isDarkMode)
+    }
+
+    // ========== BUG-00066: 标签编辑功能 ==========
+
+    /**
+     * 开始编辑标签
+     *
+     * 显示编辑对话框，并设置当前编辑的标签
+     *
+     * @param tag 要编辑的标签
+     */
+    private fun startEditBrainTag(tag: com.empathy.ai.domain.model.BrainTag) {
+        _uiState.update {
+            it.copy(
+                showEditBrainTagDialog = true,
+                editingBrainTag = tag
+            )
+        }
+    }
+
+    /**
+     * 确认编辑标签
+     *
+     * 调用 EditBrainTagUseCase 更新标签，成功后刷新数据
+     *
+     * @param tagId 标签ID
+     * @param newContent 新的标签内容
+     * @param newType 新的标签类型
+     */
+    private fun confirmEditBrainTag(
+        tagId: Long,
+        newContent: String,
+        newType: com.empathy.ai.domain.model.TagType
+    ) {
+        // 验证内容不为空
+        if (newContent.isBlank()) {
+            _uiState.update { it.copy(error = "标签内容不能为空") }
+            return
+        }
+
+        viewModelScope.launch {
+            editBrainTagUseCase(tagId, newContent, newType)
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            showEditBrainTagDialog = false,
+                            editingBrainTag = null,
+                            successMessage = "标签已更新"
+                        )
+                    }
+                    // 刷新标签数据
+                    _uiState.value.contact?.id?.let { contactId ->
+                        loadBrainTags(contactId)
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = error.message ?: "更新标签失败")
+                    }
+                }
+        }
+    }
+
+    /**
+     * 取消编辑标签
+     *
+     * 关闭编辑对话框，清除编辑状态
+     */
+    private fun cancelEditBrainTag() {
+        _uiState.update {
+            it.copy(
+                showEditBrainTagDialog = false,
+                editingBrainTag = null
+            )
+        }
     }
 }
