@@ -12,12 +12,12 @@ import org.junit.runner.RunWith
  * FieldMappingConfig Instrumented 测试
  *
  * 测试配置文件加载功能（需要 Android Context）
- * 
+ *
  * 测试目标：
  * - 测试配置文件加载成功
  * - 测试配置文件加载失败时使用默认配置
  * - 测试配置缓存机制
- * 
+ *
  * 需求: 2.5, 8.2
  */
 @RunWith(AndroidJUnit4::class)
@@ -34,7 +34,7 @@ class FieldMappingConfigInstrumentedTest {
 
     /**
      * 测试配置文件加载成功
-     * 
+     *
      * 验证：
      * - 配置文件可以从 assets 目录加载
      * - 加载的配置包含所有必需的字段映射
@@ -81,7 +81,7 @@ class FieldMappingConfigInstrumentedTest {
 
     /**
      * 测试配置缓存机制
-     * 
+     *
      * 验证：
      * - 第一次调用 load() 会从文件加载
      * - 后续调用 load() 会使用缓存
@@ -108,7 +108,7 @@ class FieldMappingConfigInstrumentedTest {
 
     /**
      * 测试清除缓存后重新加载
-     * 
+     *
      * 验证：
      * - clearCache() 可以清除缓存
      * - 清除缓存后再次调用 load() 会重新加载配置
@@ -138,7 +138,7 @@ class FieldMappingConfigInstrumentedTest {
 
     /**
      * 测试配置文件内容的正确性
-     * 
+     *
      * 验证：
      * - 配置文件中的字段映射与预期一致
      * - 每个字段的中文映射列表包含预期的值
@@ -198,7 +198,7 @@ class FieldMappingConfigInstrumentedTest {
 
     /**
      * 测试配置文件加载失败时使用默认配置
-     * 
+     *
      * 注意：这个测试无法直接模拟文件不存在的情况，
      * 因为配置文件已经存在于 assets 目录中。
      * 但我们可以验证 getDefaultMappings() 方法的行为。
@@ -233,7 +233,7 @@ class FieldMappingConfigInstrumentedTest {
 
     /**
      * 测试配置文件与默认配置的一致性
-     * 
+     *
      * 验证：
      * - 配置文件加载的结果与默认配置包含相同的字段
      * - 配置文件的内容应该与默认配置一致或更丰富

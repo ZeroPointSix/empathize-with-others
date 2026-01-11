@@ -138,11 +138,15 @@ class FloatingWindowPreferencesTest {
         val y = -100
 
         // When
-        preferences.saveButtonPosition(x, y)
+        var thrown = false
+        try {
+            preferences.saveButtonPosition(x, y)
+        } catch (e: IllegalArgumentException) {
+            thrown = true
+        }
 
         // Then
-        assertEquals(x, preferences.getButtonX())
-        assertEquals(y, preferences.getButtonY())
+        assertTrue("负坐标应触发校验异常", thrown)
     }
 
     @Test

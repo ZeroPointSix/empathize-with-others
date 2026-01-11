@@ -52,6 +52,7 @@ import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 
 /**
@@ -236,7 +237,7 @@ private fun ModernListRow(
                 Text(
                     text = formatTimeOnly(item.timestamp),
                     fontSize = 12.sp,
-                    color = Color(0xFF8E8E93)
+                    color = iOSTextSecondary
                 )
             }
             
@@ -246,7 +247,7 @@ private fun ModernListRow(
             Text(
                 text = getListItemContent(item),
                 fontSize = 13.sp,
-                color = Color(0xFF8E8E93),
+                color = iOSTextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

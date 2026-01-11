@@ -54,17 +54,16 @@ class BottomNavScaffoldTest {
     // ============================================================
 
     @Test
-    fun `TabContentHost visible when currentTab matches route`() {
+    fun tabContentHost_visibleWhenCurrentTabMatchesRoute() {
         var currentTab by mutableStateOf(BottomNavTab.CONTACTS)
         var visibleState by mutableStateOf(false)
 
         composeTestRule.setContent {
             TestTabContentHost(
                 route = BottomNavTab.CONTACTS.route,
-                currentTab = currentTab
-            ) {
-                visibleState = true
-            }
+                currentTab = currentTab,
+                onVisibleChanged = { visibleState = it }
+            ) {}
         }
 
         // 等待组合完成
@@ -75,17 +74,16 @@ class BottomNavScaffoldTest {
     }
 
     @Test
-    fun `TabContentHost invisible when currentTab does not match`() {
+    fun tabContentHost_invisibleWhenCurrentTabDoesNotMatch() {
         var currentTab by mutableStateOf(BottomNavTab.AI_ADVISOR)
-        var visibleState by mutableStateOf(true)
+        var visibleState by mutableStateOf(false)
 
         composeTestRule.setContent {
             TestTabContentHost(
                 route = BottomNavTab.CONTACTS.route,
-                currentTab = currentTab
-            ) {
-                visibleState = true
-            }
+                currentTab = currentTab,
+                onVisibleChanged = { visibleState = it }
+            ) {}
         }
 
         composeTestRule.waitForIdle()
@@ -98,7 +96,7 @@ class BottomNavScaffoldTest {
     // ============================================================
 
     @Test
-    fun `TabContentHost switches visibility on tab change - CONTACTS to AI_ADVISOR`() {
+    fun tabContentHost_switchesVisibilityOnTabChange_contactsToAiAdvisor() {
         var currentTab by mutableStateOf(BottomNavTab.CONTACTS)
         var contactsVisible by mutableStateOf(false)
         var advisorVisible by mutableStateOf(false)
@@ -107,14 +105,16 @@ class BottomNavScaffoldTest {
             // Contacts Tab
             TestTabContentHost(
                 route = BottomNavTab.CONTACTS.route,
-                currentTab = currentTab
-            ) { contactsVisible = true }
+                currentTab = currentTab,
+                onVisibleChanged = { contactsVisible = it }
+            ) {}
 
             // Advisor Tab
             TestTabContentHost(
                 route = BottomNavTab.AI_ADVISOR.route,
-                currentTab = currentTab
-            ) { advisorVisible = true }
+                currentTab = currentTab,
+                onVisibleChanged = { advisorVisible = it }
+            ) {}
         }
 
         composeTestRule.waitForIdle()
@@ -133,7 +133,7 @@ class BottomNavScaffoldTest {
     }
 
     @Test
-    fun `TabContentHost switches visibility on tab change - full cycle`() {
+    fun tabContentHost_switchesVisibilityOnTabChange_fullCycle() {
         var currentTab by mutableStateOf(BottomNavTab.CONTACTS)
 
         composeTestRule.setContent {
@@ -178,7 +178,7 @@ class BottomNavScaffoldTest {
     // ============================================================
 
     @Test
-    fun `TabContentHost visible tab has higher zIndex`() {
+    fun tabContentHost_visibleTabHasHigherZIndex() {
         var currentTab by mutableStateOf(BottomNavTab.CONTACTS)
 
         composeTestRule.setContent {
@@ -215,9 +215,13 @@ class BottomNavScaffoldTest {
     private fun TestTabContentHost(
         route: String,
         currentTab: BottomNavTab,
+        onVisibleChanged: (Boolean) -> Unit = {},
         content: @Composable () -> Unit
     ) {
         val visible = currentTab.route == route
+        LaunchedEffect(visible) {
+            onVisibleChanged(visible)
+        }
 
         androidx.compose.foundation.layout.Box(
             modifier = Modifier

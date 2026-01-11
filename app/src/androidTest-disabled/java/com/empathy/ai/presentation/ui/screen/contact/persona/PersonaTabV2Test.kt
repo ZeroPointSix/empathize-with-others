@@ -6,7 +6,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performLongClick
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performTextInput
 import com.empathy.ai.domain.model.CategoryColor
 import com.empathy.ai.domain.model.EditModeState
@@ -14,7 +15,7 @@ import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.domain.model.FactCategory
 import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.model.PersonaSearchState
-import com.empathy.ai.presentation.theme.EmpathyAiTheme
+import com.empathy.ai.presentation.theme.EmpathyTheme
 import org.junit.Rule
 import org.junit.Test
 
@@ -60,18 +61,19 @@ class PersonaTabV2Test {
     @Test
     fun 显示搜索栏_非编辑模式() {
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = emptyList(),
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -92,18 +94,19 @@ class PersonaTabV2Test {
     @Test
     fun 显示编辑模式顶栏_编辑模式() {
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = emptyList(),
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState.activated("fact_1"),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -128,18 +131,19 @@ class PersonaTabV2Test {
         )
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -166,18 +170,19 @@ class PersonaTabV2Test {
         )
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = { toggledKey = it },
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -200,23 +205,24 @@ class PersonaTabV2Test {
 
     @Test
     fun 标签点击_非编辑模式() {
-        var clickedFact: Fact? = null
+        var clickedFactId: String? = null
         val fact = createFact("1", "性格特点", "开朗")
         val categories = listOf(createCategory("性格特点", listOf(fact)))
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = { clickedFact = it },
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = { clickedFactId = it },
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -234,7 +240,7 @@ class PersonaTabV2Test {
         composeTestRule.onNodeWithText("开朗").performClick()
 
         // 验证回调被调用
-        assert(clickedFact?.id == "1")
+        assert(clickedFactId == "1")
     }
 
     @Test
@@ -244,18 +250,19 @@ class PersonaTabV2Test {
         val categories = listOf(createCategory("性格特点", listOf(fact)))
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = { longClickedFactId = it },
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = { longClickedFactId = it },
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -270,7 +277,7 @@ class PersonaTabV2Test {
         }
 
         // 长按标签
-        composeTestRule.onNodeWithText("开朗").performLongClick()
+        composeTestRule.onNodeWithText("开朗").performTouchInput { longClick() }
 
         // 验证回调被调用
         assert(longClickedFactId == "1")
@@ -282,18 +289,19 @@ class PersonaTabV2Test {
         val categories = listOf(createCategory("性格特点", listOf(fact)))
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = categories,
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState.activated("1"),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -317,18 +325,19 @@ class PersonaTabV2Test {
         var searchQuery = ""
 
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = emptyList(),
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = { searchQuery = it },
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -352,18 +361,19 @@ class PersonaTabV2Test {
     @Test
     fun 空状态显示() {
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = emptyList(),
                     searchState = PersonaSearchState(),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -384,18 +394,19 @@ class PersonaTabV2Test {
     @Test
     fun 搜索无结果显示() {
         composeTestRule.setContent {
-            EmpathyAiTheme {
+            EmpathyTheme {
                 PersonaTabV2(
                     categories = emptyList(),
                     searchState = PersonaSearchState(query = "不存在的关键词"),
                     editModeState = EditModeState(),
                     availableCategories = emptyList(),
+                    isDarkMode = false,
                     onSearchQueryChange = {},
                     onClearSearch = {},
                     onToggleCategoryExpand = {},
-                    onTagClick = {},
-                    onTagLongClick = {},
-                    onToggleSelection = {},
+                    onFactClick = {},
+                    onFactLongClick = {},
+                    onToggleFactSelection = {},
                     onExitEditMode = {},
                     onSelectAll = {},
                     onDeselectAll = {},
@@ -413,3 +424,6 @@ class PersonaTabV2Test {
         composeTestRule.onNodeWithText("未找到匹配的标签").assertIsDisplayed()
     }
 }
+
+
+

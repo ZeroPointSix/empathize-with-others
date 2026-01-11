@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.empathy.ai.data.local.ApiKeyStorage
 import com.empathy.ai.data.local.AppDatabase
+import com.empathy.ai.data.local.ProxyPreferences
 import com.empathy.ai.domain.model.AiModel
 import com.empathy.ai.domain.model.AiProvider
 import com.squareup.moshi.Moshi
@@ -37,6 +38,7 @@ class AiProviderRepositoryPropertyTest {
     private lateinit var context: Context
     private lateinit var database: AppDatabase
     private lateinit var apiKeyStorage: ApiKeyStorage
+    private lateinit var proxyPreferences: ProxyPreferences
     private lateinit var moshi: Moshi
     private lateinit var repository: AiProviderRepositoryImpl
 
@@ -52,6 +54,7 @@ class AiProviderRepositoryPropertyTest {
 
         // 创建依赖
         apiKeyStorage = ApiKeyStorage(context)
+        proxyPreferences = ProxyPreferences(context)
         moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
@@ -60,6 +63,7 @@ class AiProviderRepositoryPropertyTest {
         repository = AiProviderRepositoryImpl(
             dao = database.aiProviderDao(),
             apiKeyStorage = apiKeyStorage,
+            proxyPreferences = proxyPreferences,
             moshi = moshi
         )
     }
@@ -77,7 +81,7 @@ class AiProviderRepositoryPropertyTest {
      * 对于任意有效的服务商配置，保存后再读取应返回等价的配置
      */
     @Test
-    fun `property 3 - provider save and retrieve should be consistent`() = runBlocking {
+    fun property3_provider_save_and_retrieve_should_be_consistent() = runBlocking {
         // Given - 创建多个测试服务商
         val testProviders = listOf(
             createValidProvider("Provider 1", 2),
@@ -125,7 +129,7 @@ class AiProviderRepositoryPropertyTest {
      * 对于任意服务商配置，添加的所有模型都应在保存后能够正确读取
      */
     @Test
-    fun `property 4 - all models should be preserved after save`() = runBlocking {
+    fun property4_all_models_should_be_preserved_after_save() = runBlocking {
         // Given - 创建带不同数量模型的服务商
         val testProviders = listOf(
             createValidProvider("Provider with 2 models", 2),
@@ -170,7 +174,7 @@ class AiProviderRepositoryPropertyTest {
      * 测试：删除服务商应同时删除 API Key
      */
     @Test
-    fun `delete provider should also delete api key`() = runBlocking {
+    fun delete_provider_should_also_delete_api_key() = runBlocking {
         // Given - 创建并保存服务商
         val provider = createValidProvider("Test Provider", 2)
         repository.saveProvider(provider)
@@ -194,7 +198,7 @@ class AiProviderRepositoryPropertyTest {
      * 测试：设置默认服务商应清除其他默认标记
      */
     @Test
-    fun `set default provider should clear other default flags`() = runBlocking {
+    fun set_default_provider_should_clear_other_default_flags() = runBlocking {
         // Given - 创建两个服务商
         val provider1 = createValidProvider("Provider 1", 2)
         val provider2 = createValidProvider("Provider 2", 2)

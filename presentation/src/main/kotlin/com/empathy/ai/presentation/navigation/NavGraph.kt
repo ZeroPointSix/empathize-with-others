@@ -137,7 +137,12 @@ fun NavGraph(
                         }
                     },
                     onNavigateToSettings = {
-                        navController.navigate(NavRoutes.SETTINGS)
+                        navController.navigate(NavRoutes.SETTINGS) {
+                            popUpTo(NavRoutes.CONTACT_LIST) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                        }
                     },
                     // 修复BUG-00031: 添加底部导航栏的导航回调
                     onNavigate = { route ->
@@ -206,16 +211,24 @@ fun NavGraph(
                 SettingsScreen(
                     onNavigateBack = { navController.navigateUp() },
                     onNavigateToAiConfig = {
-                        navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_SETTINGS))
+                        navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_SETTINGS)) {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToPromptEditor = { route ->
-                        navController.navigate(route)
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToUserProfile = {
-                        navController.navigate(NavRoutes.USER_PROFILE)
+                        navController.navigate(NavRoutes.USER_PROFILE) {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToSystemPromptList = {
-                        navController.navigate(NavRoutes.SYSTEM_PROMPT_LIST)
+                        navController.navigate(NavRoutes.SYSTEM_PROMPT_LIST) {
+                            launchSingleTop = true
+                        }
                     },
                     // 修复BUG-001: 添加底部导航栏的导航回调
                     onNavigate = { route ->
@@ -245,13 +258,19 @@ fun NavGraph(
             if (includeTabScreens) {
                 AiAdvisorScreen(
                     onNavigateToChat = { contactId ->
+                        // BUG-00068修复: 使用CONTACT_LIST作为稳定锚点，避免回退栈残留旧会话
+                        // popUpTo(CONTACT_LIST)确保返回时能正确回到联系人Tab
+                        // saveState=true保持Tab页面状态，避免重建
                         navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
-                            popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                            popUpTo(NavRoutes.CONTACT_LIST) { saveState = true }
+                            launchSingleTop = true
                         }
                     },
                     onNavigateToContactSelect = {
+                        // BUG-00068修复: 同样使用CONTACT_LIST锚点，保持返回一致性
                         navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
-                            popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                            popUpTo(NavRoutes.CONTACT_LIST) { saveState = true }
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -285,23 +304,33 @@ fun NavGraph(
             val createNew = backStackEntry.arguments?.getBoolean(NavRoutes.AI_ADVISOR_CHAT_ARG_CREATE_NEW) ?: false
             // BUG-00061: 获取sessionId参数
             val sessionId = backStackEntry.arguments?.getString(NavRoutes.AI_ADVISOR_CHAT_ARG_SESSION_ID)
-                AiAdvisorChatScreen(
+            AiAdvisorChatScreen(
                 createNew = createNew,  // BUG-00058: 传递createNew参数
                 sessionId = sessionId,  // BUG-00061: 传递sessionId参数
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToContact = { newContactId ->
                     navController.navigate(NavRoutes.aiAdvisorChat(newContactId)) {
-                        popUpTo(NavRoutes.AI_ADVISOR)
+                        popUpTo(NavRoutes.AI_ADVISOR_CHAT) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
-                    onNavigateToSettings = {
-                    navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_ADVISOR_CHAT))
-                    },
+                onNavigateToSettings = {
+                    navController.navigate(NavRoutes.aiConfig(NavRoutes.SOURCE_ADVISOR_CHAT)) {
+                        popUpTo(NavRoutes.AI_ADVISOR_CHAT) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
                 onNavigateToSessionHistory = {
-                    navController.navigate(NavRoutes.aiAdvisorSessions(contactId))
+                    navController.navigate(NavRoutes.aiAdvisorSessions(contactId)) {
+                        popUpTo(NavRoutes.AI_ADVISOR_CHAT) { inclusive = false }
+                        launchSingleTop = true
+                    }
                 },
                 onNavigateToContactSelect = {
-                    navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS)
+                    navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
+                        popUpTo(NavRoutes.AI_ADVISOR_CHAT) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -324,12 +353,14 @@ fun NavGraph(
                     // BUG-00061修复：传递sessionId参数，加载指定会话
                     navController.navigate(NavRoutes.aiAdvisorChat(contactId, sessionId = sessionId)) {
                         popUpTo(NavRoutes.AI_ADVISOR_SESSIONS) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 onCreateNewSession = {
                     // BUG-00058修复：传递createNew=true，触发新会话创建
                     navController.navigate(NavRoutes.aiAdvisorChat(contactId, createNew = true)) {
                         popUpTo(NavRoutes.AI_ADVISOR_SESSIONS) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -343,7 +374,8 @@ fun NavGraph(
                 onSelectContact = { contactId ->
                     // 保存联系人ID并导航到对话界面
                     navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
-                        popUpTo(NavRoutes.AI_ADVISOR) { inclusive = true }
+                        popUpTo(NavRoutes.AI_ADVISOR_CONTACTS) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -380,14 +412,20 @@ fun NavGraph(
                     }
                 },
                 onNavigateToAddProvider = {
-                    navController.navigate(NavRoutes.ADD_PROVIDER)
+                    navController.navigate(NavRoutes.ADD_PROVIDER) {
+                        launchSingleTop = true
+                    }
                 },
                 onNavigateToEditProvider = { providerId ->
-                    navController.navigate(NavRoutes.editProvider(providerId))
+                    navController.navigate(NavRoutes.editProvider(providerId)) {
+                        launchSingleTop = true
+                    }
                 },
                 // TD-00025: 添加用量统计导航
                 onNavigateToUsageStats = {
-                    navController.navigate(NavRoutes.USAGE_STATS)
+                    navController.navigate(NavRoutes.USAGE_STATS) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -440,7 +478,9 @@ fun NavGraph(
                 contactId = contactId,
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToPromptEditor = { route ->
-                    navController.navigate(route)
+                    navController.navigate(route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -482,7 +522,9 @@ fun NavGraph(
             com.empathy.ai.presentation.ui.screen.settings.SystemPromptListScreen(
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToEdit = { scene ->
-                    navController.navigate(NavRoutes.systemPromptEdit(scene))
+                    navController.navigate(NavRoutes.systemPromptEdit(scene)) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

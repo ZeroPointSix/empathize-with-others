@@ -8,6 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,10 +61,18 @@ fun AiAdvisorScreen(
     viewModel: AiAdvisorEntryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var hasInitialized by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
-            viewModel.refreshNavigationTarget()
+            // BUG-00068修复: 防止首帧重复刷新导航导致重复入栈
+            // hasInitialized=false时跳过刷新，仅在后续切换回来时才触发
+            // 配合MainActivity.kt中的launchSingleTop实现稳定的导航行为
+            if (hasInitialized) {
+                viewModel.refreshNavigationTarget()
+            } else {
+                hasInitialized = true
+            }
         }
     }
 

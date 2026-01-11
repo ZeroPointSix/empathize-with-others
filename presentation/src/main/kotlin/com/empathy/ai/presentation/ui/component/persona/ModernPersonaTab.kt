@@ -181,7 +181,7 @@ data class PersonaCategoryData(
  * - 纯白色背景（#FFFFFF）
  * - 圆角12px
  * - 极淡投影（悬浮效果）
- * - 左侧浅灰搜索图标（#8E8E93）
+ * - 左侧次级搜索图标（iOSTextSecondary）
  */
 @Composable
 fun ModernFloatingSearchBar(
@@ -206,7 +206,7 @@ fun ModernFloatingSearchBar(
         Icon(
             imageVector = Icons.Filled.Search,
             contentDescription = "搜索",
-            tint = Color(0xFF8E8E93),
+            tint = iOSTextSecondary,
             modifier = Modifier.size(20.dp)
         )
         
@@ -217,7 +217,7 @@ fun ModernFloatingSearchBar(
                 Text(
                     text = placeholder,
                     fontSize = 16.sp,
-                    color = Color(0xFF8E8E93)
+                    color = iOSTextSecondary
                 )
             }
             androidx.compose.foundation.text.BasicTextField(
@@ -332,7 +332,7 @@ fun ModernFolderCard(
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
                         contentDescription = if (isExpanded) "收起" else "展开",
-                        tint = Color(0xFFC7C7CC),
+                        tint = iOSTextTertiary,
                         modifier = Modifier
                             .size(20.dp)
                             .rotate(arrowRotation)

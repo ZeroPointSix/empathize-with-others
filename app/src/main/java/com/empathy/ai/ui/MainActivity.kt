@@ -126,10 +126,17 @@ private fun MainScreen() {
                 aiAdvisorContent = {
                     AiAdvisorScreen(
                         onNavigateToChat = { contactId ->
-                            navController.navigate(NavRoutes.aiAdvisorChat(contactId))
+                            // BUG-00068修复: 添加launchSingleTop防止Tab切换时重复入栈
+                            // 配合NavGraph.kt中的popUpTo(CONTACT_LIST)实现稳定的返回行为
+                            navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
+                                launchSingleTop = true
+                            }
                         },
                         onNavigateToContactSelect = {
-                            navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS)
+                            // BUG-00068修复: 同样添加launchSingleTop防重复入栈
+                            navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
+                                launchSingleTop = true
+                            }
                         },
                         isVisible = currentTab == BottomNavTab.AI_ADVISOR
                     )

@@ -73,9 +73,10 @@
     <color name="floating_accent">#FF4081</color>
     
     <!-- 文本颜色 -->
+    <!-- BUG-00067修复: 加深颜色提高可读性 -->
     <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="text_hint">#BDBDBD</color>
+    <color name="text_secondary">#666666</color>  <!-- 原#757575，提高对比度 -->
+    <color name="text_hint">#999999</color>         <!-- 原#BDBDBD，提高可见性 -->
     
     <!-- 功能颜色 -->
     <color name="analyze_color">#4CAF50</color>

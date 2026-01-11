@@ -36,6 +36,7 @@ import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.iOSGreen
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSRed
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 
 /**
  * 现代化时光轴卡片组件
@@ -143,7 +144,7 @@ fun ModernTimelineCard(
                     Text(
                         text = time,
                         fontSize = 11.sp,
-                        color = Color(0xFF8E8E93)
+                        color = iOSTextSecondary
                     )
                 }
                 
@@ -200,7 +201,7 @@ private fun MiniSourceTag(text: String) {
         Text(
             text = text,
             fontSize = 10.sp,
-            color = Color(0xFF8E8E93)
+            color = iOSTextSecondary
         )
     }
 }

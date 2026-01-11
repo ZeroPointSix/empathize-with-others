@@ -52,6 +52,7 @@ import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.theme.iOSTextTertiary
 import com.empathy.ai.presentation.viewmodel.ContactSelectViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -196,7 +197,7 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     placeholder: String
 ) {
-    val searchBackground = Color(0x1F8E8E93) // rgba(142, 142, 147, 0.12)
+    val searchBackground = iOSTextSecondary.copy(alpha = 0.12f)
     val dimensions = AdaptiveDimensions.current
 
     Box(
@@ -371,7 +372,7 @@ private fun ContactListItem(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = Color(0xFFC7C7CC),
+                tint = iOSTextTertiary,
                 modifier = Modifier.size(20.dp)
             )
         }

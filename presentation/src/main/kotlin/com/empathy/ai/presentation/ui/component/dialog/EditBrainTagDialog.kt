@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.BrainTag
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.presentation.theme.iOSTextSecondary
 
 /**
  * 编辑标签对话框
@@ -56,7 +57,6 @@ fun EditBrainTagDialog(
     val iOSBlue = Color(0xFF007AFF)
     val iOSRed = Color(0xFFFF3B30)
     val iOSGreen = Color(0xFF34C759)
-    val iOSTextSecondary = Color(0xFF8E8E93)
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    分析功能图标 - 智能分析灯泡
+
+    业务背景 (PRD-00001/US-001):
+    - "帮我分析"功能的视觉标识
+    - 灯泡象征灵感和智能分析
+    - 金色系与 analyze_color (#4CAF50) 配合使用
+
+    设计决策:
+    - 使用 Material Design 灯泡图标 (24dp)
+    - 金色填充 (#FFC107) 传递智慧/启发意象
+    - 菜单按钮中使用 iconTint 动态着色
+
+    任务: FD-00001/T001
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 分析图标：灯泡 -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1H9V21zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74V17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74C19,5.14 15.86,2 12,2z" />
+</vector>

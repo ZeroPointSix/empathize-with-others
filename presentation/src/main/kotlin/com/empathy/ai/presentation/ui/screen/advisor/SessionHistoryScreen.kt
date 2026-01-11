@@ -61,6 +61,7 @@ import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.theme.iOSTextTertiary
 import com.empathy.ai.presentation.viewmodel.SessionHistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -352,7 +353,7 @@ private fun SessionListItem(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = Color(0xFFC7C7CC),
+                    tint = iOSTextTertiary,
                     modifier = Modifier.size(20.dp)
                 )
             }

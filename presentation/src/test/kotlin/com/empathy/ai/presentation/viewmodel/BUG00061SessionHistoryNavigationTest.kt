@@ -8,6 +8,7 @@ import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
+import com.empathy.ai.presentation.navigation.NavRoutes
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -333,10 +334,10 @@ class BUG00061SessionHistoryNavigationTest {
         val contactId = "contact-123"
         val sessionId = "session-456"
         
-        // When: 模拟修复后的路由生成逻辑
-        val routeWithSessionId = "ai_advisor_chat/$contactId?createNew=false&sessionId=$sessionId"
-        val routeWithoutSessionId = "ai_advisor_chat/$contactId?createNew=false"
-        val routeWithCreateNew = "ai_advisor_chat/$contactId?createNew=true"
+        // When
+        val routeWithSessionId = NavRoutes.aiAdvisorChat(contactId, sessionId = sessionId)
+        val routeWithoutSessionId = NavRoutes.aiAdvisorChat(contactId)
+        val routeWithCreateNew = NavRoutes.aiAdvisorChat(contactId, createNew = true)
 
         // Then: 验证路由格式正确
         assert(routeWithSessionId.contains("sessionId=$sessionId"))
