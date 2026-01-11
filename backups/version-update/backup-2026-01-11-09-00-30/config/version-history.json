@@ -3,19 +3,9 @@
         "version": "1.2.0",
         "versionCode": 10200,
         "stage": "production",
-        "updatedAt": "2026-01-11T09:00:30.206879447Z"
+        "updatedAt": "2026-01-11T08:39:51.737293816Z"
     },
     "history": [
-        {
-            "version": "1.2.0",
-            "versionCode": 10200,
-            "stage": "production",
-            "date": "2026-01-11T09:00:30.206879447Z",
-            "commits": [
-                "sanitize keystore base64 in release job"
-            ],
-            "changelog": "### 🔧 其他变更\n- 👷 sanitize keystore base64 in release job"
-        },
         {
             "version": "1.2.0",
             "versionCode": 10200,
