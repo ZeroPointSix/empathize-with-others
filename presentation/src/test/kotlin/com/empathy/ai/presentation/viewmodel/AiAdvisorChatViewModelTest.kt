@@ -480,43 +480,69 @@ class AiAdvisorChatViewModelTest {
     // ==================== BUG-00044修复测试 ====================
 
     /**
-     * BUG-044-P1-001: 测试CANCELLED状态的消息可以重试
+     * BUG-00059修复: 测试CANCELLED状态的AI消息不能重试
+     *
+     * 业务规则 (PRD-00028): AI消息停止后应使用"重新生成"而非"重试"
+     * 任务: BUG-00059/T002
      */
     @Test
-    fun `retryMessage should retry cancelled message`() = runTest {
+    fun `retryMessage should NOT retry cancelled AI message`() = runTest {
         // Given
         setupSuccessfulInit()
-        val cancelledConversation = AiAdvisorConversation(
+        val cancelledAiConversation = AiAdvisorConversation(
             id = "conv-1",
             contactId = testContactId,
             sessionId = testSessionId,
-            messageType = MessageType.USER,
-            content = "Cancelled message",
+            messageType = MessageType.AI,  // AI消息
+            content = "AI生成的部分内容...[用户已停止生成]",
             timestamp = System.currentTimeMillis(),
             createdAt = System.currentTimeMillis(),
             sendStatus = SendStatus.CANCELLED
         )
-        val aiResponse = createTestConversation(
-            "conv-2", testContactId, testSessionId, MessageType.AI, "Response"
-        )
-
-        coEvery { deleteAdvisorConversationUseCase("conv-1") } returns Result.success(Unit)
-        coEvery {
-            sendAdvisorMessageUseCase(testContactId, testSessionId, "Cancelled message")
-        } returns Result.success(aiResponse)
 
         createViewModel()
-        // 禁用流式模式以使用非流式发送
-        viewModel.setStreamingMode(false)
         advanceUntilIdle()
 
         // When
-        viewModel.retryMessage(cancelledConversation)
+        viewModel.retryMessage(cancelledAiConversation)
         advanceUntilIdle()
 
-        // Then
-        coVerify { deleteAdvisorConversationUseCase("conv-1") }
-        coVerify { sendAdvisorMessageUseCase(testContactId, testSessionId, "Cancelled message") }
+        // Then: 不应该调用删除或发送
+        coVerify(exactly = 0) { deleteAdvisorConversationUseCase(any()) }
+        coVerify(exactly = 0) { sendAdvisorMessageUseCase(any(), any(), any()) }
+    }
+
+    /**
+     * BUG-00059修复: 测试CANCELLED状态的用户消息不能重试
+     *
+     * 业务规则 (PRD-00028): 仅FAILED状态可重试
+     * 任务: BUG-00059/T002
+     */
+    @Test
+    fun `retryMessage should NOT retry cancelled USER message`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        val cancelledUserConversation = AiAdvisorConversation(
+            id = "conv-1",
+            contactId = testContactId,
+            sessionId = testSessionId,
+            messageType = MessageType.USER,
+            content = "用户消息",
+            timestamp = System.currentTimeMillis(),
+            createdAt = System.currentTimeMillis(),
+            sendStatus = SendStatus.CANCELLED
+        )
+
+        createViewModel()
+        advanceUntilIdle()
+
+        // When
+        viewModel.retryMessage(cancelledUserConversation)
+        advanceUntilIdle()
+
+        // Then: 不应该调用删除或发送（因为状态是CANCELLED而非FAILED）
+        coVerify(exactly = 0) { deleteAdvisorConversationUseCase(any()) }
+        coVerify(exactly = 0) { sendAdvisorMessageUseCase(any(), any(), any()) }
     }
 
     /**
@@ -757,5 +783,98 @@ class AiAdvisorChatViewModelTest {
 
         // Then - isRegenerating应该变为false
         assertFalse(viewModel.uiState.value.isRegenerating)
+    }
+
+    // ==================== BUG-00059修复测试 ====================
+
+    /**
+     * BUG-00059: 测试isLikelyAiContent检测停止生成标记
+     *
+     * 业务规则 (PRD-00028): AI内容包含"[用户已停止生成]"标记
+     * 任务: BUG-00059/T003
+     */
+    @Test
+    fun `isLikelyAiContent should detect stop marker`() = runTest {
+        // Given
+        setupSuccessfulInit()
+        createViewModel()
+        advanceUntilIdle()
+
+        // 测试数据: PRD-00028/AC-003
+        val testData = listOf(
+            "正常内容" to false,
+            "部分内容...[用户已停止生成]" to true,
+            "没有标记的长文本内容" to false,
+            "核心策略：..." to true,
+            "## 标题\n内容" to true,
+            "ENFJ类型分析" to true,
+            "1. 第一点\n2. 第二点" to true,
+            "**加粗文本**" to true,
+            "正常用户输入比较短" to false,
+            "a".repeat(350) to true,  // 超长内容
+        )
+
+        // When & Then
+        testData.forEach { (content, expected) ->
+            val result = viewModel.isLikelyAiContent(content)
+            assertEquals("Content: '$content' should be detected as AI=$expected", expected, result)
+        }
+    }
+
+    /**
+     * BUG-00059: 测试AI消息不能重试（仅FAILED用户消息可重试）
+     *
+     * 使用table-driven tests覆盖多种组合
+     * 任务: BUG-00059/T002
+     */
+    @Test
+    fun `retryMessage should only work for USER and FAILED combination`() = runTest {
+        // Given
+        setupSuccessfulInit()
+
+        // 测试数据来源: BUG-00059/AC-002
+        val testData = listOf(
+            // (消息类型, 发送状态, 预期可重试)
+            (MessageType.USER, SendStatus.FAILED, true),
+            (MessageType.USER, SendStatus.CANCELLED, false),
+            (MessageType.USER, SendStatus.SUCCESS, false),
+            (MessageType.AI, SendStatus.FAILED, false),
+            (MessageType.AI, SendStatus.CANCELLED, false),
+            (MessageType.AI, SendStatus.SUCCESS, false),
+        )
+
+        testData.forEach { (messageType, sendStatus, shouldRetry) ->
+            // Given
+            val conversation = AiAdvisorConversation(
+                id = "conv-${messageType.name}-${sendStatus.name}",
+                contactId = testContactId,
+                sessionId = testSessionId,
+                messageType = messageType,
+                content = "Test content",
+                timestamp = System.currentTimeMillis(),
+                createdAt = System.currentTimeMillis(),
+                sendStatus = sendStatus
+            )
+
+            coEvery { deleteAdvisorConversationUseCase(any()) } returns Result.success(Unit)
+            coEvery { sendAdvisorMessageUseCase(any(), any(), any()) } returns Result.success(
+                createTestConversation("response", testContactId, testSessionId, MessageType.AI, "Response")
+            )
+
+            createViewModel()
+            viewModel.setStreamingMode(false)
+            advanceUntilIdle()
+
+            // When
+            viewModel.retryMessage(conversation)
+            advanceUntilIdle()
+
+            // Then
+            if (shouldRetry) {
+                coVerify(atLeast = 1) { deleteAdvisorConversationUseCase(any()) }
+            } else {
+                coVerify(exactly = 0) { deleteAdvisorConversationUseCase(any()) }
+            }
+        }
     }
 }

@@ -155,7 +155,7 @@ class BUG00068NavigationStackTest {
     @Test
     fun `CONTACT_DETAIL_TAB is a non-tab route`() {
         // 验证联系人详情标签页是非Tab路由
-        assertEquals("contact_detail_tab/{id}", NavRoutes.CONTACT_DETAIL_TAB)
+        assertEquals("contact_detail_tab/{contactId}", NavRoutes.CONTACT_DETAIL_TAB)
         assertFalse("CONTACT_DETAIL_TAB should not be in BOTTOM_NAV_ROUTES",
             NavRoutes.BOTTOM_NAV_ROUTES.contains(NavRoutes.CONTACT_DETAIL_TAB))
     }
