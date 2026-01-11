@@ -240,12 +240,14 @@ jobs:
 
       - name: 准备签名配置
         run: |
-          if [ -z "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" ]; then
+          RAW_KEYSTORE="${{ secrets.RELEASE_STORE_FILE_BASE64 }}"
+          RAW_KEYSTORE_CLEAN=$(printf "%s" "$RAW_KEYSTORE" | tr -d '\n\r ')
+          if [ -z "$RAW_KEYSTORE_CLEAN" ]; then
             echo "缺少 RELEASE_STORE_FILE_BASE64，无法构建 Release APK"
             exit 1
           fi
 
-          echo "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" | base64 --decode > empathy-release-key.jks
+          printf "%s" "$RAW_KEYSTORE_CLEAN" | base64 --decode > empathy-release-key.jks
 
           {
             echo "RELEASE_STORE_FILE=empathy-release-key.jks"
