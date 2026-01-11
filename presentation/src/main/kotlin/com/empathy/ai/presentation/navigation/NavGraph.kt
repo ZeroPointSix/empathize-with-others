@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -268,8 +269,9 @@ fun NavGraph(
                             "AiAdvisorNav",
                             "NavGraph onNavigateToChat contactId=$contactId current=${navController.currentBackStackEntry?.destination?.route}"
                         )
+                        val popAnchorRoute = navController.aiAdvisorPopAnchor()
                         navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
-                            popUpTo(NavRoutes.AI_ADVISOR) { saveState = true }
+                            popUpTo(popAnchorRoute) { saveState = true }
                             launchSingleTop = true
                         }
                     },
@@ -279,8 +281,9 @@ fun NavGraph(
                             "AiAdvisorNav",
                             "NavGraph onNavigateToContactSelect current=${navController.currentBackStackEntry?.destination?.route}"
                         )
+                        val popAnchorRoute = navController.aiAdvisorPopAnchor()
                         navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
-                            popUpTo(NavRoutes.AI_ADVISOR) { saveState = true }
+                            popUpTo(popAnchorRoute) { saveState = true }
                             launchSingleTop = true
                         }
                     }
@@ -580,6 +583,25 @@ fun NavGraph(
                 onNavigateBack = { navController.navigateUp() }
             )
         }
+    }
+}
+
+// 辅助函数: AI军师相关页面在非Tab导航栈中可能没有AI_ADVISOR锚点
+// 若锚点不存在，回退至CONTACT_LIST避免清空根栈导致无法返回
+internal fun NavController.aiAdvisorPopAnchor(): String {
+    return if (hasBackStackRoute(NavRoutes.AI_ADVISOR)) {
+        NavRoutes.AI_ADVISOR
+    } else {
+        NavRoutes.CONTACT_LIST
+    }
+}
+
+internal fun NavController.hasBackStackRoute(route: String): Boolean {
+    return try {
+        getBackStackEntry(route)
+        true
+    } catch (_: IllegalArgumentException) {
+        false
     }
 }
 
