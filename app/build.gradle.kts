@@ -1,5 +1,6 @@
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -265,19 +266,23 @@ fun Project.loadReleaseSigningCredentials(): SigningCredentials? {
     val keyPassword = resolve("RELEASE_KEY_PASSWORD") ?: return null
     val storePassword = resolve("RELEASE_STORE_PASSWORD") ?: return null
     val storeFile = resolve("RELEASE_STORE_FILE")
+        ?.let { path ->
+            val file = rootProject.file(path)
+            if (file.exists()) file else file.absoluteFile
+        }
         ?: defaultReleaseStoreFile()
         ?: return null
 
-    return SigningCredentials(storeFile, keyAlias, keyPassword, storePassword)
+    return SigningCredentials(storeFile.absolutePath, keyAlias, keyPassword, storePassword)
 }
 
-fun Project.defaultReleaseStoreFile(): String? {
+fun Project.defaultReleaseStoreFile(): File? {
     val rootKeystore = rootProject.file("empathy-release-key.jks")
     if (rootKeystore.exists()) {
-        return rootKeystore.absolutePath
+        return rootKeystore
     }
     val appKeystore = rootProject.file("app/empathy-release-key.jks")
-    return appKeystore.takeIf { it.exists() }?.absolutePath
+    return appKeystore.takeIf { it.exists() }
 }
 
 fun Project.requiresReleaseSigning(): Boolean {
