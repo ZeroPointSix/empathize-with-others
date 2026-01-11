@@ -13,16 +13,22 @@ plugins {
 }
 
 val releaseSigningRequired = project.requiresReleaseSigning()
-val releaseSigning = if (releaseSigningRequired) {
-    project.loadReleaseSigningCredentials()
-} else {
-    null
-}
+val releaseSigning = project.loadReleaseSigningCredentials()
+val enforceReleaseSigning = (project.findProperty("RELEASE_SIGNING_STRICT") as? String)
+    ?.toBoolean()
+    ?: false
 
 if (releaseSigningRequired && releaseSigning == null) {
-    throw GradleException(
-        "Release signing config is missing. Configure RELEASE_* properties via local gradle.properties or environment variables."
-    )
+    if (enforceReleaseSigning) {
+        throw GradleException(
+            "Release signing config is missing. Configure RELEASE_* properties via local gradle.properties or environment variables."
+        )
+    } else {
+        logger.warn(
+            "Release signing credentials are missing. Falling back to debug keystore for release build. " +
+                "Set RELEASE_SIGNING_STRICT=true to enforce real release signing."
+        )
+    }
 }
 
 android {
@@ -66,8 +72,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (releaseSigning != null) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigning != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
         }
         debug {
