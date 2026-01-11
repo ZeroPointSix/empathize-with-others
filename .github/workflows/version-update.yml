@@ -42,6 +42,10 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: version-update-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   JAVA_VERSION: '17'
   GRADLE_VERSION: '8.13'
