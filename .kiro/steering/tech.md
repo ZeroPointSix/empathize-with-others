@@ -17,7 +17,7 @@
 
 > 项目已完成Clean Architecture多模块改造
 
-### 模块配置
+### 模块配置（基于实际代码）
 
 | 模块 | 类型 | 插件 | 主要依赖 |
 |------|------|------|----------|
@@ -49,17 +49,7 @@
 ./gradlew assembleRelease        # Release APK
 ```
 
-## 构建系统
-
-- **Build Tool**: Gradle 8.13 with Kotlin DSL
-- **AGP**: 8.7.3
-- **Kotlin**: 2.0.21
-- **JDK**: 17
-- **Min SDK**: 24 (Android 7.0)
-- **Target SDK**: 35
-- **KSP**: 2.0.21-1.0.28
-
-## 核心技术
+## 核心技术栈（基于实际代码扫描）
 
 ### UI 层
 
@@ -89,10 +79,6 @@
 
 - **协程**：Kotlin Coroutines 1.9.0
 - **Flow**：用于响应式数据流
-
-### 媒体处理（已配置但未实现）
-
-- **FFmpeg Kit**：6.0.LTS（音视频处理）
 
 ### 测试
 
@@ -183,17 +169,7 @@ implementation(libs.androidx.core.ktx)
 implementation("androidx.core:core-ktx:1.15.0")
 ```
 
-## 关键库
-
-- **Compose BOM**：所有 Compose 库的统一版本管理
-- **Hilt**：ViewModel 和 Repository 的构造函数注入
-- **Room**：支持 Flow 的类型安全数据库
-- **Retrofit**：使用 Moshi 转换器的 REST API 客户端
-- **Security Crypto**：敏感数据的硬件支持加密
-- **Paging**：分页加载支持
-- **Coil**：图片加载和缓存
-
-## 当前实现状态
+## 当前实现状态（2026-01-11更新）
 
 ### 完全实现的技术栈
 
@@ -202,68 +178,87 @@ implementation("androidx.core:core-ktx:1.15.0")
   - KSP配置用于Room和Moshi编译时处理
   - KAPT配置用于Hilt编译时处理（解决多模块兼容性问题）
   - Desugaring配置支持Java 8+ API (minSdk=24)
+
 - **UI框架**: Jetpack Compose + Material Design 3 完整实现
   - Compose BOM 2024.12.01统一版本管理
-  - Navigation Compose 2.8.5完整导航系统
+  - Navigation Compose 2.8.5完整导航系统（23个路由）
   - Material Icons Extended完整图标库
   - 提示词编辑器UI：完整的Compose界面实现
   - 悬浮窗功能重构UI：Tab系统和状态管理完整实现
   - 悬浮球状态指示与拖动UI：流畅交互体验完整实现
   - MaxHeightScrollView：自适应高度滚动视图组件
-  - PromptSettingsSection：提示词设置界面组件（TD-00015新增）
   - **页面缓存机制**：BottomNavScaffold实现Tab页面内存缓存，消除切换黑屏（2026-01-10新增）
+
 - **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
   - 严格的层级分离和依赖规则
-  - Hilt 2.52依赖注入完整配置
-  - PromptEditorViewModel：完整的状态管理
-  - ContactDetailTabViewModel：四标签页状态管理
-  - SettingsViewModel：已更新，添加promptScenesOrdered属性（TD-00015）
-  - 新增AppDispatcherModule：统一协程调度器管理
+  - Hilt 2.52依赖注入完整配置（24个DI模块：8个data + 16个app）
+  - 27个ViewModel完整状态管理
   - **新增导航组件**：BottomNavTab、NonTabNavGraph、BottomNavScaffold（2026-01-10新增）
   - **新增AI军师入口**：AiAdvisorScreen、AiAdvisorEntryViewModel（PRD-00029新增）
-  - 完整的UI组件系统（原子-分子-有机体-模板四级架构）
-- **架构模式**: Clean Architecture + MVVM + Hilt 完整实现
-  - 严格的层级分离和依赖规则
-  - Hilt 2.52依赖注入完整配置
-  - ViewModel完整状态管理
+  - 完整的UI组件系统（原子-分子-有机体-模板四级架构，24个子目录）
+
 - **数据持久化**: Room 数据库 + Flow 响应式编程完整实现
   - Room 2.6.1 + KTX扩展
-  - 数据库版本v16，完整Migration链（1→16）
+  - 数据库版本v16，完整Migration链（1→16，16个增量迁移脚本）
+  - 11张表：profiles、brain_tags、ai_providers、conversation_logs、conversation_topics、daily_summaries、failed_summary_tasks、api_usage_records、ai_advisor_sessions、ai_advisor_conversations、ai_advisor_message_blocks
+  - 11个DAO
   - Flow响应式数据流
   - Paging 3.3.5分页加载支持
+
 - **网络通信**: Retrofit + OkHttp + Moshi 完整实现
   - Retrofit 2.11.0动态URL支持
   - OkHttp 4.12.0 + Logging拦截器
   - OkHttpClientFactory：动态代理切换机制
   - Moshi 1.15.1 Kotlin代码生成
-  - 支持多种AI服务商：OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火
+  - 支持多种AI服务商：OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火（7家）
   - 网络代理支持：HTTP/HTTPS/SOCKS4/SOCKS5
+  - SSE流式读取器：SseStreamReader
+
 - **异步编程**: Kotlin Coroutines + Flow 完整实现
   - Coroutines 1.9.0
   - 完整的suspend函数和Flow支持
   - DispatcherModule统一协程调度器管理
+
 - **安全存储**: EncryptedSharedPreferences 完整实现
   - androidx.security.crypto 1.1.0-alpha06
   - 硬件级加密支持
   - ApiKeyStorage：API密钥安全存储
+
 - **依赖注入**: Hilt 模块完整配置
-  - 18个DI模块完整配置
+  - 24个DI模块完整配置（8个data + 16个app）
+
 - **图片加载**: Coil 图片加载和缓存完整实现
   - Coil 2.5.0 + Compose集成
+
 - **测试框架**: 完整测试套件实现
-  - 268个单元测试 + 39个Android测试
+  - 255个单元测试 + 21个Android测试
   - MockK 1.13.13模拟框架
   - Compose UI Test + Espresso 3.6.1
+
 - **通知系统**: Android通知管理完整实现
   - AiResultNotificationManager：AI完成后系统通知
   - 支持多种通知类型和优先级
-- **代码统计**: 580个Kotlin主源码文件 + 276个测试文件
-  - domain模块：211个文件（184主源码 + 27测试，业务模型 + Repository接口 + UseCase + Service + Util）
-  - data模块：115个文件（84主源码 + 25测试 + 6 Android测试，Room + Retrofit + Repository实现 + Parser + DI模块）
-  - presentation模块：353个文件（284主源码 + 62测试 + 7 Android测试，UI组件 + ViewModel + Navigation + Theme）
-  - app模块：177个文件（28主源码 + 141测试 + 8 Android测试，应用入口 + Android服务 + DI聚合）
-  - **总计**: 856个文件（580主源码 + 255单元测试 + 21 Android测试）
-  - **测试框架更新**: Compose UI Test + Espresso 3.6.1完整集成，21个Android测试文件覆盖核心页面
+
+### 代码统计（基于实际代码架构扫描 - 2026-01-11最新）
+
+| 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
+|------|--------|---------|------------|------|
+| **:domain** | 198 | 27 | 0 | 225 |
+| **:data** | 79 | 25 | 6 | 110 |
+| **:presentation** | 310 | 62 | 7 | 379 |
+| **:app** | 28 | 141 | 8 | 177 |
+| **总计** | **615** | **255** | **21** | **891** |
+
+**文件构成详细说明**：
+- **主源码**：615个文件
+  - domain: 198个（96模型 + 18仓库接口 + 51用例 + 2服务 + 29工具 + 2其他）
+  - data: 79个（11DAO + 11Entity + 18仓库实现 + 8DI + 6parser + 其他）
+  - presentation: 310个（27ViewModel + 5导航 + 13主题 + 264UI组件/屏幕 + 其他）
+  - app: 28个（16DI + Application + Service + 其他）
+- **单元测试**：255个文件
+- **Android测试**：21个文件
+
+**测试框架更新**: Compose UI Test + Espresso 3.6.1完整集成，21个Android测试文件覆盖核心页面
 
 ### 部分实现/待完善功能
 
@@ -272,20 +267,6 @@ implementation("androidx.core:core-ktx:1.15.0")
   - FFmpeg Kit 6.0.LTS已配置但未启用
 
 ## 技术债务
-
-### 待实现功能
-
-- **输入内容身份识别与双向对话历史**: 需要完整实现
-  - IdentityPrefixHelper工具类已实现
-  - 需要实现：UseCase层集成、系统提示词增强、UI渲染优化
-
-- **手动触发AI总结功能**: 已实现核心功能
-  - ManualSummaryUseCase、SummaryTask等已实现
-  - UI组件已实现
-
-- **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
-  - 代码架构已设计
-  - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
 
 ### 已解决的技术债务
 
@@ -334,39 +315,24 @@ implementation("androidx.core:core-ktx:1.15.0")
   - 修复手动总结功能未正确触发问题
   - 测试用例已验证
 
-### 进行中的问题修复
+### 待实现功能
 
-- **BUG-00063**: 联系人搜索功能优化
-  - 问题：联系人搜索功能需要优化
-  - 状态：已修复，测试用例已验证，新增SearchModeContent组件（2026-01-10）
+- **输入内容身份识别与双向对话历史**: 需要完整实现
+  - IdentityPrefixHelper工具类已实现
+  - 需要实现：UseCase层集成、系统提示词增强、UI渲染优化
 
-- **BUG-00067**: 提示词功能优化（2026-01-10新增）
-  - 问题：提示词相关功能需要优化
-  - 状态：已识别，待实现
+- **媒体处理模块**: transcribeMedia方法需要实现FFmpeg集成
+  - 代码架构已设计
+  - 需要集成：FFmpeg音视频处理、ASR语音识别、OCR文字识别
 
-- **BUG-00068**: AI对话输入框与配置回退及非Tab功能屏幕展示问题（2026-01-10新增）
-  - 问题：AI对话输入框与配置回退及非Tab功能屏幕展示存在问题
-  - 状态：已识别，待实现
+---
 
-**文档版本**: 2.18
-**最后更新**: 2026-01-10
-**更新内容**:
-- 添加页面缓存机制（BottomNavScaffold）到已实现列表
-- 添加新增导航组件（BottomNavTab、NonTabNavGraph、BottomNavScaffold）
-- 添加新增AI军师入口组件（AiAdvisorScreen、AiAdvisorEntryViewModel）
-- 更新BUG-00063状态为已修复
-- 添加BUG-00067/68新问题记录
-| Bug ID | 问题描述 | 状态 |
-|--------|----------|------|
-| BUG-00058 | 新建会话功能失效问题 | 已修复，测试用例已验证 |
-| BUG-00059 | 中断生成后重新生成消息角色错乱问题 | 已修复，测试用例已验证 |
-| BUG-00060 | 会话管理增强需求 | 已修复，测试用例已验证 |
-| BUG-00061 | 会话历史跳转失败问题 | 已修复，测试用例已验证 |
-| BUG-00064 | AI手动总结功能未生效问题 | 已修复，测试用例已验证 |
-| BUG-00065 | 联系人搜索功能优化 | 进行中 |
-
-**文档版本**: 2.20
+**文档版本**: 3.0
 **最后更新**: 2026-01-11
 **更新内容**:
-- 更新模块文件统计（基于实际代码架构扫描）：domain(184+27)、data(84+25+6)、presentation(284+62+7)、app(28+141+8)
-- 更新项目总文件数：580个主源码 + 255个单元测试 + 21个Android测试 = 856个文件
+- 基于实际代码架构扫描完整更新技术栈文档
+- 更新模块文件统计：domain(198+27)、data(79+25+6)、presentation(310+62+7)、app(28+141+8)
+- 更新项目总文件数：615个主源码 + 255个单元测试 + 21个Android测试 = 891个文件
+- 添加数据库表详细说明（11张表）
+- 添加导航路由统计（23个路由）
+- 添加DI模块详细统计（24个模块：8个data + 16个app）

@@ -34,6 +34,7 @@ import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.util.UserFriendlyError
 import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
+import android.util.Log
 
 /**
  * AI 配置页面 (iOS风格重构)
@@ -69,14 +70,18 @@ fun AiConfigScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // 处理导航返回
+    // [调试日志] BUG-00063: 记录返回导航触发时机
     LaunchedEffect(uiState.shouldNavigateBack) {
+        Log.d("AiConfigScreen", "NavigateBack flag=${uiState.shouldNavigateBack}")
         if (uiState.shouldNavigateBack) {
             onNavigateBack()
         }
     }
 
     // TD-00025: 处理用量统计导航
+    // [调试日志] BUG-00063: 记录用量统计导航触发时机
     LaunchedEffect(uiState.shouldNavigateToUsageStats) {
+        Log.d("AiConfigScreen", "NavigateUsageStats flag=${uiState.shouldNavigateToUsageStats}")
         if (uiState.shouldNavigateToUsageStats) {
             viewModel.resetUsageStatsNavigationState()
             onNavigateToUsageStats?.invoke()
