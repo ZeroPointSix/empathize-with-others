@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
@@ -57,7 +57,7 @@ object DataSourceTypes {
     /** 聊天记录 - 主色蓝，代表沟通和信息流 */
     val CHAT = DataSourceConfig(
         id = "chat",
-        icon = Icons.Default.Chat,
+        icon = Icons.AutoMirrored.Filled.Chat,
         title = "聊天记录",
         subtitle = "文字消息",
         iconColor = iOSBlue
