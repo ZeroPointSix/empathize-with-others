@@ -1,5 +1,6 @@
 package com.empathy.ai.presentation.viewmodel
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -550,12 +551,22 @@ class AiAdvisorChatViewModel @Inject constructor(
     /**
      * BUG-048-V4 + BUG-00059修复: 获取重新生成时的用户输入
      *
+     * 业务规则 (PRD-00028):
+     *   - 停止AI生成后重新生成，必须使用原始用户输入而非AI半截内容
+     *   - 消息角色不可变：AI内容永远不应被当作用户消息
+     *
      * BUG-00059修复：增强验证逻辑，确保不会错误地使用AI生成的内容
-     * 
-     * 优先级：
-     * 1. 通过relatedUserMessageId查找关联的用户消息（最可靠，持久化）
-     * 2. 内存中的lastUserInput（需要验证不是AI内容）
-     * 3. 时间戳回退查找（兼容旧数据，需要验证消息类型）
+     *
+     * 优先级策略（从高到低）:
+     * 1. relatedUserMessageId（最可靠）- 持久化的关联关系，直接获取USER消息
+     * 2. 时间戳回退查找（兼容旧数据）- 仅查找MessageType.USER的消息
+     * 3. lastUserInput（仅匹配验证）- 必须与USER消息内容完全匹配才使用
+     *
+     * 设计权衡 (BUG-00059):
+     *   - 选择将lastUserInput优先级降至最低，避免内存状态污染
+     *   - 原因：快速stop→regenerate时lastUserInput可能包含AI内容
+     *
+     * 任务: BUG-00059/T001
      *
      * @param lastAiMessage 最后一条AI消息
      * @param conversations 当前对话列表
@@ -578,22 +589,7 @@ class AiAdvisorChatViewModel @Inject constructor(
             }
         }
         
-        // 优先级2：使用内存中的lastUserInput（需要验证）
-        val fromMemory = _uiState.value.lastUserInput
-        if (fromMemory.isNotEmpty() && !isLikelyAiContent(fromMemory)) {
-            // 尝试找到对应的用户消息ID
-            val relatedId = conversations
-                .filter { 
-                    it.messageType == MessageType.USER && 
-                    it.sendStatus == SendStatus.SUCCESS &&
-                    it.timestamp < lastAiMessage.timestamp
-                }
-                .maxByOrNull { it.timestamp }
-                ?.id
-            return Pair(fromMemory, relatedId)
-        }
-        
-        // 优先级3：时间戳回退查找（兼容旧数据）
+        // 优先级2：时间戳回退查找（兼容旧数据）
         val fallbackMessage = conversations
             .filter { 
                 it.messageType == MessageType.USER && 
@@ -602,19 +598,50 @@ class AiAdvisorChatViewModel @Inject constructor(
                 !isLikelyAiContent(it.content)  // BUG-00059: 验证不是AI内容
             }
             .maxByOrNull { it.timestamp }
+
+        if (fallbackMessage != null) {
+            return Pair(fallbackMessage.content, fallbackMessage.id)
+        }
+
+        // 优先级3：使用内存中的lastUserInput，但必须与USER消息匹配
+        val fromMemory = _uiState.value.lastUserInput
+        if (fromMemory.isNotEmpty() && !isLikelyAiContent(fromMemory)) {
+            val matchedUser = conversations.firstOrNull {
+                it.messageType == MessageType.USER &&
+                    it.sendStatus == SendStatus.SUCCESS &&
+                    it.content == fromMemory
+            }
+            if (matchedUser != null) {
+                return Pair(fromMemory, matchedUser.id)
+            }
+        }
         
-        return Pair(fallbackMessage?.content ?: "", fallbackMessage?.id)
+        return Pair("", null)
     }
 
     /**
      * BUG-00059: 检测内容是否可能是AI生成的
-     * 
-     * 通过以下特征判断：
-     * 1. 包含停止生成标记
-     * 2. 内容过长（用户输入通常较短）
-     * 3. 包含AI特有的格式标记
+     *
+     * 业务规则 (PRD-00028):
+     *   - AI内容包含特定格式标记（Markdown、MBTI、结构化输出）
+     *   - 停止标记"[用户已停止生成]"仅出现在AI消息中
+     *   - AI分析内容通常远长于用户输入
+     *
+     * 设计权衡 (BUG-00059):
+     *   - 选择启发式检测而非精确匹配，兼顾准确率和灵活性
+     *   - 原因：无法100%预判AI输出格式，使用多特征组合降低误判
+     *
+     * 检测特征：
+     * 1. 停止生成标记（强信号）
+     * 2. AI格式标记组合（≥2个，如Markdown+MBTI）
+     * 3. 内容长度阈值（>300字符）
+     *
+     * 任务: BUG-00059/T003
+     *
+     * @return true表示可能是AI内容，false表示可能是用户输入
      */
-    private fun isLikelyAiContent(content: String): Boolean {
+    @VisibleForTesting  // BUG-00059: 暴露给测试
+    fun isLikelyAiContent(content: String): Boolean {
         // 检查停止生成标记
         if (content.contains("[用户已停止生成]")) return true
         
@@ -764,12 +791,24 @@ class AiAdvisorChatViewModel @Inject constructor(
     /**
      * 重试发送失败的消息
      *
+     * 业务规则 (PRD-00028):
+     *   - 用户发送失败时可重试，删除失败消息并重新发送
+     *   - AI消息失败/停止后应使用"重新生成"而非"重试"
+     *
      * BUG-044-P1-001修复：扩展条件，包括CANCELLED状态
+     * BUG-00059修复：收紧重试条件，仅允许USER消息FAILED状态重试
+     *
+     * 设计权衡 (BUG-00059):
+     *   - 选择禁止CANCELLED状态重试，防止AI内容被当作用户输入
+     *   - 原因：AI内容包含"[用户已停止生成]"等标记，误当作用户输入会导致角色错乱
+     *
+     * 任务: BUG-00059/T002
      */
     fun retryMessage(conversation: AiAdvisorConversation) {
-        // BUG-044-P1-001: 支持FAILED和CANCELLED状态的重试
-        if (conversation.sendStatus != SendStatus.FAILED &&
-            conversation.sendStatus != SendStatus.CANCELLED) return
+        // [防御性编程] 仅允许用户消息失败后重试，避免AI内容被当作用户输入
+        // BUG-00059: 移除对CANCELLED状态的支持，防止AI消息走"重试"路径
+        if (conversation.messageType != MessageType.USER ||
+            conversation.sendStatus != SendStatus.FAILED) return
 
         viewModelScope.launch {
             // Delete failed/cancelled message and resend

@@ -597,23 +597,45 @@ private fun ChatBubble(
             }
 
             // 失败/取消消息操作
+            // BUG-00059: UI层隔离"重试"和"重新生成"入口，避免用户混淆
+            // - FAILED状态用户消息：显示"重试"
+            // - CANCELLED状态AI消息：显示"重新生成"（仅最后一条AI消息）
             if (isFailed || isCancelled) {
                 Row(
                     modifier = Modifier.padding(top = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.clickable(onClick = onRetry),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            tint = iOSBlue,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("重试", fontSize = dimensions.fontSizeCaption, color = iOSBlue)  // BUG-00052: 使用响应式字体替代 12.sp
+                    // [业务规则] BUG-00059: 仅用户消息失败时可重试
+                    if (isFailed) {
+                        Row(
+                            modifier = Modifier.clickable(onClick = onRetry),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = iOSBlue,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("重试", fontSize = dimensions.fontSizeCaption, color = iOSBlue)  // BUG-00052: 使用响应式字体替代 12.sp
+                        }
+                    } else if (isCancelled && !isUser && isLastAiMessage) {
+                        // [业务规则] BUG-00059: AI消息停止后显示"重新生成"
+                        // 避免与"重试"功能混淆，防止AI内容被当作用户输入
+                        Row(
+                            modifier = Modifier.clickable(onClick = onRegenerate),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = iOSBlue,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("重新生成", fontSize = dimensions.fontSizeCaption, color = iOSBlue)  // BUG-00052: 使用响应式字体替代 12.sp
+                        }
                     }
                     Row(
                         modifier = Modifier.clickable(onClick = onDelete),

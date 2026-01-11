@@ -25,29 +25,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # 构建与测试
-./gradlew assembleDebug          # Debug构建
-./gradlew assembleRelease        # Release构建
-./gradlew test                   # 所有单元测试
-./gradlew testDebugUnitTest      # Debug单元测试
-./gradlew connectedAndroidTest   # 连接设备运行Android测试
-./gradlew clean                  # 清理构建缓存
+gradlew.bat assembleDebug          # Debug构建
+gradlew.bat assembleRelease        # Release构建
+gradlew.bat test                   # 所有单元测试
+gradlew.bat testDebugUnitTest      # Debug单元测试
+gradlew.bat connectedAndroidTest   # 连接设备运行Android测试
+gradlew.bat clean                  # 清理构建缓存
 
 # 单个模块测试
-./gradlew :presentation:test     # presentation模块测试
-./gradlew :domain:test           # domain模块测试
-./gradlew :data:test             # data模块测试
+gradlew.bat :presentation:test     # presentation模块测试
+gradlew.bat :domain:test           # domain模块测试
+gradlew.bat :data:test             # data模块测试
 
 # 运行单个测试类
-./gradlew :domain:test --tests "com.empathy.ai.domain.usecase.SendAdvisorMessageUseCaseTest"
+gradlew.bat :domain:test --tests "com.empathy.ai.domain.usecase.SendAdvisorMessageUseCaseTest"
 
 # 运行特定Bug测试
-./gradlew :presentation:test --tests "*BUG00058*"
-./gradlew :presentation:test --tests "*SessionManagement*"
+gradlew.bat :presentation:test --tests "*BUG00058*"
+gradlew.bat :presentation:test --tests "*SessionManagement*"
+gradlew.bat :presentation:test --tests "*BUG00068*"
 
 # Lint检查
-./gradlew lint                   # 全局Lint
-./gradlew :presentation:lint     # presentation模块Lint
-./gradlew ktlintCheck            # Kotlin代码风格检查
+gradlew.bat lint                   # 全局Lint
+gradlew.bat :presentation:lint     # presentation模块Lint
+gradlew.bat ktlintCheck            # Kotlin代码风格检查
 
 # 调试脚本 (Windows)
 scripts\logcat.bat -e            # ERROR日志
@@ -63,7 +64,7 @@ scripts\dev-cycle.bat            # 开发循环（构建+测试+安装）
 # ADB调试
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.empathy.ai/.ui.MainActivity
-adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈
+adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈（Windows）
 adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
 
 # 设备连接
@@ -77,7 +78,7 @@ adb -s emulator-5556 install ...    # 向指定模拟器安装
 | 模块 | 单元测试 | Android测试 | 关键测试 |
 |------|----------|-------------|----------|
 | domain | 27 | - | UseCase、Model、PromptBuilder |
-| presentation | 62 | 7 | ViewModel、Compose UI、Bug回归测试 |
+| presentation | 64+ | 7 | ViewModel、Compose UI、Bug回归测试 |
 | data | 25 | 6 | Repository、Database |
 | app | 141 | 8 | Application初始化、服务测试 |
 
@@ -88,6 +89,8 @@ adb -s emulator-5556 install ...    # 向指定模拟器安装
 - `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
 - `BUG00064ManualSummaryTest.kt` - AI手动总结功能测试
 - `BUG00066EditBrainTagTest.kt` - 大脑标签编辑功能测试
+- `BUG00068NavigationStackTest.kt` - 导航栈治理与返回语义测试
+- `BUG00068AiAdvisorEntryRefreshTest.kt` - AI军师入口刷新测试
 
 **连接测试注意事项**:
 - 部分 androidTest 已隔离到 `app/src/androidTest-disabled/` 目录
@@ -141,7 +144,9 @@ adb -s emulator-5556 install ...    # 向指定模拟器安装
 - **迁移路径**: `data/src/main/kotlin/com/empathy/ai/data/local/MIGRATION_*.kt`
 - **Schema目录**: `data/schemas/com.empathy.ai.data.local.AppDatabase/`
 - **迁移策略**: 每次架构变更添加增量迁移脚本
-- **版本查看**: 检查 `AppDatabase.kt` 中的 `@Database(version = X)` 注解
+- **版本查看**: 检查 `AppDatabase.kt` 中的 `@Database(version = 16)` 注解
+- **迁移历史**:
+  - v15→v16: 添加 `is_pinned` 字段（会话置顶功能，BUG-00060）
 
 ### Hilt 模块索引
 | 模块 | 文件 | 职责 |
@@ -154,18 +159,20 @@ adb -s emulator-5556 install ...    # 向指定模拟器安装
 | presentation | `ViewModelModule.kt` | ViewModel Factory |
 
 ### 导航系统结构（2026-01-11更新）
-- **NavGraph.kt** - 主导航图，定义所有导航路由和导航图组合（支持Tab页面和非Tab页面分离）
+- **NavGraph.kt** - 主导航图，定义所有导航路由（支持 `includeTabScreens` 参数区分Tab和非Tab导航）
 - **NavRoutes.kt** - 路由常量定义（contactList, contactDetail, chat, settings 等）
 - **BottomNavTab.kt** - 底部导航标签枚举（CONTACTS, AI_ADVISOR, SETTINGS）
 - **NonTabNavGraph.kt** - 非Tab页面导航容器，用于承载详情页等非Tab路由
-- **BottomNavScaffold.kt** - 带页面缓存的底部导航Scaffold（2026-01-10新增，解决Tab切换黑屏问题）
+- **MainScreen.kt** - 主屏幕容器，包含底部导航栏和内容区域
+- **EmpathyBottomNavigation.kt** - 底部导航栏组件（4Tab布局：联系人、占位、AI军师、设置）
 - **PromptEditorNavigation.kt** - 提示词编辑器导航配置
 - **屏幕级导航**: `ContactDetailNavigation`, `PromptEditorNavigation` 等
 
-**导航栈治理（PRD-00035）**:
+**导航栈治理（PRD-00035/BUG-00068）**:
 - AI军师子页面使用 `popUpTo` 清理返回栈，防止栈堆积
 - AI军师联系人切换以 `CONTACT_LIST` 为稳定锚点
 - 入口跳转增加 `launchSingleTop` 防止重复入栈
+- 设置页面导航增加 `launchSingleTop` 避免重复入栈
 
 **悬浮窗+无障碍服务交互**
 ```
@@ -218,20 +225,20 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - **入口**: 设置页面 → 开发者选项
 - **用途**: 调试 AI 响应、查看日志、管理提示词
 
-### 进行中的问题修复（2026-01-11）
+### 最近完成的问题修复（2026-01-11）
 | BUG编号 | 问题描述 | 状态 |
 |---------|----------|------|
-| BUG-00057 | AI军师对话界面可读性问题 | 代码完成，待验收 |
+| BUG-00057 | AI军师对话界面可读性问题 | 已完成 |
 | BUG-00058 | 新建会话功能失效问题 | 已实现 |
 | BUG-00059 | 中断生成后重新生成消息角色错乱 | 已实现 |
 | BUG-00060 | 会话管理增强功能 | 已实现 |
 | BUG-00061 | 会话历史跳转失败问题 | 已实现 |
 | BUG-00062 | AI用量统计统一问题 | 已完成 |
-| BUG-00063 | 联系人搜索功能缺失 | 代码完成，待人工验收 |
+| BUG-00063 | 联系人搜索功能缺失 | 代码完成 |
 | BUG-00064 | AI总结功能未生效 | 已完成 |
-| BUG-00067 | 全局字体可读性问题复盘与修复方案 | 待人工验收 |
-| BUG-00068 | 导航栈治理与返回语义规范 | 进行中 |
-| PRD-00035 | 导航栈治理与返回语义规范 | 进行中 |
+| BUG-00066 | 画像标签编辑功能缺失 | 已完成 |
+| BUG-00067 | 全局字体可读性修复 | 已完成 |
+| BUG-00068 | 导航栈治理与返回语义规范 | 已实现 |
 
 详细修复方案见: [文档/开发文档/BUG/](./文档/开发文档/BUG/)
 
@@ -256,6 +263,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - AI军师子页面去栈与设置链路防重复入栈
 - 联系人切换以 `CONTACT_LIST` 为稳定锚点
 - 连接测试资源补齐与 androidTest 隔离
+- 新增 `BUG00068NavigationStackTest.kt` 和 `BUG00068AiAdvisorEntryRefreshTest.kt` 测试
 
 ### 多AI协作规则（关键规则）
 
@@ -292,24 +300,15 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 项目使用 `Rules/` 目录管理多AI协作状态（主目录）：
 
-| 目录 | 用途 | 规则内容 |
-|------|------|----------|
-| `Rules/` | 主协作规则目录 | 工作流规则、项目开发规范 |
-| `.kiro/steering/` | 项目决策文档 | 产品概览、技术栈、项目结构、快速开始 |
-| `.kiro/specs/` | 功能规格文档 | 需求、设计、任务分解文档 |
-| `.kiro/test/` | 测试用例文档 | 测试用例和测试指南 |
-
-**核心规则文件**:
-- `Rules/workspace-rules.md` - 多AI协作核心规则（强制执行）
-- `Rules/WORKSPACE.md` - 当前任务状态追踪
-- `Rules/项目开发规范.md` - 代码规范、命名约定
-| 文件/目录 | 用途 |
+| 目录/文件 | 用途 |
 |-----------|------|
+| `Rules/` | 主协作规则目录 |
 | `Rules/workspace-rules.md` | 多AI协作核心规则（强制执行） |
-| `Rules/ai-status.md` | AI工具状态监控 |
-| `Rules/项目开发规范.md` | 完整开发规范 |
-
-**注意**: `WORKSPACE.md` 可能不存在，如需使用请先创建。
+| `Rules/RulesReadMe.md` | 多AI协作说明文档 |
+| `Rules/项目开发规范.md` | 代码规范、命名约定 |
+| `.kiro/steering/` | 项目决策文档 |
+| `.kiro/specs/` | 功能规格文档 |
+| `.kiro/test/` | 测试用例文档 |
 
 **协作流程**:
 1. 任务开始前 → 读取 `Rules/workspace-rules.md` 检查协作规则
@@ -338,7 +337,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - `design.md` - 设计方案
 - `tasks.md` - 任务分解
 
-**当前分支**: `master`（基于 Git，最近提交：ca93275 - merge: master into PRD34）
+**当前分支**: `master`（基于 Git，最近提交：96e1a82 - docs: add BUG-00058 fix summary）
 
 ## 模块文档
 
@@ -408,7 +407,3 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | Entity | `XxxEntity` | `ContactProfileEntity` |
 | DTO | `XxxDto` | `ChatRequestDto` |
 | 测试用例 | `XxxTest` | `SendAdvisorMessageUseCaseTest` |
-
-## 多AI协作规则
-
-详细规则参考: [Rules/workspace-rules.md](./Rules/workspace-rules.md)
