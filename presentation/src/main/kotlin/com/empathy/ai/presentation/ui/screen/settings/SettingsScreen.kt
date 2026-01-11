@@ -133,6 +133,7 @@ fun SettingsScreen(
     onAddClick: () -> Unit = {},
     currentRoute: String = NavRoutes.SETTINGS,
     showBottomBar: Boolean = true,
+    isVisible: Boolean = true,
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -164,11 +165,20 @@ fun SettingsScreen(
     }
     
     // 监听权限请求标志，触发实际的权限请求Intent
-    LaunchedEffect(uiState.pendingPermissionRequest) {
+    // [BUG-00063修复] 增加可见性门控：不可见时不触发权限请求，避免隐藏Tab跳转系统设置
+    LaunchedEffect(uiState.pendingPermissionRequest, isVisible) {
+        if (!isVisible) {
+            // 清理待处理的权限请求，防止返回可见时意外触发
+            if (uiState.pendingPermissionRequest) {
+                viewModel.onEvent(SettingsUiEvent.PermissionRequestHandled)
+            }
+            return@LaunchedEffect
+        }
+
         if (uiState.pendingPermissionRequest) {
             // 标记已处理
             viewModel.onEvent(SettingsUiEvent.PermissionRequestHandled)
-            
+
             // 触发权限请求
             (context as? Activity)?.let { activity ->
                 try {

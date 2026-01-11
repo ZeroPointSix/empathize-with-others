@@ -23,16 +23,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **注意**: Windows环境下使用 `gradlew.bat` 代替 `./gradlew`
 
+### 构建与测试
 ```bash
-# 构建与测试
+# 基础构建
 gradlew.bat assembleDebug          # Debug构建
 gradlew.bat assembleRelease        # Release构建
+gradlew.bat clean                  # 清理构建缓存
+
+# 单元测试
 gradlew.bat test                   # 所有单元测试
 gradlew.bat testDebugUnitTest      # Debug单元测试
 gradlew.bat connectedAndroidTest   # 连接设备运行Android测试
-gradlew.bat clean                  # 清理构建缓存
 
-# 单个模块测试
+# 模块级测试
 gradlew.bat :presentation:test     # presentation模块测试
 gradlew.bat :domain:test           # domain模块测试
 gradlew.bat :data:test             # data模块测试
@@ -49,38 +52,60 @@ gradlew.bat :presentation:test --tests "*BUG00068*"
 gradlew.bat lint                   # 全局Lint
 gradlew.bat :presentation:lint     # presentation模块Lint
 gradlew.bat ktlintCheck            # Kotlin代码风格检查
-
-# 调试脚本 (Windows)
-scripts\logcat.bat -e            # ERROR日志
-scripts\quick-error.bat          # 快速查看最近错误
-scripts\ai-debug.bat             # AI请求调试
-scripts\ai-debug.bat -h          # 获取最近100条AI日志
-scripts\ai-debug.bat -h -n 200   # 获取最近200条AI日志
-scripts\ai-debug.bat -d 127.0.0.1:7555  # 指定MuMu模拟器
-scripts\ai-debug-full.bat        # 获取完整AI请求日志（包含提示词）
-scripts\quick-test.bat           # 快速测试
-scripts\dev-cycle.bat            # 开发循环（构建+测试+安装）
-
-# ADB调试
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.empathy.ai/.ui.MainActivity
-adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈（Windows）
-adb logcat -c && adb logcat *:E  # 清除日志并只显示ERROR级别
-
-# 设备连接
-adb devices -l                      # 列出所有连接设备
-adb -s 127.0.0.1:7555 install ...   # 向指定设备安装（MuMu模拟器）
-adb -s emulator-5556 install ...    # 向指定模拟器安装
 ```
 
-## 测试覆盖
+### 调试脚本（Windows）
+```bash
+# Logcat 日志调试
+scripts\logcat.bat                 # 显示WARN及以上（默认）
+scripts\logcat.bat -e              # 只看ERROR级别
+scripts\logcat.bat -c -e           # 清空日志后只看ERROR
+scripts\logcat.bat -f -e           # ERROR日志保存到文件
+scripts\logcat.bat -crash          # 只看崩溃日志
+scripts\quick-error.bat            # 获取最近的ERROR日志（一次性）
 
-| 模块 | 单元测试 | Android测试 | 关键测试 |
-|------|----------|-------------|----------|
-| domain | 27 | - | UseCase、Model、PromptBuilder |
-| presentation | 64+ | 7 | ViewModel、Compose UI、Bug回归测试 |
-| data | 25 | 6 | Repository、Database |
-| app | 141 | 8 | Application初始化、服务测试 |
+# AI 请求调试（显示 Temperature、MaxTokens 等关键参数）
+scripts\ai-debug.bat               # 实时监听AI日志
+scripts\ai-debug.bat -h            # 获取最近100条AI日志
+scripts\ai-debug.bat -h -n 200     # 获取最近200条AI日志
+scripts\ai-debug.bat -d 127.0.0.1:7555  # 指定MuMu模拟器
+scripts\ai-debug.bat -f ai_log.txt # 输出到文件
+
+# 完整AI日志（包含提示词内容）
+scripts\ai-debug-full.bat          # 获取完整AI请求日志
+scripts\ai-debug-full.bat 127.0.0.1:7555  # 指定设备
+
+# 快捷脚本
+scripts\quick-build.bat            # 快速构建（跳过lint和测试）
+scripts\quick-test.bat             # 运行所有单元测试
+scripts\dev-cycle.bat              # 开发循环（构建+测试+安装）
+```
+
+### ADB 调试
+```bash
+# 设备管理
+adb devices -l                     # 列出所有连接设备
+adb -s 127.0.0.1:7555 install ...   # 向指定设备安装（MuMu模拟器）
+adb -s emulator-5556 install ...    # 向指定模拟器安装
+
+# 应用安装与启动
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n com.empathy.ai/.ui.MainActivity
+
+# 日志与调试
+adb logcat -c && adb logcat *:E   # 清除日志并只显示ERROR级别
+adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity栈（Windows）
+```
+
+## 测试覆盖（基于实际代码架构扫描 - 2026-01-11最新）
+
+| 模块 | 单元测试 | Android测试 | 总计 | 关键测试 |
+|------|----------|-------------|------|----------|
+| domain | 27 | 0 | 27 | UseCase、Model、PromptBuilder |
+| presentation | 62 | 7 | 69 | ViewModel、Compose UI、Bug回归测试 |
+| data | 25 | 6 | 31 | Repository、Database |
+| app | 141 | 8 | 149 | Application初始化、服务测试 |
+| **总计** | **255** | **21** | **276** | - |
 
 **Bug回归测试**:
 - `BUG00058CreateNewSessionTest.kt` - 新建会话功能测试
@@ -92,7 +117,7 @@ adb -s emulator-5556 install ...    # 向指定模拟器安装
 - `BUG00068NavigationStackTest.kt` - 导航栈治理与返回语义测试
 - `BUG00068AiAdvisorEntryRefreshTest.kt` - AI军师入口刷新测试
 
-**连接测试注意事项**:
+**测试注意事项**:
 - 部分 androidTest 已隔离到 `app/src/androidTest-disabled/` 目录
 - 迁移测试需要历史 schema 文件（位于 `data/schemas/`）
 - 当前存在 27 个既有用例失败（与导航改动无直接关联）
@@ -148,25 +173,78 @@ adb -s emulator-5556 install ...    # 向指定模拟器安装
 - **迁移历史**:
   - v15→v16: 添加 `is_pinned` 字段（会话置顶功能，BUG-00060）
 
-### Hilt 模块索引
-| 模块 | 文件 | 职责 |
-|------|------|------|
-| app | `AppModule.kt` | Application 级注入 |
-| app | `ServiceModule.kt` | Android Service 注入 |
-| data | `DatabaseModule.kt` | Room 数据库配置 |
-| data | `NetworkModule.kt` | Retrofit/OkHttp 配置 |
-| data | `RepositoryModule.kt` | Repository 实现绑定 |
-| presentation | `ViewModelModule.kt` | ViewModel Factory |
+### Hilt 模块索引（基于实际代码扫描 - 2026-01-11最新）
+
+**Data模块（8个DI模块）**：
+| 模块 | 职责 |
+|------|------|
+| `DatabaseModule.kt` | Room数据库v16、16个迁移脚本、11个DAO |
+| `NetworkModule.kt` | Retrofit、OkHttp、Moshi、SSE流式读取 |
+| `RepositoryModule.kt` | 18个Repository接口绑定 |
+| `MemoryModule.kt` | 内存缓存依赖 |
+| `PromptModule.kt` | 提示词系统依赖 |
+| `DispatcherModule.kt` | 协程调度器 |
+| `OkHttpClientFactory.kt` | OkHttp工厂（代理支持） |
+| `Qualifiers.kt` | 限定符定义 |
+
+**App模块（16个DI模块）**：
+| 模块 | 职责 |
+|------|------|
+| `LoggerModule.kt` | Logger接口绑定 |
+| `AppDispatcherModule.kt` | 应用级协程调度器 |
+| `ServiceModule.kt` | Android服务注入 |
+| `FloatingWindowModule.kt` | 悬浮窗组件 |
+| `NotificationModule.kt` | 通知系统 |
+| `SummaryModule.kt` | 总结功能 |
+| `EditModule.kt` | 编辑功能 |
+| `PersonaModule.kt` | 人设功能 |
+| `TopicModule.kt` | 主题功能 |
+| `UserProfileModule.kt` | 用户画像功能 |
+| `AiAdvisorModule.kt` | AI军师模块 |
+| `ProxyModule.kt` | 代理配置 |
+| `ApiUsageModule.kt` | API用量统计 |
+| `SystemPromptModule.kt` | 系统提示词 |
+| `FloatingWindowManagerModule.kt` | 悬浮窗管理器 |
 
 ### 导航系统结构（2026-01-11更新）
-- **NavGraph.kt** - 主导航图，定义所有导航路由（支持 `includeTabScreens` 参数区分Tab和非Tab导航）
-- **NavRoutes.kt** - 路由常量定义（contactList, contactDetail, chat, settings 等）
+- **NavGraph.kt** - 主导航图，定义所有导航路由（23个路由）
+- **NavRoutes.kt** - 路由常量定义
 - **BottomNavTab.kt** - 底部导航标签枚举（CONTACTS, AI_ADVISOR, SETTINGS）
 - **NonTabNavGraph.kt** - 非Tab页面导航容器，用于承载详情页等非Tab路由
-- **MainScreen.kt** - 主屏幕容器，包含底部导航栏和内容区域
-- **EmpathyBottomNavigation.kt** - 底部导航栏组件（4Tab布局：联系人、占位、AI军师、设置）
+- **BottomNavScaffold.kt** - 底部导航栏组件，实现Tab页面内存缓存
+- **MainScreen.kt** - 主屏幕容器，管理底部导航和内容区域
+- **MainActivity.kt** - 单一Activity，共享NavController管理所有导航
 - **PromptEditorNavigation.kt** - 提示词编辑器导航配置
-- **屏幕级导航**: `ContactDetailNavigation`, `PromptEditorNavigation` 等
+
+**导航路由清单（23个）**：
+- CONTACT_LIST - 联系人列表（首页）
+- CONTACT_DETAIL_TAB/{id} - 联系人详情标签页
+- CREATE_CONTACT - 新建联系人
+- CHAT/{id} - AI分析界面
+- BRAIN_TAG - 标签管理
+- AI_ADVISOR - AI军师入口
+- AI_ADVISOR_CHAT/{id} - AI军师对话
+- AI_ADVISOR_SESSIONS/{id} - AI军师会话历史
+- AI_ADVISOR_CONTACTS - AI军师联系人选择
+- SETTINGS - 设置页面
+- AI_CONFIG - AI配置
+- ADD_PROVIDER - 添加服务商
+- EDIT_PROVIDER/{id} - 编辑服务商
+- USAGE_STATS - 用量统计
+- USER_PROFILE - 用户画像
+- SYSTEM_PROMPT_LIST - 系统提示词列表
+- SYSTEM_PROMPT_EDIT/{scene} - 系统提示词编辑
+
+**导航架构关键点**:
+- 使用 BottomNavScaffold 实现 Tab 页面内存缓存，避免切换时重建
+- NonTabNavGraph 始终挂载承载非 Tab 页面
+- 所有页面共享同一个 NavController
+- 隐藏 Tab 通过 alpha 和 pointerInput 阻止交互，但不卸载
+
+**导航副作用可见性保护（BUG-00063修复）**:
+- 隐藏 Tab 不触发导航或跨 Activity 跳转副作用
+- AiAdvisorScreen 和 SettingsScreen 的导航副作用增加可见性门控
+- 页面从可见切换为不可见时清理待导航状态
 
 **导航栈治理（PRD-00035/BUG-00068）**:
 - AI军师子页面使用 `popUpTo` 清理返回栈，防止栈堆积
@@ -234,13 +312,14 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 | BUG-00060 | 会话管理增强功能 | 已实现 |
 | BUG-00061 | 会话历史跳转失败问题 | 已实现 |
 | BUG-00062 | AI用量统计统一问题 | 已完成 |
-| BUG-00063 | 联系人搜索功能缺失 | 代码完成 |
+| BUG-00063 | 导航回退与白屏闪烁问题 | 已实现 |
 | BUG-00064 | AI总结功能未生效 | 已完成 |
 | BUG-00066 | 画像标签编辑功能缺失 | 已完成 |
 | BUG-00067 | 全局字体可读性修复 | 已完成 |
 | BUG-00068 | 导航栈治理与返回语义规范 | 已实现 |
 
 详细修复方案见: [文档/开发文档/BUG/](./文档/开发文档/BUG/)
+- BUG-00063 修复见: [BUG-00063-切屏优化.md](./BUG-00063-切屏优化.md)
 
 ### 最近修复详情（2026-01-09 ~ 2026-01-11）
 
@@ -265,25 +344,14 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - 连接测试资源补齐与 androidTest 隔离
 - 新增 `BUG00068NavigationStackTest.kt` 和 `BUG00068AiAdvisorEntryRefreshTest.kt` 测试
 
-### 多AI协作规则（关键规则）
+**BUG-00063: 导航回退与白屏闪烁问题**
+- 为缓存 Tab 增加可见性保护，隐藏 Tab 不触发导航副作用
+- AiAdvisorScreen 导航副作用增加可见性门控
+- SettingsScreen 权限跳转副作用增加可见性门控
+- 解决从联系人列表进入详情页时自动回退、白屏闪烁、层级混乱问题
+- 修复详情：见 `BUG-00063-切屏优化.md`
 
-项目使用多 AI 工具协作开发：
-- **Roo**: 代码审查（Review）
-- **Kiro**: 代码实现与调试
-- **Claude**: 功能设计与文档编写
-
-**任务执行前必须**:
-1. 读取 `Rules/workspace-rules.md` 检查协作规则
-2. 如有其他 AI 正在执行相关任务，**必须停止并询问用户**
-3. 在 WORKSPACE.md 中记录任务开始信息（如存在）
-
-**强制优先级**: `Rules/workspace-rules.md` 中的规则 > 所有其他规则
-
-**MCP 服务器配置**:
-- `sequentialthinking`: 复杂问题分步推理
-- `context7`: 项目文档实时查询
-
-### 组件复用系统
+### 组件复用系统（基于实际代码扫描 - 2026-01-11最新）
 
 项目采用 **原子-分子-有机体-模板** 四级组件架构：
 
@@ -296,27 +364,62 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 **组件位置**: `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/`
 
-## Rules 多AI协作规则目录
+**组件目录组织（24个子目录）**：
+- animation/ - 动画组件
+- button/ - 按钮组件
+- card/ - 卡片组件
+- chart/ - 图表组件
+- chip/ - 标签组件
+- contact/ - 联系人组件
+- control/ - 控制组件
+- dialog/ - 对话框组件（12个）
+- emotion/ - 情感组件
+- factstream/ - 事实流组件（8个）
+- filter/ - 过滤组件
+- input/ - 输入组件
+- ios/ - iOS风格组件（18个）
+- list/ - 列表组件
+- message/ - 消息组件
+- navigation/ - 导航组件
+- overview/ - 概览组件
+- persona/ - 人设组件
+- relationship/ - 关系组件
+- state/ - 状态组件
+- tag/ - 标签组件
+- text/ - 文本组件
+- timeline/ - 时间轴组件（7个）
+- topic/ - 主题组件
+- vault/ - 数据保险库组件
 
-项目使用 `Rules/` 目录管理多AI协作状态（主目录）：
+**ViewModel统计（27个）**：
+- BaseViewModel、AiAdvisorChatViewModel、AiAdvisorEntryViewModel、AiConfigViewModel
+- BrainTagViewModel、ChatViewModel、ContactDetailTabViewModel、ContactDetailViewModel
+- ContactListViewModel、ContactSelectViewModel、CreateContactViewModel
+- DeveloperModeViewModel、ManualSummaryViewModel、PromptEditorViewModel
+- SessionHistoryViewModel、SettingsViewModel、SystemPromptEditViewModel
+- SystemPromptListViewModel、TopicViewModel、UserProfileViewModel、UsageStatsViewModel
+
+## 多AI协作与文档系统
+
+### 协作规则目录
+
+项目使用 `.kiro/` 和 `.claude/` 目录管理多AI协作状态：
 
 | 目录/文件 | 用途 |
 |-----------|------|
-| `Rules/` | 主协作规则目录 |
-| `Rules/workspace-rules.md` | 多AI协作核心规则（强制执行） |
-| `Rules/RulesReadMe.md` | 多AI协作说明文档 |
-| `Rules/项目开发规范.md` | 代码规范、命名约定 |
-| `.kiro/steering/` | 项目决策文档 |
-| `.kiro/specs/` | 功能规格文档 |
-| `.kiro/test/` | 测试用例文档 |
+| `.kiro/steering/` | 项目决策、快速启动指南 |
+| `.kiro/specs/` | 功能规格文档（需求、设计、任务） |
+| `.kiro/commands/` | 命令模板（QuickBuild、QuickTest等） |
+| `.claude/steering/` | Claude专属项目决策文档 |
+| `文档/项目文档/` | 长期文档体系（架构、接口说明） |
 
 **协作流程**:
-1. 任务开始前 → 读取 `Rules/workspace-rules.md` 检查协作规则
-2. 任务进行中 → 实时更新里程碑和发现问题
-3. 任务完成后 → 更新任务状态并记录变更日志
+1. 任务开始前 → 读取 `.kiro/steering/quick-start.md`
+2. 任务进行中 → 更新对应 spec 文档中的任务进度
+3. 任务完成后 → 更新状态并记录变更日志
 
 **关键规则（必须遵守）**:
-- 每次任务执行前读取 `Rules/workspace-rules.md`
+- 任务执行前读取 `.kiro/steering/quick-start.md`
 - 如发现其他AI正在执行相关任务，**必须停止并询问用户**
 - 所有回答和文档使用中文编写
 
@@ -364,6 +467,19 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 6. 当前包的类
 ```
 
+### 模块间依赖规则
+```
+app → data, presentation, domain
+data → domain（使用 api 暴露，解决 Hilt 多模块类型解析问题）
+presentation → domain（使用 api 暴露，解决 Hilt 多模块类型解析问题）
+domain → 纯 Kotlin，无 Android 依赖
+```
+
+### KSP vs KAPT 使用
+- **Room**: 使用 KSP（注解处理器）
+- **Moshi**: 使用 KSP（代码生成）
+- **Hilt**: 使用 KAPT（解决多模块兼容性问题，`android.enableAggregatingTask=false`）
+
 ### 日志级别规范
 | 级别 | 使用场景 | 示例 |
 |------|----------|------|
@@ -394,7 +510,32 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 ## 仓库镜像配置
 
-项目使用国内镜像加速依赖下载，优先级：腾讯云 > 阿里云 > 官方仓库
+项目使用国内镜像加速依赖下载，优先级：**腾讯云 > 阿里云 > JitPack > 官方仓库**
+
+**settings.gradle.kts 配置**:
+- 腾讯云 Maven 镜像（优先使用）：mirrors.cloud.tencent.com
+- 阿里云镜像（备用）：maven.aliyun.com
+- JitPack（第三方库）
+- Google/MavenCentral（最后备用）
+
+**JVM 配置（24GB RAM 优化）**:
+- 最大堆: 4GB（可调整）
+- 初始堆: 1GB
+- GC: G1垃圾收集器
+- 工作线程: 最大8个（14核20线程优化）
+
+## Build 变体
+
+| 变体 | 说明 | 用途 |
+|------|------|------|
+| debug | Debug 构建 | 开发调试 |
+| release | Release 构建 | 发布版本（混淆 + 签名） |
+| dev | 开发专用变体 | 本地测试（applicationIdSuffix: .dev） |
+
+**版本号配置**（gradle.properties）:
+- APP_VERSION_NAME: 1.1.0
+- APP_VERSION_CODE: 10100
+- APP_RELEASE_STAGE: dev
 
 ## 关键命名约定
 

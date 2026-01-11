@@ -28,6 +28,7 @@ import com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
 import com.empathy.ai.presentation.ui.screen.contact.ContactListScreen
 import com.empathy.ai.presentation.ui.screen.settings.SettingsScreen
 import com.empathy.ai.ui.theme.AppTheme
+import android.util.Log
 
 /**
  * 应用主Activity
@@ -81,6 +82,15 @@ private fun MainScreen() {
 
     LaunchedEffect(currentRoute) {
         BottomNavTab.fromRoute(currentRoute)?.let { currentTab = it }
+    }
+
+    // [调试日志] BUG-00063: 添加导航状态日志用于排查白屏问题
+    // 记录路由、Tab位置和主Tab状态，便于分析切换流程
+    LaunchedEffect(currentRoute, currentTab, isInMainTab) {
+        Log.d(
+            "MainActivity",
+            "NavState route=$currentRoute isInMainTab=$isInMainTab currentTab=${currentTab.route}"
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -156,7 +166,8 @@ private fun MainScreen() {
                         },
                         onAddClick = { navController.navigate(NavRoutes.CREATE_CONTACT) },
                         currentRoute = currentTab.route,
-                        showBottomBar = false
+                        showBottomBar = false,
+                        isVisible = currentTab == BottomNavTab.SETTINGS
                     )
                 },
                 bottomBar = {
