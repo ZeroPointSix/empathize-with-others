@@ -3,23 +3,9 @@
         "version": "1.2.4",
         "versionCode": 10204,
         "stage": "dev",
-        "updatedAt": "2026-01-11T12:52:46.631883263Z"
+        "updatedAt": "2026-01-11T10:41:48.475154645Z"
     },
     "history": [
-        {
-            "version": "1.2.4",
-            "versionCode": 10204,
-            "stage": "dev",
-            "date": "2026-01-11T12:52:46.631883263Z",
-            "commits": [
-                "trigger workflow",
-                "更新版本号到 1.2.4 [skip ci]",
-                "fix release keystore path",
-                "更新版本号到 1.2.4 [skip ci]",
-                "write keystore under app for release"
-            ],
-            "changelog": "### 🔧 其他变更\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
-        },
         {
             "version": "1.2.4",
             "versionCode": 10204,
