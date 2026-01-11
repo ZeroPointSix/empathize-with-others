@@ -1,27 +1,11 @@
 {
     "currentVersion": {
-        "version": "1.2.2",
-        "versionCode": 10202,
-        "stage": "production",
-        "updatedAt": "2026-01-11T09:44:55.098020243Z"
+        "version": "1.2.1",
+        "versionCode": 10201,
+        "stage": "dev",
+        "updatedAt": "2026-01-11T09:36:07.126116466Z"
     },
     "history": [
-        {
-            "version": "1.2.2",
-            "versionCode": 10202,
-            "stage": "production",
-            "date": "2026-01-11T09:44:55.098020243Z",
-            "commits": [
-                "rebase before pushing version updates",
-                "更新版本号到 1.2.1 [skip ci]",
-                "re-encode launcher foreground png",
-                "更新版本号到 1.2.0 [skip ci]",
-                "skip existing tag creation",
-                "更新版本号到 1.2.0 [skip ci]",
-                "sanitize keystore base64 in release job"
-            ],
-            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground png\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.1 [skip ci]\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 👷 rebase before pushing version updates\n- 👷 skip existing tag creation\n- 👷 sanitize keystore base64 in release job"
-        },
         {
             "version": "1.2.1",
             "versionCode": 10201,
