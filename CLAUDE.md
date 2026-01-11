@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **共情AI助手** - 基于 Android 平台的智能社交沟通辅助应用，采用 Clean Architecture + MVVM 架构模式。
 
+**当前分支**: BUG63-qieping（导航副作用可见性保护优化分支）
+**当前版本**: v1.1.0 (versionCode: 10100, dev阶段)
+**数据库版本**: Room v16
+
 ### 核心原则
 - **零后端 (Zero-Backend)**: 无服务器，无用户账户体系
 - **BYOK**: AI能力通过用户自备API密钥直连第三方服务
@@ -112,6 +116,8 @@ adb shell dumpsys activity activities | findstr ActivityRecord  # 查看Activity
 - `BUG00059RegenerateMessageRoleTest.kt` - 消息重新生成角色测试
 - `BUG00060SessionManagementTest.kt` - 会话管理增强测试
 - `BUG00061SessionHistoryNavigationTest.kt` - 会话历史导航测试
+- `BUG00063VisibilityGateTest.kt` - 导航副作用可见性保护测试
+- `BUG00063ContactSearchTest.kt` - 联系人列表搜索功能测试
 - `BUG00064ManualSummaryTest.kt` - AI手动总结功能测试
 - `BUG00066EditBrainTagTest.kt` - 大脑标签编辑功能测试
 - `BUG00068NavigationStackTest.kt` - 导航栈治理与返回语义测试
@@ -364,7 +370,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 
 **组件位置**: `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/`
 
-**组件目录组织（24个子目录）**：
+**组件目录组织（25个子目录）**：
 - animation/ - 动画组件
 - button/ - 按钮组件
 - card/ - 卡片组件
@@ -391,7 +397,7 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - topic/ - 主题组件
 - vault/ - 数据保险库组件
 
-**ViewModel统计（27个）**：
+**ViewModel统计（23个）**：
 - BaseViewModel、AiAdvisorChatViewModel、AiAdvisorEntryViewModel、AiConfigViewModel
 - BrainTagViewModel、ChatViewModel、ContactDetailTabViewModel、ContactDetailViewModel
 - ContactListViewModel、ContactSelectViewModel、CreateContactViewModel
@@ -440,7 +446,12 @@ ViewModel → UseCase → Repository → AI Provider → Retrofit → AI Service
 - `design.md` - 设计方案
 - `tasks.md` - 任务分解
 
-**当前分支**: `master`（基于 Git，最近提交：96e1a82 - docs: add BUG-00058 fix summary）
+**当前分支**: `BUG63-qieping`（基于 Git，导航副作用可见性保护优化分支）
+
+**最近提交**:
+- 583fe34 fix: 修复切屏回退与联系人错误闪现问题 (BUG-00069)
+- aad3781 fix: 修复Tab缓存场景下导航副作用可见性问题 (BUG-00063)
+- 3a4b295 docs: add BUG-00063 screen switch optimization
 
 ## 模块文档
 
