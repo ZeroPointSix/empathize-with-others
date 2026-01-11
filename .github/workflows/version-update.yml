@@ -202,3 +202,70 @@ jobs:
           name: debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
+
+  # 云端编译并自动发布 Release（使用提交信息作为发布说明）
+  release:
+    name: Release 发布
+    needs: version-update
+    runs-on: ubuntu-latest
+    if: github.event.inputs.dry_run != 'true'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: 设置JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 准备签名配置
+        run: |
+          if [ -z "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" ]; then
+            echo "缺少 RELEASE_STORE_FILE_BASE64，无法构建 Release APK"
+            exit 1
+          fi
+
+          echo "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" | base64 --decode > empathy-release-key.jks
+
+          {
+            echo "RELEASE_STORE_FILE=empathy-release-key.jks"
+            echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+            echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+            echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+          } >> gradle.properties
+
+      - name: 授予Gradle执行权限
+        run: chmod +x ./gradlew
+
+      - name: 构建Release APK
+        run: |
+          echo "🔨 构建Release APK..."
+          ./gradlew assembleRelease --no-daemon
+
+      - name: 获取版本号与发布说明
+        id: release_meta
+        run: |
+          VERSION=$(grep "APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2)
+          NOTES=$(git log -1 --pretty=%B)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 发布GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.release_meta.outputs.version }}
+          name: v${{ steps.release_meta.outputs.version }}
+          body: ${{ steps.release_meta.outputs.notes }}
+          artifacts: app/build/outputs/apk/release/app-release.apk
+          allowUpdates: true
