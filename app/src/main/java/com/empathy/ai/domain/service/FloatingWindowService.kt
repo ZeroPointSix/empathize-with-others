@@ -492,6 +492,7 @@ class FloatingWindowService : Service() {
      *
      * @return 默认布局参数
      */
+    @Suppress("DEPRECATION")
     private fun createDefaultLayoutParams(): WindowManager.LayoutParams {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams(
@@ -1837,21 +1838,20 @@ class FloatingWindowService : Service() {
                 .build()
         } catch (e: Exception) {
             android.util.Log.e("FloatingWindowService", "创建降级通知也失败，使用最基础通知", e)
-            
-            // 最后的降级方案：使用最基础的 Notification
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification.Builder(this, CHANNEL_ID)
-                    .setContentTitle("AI 助手")
-                    .setContentText("运行中")
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .build()
+
+            val fallbackChannelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                CHANNEL_ID
             } else {
-                Notification.Builder(this)
-                    .setContentTitle("AI 助手")
-                    .setContentText("运行中")
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .build()
+                "${CHANNEL_ID}_legacy"
             }
+            val builder = NotificationCompat.Builder(this, fallbackChannelId)
+
+            builder
+                .setContentTitle("AI 助手")
+                .setContentText("运行中")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setOngoing(true)
+                .build()
         }
     }
     
