@@ -104,7 +104,7 @@ fun EmpathyBottomNavigation(
             BottomNavItem(
                 icon = Icons.Outlined.Person, // 临时使用，后续替换为自定义图标
                 selectedIcon = Icons.Filled.Person,
-                label = "AI军师",
+                label = "心语",
                 selected = currentRoute == NavRoutes.AI_ADVISOR,
                 onClick = { onNavigate(NavRoutes.AI_ADVISOR) },
                 modifier = Modifier.weight(1f)

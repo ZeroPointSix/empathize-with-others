@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AiModel
@@ -68,6 +69,11 @@ fun AiConfigScreen(
     onNavigateToUsageStats: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 系统返回手势统一走同一返回逻辑，避免回退到联系人列表
+    BackHandler {
+        onNavigateBack()
+    }
 
     // 处理导航返回
     // [调试日志] BUG-00063: 记录返回导航触发时机

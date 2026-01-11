@@ -153,8 +153,7 @@ class AiAdvisorChatViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         sessions = sessions,
-                        currentSessionId = activeSession.id,
-                        isLoading = false
+                        currentSessionId = activeSession.id
                     )
                 }
                 loadConversations(activeSession.id)
@@ -176,11 +175,21 @@ class AiAdvisorChatViewModel @Inject constructor(
         // BUG-046修复：取消之前的收集器
         conversationsJob?.cancel()
         
+        _uiState.update { it.copy(isLoading = true, hasLoadedConversations = false) }
+
         conversationsJob = viewModelScope.launch {
+            var hasEmitted = false
             getAdvisorConversationsUseCase(sessionId).collect { conversations ->
                 // BUG-046修复：验证sessionId仍然匹配，避免跨会话数据污染
                 if (_uiState.value.currentSessionId == sessionId) {
-                    _uiState.update { it.copy(conversations = conversations) }
+                    _uiState.update {
+                        it.copy(
+                            conversations = conversations,
+                            isLoading = if (hasEmitted) it.isLoading else false,
+                            hasLoadedConversations = true
+                        )
+                    }
+                    hasEmitted = true
                 }
             }
         }
@@ -839,7 +848,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                 streamingContent = "",
                 thinkingContent = "",
                 thinkingElapsedMs = 0,
-                error = null
+                error = null,
+                hasLoadedConversations = false
             )
         }
         loadConversations(sessionId)
@@ -855,7 +865,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                     currentState.copy(
                         sessions = listOf(session) + currentState.sessions,
                         currentSessionId = session.id,
-                        isLoading = false
+                        isLoading = false,
+                        hasLoadedConversations = false
                     )
                 }
                 loadConversations(session.id)
@@ -888,7 +899,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                     streamingContent = "",
                     thinkingContent = "",
                     currentStreamingMessageId = null,
-                    isLoading = true
+                    isLoading = true,
+                    hasLoadedConversations = false
                 )
             }
             
@@ -899,7 +911,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                     _uiState.update { currentState ->
                         currentState.copy(
                             currentSessionId = emptySession.id,
-                            isLoading = false
+                            isLoading = false,
+                            hasLoadedConversations = false
                         )
                     }
                     // 重新加载会话列表以确保UI同步
@@ -911,7 +924,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                             currentState.copy(
                                 sessions = listOf(session) + currentState.sessions,
                                 currentSessionId = session.id,
-                                isLoading = false
+                                isLoading = false,
+                                hasLoadedConversations = false
                             )
                         }
                         // 加载新会话的对话（应该是空的）
@@ -964,7 +978,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                     _uiState.update { currentState ->
                         currentState.copy(
                             currentSessionId = session.id,
-                            isLoading = false
+                            isLoading = false,
+                            hasLoadedConversations = false
                         )
                     }
                     // 加载该会话的对话内容
@@ -1148,5 +1163,7 @@ data class AiAdvisorChatUiState(
     val currentStreamingMessageId: String? = null,
     val lastTokenUsage: TokenUsage? = null,
     // BUG-048新增：记录最后一次用户输入，用于重新生成时避免消息角色混淆
-    val lastUserInput: String = ""
+    val lastUserInput: String = "",
+    // BUG-00069: 等待首次对话加载完成，避免空状态闪现
+    val hasLoadedConversations: Boolean = false
 )

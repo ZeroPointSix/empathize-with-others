@@ -307,7 +307,10 @@ fun NavGraph(
             AiAdvisorChatScreen(
                 createNew = createNew,  // BUG-00058: 传递createNew参数
                 sessionId = sessionId,  // BUG-00061: 传递sessionId参数
-                onNavigateBack = { navController.navigateUp() },
+                onNavigateBack = {
+                    // 统一返回到联系人列表，避免AI军师入口叠加导致双层返回
+                    navController.popBackStack(NavRoutes.CONTACT_LIST, false)
+                },
                 onNavigateToContact = { newContactId ->
                     navController.navigate(NavRoutes.aiAdvisorChat(newContactId)) {
                         popUpTo(NavRoutes.AI_ADVISOR_CHAT) { inclusive = true }
@@ -476,7 +479,15 @@ fun NavGraph(
             val contactId = backStackEntry.arguments?.getString(NavRoutes.CONTACT_DETAIL_TAB_ARG_ID) ?: ""
             ContactDetailTabScreen(
                 contactId = contactId,
-                onNavigateBack = { navController.navigateUp() },
+                onNavigateBack = {
+                    val popped = navController.popBackStack(NavRoutes.CONTACT_LIST, false)
+                    if (!popped) {
+                        navController.navigate(NavRoutes.CONTACT_LIST) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
                 onNavigateToPromptEditor = { route ->
                     navController.navigate(route) {
                         launchSingleTop = true

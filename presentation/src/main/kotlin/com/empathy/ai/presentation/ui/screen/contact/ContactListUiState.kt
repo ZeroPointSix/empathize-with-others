@@ -85,7 +85,9 @@ data class ContactListUiState(
     val shouldNavigateToChat: String = "",
     val shouldNavigateToEdit: String = "",
     val shouldNavigateToSettings: Boolean = false,
-    val shouldNavigateBack: Boolean = false
+    val shouldNavigateBack: Boolean = false,
+    // 首次加载完成标记，避免初始错误闪现
+    val hasLoadedContacts: Boolean = false
 ) {
     /** 是否有联系人数据 */
     val hasContacts: Boolean get() = contacts.isNotEmpty()

@@ -171,7 +171,7 @@ private fun ContactListScreenContent(
                 uiState.isLoading -> {
                     ContactListSkeleton()
                 }
-                uiState.error != null -> {
+                uiState.error != null && uiState.hasLoadedContacts -> {
                     FriendlyErrorCard(
                         error = UserFriendlyError(
                             title = "出错了",
