@@ -77,11 +77,11 @@ fun SparklineChart(
             val curr = points[i]
             val midX = (prev.x + curr.x) / 2
             
-            path.quadraticBezierTo(
+            path.quadraticTo(
                 prev.x + (midX - prev.x) * 0.5f, prev.y,
                 midX, (prev.y + curr.y) / 2
             )
-            path.quadraticBezierTo(
+            path.quadraticTo(
                 midX + (curr.x - midX) * 0.5f, curr.y,
                 curr.x, curr.y
             )
