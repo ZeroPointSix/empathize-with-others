@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "description": "版本更新配置文件",
+  "createdAt": "2026-01-01",
+  "updatedAt": "2026-01-01",
+  
+  "versionSource": {
+    "file": "gradle.properties",
+    "keys": {
+      "versionName": "APP_VERSION_NAME",
+      "versionCode": "APP_VERSION_CODE",
+      "releaseStage": "APP_RELEASE_STAGE"
+    }
+  },
+  
+  "commitTypes": {
+    "major": ["feat!", "fix!", "breaking"],
+    "minor": ["feat"],
+    "patch": ["fix", "perf"],
+    "none": ["docs", "style", "refactor", "test", "chore", "ci", "build", "deps", "revert"]
+  },
+  
+  "releaseStages": {
+    "dev": {
+      "displayName": "开发版",
+      "badgeText": "DEV",
+      "badgeColor": "#FF9800"
+    },
+    "test": {
+      "displayName": "测试版",
+      "badgeText": "TEST",
+      "badgeColor": "#2196F3"
+    },
+    "beta": {
+      "displayName": "预发布版",
+      "badgeText": "BETA",
+      "badgeColor": "#9C27B0"
+    },
+    "production": {
+      "displayName": "正式版",
+      "badgeText": null,
+      "badgeColor": "#4CAF50"
+    }
+  },
+  
+  "backup": {
+    "enabled": true,
+    "directory": "backups/version-update",
+    "maxBackups": 50,
+    "retentionDays": 30
+  },
+  
+  "options": {
+    "autoCreateTag": false,
+    "updateChangelog": true,
+    "syncModules": true
+  }
+}
