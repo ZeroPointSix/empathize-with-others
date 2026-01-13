@@ -52,6 +52,7 @@ import com.empathy.ai.presentation.ui.component.text.AutoSizeText
  * @param modelId 模型ID
  * @param displayName 显示名称（可选，为空时使用modelId）
  * @param isDefault 是否为默认模型
+ * @param supportsImage 是否支持图片理解
  * @param onClick 点击回调
  * @param modifier Modifier
  * @param showDivider 是否显示分隔线
@@ -60,6 +61,7 @@ import com.empathy.ai.presentation.ui.component.text.AutoSizeText
  * @param onMoveDown 下移回调（BUG-00038 P3修复）
  * @param canMoveUp 是否可以上移（BUG-00038 P3修复）
  * @param canMoveDown 是否可以下移（BUG-00038 P3修复）
+ * @param onSupportsImageChange 图片能力开关回调
  *
  * @see TDD-00021 3.5节 IOSModelListItem组件规格
  */
@@ -70,12 +72,14 @@ fun IOSModelListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     displayName: String = "",
+    supportsImage: Boolean = false,
     showDivider: Boolean = true,
     showDragHandle: Boolean = true,
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null,
     canMoveUp: Boolean = true,
-    canMoveDown: Boolean = true
+    canMoveDown: Boolean = true,
+    onSupportsImageChange: ((Boolean) -> Unit)? = null
 ) {
     // 使用响应式尺寸
     val dimensions = AdaptiveDimensions.current
@@ -86,11 +90,19 @@ fun IOSModelListItem(
     // 列表项高度 = iOS标准高度 + 小间距
     val itemHeight = dimensions.iosListItemHeight + dimensions.spacingSmall
 
-    Row(
-        modifier = modifier
+    val rowModifier = if (onSupportsImageChange == null) {
+        modifier
             .fillMaxWidth()
             .height(itemHeight)
             .clickable(onClick = onClick)
+    } else {
+        modifier
+            .fillMaxWidth()
+            .height(itemHeight)
+    }
+
+    Row(
+        modifier = rowModifier
             .drawBehind {
                 if (showDivider) {
                     val startX = dividerStartPadding.toPx()
@@ -111,7 +123,11 @@ fun IOSModelListItem(
             maxFontSize = dimensions.fontSizeBody,
             minFontSize = 10.sp,  // 最小字体10sp，保持可读性
             color = iOSTextPrimary,
-            modifier = Modifier.weight(1f)
+            modifier = if (onSupportsImageChange == null) {
+                Modifier.weight(1f)
+            } else {
+                Modifier.weight(1f).clickable(onClick = onClick)
+            }
         )
 
         // 默认标记
@@ -131,6 +147,20 @@ fun IOSModelListItem(
                     color = Color.White
                 )
             }
+            Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
+        }
+
+        if (onSupportsImageChange != null) {
+            Text(
+                text = "图片",
+                fontSize = dimensions.fontSizeCaption,
+                color = iOSTextSecondary
+            )
+            Spacer(modifier = Modifier.width(dimensions.spacingSmall))
+            IOSSwitch(
+                checked = supportsImage,
+                onCheckedChange = onSupportsImageChange
+            )
             Spacer(modifier = Modifier.width(dimensions.spacingMediumSmall))
         }
 

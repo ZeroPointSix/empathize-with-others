@@ -16,6 +16,9 @@
     <string name="floating_window_permission">悬浮窗权限</string>
     <string name="floating_window_enabled">悬浮窗已启用</string>
     <string name="floating_window_disabled">悬浮窗已禁用</string>
+    <string name="cd_screenshot">区域截图</string>
+    <string name="cd_screenshot_delete">删除截图</string>
+    <string name="screenshot_hint_continue">继续拖拽可截下一张</string>
     
     <!-- 联系人详情页 - 标签页 -->
     <string name="tab_overview">概览</string>

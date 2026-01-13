@@ -88,7 +88,8 @@ object ProviderPresets {
                 ),
                 AiModel(
                     id = "gemini-1.5-pro",
-                    displayName = "Gemini 1.5 Pro"
+                    displayName = "Gemini 1.5 Pro",
+                    supportsImage = true
                 )
             ),
             defaultModelId = "gemini-1.5-pro",

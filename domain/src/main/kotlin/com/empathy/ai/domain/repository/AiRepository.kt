@@ -8,6 +8,7 @@ import com.empathy.ai.domain.model.KnowledgeQueryResponse
 import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.SafetyCheckResult
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -54,7 +55,8 @@ interface AiRepository {
     suspend fun analyzeChat(
         provider: AiProvider,
         promptContext: String,
-        systemInstruction: String
+        systemInstruction: String,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<AnalysisResult>
 
     /**
@@ -79,7 +81,8 @@ interface AiRepository {
         provider: AiProvider,
         draft: String,
         riskRules: List<String>,
-        systemInstruction: String? = null
+        systemInstruction: String? = null,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<SafetyCheckResult>
 
     /**
@@ -162,7 +165,8 @@ interface AiRepository {
     suspend fun polishDraft(
         provider: AiProvider,
         draft: String,
-        systemInstruction: String
+        systemInstruction: String,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<PolishResult>
 
     /**
@@ -181,7 +185,8 @@ interface AiRepository {
     suspend fun generateReply(
         provider: AiProvider,
         message: String,
-        systemInstruction: String
+        systemInstruction: String,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<ReplyResult>
 
     // ==================== 微调方法 ====================

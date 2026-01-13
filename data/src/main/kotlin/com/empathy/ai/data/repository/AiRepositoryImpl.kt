@@ -17,6 +17,7 @@
  */
 package com.empathy.ai.data.repository
 
+import android.util.Base64
 import android.util.Log
 import com.empathy.ai.data.parser.CleaningContext
 import com.empathy.ai.data.parser.EnhancedJsonCleaner
@@ -24,7 +25,10 @@ import com.empathy.ai.data.remote.api.OpenAiApi
 import com.empathy.ai.data.remote.model.ChatRequestDto
 import com.empathy.ai.data.remote.model.FunctionDefinition
 import com.empathy.ai.data.remote.model.FunctionParameters
+import com.empathy.ai.data.remote.model.ImageUrlDto
+import com.empathy.ai.data.remote.model.MessageContentPartDto
 import com.empathy.ai.data.remote.model.MessageDto
+import com.empathy.ai.data.remote.model.MessageDtoContentJsonAdapterFactory
 import com.empathy.ai.data.remote.model.PropertyDefinition
 import com.empathy.ai.data.remote.model.ResponseFormat
 import com.empathy.ai.data.remote.model.ToolChoice
@@ -43,6 +47,7 @@ import com.empathy.ai.domain.model.Recommendation
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.RiskLevel
 import com.empathy.ai.domain.model.SafetyCheckResult
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.SettingsRepository
@@ -57,6 +62,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
 import retrofit2.HttpException
+import java.io.File
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.UUID
@@ -85,6 +91,7 @@ class AiRepositoryImpl @Inject constructor(
 ) : AiRepository {
 
     private val moshi = Moshi.Builder()
+        .add(MessageDtoContentJsonAdapterFactory())
         .add(KotlinJsonAdapterFactory())
         .build()
 
@@ -299,10 +306,12 @@ $COMMON_JSON_RULES""".trim()
     override suspend fun analyzeChat(
         provider: AiProvider,
         promptContext: String,
-        systemInstruction: String
+        systemInstruction: String,
+        attachments: List<ScreenshotAttachment>
     ): Result<AnalysisResult> {
         val startTime = System.currentTimeMillis()
         val model = selectModel(provider)
+        val userMessage = buildUserMessage(promptContext, attachments, providerSupportsImage(provider))
         // TD-00025: 使用服务商配置的 temperature 和 maxTokens
         val effectiveTemperature = provider.temperature.toDouble()
         val effectiveMaxTokens = if (provider.maxTokens > 0) provider.maxTokens else null
@@ -336,7 +345,7 @@ $COMMON_JSON_RULES""".trim()
                         model = model,
                         messages = listOf(
                             MessageDto(role = "system", content = effectiveSystemInstruction),
-                            MessageDto(role = "user", content = promptContext)
+                            userMessage
                         ),
                         temperature = effectiveTemperature,
                         maxTokens = effectiveMaxTokens,
@@ -349,14 +358,9 @@ $COMMON_JSON_RULES""".trim()
                     val effectiveSystemInstruction = systemInstruction.ifEmpty { SYSTEM_ANALYZE }
                     val messages = listOf(
                         MessageDto(role = "system", content = effectiveSystemInstruction),
-                        MessageDto(role = "user", content = promptContext)
+                        userMessage
                     )
-                    val adaptedMessages = if (ProviderCompatibility.requiresJsonKeywordInMessages(provider)) {
-                        messages.map { msg ->
-                            if (msg.role == "system") msg.copy(content = ProviderCompatibility.adaptSystemInstruction(provider, msg.content))
-                            else msg
-                        }
-                    } else messages
+                    val adaptedMessages = adaptSystemMessages(provider, messages)
                     ChatRequestDto(
                         model = model,
                         messages = adaptedMessages,
@@ -372,7 +376,7 @@ $COMMON_JSON_RULES""".trim()
                         model = model,
                         messages = listOf(
                             MessageDto(role = "system", content = effectiveSystemInstruction),
-                            MessageDto(role = "user", content = promptContext)
+                            userMessage
                         ),
                         temperature = effectiveTemperature,
                         maxTokens = effectiveMaxTokens,
@@ -468,7 +472,8 @@ $COMMON_JSON_RULES""".trim()
         provider: AiProvider,
         draft: String,
         riskRules: List<String>,
-        systemInstruction: String?
+        systemInstruction: String?,
+        attachments: List<ScreenshotAttachment>
     ): Result<SafetyCheckResult> {
         return try {
             val url = buildChatCompletionsUrl(provider.baseUrl)
@@ -481,20 +486,16 @@ $COMMON_JSON_RULES""".trim()
             val checkPrompt = """用户草稿: "$draft"
 风险规则: [$riskRulesText]
 请检查草稿是否触发了任何风险规则。"""
+            val userMessage = buildUserMessage(checkPrompt, attachments, providerSupportsImage(provider))
 
             val effectiveSystemInstruction = systemInstruction ?: SYSTEM_CHECK
             val messages = listOf(
                 MessageDto(role = "system", content = effectiveSystemInstruction),
-                MessageDto(role = "user", content = checkPrompt)
+                userMessage
             )
 
             val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
-            val adaptedMessages = if (ProviderCompatibility.requiresJsonKeywordInMessages(provider)) {
-                messages.map { msg ->
-                    if (msg.role == "system") msg.copy(content = ProviderCompatibility.adaptSystemInstruction(provider, msg.content))
-                    else msg
-                }
-            } else messages
+            val adaptedMessages = adaptSystemMessages(provider, messages)
 
             val request = ChatRequestDto(
                 model = model,
@@ -537,8 +538,11 @@ $COMMON_JSON_RULES""".trim()
             val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
             val adaptedMessages = if (ProviderCompatibility.requiresJsonKeywordInMessages(provider)) {
                 messages.map { msg ->
-                    if (msg.role == "system") msg.copy(content = ProviderCompatibility.adaptSystemInstruction(provider, msg.content))
-                    else msg
+                    if (msg.role == "system" && msg.content is String) {
+                        msg.copy(content = ProviderCompatibility.adaptSystemInstruction(provider, msg.content as String))
+                    } else {
+                        msg
+                    }
                 }
             } else messages
 
@@ -659,7 +663,8 @@ $COMMON_JSON_RULES""".trim()
     override suspend fun polishDraft(
         provider: AiProvider,
         draft: String,
-        systemInstruction: String
+        systemInstruction: String,
+        attachments: List<ScreenshotAttachment>
     ): Result<PolishResult> {
         val startTime = System.currentTimeMillis()
         val model = selectModel(provider)
@@ -670,10 +675,12 @@ $COMMON_JSON_RULES""".trim()
                 "Authorization" to "Bearer ${provider.apiKey}",
                 "Content-Type" to "application/json"
             )
+            val userMessage = buildUserMessage(draft, attachments, providerSupportsImage(provider))
             val messages = listOf(
                 MessageDto(role = "system", content = systemInstruction),
-                MessageDto(role = "user", content = draft)
+                userMessage
             )
+            val adaptedMessages = adaptSystemMessages(provider, messages)
 
             val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
             // TD-00025: 使用服务商配置的 temperature 和 maxTokens
@@ -682,7 +689,7 @@ $COMMON_JSON_RULES""".trim()
             
             val request = ChatRequestDto(
                 model = model,
-                messages = messages,
+                messages = adaptedMessages,
                 temperature = effectiveTemperature,
                 maxTokens = effectiveMaxTokens,
                 stream = false,
@@ -750,7 +757,8 @@ $COMMON_JSON_RULES""".trim()
     override suspend fun generateReply(
         provider: AiProvider,
         message: String,
-        systemInstruction: String
+        systemInstruction: String,
+        attachments: List<ScreenshotAttachment>
     ): Result<ReplyResult> {
         val startTime = System.currentTimeMillis()
         val model = selectModel(provider)
@@ -761,10 +769,12 @@ $COMMON_JSON_RULES""".trim()
                 "Authorization" to "Bearer ${provider.apiKey}",
                 "Content-Type" to "application/json"
             )
+            val userMessage = buildUserMessage(message, attachments, providerSupportsImage(provider))
             val messages = listOf(
                 MessageDto(role = "system", content = systemInstruction),
-                MessageDto(role = "user", content = message)
+                userMessage
             )
+            val adaptedMessages = adaptSystemMessages(provider, messages)
 
             val useResponseFormat = ProviderCompatibility.supportsResponseFormat(provider)
             // TD-00025: 使用服务商配置的 temperature 和 maxTokens
@@ -773,7 +783,7 @@ $COMMON_JSON_RULES""".trim()
             
             val request = ChatRequestDto(
                 model = model,
-                messages = messages,
+                messages = adaptedMessages,
                 temperature = effectiveTemperature,
                 maxTokens = effectiveMaxTokens,
                 stream = false,
@@ -841,17 +851,17 @@ $COMMON_JSON_RULES""".trim()
 
     override suspend fun refineAnalysis(provider: AiProvider, refinementPrompt: String): Result<AnalysisResult> {
         val systemInstruction = SystemPrompts.getHeader(PromptScene.ANALYZE) + "\n\n" + SystemPrompts.getFooter(PromptScene.ANALYZE)
-        return analyzeChat(provider, refinementPrompt, systemInstruction)
+        return analyzeChat(provider, refinementPrompt, systemInstruction, emptyList())
     }
 
     override suspend fun refinePolish(provider: AiProvider, refinementPrompt: String): Result<PolishResult> {
         val systemInstruction = SystemPrompts.getHeader(PromptScene.POLISH) + "\n\n" + SystemPrompts.getFooter(PromptScene.POLISH)
-        return polishDraft(provider, refinementPrompt, systemInstruction)
+        return polishDraft(provider, refinementPrompt, systemInstruction, emptyList())
     }
 
     override suspend fun refineReply(provider: AiProvider, refinementPrompt: String): Result<ReplyResult> {
         val systemInstruction = SystemPrompts.getHeader(PromptScene.REPLY) + "\n\n" + SystemPrompts.getFooter(PromptScene.REPLY)
-        return generateReply(provider, refinementPrompt, systemInstruction)
+        return generateReply(provider, refinementPrompt, systemInstruction, emptyList())
     }
 
     // ==================== 辅助方法 ====================
@@ -877,6 +887,72 @@ $COMMON_JSON_RULES""".trim()
                 provider.name.contains("OpenAI", ignoreCase = true) -> MODEL_OPENAI
                 else -> MODEL_OPENAI
             }
+        }
+    }
+
+    /**
+     * 模型图片能力判定（本地决策）。
+     *
+     * 业务规则 (PRD-00036/3.5):
+     * - 若所选模型不支持图片理解，则请求体中不应携带截图附件，避免浪费带宽/Token，并给出明确提示。
+     */
+    private fun providerSupportsImage(provider: AiProvider): Boolean {
+        return provider.getDefaultModel()?.supportsImage == true
+    }
+
+    private fun adaptSystemMessages(
+        provider: AiProvider,
+        messages: List<MessageDto>
+    ): List<MessageDto> {
+        if (!ProviderCompatibility.requiresJsonKeywordInMessages(provider)) return messages
+        return messages.map { msg ->
+            if (msg.role == "system" && msg.content is String) {
+                msg.copy(content = ProviderCompatibility.adaptSystemInstruction(provider, msg.content as String))
+            } else {
+                msg
+            }
+        }
+    }
+
+    private fun buildUserMessage(
+        prompt: String,
+        attachments: List<ScreenshotAttachment>,
+        supportsImage: Boolean
+    ): MessageDto {
+        // PRD-00036/3.5：不支持图片或无附件时退化为纯文本 user message，保持兼容性。
+        if (attachments.isEmpty() || !supportsImage) {
+            return MessageDto.text(role = "user", content = prompt)
+        }
+        val parts = mutableListOf(
+            MessageContentPartDto(
+                type = "text",
+                text = prompt
+            )
+        )
+        attachments.forEach { attachment ->
+            val dataUrl = encodeAttachmentToDataUrl(attachment) ?: return@forEach
+            parts.add(
+                MessageContentPartDto(
+                    type = "image_url",
+                    imageUrl = ImageUrlDto(dataUrl)
+                )
+            )
+        }
+        return MessageDto.multimodal(role = "user", parts = parts)
+    }
+
+    private fun encodeAttachmentToDataUrl(
+        attachment: ScreenshotAttachment
+    ): String? {
+        val file = File(attachment.localPath)
+        if (!file.exists()) return null
+        return try {
+            val bytes = file.readBytes()
+            val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            "data:image/jpeg;base64,$base64"
+        } catch (e: Exception) {
+            Log.w("AiRepositoryImpl", "编码截图附件失败: ${attachment.localPath}", e)
+            null
         }
     }
 

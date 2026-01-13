@@ -202,6 +202,9 @@ private fun AiConfigScreenContent(
             onSetDefaultModel = { modelId ->
                 onEvent(AiConfigUiEvent.SetFormDefaultModel(modelId))
             },
+            onToggleModelImageSupport = { modelId, enabled ->
+                onEvent(AiConfigUiEvent.UpdateFormModelImageSupport(modelId, enabled))
+            },
             onTestConnection = { onEvent(AiConfigUiEvent.TestConnection) },
             onSave = { onEvent(AiConfigUiEvent.SaveProvider) },
             onDismiss = { onEvent(AiConfigUiEvent.DismissFormDialog) }

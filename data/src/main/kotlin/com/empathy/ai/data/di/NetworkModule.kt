@@ -4,6 +4,7 @@ import android.util.Log
 import com.empathy.ai.data.local.ProxyPreferences
 import com.empathy.ai.data.remote.SseStreamReader
 import com.empathy.ai.data.remote.api.OpenAiApi
+import com.empathy.ai.data.remote.model.MessageDtoContentJsonAdapterFactory
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -70,6 +71,7 @@ object NetworkModule {
     @Singleton
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
+            .add(MessageDtoContentJsonAdapterFactory())
             .add(KotlinJsonAdapterFactory())
             .build()
     }

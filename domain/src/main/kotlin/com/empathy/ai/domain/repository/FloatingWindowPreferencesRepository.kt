@@ -269,6 +269,18 @@ interface FloatingWindowPreferencesRepository {
      */
     fun shouldStartAsBubble(): Boolean
 
+    // ==================== 截图设置 ====================
+
+    /**
+     * 保存连续截屏开关
+     */
+    fun saveContinuousScreenshotEnabled(enabled: Boolean)
+
+    /**
+     * 获取连续截屏开关状态
+     */
+    fun isContinuousScreenshotEnabled(): Boolean
+
     companion object {
         const val DISPLAY_MODE_BUBBLE = "BUBBLE"
         const val DISPLAY_MODE_DIALOG = "DIALOG"

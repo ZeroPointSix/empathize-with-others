@@ -7,6 +7,7 @@ import com.empathy.ai.domain.model.PolishResult
 import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
@@ -66,7 +67,8 @@ class PolishDraftUseCase @Inject constructor(
      */
     suspend operator fun invoke(
         contactId: String,
-        draftText: String
+        draftText: String,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<PolishResult> {
         return try {
             // 1. 前置检查
@@ -130,7 +132,8 @@ class PolishDraftUseCase @Inject constructor(
             aiRepository.polishDraft(
                 provider = defaultProvider,
                 draft = prefixedDraft,
-                systemInstruction = systemInstruction
+                systemInstruction = systemInstruction,
+                attachments = attachments
             )
         } catch (e: Exception) {
             logger.e(TAG, "润色失败", e)

@@ -1,5 +1,31 @@
 package com.empathy.ai.data.repository
 
+import com.empathy.ai.data.local.PromptFileStorage
+import com.empathy.ai.data.local.dao.ContactDao
+import com.empathy.ai.domain.model.GlobalPromptConfig
+import com.empathy.ai.domain.model.PromptError
+import com.empathy.ai.domain.model.PromptHistoryItem
+import com.empathy.ai.domain.model.PromptScene
+import com.empathy.ai.domain.model.ScenePromptConfig
+import com.empathy.ai.domain.util.PromptSanitizer
+import com.empathy.ai.domain.util.PromptValidator
+import com.empathy.ai.domain.util.PromptVariableResolver
+import com.empathy.ai.testutil.PromptTestDataFactory
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
 /**
  * PromptRepositoryImpl单元测试
  *
