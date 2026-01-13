@@ -18,16 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.presentation.theme.ComposeCategoryColor
+import com.empathy.ai.presentation.util.buildHighlightedText
 
 /**
  * 可选标签芯片
@@ -39,6 +36,7 @@ import com.empathy.ai.presentation.theme.ComposeCategoryColor
  * @param isSelected 是否被选中
  * @param searchQuery 搜索关键词（用于高亮）
  * @param categoryColor 分类颜色
+ * @param highlightStyle 高亮样式
  * @param onClick 点击回调
  * @param onLongClick 长按回调
  * @param onToggleSelection 切换选中状态回调
@@ -52,6 +50,7 @@ fun SelectableTagChip(
     isSelected: Boolean,
     searchQuery: String,
     categoryColor: ComposeCategoryColor,
+    highlightStyle: SpanStyle,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onToggleSelection: () -> Unit,
@@ -100,59 +99,13 @@ fun SelectableTagChip(
 
         // 标签文本（支持搜索高亮）
         Text(
-            text = buildHighlightedText(fact.value, searchQuery, textColor),
+            text = buildHighlightedText(
+                text = fact.value,
+                query = searchQuery,
+                highlightStyle = highlightStyle
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = textColor
         )
-    }
-}
-
-/**
- * 构建带高亮的文本
- *
- * @param text 原始文本
- * @param query 搜索关键词
- * @param defaultColor 默认文字颜色
- * @return 带高亮的AnnotatedString
- */
-@Composable
-private fun buildHighlightedText(
-    text: String,
-    query: String,
-    defaultColor: Color
-) = buildAnnotatedString {
-    if (query.isBlank()) {
-        append(text)
-        return@buildAnnotatedString
-    }
-
-    val lowerText = text.lowercase()
-    val lowerQuery = query.lowercase()
-    var currentIndex = 0
-
-    while (currentIndex < text.length) {
-        val matchIndex = lowerText.indexOf(lowerQuery, currentIndex)
-        if (matchIndex == -1) {
-            // 没有更多匹配，添加剩余文本
-            append(text.substring(currentIndex))
-            break
-        }
-
-        // 添加匹配前的文本
-        if (matchIndex > currentIndex) {
-            append(text.substring(currentIndex, matchIndex))
-        }
-
-        // 添加高亮的匹配文本
-        withStyle(
-            SpanStyle(
-                fontWeight = FontWeight.Bold,
-                background = MaterialTheme.colorScheme.tertiaryContainer
-            )
-        ) {
-            append(text.substring(matchIndex, matchIndex + query.length))
-        }
-
-        currentIndex = matchIndex + query.length
     }
 }
