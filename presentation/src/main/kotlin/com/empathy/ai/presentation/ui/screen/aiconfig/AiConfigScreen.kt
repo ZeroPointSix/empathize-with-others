@@ -30,6 +30,7 @@ import com.empathy.ai.presentation.ui.component.ios.IOSLargeTitleBar
 import com.empathy.ai.presentation.ui.component.ios.IOSProviderCard
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
+import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
@@ -161,6 +162,14 @@ private fun AiConfigScreenContent(
                     onAction = null
                 )
             }
+            uiState.searchQuery.isNotBlank() && uiState.filteredProviders.isEmpty() -> {
+                EmptyView(
+                    message = "未找到匹配的服务商",
+                    actionText = null,
+                    onAction = null,
+                    emptyType = EmptyType.NoResults
+                )
+            }
             else -> {
                 ProviderListContent(
                     uiState = uiState,
@@ -271,7 +280,8 @@ private fun ProviderListContent(
                             // 滑动删除
                             onEvent(AiConfigUiEvent.ShowDeleteConfirmDialog(provider.id))
                         },
-                        showDivider = index < providers.lastIndex
+                        showDivider = index < providers.lastIndex,
+                        highlightQuery = uiState.searchQuery
                     )
                 }
             }
