@@ -78,6 +78,8 @@ class AiConfigViewModel @Inject constructor(
             is AiConfigUiEvent.RemoveFormModel -> removeFormModel(event.modelId)
             is AiConfigUiEvent.SetFormDefaultModel -> setFormDefaultModel(event.modelId)
             is AiConfigUiEvent.ReorderFormModels -> reorderFormModels(event.fromIndex, event.toIndex)
+            is AiConfigUiEvent.UpdateFormModelImageSupport ->
+                updateFormModelImageSupport(event.modelId, event.supportsImage)
 
             // === 服务商操作事件 ===
             is AiConfigUiEvent.SaveProvider -> saveProvider()
@@ -235,7 +237,11 @@ class AiConfigViewModel @Inject constructor(
                 formBaseUrl = provider.baseUrl,
                 formApiKey = provider.apiKey,
                 formModels = provider.models.map { model ->
-                    FormModel(id = model.id, displayName = model.displayName ?: "")
+                    FormModel(
+                        id = model.id,
+                        displayName = model.displayName ?: "",
+                        supportsImage = model.supportsImage
+                    )
                 },
                 formDefaultModelId = provider.defaultModelId,
                 // BUG-00040: 加载高级选项
@@ -384,6 +390,17 @@ class AiConfigViewModel @Inject constructor(
         _uiState.update { it.copy(formModels = currentModels) }
     }
 
+    private fun updateFormModelImageSupport(modelId: String, supportsImage: Boolean) {
+        val updatedModels = _uiState.value.formModels.map { model ->
+            if (model.id == modelId) {
+                model.copy(supportsImage = supportsImage)
+            } else {
+                model
+            }
+        }
+        _uiState.update { it.copy(formModels = updatedModels) }
+    }
+
     /**
      * 保存服务商
      */
@@ -429,7 +446,8 @@ class AiConfigViewModel @Inject constructor(
             models = currentState.formModels.map { formModel ->
                 AiModel(
                     id = formModel.id,
-                    displayName = formModel.displayName.ifBlank { null }
+                    displayName = formModel.displayName.ifBlank { null },
+                    supportsImage = formModel.supportsImage
                 )
             },
             defaultModelId = currentState.formDefaultModelId,
@@ -565,7 +583,11 @@ class AiConfigViewModel @Inject constructor(
                             formBaseUrl = loadedProvider.baseUrl,
                             formApiKey = loadedProvider.apiKey,
                             formModels = loadedProvider.models.map { model ->
-                                FormModel(id = model.id, displayName = model.displayName ?: "")
+                                FormModel(
+                                    id = model.id,
+                                    displayName = model.displayName ?: "",
+                                    supportsImage = model.supportsImage
+                                )
                             },
                             formDefaultModelId = loadedProvider.defaultModelId,
                             // BUG-00040: 加载高级选项
@@ -619,7 +641,8 @@ class AiConfigViewModel @Inject constructor(
             models = currentState.formModels.map { formModel ->
                 AiModel(
                     id = formModel.id,
-                    displayName = formModel.displayName.ifBlank { null }
+                    displayName = formModel.displayName.ifBlank { null },
+                    supportsImage = formModel.supportsImage
                 )
             },
             defaultModelId = currentState.formDefaultModelId
@@ -712,7 +735,8 @@ class AiConfigViewModel @Inject constructor(
                 val newFormModels = models.map { model: AiModel ->
                     FormModel(
                         id = model.id,
-                        displayName = model.displayName ?: ""
+                        displayName = model.displayName ?: "",
+                        supportsImage = model.supportsImage
                     )
                 }
 

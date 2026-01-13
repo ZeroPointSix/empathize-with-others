@@ -56,6 +56,7 @@ import com.empathy.ai.presentation.ui.screen.aiconfig.TestConnectionResult
  * @param onAddModel 添加模型回调
  * @param onRemoveModel 删除模型回调
  * @param onSetDefaultModel 设置默认模型回调
+ * @param onToggleModelImageSupport 切换模型图片理解能力
  * @param onTestConnection 测试连接回调
  * @param onSave 保存回调
  * @param onDismiss 关闭对话框回调
@@ -85,6 +86,7 @@ fun ProviderFormDialog(
     onAddModel: (String, String) -> Unit,
     onRemoveModel: (String) -> Unit,
     onSetDefaultModel: (String) -> Unit,
+    onToggleModelImageSupport: (String, Boolean) -> Unit,
     onTestConnection: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
@@ -346,7 +348,10 @@ fun ProviderFormDialog(
                             model = model,
                             isDefault = model.id == formDefaultModelId,
                             onSetDefault = { onSetDefaultModel(model.id) },
-                            onRemove = { onRemoveModel(model.id) }
+                            onRemove = { onRemoveModel(model.id) },
+                            onToggleImageSupport = { enabled ->
+                                onToggleModelImageSupport(model.id, enabled)
+                            }
                         )
                     }
 
@@ -423,6 +428,7 @@ private fun ModelItem(
     isDefault: Boolean,
     onSetDefault: () -> Unit,
     onRemove: () -> Unit,
+    onToggleImageSupport: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -470,9 +476,18 @@ private fun ModelItem(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+                Text(
+                    text = "图片理解",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Switch(
+                    checked = model.supportsImage,
+                    onCheckedChange = onToggleImageSupport
+                )
                 if (!isDefault) {
                     TextButton(onClick = onSetDefault) {
                         Text("设为默认")
@@ -596,6 +611,7 @@ private fun ProviderFormDialogAddPreview() {
             onAddModel = { _, _ -> },
             onRemoveModel = {},
             onSetDefaultModel = {},
+            onToggleModelImageSupport = { _, _ -> },
             onTestConnection = {},
             onSave = {},
             onDismiss = {}
@@ -630,6 +646,7 @@ private fun ProviderFormDialogEditPreview() {
             onAddModel = { _, _ -> },
             onRemoveModel = {},
             onSetDefaultModel = {},
+            onToggleModelImageSupport = { _, _ -> },
             onTestConnection = {},
             onSave = {},
             onDismiss = {}

@@ -97,6 +97,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsUiEvent.HideClearDataDialog -> hideClearDataDialog()
             is SettingsUiEvent.ClearAllData -> clearAllData()
             is SettingsUiEvent.ToggleFloatingWindow -> toggleFloatingWindow()
+            is SettingsUiEvent.ToggleContinuousScreenshot -> toggleContinuousScreenshot()
             is SettingsUiEvent.RequestFloatingWindowPermission -> requestFloatingWindowPermission()
             is SettingsUiEvent.PermissionRequestHandled -> clearPendingPermissionRequest()
             is SettingsUiEvent.ShowPermissionDialog -> showPermissionDialog()
@@ -327,6 +328,7 @@ class SettingsViewModel @Inject constructor(
                 settingsRepository.setLocalFirstModeEnabled(true)
                 
                 floatingWindowPreferencesRepository.saveEnabled(false)
+                floatingWindowPreferencesRepository.saveContinuousScreenshotEnabled(false)
                 if (_uiState.value.floatingWindowEnabled) {
                     floatingWindowManager.stopService()
                 }
@@ -340,6 +342,7 @@ class SettingsViewModel @Inject constructor(
                         dataMaskingEnabled = true,
                         localFirstMode = true,
                         floatingWindowEnabled = false,
+                        continuousScreenshotEnabled = false,
                         showClearDataDialog = false,
                         successMessage = "所有设置已清除"
                     )
@@ -434,8 +437,12 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadFloatingWindowState() {
         val state = floatingWindowPreferencesRepository.loadState()
+        val continuousEnabled = floatingWindowPreferencesRepository.isContinuousScreenshotEnabled()
         _uiState.update {
-            it.copy(floatingWindowEnabled = state.isEnabled)
+            it.copy(
+                floatingWindowEnabled = state.isEnabled,
+                continuousScreenshotEnabled = continuousEnabled
+            )
         }
         
         if (state.isEnabled) {
@@ -453,6 +460,25 @@ class SettingsViewModel @Inject constructor(
                     android.util.Log.w("SettingsViewModel", "悬浮窗权限丢失，重置状态")
                     floatingWindowPreferencesRepository.saveEnabled(false)
                     _uiState.update { it.copy(floatingWindowEnabled = false) }
+                }
+            }
+        }
+    }
+
+    private fun toggleContinuousScreenshot() {
+        viewModelScope.launch {
+            try {
+                val newValue = !_uiState.value.continuousScreenshotEnabled
+                floatingWindowPreferencesRepository.saveContinuousScreenshotEnabled(newValue)
+                _uiState.update {
+                    it.copy(
+                        continuousScreenshotEnabled = newValue,
+                        successMessage = "连续截屏已${if (newValue) "开启" else "关闭"}"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = "保存设置失败: ${e.message}")
                 }
             }
         }

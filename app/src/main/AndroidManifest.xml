@@ -14,6 +14,7 @@
     
     <!-- 前台服务类型 (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <application
         android:name=".app.EmpathyApplication"
@@ -37,12 +38,19 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.ScreenshotPermissionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true"
+            android:theme="@style/Theme.GiveLove.Transparent" />
+
         <!-- 悬浮窗服务 -->
         <service
             android:name=".domain.service.FloatingWindowService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:foregroundServiceType="specialUse|mediaProjection">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="AI助手悬浮窗服务" />

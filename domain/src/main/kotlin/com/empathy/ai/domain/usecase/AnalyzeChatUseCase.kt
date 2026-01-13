@@ -10,6 +10,7 @@ import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.domain.model.TimestampedMessage
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
@@ -70,7 +71,8 @@ class AnalyzeChatUseCase @Inject constructor(
      */
     suspend operator fun invoke(
         contactId: String,
-        rawScreenContext: List<String>
+        rawScreenContext: List<String>,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<AnalysisResult> {
         // 用于记录对话的ID，即使AI分析失败也要保存用户输入
         var conversationLogId: Long? = null
@@ -193,7 +195,8 @@ class AnalyzeChatUseCase @Inject constructor(
             val analysisResult = aiRepository.analyzeChat(
                 provider = defaultProvider,
                 promptContext = runtimeData,
-                systemInstruction = systemInstruction
+                systemInstruction = systemInstruction,
+                attachments = attachments
             ).getOrThrow()
 
             // 9. 【记忆系统】保存AI回复到对话记录

@@ -31,6 +31,43 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- 截图入口与缩略图 -->
+    <LinearLayout
+        android:id="@+id/attachment_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_screenshot"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_screenshot_button"
+            android:contentDescription="@string/cd_screenshot"
+            android:padding="6dp"
+            android:src="@drawable/ic_screenshot"
+            android:tint="#666666" />
+
+        <HorizontalScrollView
+            android:id="@+id/attachment_scroll"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/attachment_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+    </LinearLayout>
+
     <!-- 
         输入框（BUG-00024修复：进一步减少高度）
         - minLines从2改为1，减少约20dp

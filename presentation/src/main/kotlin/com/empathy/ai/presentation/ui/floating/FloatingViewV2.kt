@@ -7,13 +7,19 @@ import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.AiResult
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.FloatingWindowUiState
+import java.io.File
+import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
@@ -45,6 +51,9 @@ class FloatingViewV2(
     private var tabContentContainer: FrameLayout? = null
     private var contactSelectorLayout: TextInputLayout? = null
     private var contactSelector: AutoCompleteTextView? = null
+    private var screenshotButton: ImageButton? = null
+    private var attachmentScroll: HorizontalScrollView? = null
+    private var attachmentContainer: LinearLayout? = null
     private var inputLayout: TextInputLayout? = null
     private var inputText: TextInputEditText? = null
     private var btnSubmit: MaterialButton? = null
@@ -76,6 +85,8 @@ class FloatingViewV2(
     private var onTabChangedListener: ((ActionType) -> Unit)? = null
     private var onContactSelectedListener: ((String) -> Unit)? = null
     private var onSubmitListener: ((ActionType, String, String) -> Unit)? = null
+    private var onScreenshotClickListener: (() -> Unit)? = null
+    private var onScreenshotDeleteListener: ((String) -> Unit)? = null
     private var onCopyListener: ((String) -> Unit)? = null
     private var onRegenerateListener: ((ActionType, String?) -> Unit)? = null
     private var onMinimizeListener: (() -> Unit)? = null
@@ -216,6 +227,9 @@ class FloatingViewV2(
         // 初始化Tab内容组件
         contactSelectorLayout = tabContent.findViewById(R.id.contact_selector_layout)
         contactSelector = tabContent.findViewById(R.id.contact_selector)
+        screenshotButton = tabContent.findViewById(R.id.btn_screenshot)
+        attachmentScroll = tabContent.findViewById(R.id.attachment_scroll)
+        attachmentContainer = tabContent.findViewById(R.id.attachment_container)
         inputLayout = tabContent.findViewById(R.id.input_layout)
         inputText = tabContent.findViewById(R.id.input_text)
         btnSubmit = tabContent.findViewById(R.id.btn_submit)
@@ -270,6 +284,10 @@ class FloatingViewV2(
             if (text.isNotBlank() && contactId != null) {
                 onSubmitListener?.invoke(currentState.selectedTab, contactId, text)
             }
+        }
+
+        screenshotButton?.setOnClickListener {
+            onScreenshotClickListener?.invoke()
         }
 
         // 重试按钮监听
@@ -507,6 +525,14 @@ class FloatingViewV2(
         onSubmitListener = listener
     }
 
+    fun setOnScreenshotClickListener(listener: () -> Unit) {
+        onScreenshotClickListener = listener
+    }
+
+    fun setOnScreenshotDeleteListener(listener: (String) -> Unit) {
+        onScreenshotDeleteListener = listener
+    }
+
     fun setOnCopyListener(listener: (String) -> Unit) {
         onCopyListener = listener
     }
@@ -548,6 +574,22 @@ class FloatingViewV2(
      */
     fun getCurrentTopicContent(): String? = currentTopicContent
 
+    fun setScreenshotAttachments(attachments: List<ScreenshotAttachment>) {
+        attachmentContainer?.removeAllViews()
+        if (attachments.isEmpty()) {
+            attachmentScroll?.visibility = View.GONE
+            return
+        }
+        attachmentScroll?.visibility = View.VISIBLE
+        val density = resources.displayMetrics.density
+        val thumbnailSize = (48 * density).toInt()
+        val marginEnd = (8 * density).toInt()
+        attachments.forEach { attachment ->
+            val item = createAttachmentItem(attachment, thumbnailSize, marginEnd)
+            attachmentContainer?.addView(item)
+        }
+    }
+
     // ==================== 私有方法 ====================
 
     private fun updateInputHint(tab: ActionType) {
@@ -572,6 +614,74 @@ class FloatingViewV2(
         // TD-00031: 知识问答模式不需要选择联系人
         val needsContact = tab != ActionType.KNOWLEDGE
         contactSelectorLayout?.visibility = if (needsContact) View.VISIBLE else View.GONE
+    }
+
+    private fun createAttachmentItem(
+        attachment: ScreenshotAttachment,
+        sizePx: Int,
+        marginEndPx: Int
+    ): View {
+        val container = FrameLayout(context).apply {
+            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                marginEnd = marginEndPx
+            }
+        }
+
+        val imageView = ImageView(context).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setImageBitmap(loadThumbnail(attachment.localPath, sizePx))
+        }
+        container.addView(imageView)
+
+        val density = resources.displayMetrics.density
+        val deleteSize = (18 * density).toInt()
+        val deleteView = TextView(context).apply {
+            layoutParams = FrameLayout.LayoutParams(deleteSize, deleteSize).apply {
+                gravity = android.view.Gravity.END or android.view.Gravity.TOP
+            }
+            background = ContextCompat.getDrawable(context, R.drawable.bg_screenshot_remove)
+            text = "x"
+            textSize = 11f
+            gravity = android.view.Gravity.CENTER
+            setTextColor(android.graphics.Color.WHITE)
+            contentDescription = context.getString(R.string.cd_screenshot_delete)
+            setOnClickListener { onScreenshotDeleteListener?.invoke(attachment.id) }
+        }
+        container.addView(deleteView)
+        return container
+    }
+
+    private fun loadThumbnail(path: String, targetSize: Int): android.graphics.Bitmap? {
+        val file = File(path)
+        if (!file.exists()) return null
+        val options = android.graphics.BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+        android.graphics.BitmapFactory.decodeFile(path, options)
+        options.inSampleSize = calculateInSampleSize(options, targetSize, targetSize)
+        options.inJustDecodeBounds = false
+        return android.graphics.BitmapFactory.decodeFile(path, options)
+    }
+
+    private fun calculateInSampleSize(
+        options: android.graphics.BitmapFactory.Options,
+        reqWidth: Int,
+        reqHeight: Int
+    ): Int {
+        var inSampleSize = 1
+        val (height, width) = options.outHeight to options.outWidth
+        if (height > reqHeight || width > reqWidth) {
+            var halfHeight = height / 2
+            var halfWidth = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
     }
 
     companion object {

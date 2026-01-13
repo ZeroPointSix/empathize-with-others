@@ -323,7 +323,7 @@ private fun SettingsScreenContent(
                         title = "启用悬浮窗",
                         subtitle = if (uiState.hasFloatingWindowPermission) null else "需要悬浮窗权限",
                         showArrow = false,
-                        showDivider = false,
+                        showDivider = true,
                         trailing = {
                             IOSSwitch(
                                 checked = uiState.floatingWindowEnabled,
@@ -334,6 +334,20 @@ private fun SettingsScreenContent(
                         onClick = if (!uiState.hasFloatingWindowPermission) {
                             { onEvent(SettingsUiEvent.ShowPermissionDialog) }
                         } else null
+                    )
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSBlue,
+                        title = "连续截屏",
+                        subtitle = "1.5秒内可继续框选",
+                        showArrow = false,
+                        showDivider = false,
+                        trailing = {
+                            IOSSwitch(
+                                checked = uiState.continuousScreenshotEnabled,
+                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleContinuousScreenshot) }
+                            )
+                        }
                     )
                 }
             }
