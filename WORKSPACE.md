@@ -1,6 +1,6 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-11 | 更新者: Codex (PRD-00035 Phase 1 进行中)
+> 最后更新: 2026-01-12 | 更新者: Codex (FREE-00007 BrainTag 返回行为一致性修复)
 
 ## 📋 当前工作状态
 
@@ -25,6 +25,13 @@
 | CR-00001 | 代码变更审查（当前工作区） | Roo | 进行中 | P1 | 2026-01-11 09:41 | 2026-01-11 |
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-12 - **FREE-00007 BrainTag 返回行为一致性修复** - Codex
+- [x] 2026-01-12 - **FREE-00006 ModernPersonaTab 无结果关键词提示** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
+- [x] 2026-01-12 - **FREE-00005 ModernPersonaTab 搜索自动展开** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
+- [x] 2026-01-12 - **FREE-00004 ModernPersonaTab 分类搜索匹配** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
+- [x] 2026-01-12 - **FREE-00003 ModernPersonaTab 搜索反馈补齐** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
+- [x] 2026-01-12 - **FREE-00002 PersonaTabV2 搜索高亮补齐** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
+- [x] 2026-01-12 - **FREE-00001 搜索体验高亮补全（Free Explorer）** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
 - [x] 2026-01-09 - **BUG-00058/59/60/61 AI军师会话管理增强** - Claude - 相关文档: [BUG-00058](文档/开发文档/BUG/BUG-00058-新建会话功能失效问题.md), [BUG-00059](文档/开发文档/BUG/BUG-00059-中断生成后重新生成消息角色错乱问题.md), [BUG-00060](文档/开发文档/BUG/BUG-00060-会话管理增强需求.md), [BUG-00061](文档/开发文档/BUG/BUG-00061-会话历史跳转失败问题.md)
 - [x] 2026-01-09 - **BUG-00057 AI军师对话界面可读性问题修复** - Kiro - 相关文档: [BUG-00057](文档/开发文档/BUG/BUG-00057-AI军师对话界面可读性问题.md)
 - [x] 2026-01-09 - **BUG-00056 知识查询超时时间过短修复** - Kiro - 相关文档: [BUG-00056](文档/开发文档/BUG/BUG-00056-知识查询超时时间过短.md)
@@ -194,6 +201,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ### 文档版本
 | 文档类型 | 最新编号 | 文档名称 | 版本 | 最后更新 | 更新者 |
 |---------|---------|---------|------|----------|--------|
+| MA | - | FREE-20260112-contact-search-highlight.md | v1.7 | 2026-01-12 | Codex |
 | MA | - | 智能体代码复用与规范统一评估报告 | v1.0 | 2026-01-03 | Roo |
 | SKILL | - | Multi-Agent Explorer 技能文档 | v2.0 | 2026-01-01 | Roo |
 | DR | DR-00024 | TDD-00024图标和版本号自动更新审查报告 | v1.0 | 2025-12-31 | Roo |
@@ -202,6 +210,11 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ---
 
 ## 🤖 AI 工具协作状态
+
+### Codex (Free Explorer)
+- **最后活动**: 2026-01-12 - 完成 FREE-00006 ModernPersonaTab 无结果关键词提示
+- **当前任务**: 无
+- **待处理**: UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
 
 ### Roo (Review)
 - **最后活动**: 2026-01-01 - 完成 Multi-Agent Explorer 决策日志机制升级提交
@@ -220,6 +233,72 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ---
 
 ## 📝 变更日志
+
+### 2026-01-12 - Codex (FREE-00007 BrainTag 返回行为一致性修复)
+- 统一 BackHandler 与导航返回按钮逻辑，搜索栏开启时优先关闭搜索
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/tag/BrainTagScreen.kt`
+
+### 2026-01-12 - Codex (FREE-00006 ModernPersonaTab 无结果关键词提示)
+- ModernPersonaTab 无结果提示显示并高亮关键词
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/persona/ModernPersonaTab.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+  - `WORKSPACE.md`
+- 相关文档链接：
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+
+### 2026-01-12 - Codex (FREE-00005 ModernPersonaTab 搜索自动展开)
+- 搜索模式下自动展开 ModernPersonaTab 分类，保证命中结果可见
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/persona/ModernPersonaTab.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+  - `WORKSPACE.md`
+- 相关文档链接：
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+
+### 2026-01-12 - Codex (FREE-00004 ModernPersonaTab 分类搜索匹配)
+- ModernPersonaTab 支持分类名称搜索匹配与标题高亮
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/persona/ModernPersonaTab.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+  - `WORKSPACE.md`
+- 相关文档链接：
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+
+### 2026-01-12 - Codex (FREE-00003 ModernPersonaTab 搜索反馈补齐)
+- ModernPersonaTab 增加搜索高亮与无结果提示
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/persona/ModernPersonaTab.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+  - `WORKSPACE.md`
+- 相关文档链接：
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+
+### 2026-01-12 - Codex (FREE-00002 PersonaTabV2 搜索高亮补齐)
+- 为 PersonaTabV2 的分类标题与标签添加统一搜索高亮
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/persona/DynamicCategoryCard.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/persona/SelectableTagChip.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+  - `WORKSPACE.md`
+- 相关文档链接：
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+
+### 2026-01-12 - Codex (FREE-00001 搜索体验高亮补全)
+- 扩展搜索高亮到联系人画像 PersonaTab（类别标题与标签值）
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/persona/PersonaTab.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
+  - `WORKSPACE.md`
+- 相关文档链接：
+  - `文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md`
 
 ### 2026-01-03 - Roo (文档清理与评估报告)
 - **清理临时文档目录并新增智能体代码复用评估报告**
