@@ -1,7 +1,6 @@
 package com.empathy.ai.presentation.ui.screen.tag
 
 import android.content.res.Configuration
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,7 +10,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,7 +23,6 @@ import com.empathy.ai.presentation.ui.component.dialog.EditBrainTagDialog
 import com.empathy.ai.presentation.ui.component.dialog.IOSAlertDialog
 import com.empathy.ai.presentation.ui.component.dialog.IOSInputDialog
 import com.empathy.ai.presentation.ui.component.input.CustomTextField
-import com.empathy.ai.presentation.ui.component.input.TagSearchBar
 import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicator
@@ -115,61 +112,28 @@ private fun BrainTagScreenContent(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isSearchBarVisible by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(uiState.searchQuery) {
-        if (uiState.searchQuery.isNotBlank()) {
-            isSearchBarVisible = true
-        }
-    }
-
-    val handleBack = {
-        if (isSearchBarVisible) {
-            isSearchBarVisible = false
-            onEvent(BrainTagUiEvent.ClearSearch)
-        } else {
-            onNavigateBack()
-        }
-    }
-
-    BackHandler { handleBack() }
-
     Scaffold(
         modifier = modifier,
         topBar = {
-            Column {
-                TopAppBar(
-                    title = { Text("标签管理") },
-                    navigationIcon = {
-                        IconButton(onClick = handleBack) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "返回"
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { isSearchBarVisible = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "搜索"
-                            )
-                        }
+            TopAppBar(
+                title = { Text("标签管理") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "返回"
+                        )
                     }
-                )
-
-                if (isSearchBarVisible) {
-                    TagSearchBar(
-                        searchQuery = uiState.searchQuery,
-                        resultCount = uiState.displayTags.size,
-                        onQueryChange = { onEvent(BrainTagUiEvent.UpdateSearchQuery(it)) },
-                        onSearchClose = {
-                            isSearchBarVisible = false
-                            onEvent(BrainTagUiEvent.ClearSearch)
-                        }
-                    )
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: 实现搜索 */ }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "搜索"
+                        )
+                    }
                 }
-            }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { onEvent(BrainTagUiEvent.ShowAddDialog) }) {
@@ -271,21 +235,6 @@ private fun TagList(
         tags.filter { it.content.contains(searchQuery, ignoreCase = true) }
     }
 
-    if (filteredTags.isEmpty() && searchQuery.isNotBlank()) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            EmptyView(
-                message = "没有找到匹配的标签",
-                actionText = null,
-                onAction = null,
-                emptyType = EmptyType.NoResults
-            )
-        }
-        return
-    }
-
     // 按类型分组
     val landmineTags = filteredTags.filter { it.type == TagType.RISK_RED }
     val strategyTags = filteredTags.filter { it.type == TagType.STRATEGY_GREEN }
@@ -312,7 +261,6 @@ private fun TagList(
                 TagChip(
                     text = tag.content,
                     tagType = tag.type,
-                    highlightQuery = searchQuery,
                     onDelete = { onDeleteTag(tag.id) },
                     onClick = { onEditTag(tag) },
                     modifier = Modifier.fillMaxWidth()
@@ -341,7 +289,6 @@ private fun TagList(
                 TagChip(
                     text = tag.content,
                     tagType = tag.type,
-                    highlightQuery = searchQuery,
                     onDelete = { onDeleteTag(tag.id) },
                     onClick = { onEditTag(tag) },
                     modifier = Modifier.fillMaxWidth()

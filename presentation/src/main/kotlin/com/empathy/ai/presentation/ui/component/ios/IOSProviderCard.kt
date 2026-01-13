@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -57,8 +56,6 @@ import com.empathy.ai.presentation.theme.iOSRed
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
-import com.empathy.ai.presentation.util.buildHighlightedText
-import com.empathy.ai.presentation.util.createSearchHighlightStyle
 import kotlin.math.roundToInt
 
 /**
@@ -93,16 +90,11 @@ fun IOSProviderCard(
     onDelete: (() -> Unit)? = null,
     showDivider: Boolean = true,
     icon: ImageVector = Icons.Default.Cloud,
-    iconBackgroundColor: Color = getProviderColor(provider.name),
-    highlightQuery: String = ""
+    iconBackgroundColor: Color = getProviderColor(provider.name)
 ) {
     // 使用响应式尺寸
     val dimensions = AdaptiveDimensions.current
     val density = LocalDensity.current
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isSystemInDarkTheme(),
-        baseColor = iOSBlue
-    )
     
     val dividerColor = iOSSeparator
     // 分隔线起始位置 = padding(16) + iconSize(40) + spacing(12)
@@ -278,11 +270,7 @@ fun IOSProviderCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = buildHighlightedText(
-                        text = provider.name,
-                        query = highlightQuery,
-                        highlightStyle = highlightStyle
-                    ),
+                    text = provider.name,
                     fontSize = dimensions.fontSizeTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = iOSTextPrimary,

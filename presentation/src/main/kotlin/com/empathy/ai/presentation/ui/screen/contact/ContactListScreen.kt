@@ -439,8 +439,7 @@ private fun SearchModeContent(
                                     ContactListItem(
                                         contact = contact,
                                         onClick = { onContactClick(contact.id) },
-                                        showDivider = index < searchResults.size - 1,
-                                        highlightQuery = searchQuery
+                                        showDivider = index < searchResults.size - 1
                                     )
                                 }
                             }
