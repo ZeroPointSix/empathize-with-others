@@ -6,7 +6,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,14 +57,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.theme.TagCategory
-import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSSystemGroupedBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.theme.iOSTextTertiary
 import com.empathy.ai.presentation.ui.component.ios.IOSSegmentedControl
-import com.empathy.ai.presentation.util.buildHighlightedText
-import com.empathy.ai.presentation.util.createSearchHighlightStyle
 
 /**
  * 现代化画像库标签页
@@ -119,31 +115,17 @@ fun ModernPersonaTab(
         }
         
         // 内容区域
-        val hasSearchQuery = searchQuery.isNotBlank()
-        val filteredCategories = categories.mapNotNull { category ->
-            val categoryMatches = hasSearchQuery &&
-                category.category.displayName.contains(searchQuery, ignoreCase = true)
-            val filteredTags = when {
-                !hasSearchQuery -> category.tags
-                categoryMatches -> category.tags
-                else -> category.tags.filter { it.contains(searchQuery, ignoreCase = true) }
-            }
-            if (!hasSearchQuery || categoryMatches || filteredTags.isNotEmpty()) {
-                category.copy(tags = filteredTags)
+        val filteredCategories = categories.map { category ->
+            val filteredTags = if (searchQuery.isBlank()) {
+                category.tags
             } else {
-                null
+                category.tags.filter { it.contains(searchQuery, ignoreCase = true) }
             }
-        }
+            category.copy(tags = filteredTags)
+        }.filter { it.tags.isNotEmpty() || searchQuery.isBlank() }
         
         if (filteredCategories.isEmpty() || filteredCategories.all { it.tags.isEmpty() }) {
-            if (hasSearchQuery) {
-                EmptyPersonaSearchResult(
-                    query = searchQuery,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                EmptyPersonaPlaceholder(modifier = Modifier.weight(1f))
-            }
+            EmptyPersonaPlaceholder(modifier = Modifier.weight(1f))
         } else {
             LazyColumn(
                 state = rememberLazyListState(),
@@ -156,8 +138,7 @@ fun ModernPersonaTab(
                         ModernFolderCard(
                             category = categoryData.category,
                             tags = categoryData.tags,
-                            isExpanded = hasSearchQuery || categoryData.category in expandedCategories,
-                            searchQuery = searchQuery,
+                            isExpanded = categoryData.category in expandedCategories,
                             onToggle = {
                                 expandedCategories = if (categoryData.category in expandedCategories) {
                                     expandedCategories - categoryData.category
@@ -286,17 +267,12 @@ fun ModernFolderCard(
     category: TagCategory,
     tags: List<String>,
     isExpanded: Boolean,
-    searchQuery: String,
     onToggle: () -> Unit,
     onAddTag: () -> Unit,
     onTagClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val style = ModernFolderStyle.getStyle(category)
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isSystemInDarkTheme(),
-        baseColor = style.iconBackground
-    )
     val arrowRotation by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
         label = "arrowRotation"
@@ -337,11 +313,7 @@ fun ModernFolderCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     
                     Text(
-                        text = buildHighlightedText(
-                            text = category.displayName,
-                            query = searchQuery,
-                            highlightStyle = highlightStyle
-                        ),
+                        text = category.displayName,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = iOSTextPrimary
@@ -390,7 +362,6 @@ fun ModernFolderCard(
                                 MorandiTagChip(
                                     text = tag,
                                     category = category,
-                                    highlightQuery = searchQuery,
                                     onClick = { onTagClick(tag) }
                                 )
                             }
@@ -418,21 +389,12 @@ fun MorandiTagChip(
     text: String,
     category: TagCategory,
     onClick: () -> Unit,
-    highlightQuery: String = "",
     modifier: Modifier = Modifier
 ) {
     val colors = MorandiTagColors.getColors(category)
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isSystemInDarkTheme(),
-        baseColor = colors.textColor
-    )
     
     Text(
-        text = buildHighlightedText(
-            text = text,
-            query = highlightQuery,
-            highlightStyle = highlightStyle
-        ),
+        text = text,
         fontSize = 14.sp,
         color = colors.textColor,
         modifier = modifier
@@ -630,53 +592,6 @@ private fun EmptyPersonaPlaceholder(modifier: Modifier = Modifier) {
 }
 
 /**
- * 搜索无结果占位符
- */
-@Composable
-private fun EmptyPersonaSearchResult(
-    query: String,
-    modifier: Modifier = Modifier
-) {
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isSystemInDarkTheme(),
-        baseColor = iOSBlue
-    )
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = iOSTextTertiary,
-                modifier = Modifier.size(56.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = buildHighlightedText(
-                    text = "未找到 \"$query\"",
-                    query = query,
-                    highlightStyle = highlightStyle
-                ),
-                fontSize = 17.sp,
-                color = iOSTextPrimary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "请尝试其他关键词",
-                fontSize = 14.sp,
-                color = iOSTextSecondary,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-/**
  * 底部提示
  */
 @Composable
@@ -744,7 +659,6 @@ private fun ModernFolderCardPreview() {
                 category = TagCategory.INTERESTS,
                 tags = listOf("喜欢旅行", "爱看电影", "健身达人"),
                 isExpanded = true,
-                searchQuery = "",
                 onToggle = {},
                 onAddTag = {},
                 onTagClick = {}

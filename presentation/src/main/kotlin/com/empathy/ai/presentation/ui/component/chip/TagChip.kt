@@ -1,7 +1,6 @@
 package com.empathy.ai.presentation.ui.component.chip
 
 import android.content.res.Configuration
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -21,8 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.TagType
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
-import com.empathy.ai.presentation.util.buildHighlightedText
-import com.empathy.ai.presentation.util.createSearchHighlightStyle
 
 /**
  * 标签芯片组件
@@ -31,7 +28,6 @@ import com.empathy.ai.presentation.util.createSearchHighlightStyle
  *
  * @param text 标签文本
  * @param tagType 标签类型
- * @param highlightQuery 搜索关键词（可选）
  * @param onDelete 删除回调，为null时不显示删除按钮
  * @param onClick 点击回调
  * @param modifier 修饰符
@@ -40,29 +36,16 @@ import com.empathy.ai.presentation.util.createSearchHighlightStyle
 fun TagChip(
     text: String,
     tagType: TagType,
-    highlightQuery: String = "",
     onDelete: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val dimensions = AdaptiveDimensions.current
     val colors = getTagColors(tagType)
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isSystemInDarkTheme(),
-        baseColor = colors.iconColor
-    )
     
     AssistChip(
         onClick = { onClick?.invoke() },
-        label = {
-            Text(
-                text = buildHighlightedText(
-                    text = text,
-                    query = highlightQuery,
-                    highlightStyle = highlightStyle
-                )
-            )
-        },
+        label = { Text(text) },
         modifier = modifier,
         leadingIcon = {
             Icon(

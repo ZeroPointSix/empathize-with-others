@@ -2,7 +2,6 @@ package com.empathy.ai.presentation.ui.screen.advisor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,8 +53,6 @@ import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 import com.empathy.ai.presentation.theme.iOSTextTertiary
-import com.empathy.ai.presentation.util.buildHighlightedText
-import com.empathy.ai.presentation.util.createSearchHighlightStyle
 import com.empathy.ai.presentation.viewmodel.ContactSelectViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -183,7 +180,6 @@ fun ContactSelectScreen(
                 else -> {
                     ContactList(
                         contacts = uiState.filteredContacts,
-                        highlightQuery = uiState.searchQuery,
                         onContactClick = { viewModel.selectContact(it.id) }
                     )
                 }
@@ -256,7 +252,6 @@ private fun SearchBar(
 @Composable
 private fun ContactList(
     contacts: List<ContactProfile>,
-    highlightQuery: String,
     onContactClick: (ContactProfile) -> Unit
 ) {
     LazyColumn(
@@ -268,8 +263,7 @@ private fun ContactList(
         ) { contact ->
             ContactListItem(
                 contact = contact,
-                onClick = { onContactClick(contact) },
-                highlightQuery = highlightQuery
+                onClick = { onContactClick(contact) }
             )
         }
     }
@@ -288,14 +282,9 @@ private fun ContactList(
 @Composable
 private fun ContactListItem(
     contact: ContactProfile,
-    onClick: () -> Unit,
-    highlightQuery: String
+    onClick: () -> Unit
 ) {
     val dimensions = AdaptiveDimensions.current
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isSystemInDarkTheme(),
-        baseColor = iOSBlue
-    )
     
     // 头像颜色方案
     val avatarColors = listOf(
@@ -346,11 +335,7 @@ private fun ContactListItem(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = buildHighlightedText(
-                                text = contact.name,
-                                query = highlightQuery,
-                                highlightStyle = highlightStyle
-                            ),
+                            text = contact.name,
                             fontSize = dimensions.fontSizeSubtitle,  // BUG-00055: 使用响应式字体
                             fontWeight = FontWeight.Medium,
                             color = iOSTextPrimary
@@ -373,11 +358,7 @@ private fun ContactListItem(
 
                 // 最后消息预览
                 Text(
-                    text = buildHighlightedText(
-                        text = contact.targetGoal.ifEmpty { "暂无消息" },
-                        query = highlightQuery,
-                        highlightStyle = highlightStyle
-                    ),
+                    text = contact.targetGoal.ifEmpty { "暂无消息" },
                     fontSize = dimensions.fontSizeCaption,  // BUG-00055: 使用响应式字体
                     color = iOSTextSecondary,
                     maxLines = 1,

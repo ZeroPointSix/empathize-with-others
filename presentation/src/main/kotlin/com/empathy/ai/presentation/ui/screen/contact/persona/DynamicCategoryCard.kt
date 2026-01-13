@@ -31,13 +31,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.model.FactCategory
 import com.empathy.ai.presentation.theme.toComposeColor
-import com.empathy.ai.presentation.util.buildHighlightedText
-import com.empathy.ai.presentation.util.createSearchHighlightStyle
 
 /**
  * 动态分类卡片
@@ -70,10 +69,6 @@ fun DynamicCategoryCard(
     modifier: Modifier = Modifier
 ) {
     val categoryColor = category.color.toComposeColor()
-    val highlightStyle = createSearchHighlightStyle(
-        isDarkTheme = isDarkMode,
-        baseColor = categoryColor.titleColor
-    )
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -105,11 +100,7 @@ fun DynamicCategoryCard(
 
                 // 分类名称
                 Text(
-                    text = buildHighlightedText(
-                        text = category.key,
-                        query = searchQuery,
-                        highlightStyle = highlightStyle
-                    ),
+                    text = category.key,
                     style = MaterialTheme.typography.titleMedium,
                     color = categoryColor.titleColor,
                     modifier = Modifier.weight(1f)
@@ -160,7 +151,6 @@ fun DynamicCategoryCard(
                             isSelected = selectedFactIds.contains(fact.id),
                             searchQuery = searchQuery,
                             categoryColor = categoryColor,
-                            highlightStyle = highlightStyle,
                             onClick = { onFactClick(fact.id) },
                             onLongClick = { onFactLongClick(fact.id) },
                             onToggleSelection = { onToggleFactSelection(fact.id) }
