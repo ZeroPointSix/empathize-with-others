@@ -3,6 +3,7 @@ package com.empathy.ai.presentation.ui.component.list
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,9 +33,12 @@ import androidx.compose.ui.unit.sp
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.presentation.theme.AvatarColors
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSSeparator
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
+import com.empathy.ai.presentation.util.buildHighlightedText
+import com.empathy.ai.presentation.util.createSearchHighlightStyle
 
 /**
  * 联系人列表项组件（微信风格）
@@ -56,10 +60,15 @@ fun ContactListItem(
     modifier: Modifier = Modifier,
     tagCount: Int = 0,
     showDivider: Boolean = true,
-    relativeTime: String? = null
+    relativeTime: String? = null,
+    highlightQuery: String = ""
 ) {
     val (backgroundColor, textColor) = AvatarColors.getColorPair(contact.name)
     val dividerColor = iOSSeparator
+    val highlightStyle = createSearchHighlightStyle(
+        isDarkTheme = isSystemInDarkTheme(),
+        baseColor = iOSBlue
+    )
 
     Row(
         modifier = modifier
@@ -110,7 +119,11 @@ fun ContactListItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = contact.name,
+                    text = buildHighlightedText(
+                        text = contact.name,
+                        query = highlightQuery,
+                        highlightStyle = highlightStyle
+                    ),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Normal,
                     color = iOSTextPrimary,
@@ -125,7 +138,11 @@ fun ContactListItem(
             // 第二行：目标描述
             if (contact.targetGoal.isNotBlank()) {
                 Text(
-                    text = contact.targetGoal,
+                    text = buildHighlightedText(
+                        text = contact.targetGoal,
+                        query = highlightQuery,
+                        highlightStyle = highlightStyle
+                    ),
                     fontSize = 14.sp,
                     color = iOSTextSecondary,
                     maxLines = 1,

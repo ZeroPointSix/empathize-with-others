@@ -102,11 +102,16 @@
 
 ## 自由探索经验
 
-### FREE-001: [待填写]
+### FREE-001: Android Library 单测过滤使用 testDebugUnitTest
 **来源**: free-explorer
-**日期**: 待填写
+**日期**: 2026-01-12
+**验证状态**: ✅ 已验证
 **经验**:
-[待填写]
+- `:presentation:test --tests` 在当前项目中不支持 `--tests` 参数
+- 使用 `:presentation:testDebugUnitTest --tests "com.empathy.ai.presentation.util.TextHighlightTest"` 可正确过滤单测
+- 首次执行可能超时，重试后可成功完成
+
+**相关报告**: 文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md
 
 ---
 
