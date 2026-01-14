@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -133,6 +134,7 @@ fun SettingsScreen(
     onAddClick: () -> Unit = {},
     currentRoute: String = NavRoutes.SETTINGS,
     showBottomBar: Boolean = true,
+    isVisible: Boolean = true,
     viewModel: SettingsViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -164,11 +166,20 @@ fun SettingsScreen(
     }
     
     // 监听权限请求标志，触发实际的权限请求Intent
-    LaunchedEffect(uiState.pendingPermissionRequest) {
+    // [BUG-00063修复] 增加可见性门控：不可见时不触发权限请求，避免隐藏Tab跳转系统设置
+    LaunchedEffect(uiState.pendingPermissionRequest, isVisible) {
+        if (!isVisible) {
+            // 清理待处理的权限请求，防止返回可见时意外触发
+            if (uiState.pendingPermissionRequest) {
+                viewModel.onEvent(SettingsUiEvent.PermissionRequestHandled)
+            }
+            return@LaunchedEffect
+        }
+
         if (uiState.pendingPermissionRequest) {
             // 标记已处理
             viewModel.onEvent(SettingsUiEvent.PermissionRequestHandled)
-            
+
             // 触发权限请求
             (context as? Activity)?.let { activity ->
                 try {
@@ -231,6 +242,8 @@ private fun SettingsScreenContent(
     promptScenes: List<PromptScene>,
     modifier: Modifier = Modifier
 ) {
+    val displayId = LocalView.current.display?.displayId
+
     Scaffold(
         modifier = modifier,
         containerColor = iOSBackground,
@@ -313,17 +326,37 @@ private fun SettingsScreenContent(
                         title = "启用悬浮窗",
                         subtitle = if (uiState.hasFloatingWindowPermission) null else "需要悬浮窗权限",
                         showArrow = false,
-                        showDivider = false,
+                        showDivider = true,
                         trailing = {
                             IOSSwitch(
                                 checked = uiState.floatingWindowEnabled,
-                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleFloatingWindow) },
+                                onCheckedChange = {
+                                    android.util.Log.d(
+                                        "SettingsScreen",
+                                        "ToggleFloatingWindow displayId=$displayId"
+                                    )
+                                    onEvent(SettingsUiEvent.ToggleFloatingWindow(displayId))
+                                },
                                 enabled = uiState.hasFloatingWindowPermission || !uiState.floatingWindowEnabled
                             )
                         },
                         onClick = if (!uiState.hasFloatingWindowPermission) {
                             { onEvent(SettingsUiEvent.ShowPermissionDialog) }
                         } else null
+                    )
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSBlue,
+                        title = "连续截屏",
+                        subtitle = "1.5秒内可继续框选",
+                        showArrow = false,
+                        showDivider = false,
+                        trailing = {
+                            IOSSwitch(
+                                checked = uiState.continuousScreenshotEnabled,
+                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleContinuousScreenshot) }
+                            )
+                        }
                     )
                 }
             }

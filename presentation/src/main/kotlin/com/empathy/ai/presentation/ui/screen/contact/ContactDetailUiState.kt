@@ -219,6 +219,11 @@ data class ContactDetailUiState(
      * 关系趋势
      */
     val relationshipTrend: RelationshipTrend = RelationshipTrend.STABLE,
+
+    /**
+     * 是否已完成首次加载（用于抑制初始错误闪现）
+     */
+    val hasLoadedContact: Boolean = false,
     
     /**
      * 最后互动日期

@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.AiModel
@@ -29,11 +30,13 @@ import com.empathy.ai.presentation.ui.component.ios.IOSLargeTitleBar
 import com.empathy.ai.presentation.ui.component.ios.IOSProviderCard
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsItem
 import com.empathy.ai.presentation.ui.component.ios.IOSSettingsSection
+import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 import com.empathy.ai.presentation.ui.component.state.FriendlyErrorCard
 import com.empathy.ai.presentation.ui.component.state.LoadingIndicatorFullScreen
 import com.empathy.ai.presentation.util.UserFriendlyError
 import com.empathy.ai.presentation.viewmodel.AiConfigViewModel
+import android.util.Log
 
 /**
  * AI 配置页面 (iOS风格重构)
@@ -68,15 +71,24 @@ fun AiConfigScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // 系统返回手势统一走同一返回逻辑，避免回退到联系人列表
+    BackHandler {
+        onNavigateBack()
+    }
+
     // 处理导航返回
+    // [调试日志] BUG-00063: 记录返回导航触发时机
     LaunchedEffect(uiState.shouldNavigateBack) {
+        Log.d("AiConfigScreen", "NavigateBack flag=${uiState.shouldNavigateBack}")
         if (uiState.shouldNavigateBack) {
             onNavigateBack()
         }
     }
 
     // TD-00025: 处理用量统计导航
+    // [调试日志] BUG-00063: 记录用量统计导航触发时机
     LaunchedEffect(uiState.shouldNavigateToUsageStats) {
+        Log.d("AiConfigScreen", "NavigateUsageStats flag=${uiState.shouldNavigateToUsageStats}")
         if (uiState.shouldNavigateToUsageStats) {
             viewModel.resetUsageStatsNavigationState()
             onNavigateToUsageStats?.invoke()
@@ -150,6 +162,14 @@ private fun AiConfigScreenContent(
                     onAction = null
                 )
             }
+            uiState.searchQuery.isNotBlank() && uiState.filteredProviders.isEmpty() -> {
+                EmptyView(
+                    message = "未找到匹配的服务商",
+                    actionText = null,
+                    onAction = null,
+                    emptyType = EmptyType.NoResults
+                )
+            }
             else -> {
                 ProviderListContent(
                     uiState = uiState,
@@ -190,6 +210,9 @@ private fun AiConfigScreenContent(
             },
             onSetDefaultModel = { modelId ->
                 onEvent(AiConfigUiEvent.SetFormDefaultModel(modelId))
+            },
+            onToggleModelImageSupport = { modelId, enabled ->
+                onEvent(AiConfigUiEvent.UpdateFormModelImageSupport(modelId, enabled))
             },
             onTestConnection = { onEvent(AiConfigUiEvent.TestConnection) },
             onSave = { onEvent(AiConfigUiEvent.SaveProvider) },
@@ -260,7 +283,8 @@ private fun ProviderListContent(
                             // 滑动删除
                             onEvent(AiConfigUiEvent.ShowDeleteConfirmDialog(provider.id))
                         },
-                        showDivider = index < providers.lastIndex
+                        showDivider = index < providers.lastIndex,
+                        highlightQuery = uiState.searchQuery
                     )
                 }
             }

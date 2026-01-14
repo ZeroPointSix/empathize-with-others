@@ -1,5 +1,6 @@
 package com.empathy.ai.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.repository.AiAdvisorPreferencesRepository
@@ -26,6 +27,7 @@ import javax.inject.Inject
  * - PRD-00029: AI军师UI架构优化需求
  * - TDD-00029: AI军师UI架构优化技术设计
  * - FD-00029: AI军师UI架构优化功能设计
+ * - BUG-00068: AI军师入口与设置回退及非Tab性能覆盖问题
  *
  * ## 导航决策逻辑
  * ```
@@ -36,8 +38,14 @@ import javax.inject.Inject
  *    - 不存在 → 清除偏好 → ContactSelect
  * ```
  *
+ * ## BUG-00068修复: Tab缓存场景下导航刷新
+ * 问题: AiAdvisorScreen被BottomNavScaffold缓存，二次进入不触发导航
+ * 方案: 新增refreshNavigationTarget()方法，在Tab可见时强制刷新
+ *
  * @see com.empathy.ai.presentation.ui.screen.advisor.AiAdvisorScreen
  */
+private const val TAG = "AiAdvisorEntryVM"
+
 @HiltViewModel
 class AiAdvisorEntryViewModel @Inject constructor(
     private val aiAdvisorPreferences: AiAdvisorPreferencesRepository,
@@ -59,10 +67,12 @@ class AiAdvisorEntryViewModel @Inject constructor(
      * - 无上次联系人记录或联系人不存在 → 导航到联系人选择页面
      */
     private fun checkNavigationTarget() {
+        Log.d(TAG, "checkNavigationTarget() start")
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
             val lastContactId = aiAdvisorPreferences.getLastContactId()
+            Log.d(TAG, "lastContactId=$lastContactId")
 
             if (lastContactId.isNullOrEmpty()) {
                 // 无历史记录，导航到联系人选择页面
@@ -72,10 +82,12 @@ class AiAdvisorEntryViewModel @Inject constructor(
                         navigationTarget = AiAdvisorNavigationTarget.ContactSelect
                     )
                 }
+                Log.d(TAG, "navigate -> ContactSelect (no last contact)")
             } else {
                 // 验证联系人是否存在
                 contactRepository.getProfile(lastContactId)
                     .onSuccess { contact ->
+                        Log.d(TAG, "getProfile success contactExists=${contact != null}")
                         if (contact != null) {
                             // 联系人存在，导航到对话界面
                             _uiState.update {
@@ -84,6 +96,7 @@ class AiAdvisorEntryViewModel @Inject constructor(
                                     navigationTarget = AiAdvisorNavigationTarget.Chat(lastContactId)
                                 )
                             }
+                            Log.d(TAG, "navigate -> Chat contactId=$lastContactId")
                         } else {
                             // 联系人不存在，清除偏好并导航到联系人选择页面
                             aiAdvisorPreferences.clear()
@@ -93,6 +106,7 @@ class AiAdvisorEntryViewModel @Inject constructor(
                                     navigationTarget = AiAdvisorNavigationTarget.ContactSelect
                                 )
                             }
+                            Log.d(TAG, "contact missing -> cleared prefs + ContactSelect")
                         }
                     }
                     .onFailure {
@@ -104,6 +118,7 @@ class AiAdvisorEntryViewModel @Inject constructor(
                                 navigationTarget = AiAdvisorNavigationTarget.ContactSelect
                             )
                         }
+                        Log.e(TAG, "getProfile failed, fallback ContactSelect", it)
                     }
             }
         }
@@ -114,6 +129,7 @@ class AiAdvisorEntryViewModel @Inject constructor(
      * 导航完成后调用，避免重复导航
      */
     fun resetNavigationState() {
+        Log.d(TAG, "resetNavigationState()")
         _uiState.update { it.copy(navigationTarget = null) }
     }
 
@@ -122,6 +138,7 @@ class AiAdvisorEntryViewModel @Inject constructor(
      * 用于Tab缓存场景下重新进入页面时刷新导航。
      */
     fun refreshNavigationTarget() {
+        Log.d(TAG, "refreshNavigationTarget()")
         checkNavigationTarget()
     }
 }

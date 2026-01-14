@@ -37,9 +37,11 @@ interface FloatingWindowManager {
     /**
      * 启动悬浮窗服务
      *
+     * @param displayId 可选的显示屏ID（多显示屏场景下用于指定目标显示屏）
+     *
      * @return ServiceStartResult 服务启动结果
      */
-    fun startService(): ServiceStartResult
+    fun startService(displayId: Int? = null): ServiceStartResult
 
     /**
      * 停止悬浮窗服务

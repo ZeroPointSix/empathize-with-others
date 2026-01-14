@@ -240,7 +240,7 @@ class ContactDetailTabViewModel @Inject constructor(
             Log.d(TAG, "========== loadContactDetail开始 ==========")
             Log.d(TAG, "contactId=$contactId")
             
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, error = null, hasLoadedContact = false) }
 
             try {
                 // 并行加载数据
@@ -286,6 +286,8 @@ class ContactDetailTabViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             contact = contact,
+                            error = null,
+                            hasLoadedContact = true,
                             summaries = summaries,
                             facts = contact?.facts ?: emptyList(),
                             timelineItems = timelineItems,
@@ -318,7 +320,8 @@ class ContactDetailTabViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = error.message ?: "加载联系人失败"
+                            error = error.message ?: "加载联系人失败",
+                            hasLoadedContact = true
                         )
                     }
                 }
@@ -326,7 +329,8 @@ class ContactDetailTabViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "加载失败"
+                        error = e.message ?: "加载失败",
+                        hasLoadedContact = true
                     )
                 }
             }

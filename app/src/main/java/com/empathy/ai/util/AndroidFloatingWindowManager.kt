@@ -60,7 +60,9 @@ class AndroidFloatingWindowManager @Inject constructor(
         return hasForegroundServicePermission()
     }
 
-    override fun startService(): FloatingWindowManager.ServiceStartResult {
+    override fun startService(
+        displayId: Int?
+    ): FloatingWindowManager.ServiceStartResult {
         return try {
             val permissionResult = hasPermission()
             if (permissionResult !is FloatingWindowManager.PermissionResult.Granted) {
@@ -69,7 +71,12 @@ class AndroidFloatingWindowManager @Inject constructor(
                 )
             }
 
-            val intent = Intent(context, FloatingWindowService::class.java)
+            Log.d(TAG, "启动悬浮窗服务，displayId=$displayId")
+            val intent = Intent(context, FloatingWindowService::class.java).apply {
+                if (displayId != null) {
+                    putExtra(FloatingWindowService.EXTRA_DISPLAY_ID, displayId)
+                }
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {

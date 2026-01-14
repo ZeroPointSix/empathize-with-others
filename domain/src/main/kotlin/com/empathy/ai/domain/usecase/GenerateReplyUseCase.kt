@@ -8,6 +8,7 @@ import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.ReplyResult
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
@@ -67,7 +68,8 @@ class GenerateReplyUseCase @Inject constructor(
      */
     suspend operator fun invoke(
         contactId: String,
-        theirMessage: String
+        theirMessage: String,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<ReplyResult> {
         return try {
             // 1. 前置检查
@@ -132,7 +134,8 @@ class GenerateReplyUseCase @Inject constructor(
             aiRepository.generateReply(
                 provider = defaultProvider,
                 message = prefixedMessage,
-                systemInstruction = systemInstruction
+                systemInstruction = systemInstruction,
+                attachments = attachments
             )
         } catch (e: Exception) {
             logger.e(TAG, "生成回复失败", e)

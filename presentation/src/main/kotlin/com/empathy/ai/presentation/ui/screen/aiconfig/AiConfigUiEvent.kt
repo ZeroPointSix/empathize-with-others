@@ -91,6 +91,17 @@ sealed interface AiConfigUiEvent {
      */
     data class ReorderFormModels(val fromIndex: Int, val toIndex: Int) : AiConfigUiEvent
 
+    /**
+     * 更新模型图片支持
+     *
+     * @param modelId 模型 ID
+     * @param supportsImage 是否支持图片理解
+     */
+    data class UpdateFormModelImageSupport(
+        val modelId: String,
+        val supportsImage: Boolean
+    ) : AiConfigUiEvent
+
     // === 服务商操作事件 ===
 
     /**
