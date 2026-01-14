@@ -1,6 +1,6 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-12 | 更新者: Codex (FREE-00007 BrainTag 返回行为一致性修复)
+> 最后更新: 2026-01-13 | 更新者: Codex (BUG-00070 悬浮球App内不显示修复)
 
 ## 📋 当前工作状态
 
@@ -25,6 +25,7 @@
 | CR-00001 | 代码变更审查（当前工作区） | Roo | 进行中 | P1 | 2026-01-11 09:41 | 2026-01-11 |
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-13 - **BUG-00070 悬浮球App内不显示修复** - Codex - 相关文档: [BUG-00070](文档/开发文档/BUG/BUG-00070-悬浮球App内不显示问题.md), [TE-00070](文档/开发文档/TE/TE-00070-悬浮球App内不显示测试用例.md)
 - [x] 2026-01-12 - **FREE-00007 BrainTag 返回行为一致性修复** - Codex
 - [x] 2026-01-12 - **FREE-00006 ModernPersonaTab 无结果关键词提示** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
 - [x] 2026-01-12 - **FREE-00005 ModernPersonaTab 搜索自动展开** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
@@ -206,13 +207,15 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 | SKILL | - | Multi-Agent Explorer 技能文档 | v2.0 | 2026-01-01 | Roo |
 | DR | DR-00024 | TDD-00024图标和版本号自动更新审查报告 | v1.0 | 2025-12-31 | Roo |
 | DR | DR-00024 | FD-00024图标和版本号自动更新审查报告 | v1.0 | 2025-12-31 | Roo |
+| BUG | BUG-00070 | 悬浮球App内不显示问题 | v1.0 | 2026-01-13 | Codex |
+| TE | TE-00070 | 悬浮球App内不显示测试用例 | v1.0 | 2026-01-13 | Codex |
 
 ---
 
 ## 🤖 AI 工具协作状态
 
 ### Codex (Free Explorer)
-- **最后活动**: 2026-01-12 - 完成 FREE-00006 ModernPersonaTab 无结果关键词提示
+- **最后活动**: 2026-01-13 - 完成 BUG-00070 悬浮球App内不显示修复  
 - **当前任务**: 无
 - **待处理**: UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
 
@@ -233,6 +236,22 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ---
 
 ## 📝 变更日志
+
+### 2026-01-13 - Codex (BUG-00070 悬浮球App内不显示修复)
+- 新增 BUG/TE 文档并补齐多显示屏 displayId 透传与恢复
+- 修改的文件列表：
+  - `domain/src/main/kotlin/com/empathy/ai/domain/util/FloatingWindowManager.kt`
+  - `app/src/main/java/com/empathy/ai/util/AndroidFloatingWindowManager.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/util/FloatingWindowManagerStub.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/settings/SettingsUiEvent.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/SettingsViewModel.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/settings/SettingsScreen.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/repository/FloatingWindowPreferencesRepository.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/local/FloatingWindowPreferences.kt`
+  - `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
+  - `app/src/main/java/com/empathy/ai/app/EmpathyApplication.kt`
+  - `文档/开发文档/BUG/BUG-00070-悬浮球App内不显示问题.md`
+  - `文档/开发文档/TE/TE-00070-悬浮球App内不显示测试用例.md`
 
 ### 2026-01-12 - Codex (FREE-00007 BrainTag 返回行为一致性修复)
 - 统一 BackHandler 与导航返回按钮逻辑，搜索栏开启时优先关闭搜索

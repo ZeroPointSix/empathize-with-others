@@ -2,6 +2,7 @@ package com.empathy.ai.app
 
 import android.app.Application
 import android.util.Log
+import android.view.Display
 import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.domain.usecase.SummarizeDailyConversationsUseCase
 import com.empathy.ai.domain.util.DataCleanupManager
@@ -9,6 +10,9 @@ import com.empathy.ai.domain.util.FloatingWindowManager
 import com.empathy.ai.domain.util.SystemPrompts
 import com.empathy.ai.util.AndroidFloatingWindowManager
 import dagger.hilt.android.HiltAndroidApp
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -96,7 +100,9 @@ class EmpathyApplication : Application() {
      * 使用 SupervisorJob 确保一个子任务失败不会影响其他任务。
      */
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    
+    private var lastForegroundDisplayId: Int? = null
+    private val isRebindingDisplay = java.util.concurrent.atomic.AtomicBoolean(false)
+
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Application onCreate 开始")
@@ -112,8 +118,49 @@ class EmpathyApplication : Application() {
             delay(STARTUP_DELAY_MS)
             initializeBackgroundTasks()
         }
-        
+
+        registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: android.app.Activity) {
+                lastForegroundDisplayId = activity.display?.displayId
+                Log.d(TAG, "记录前台displayId=$lastForegroundDisplayId")
+                if (lastForegroundDisplayId != null) {
+                    Log.d(TAG, "Activity前台，切换到displayId=$lastForegroundDisplayId")
+                    rebindFloatingWindowDisplay(lastForegroundDisplayId)
+                }
+            }
+
+            override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) = Unit
+            override fun onActivityStarted(activity: android.app.Activity) = Unit
+            override fun onActivityPaused(activity: android.app.Activity) = Unit
+            override fun onActivityStopped(activity: android.app.Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: android.app.Activity, outState: android.os.Bundle) = Unit
+            override fun onActivityDestroyed(activity: android.app.Activity) = Unit
+        })
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                val displayId = lastForegroundDisplayId
+                Log.d(TAG, "App前台(Process)，displayId=$displayId")
+                if (displayId != null) {
+                    rebindFloatingWindowDisplay(displayId)
+                }
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                Log.d(TAG, "App后台(Process)，切换到默认display")
+                rebindFloatingWindowDisplay(Display.DEFAULT_DISPLAY)
+            }
+        })
+
         Log.d(TAG, "Application onCreate 完成（后台任务将延迟执行）")
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level == TRIM_MEMORY_UI_HIDDEN) {
+            Log.d(TAG, "UI隐藏，切换到默认display")
+            rebindFloatingWindowDisplay(Display.DEFAULT_DISPLAY)
+        }
     }
     
     /**
@@ -262,7 +309,7 @@ class EmpathyApplication : Application() {
                 if (permissionResult is FloatingWindowManager.PermissionResult.Granted) {
                     // 有权限，启动服务
                     Log.d(TAG, "应用启动，检测到悬浮窗已启用，自动恢复服务")
-                    floatingWindowManager.startService()
+                    floatingWindowManager.startService(null)
                 } else {
                     // 权限丢失，重置状态以保持一致性
                     Log.w(TAG, "悬浮窗权限丢失，重置状态为关闭")
@@ -274,6 +321,27 @@ class EmpathyApplication : Application() {
         } catch (e: Exception) {
             // 恢复失败不应该导致应用崩溃
             Log.e(TAG, "恢复悬浮窗服务失败", e)
+        }
+    }
+
+    private fun rebindFloatingWindowDisplay(displayId: Int?) {
+        // 竞态条件保护：防止重复调用
+        if (!isRebindingDisplay.compareAndSet(false, true)) {
+            Log.d(TAG, "悬浮窗切换已在进行中，跳过重复请求")
+            return
+        }
+        applicationScope.launch {
+            try {
+                val prefs = floatingWindowPreferencesProvider.get()
+                if (!prefs.isEnabled()) return@launch
+
+                val manager = floatingWindowManagerProvider.get()
+                manager.startService(displayId)
+            } catch (e: Exception) {
+                Log.e(TAG, "切换悬浮窗显示屏失败", e)
+            } finally {
+                isRebindingDisplay.set(false)
+            }
         }
     }
 }

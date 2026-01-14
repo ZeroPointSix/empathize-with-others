@@ -96,7 +96,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsUiEvent.ShowClearDataDialog -> showClearDataDialog()
             is SettingsUiEvent.HideClearDataDialog -> hideClearDataDialog()
             is SettingsUiEvent.ClearAllData -> clearAllData()
-            is SettingsUiEvent.ToggleFloatingWindow -> toggleFloatingWindow()
+            is SettingsUiEvent.ToggleFloatingWindow -> toggleFloatingWindow(event.displayId)
             is SettingsUiEvent.ToggleContinuousScreenshot -> toggleContinuousScreenshot()
             is SettingsUiEvent.RequestFloatingWindowPermission -> requestFloatingWindowPermission()
             is SettingsUiEvent.PermissionRequestHandled -> clearPendingPermissionRequest()
@@ -416,25 +416,43 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun toggleFloatingWindow() {
+    private fun toggleFloatingWindow(displayId: Int?) {
         if (isProcessingFloatingWindowToggle) {
             android.util.Log.d("SettingsViewModel", "悬浮窗切换正在进行中，跳过")
             return
         }
-        
+
         val currentState = _uiState.value
-        
+
         if (!currentState.floatingWindowEnabled) {
             if (!currentState.hasFloatingWindowPermission) {
                 showPermissionDialog()
             } else {
-                startFloatingWindowService()
+                startFloatingWindowService(displayId)
             }
         } else {
             stopFloatingWindowService()
         }
     }
 
+    /**
+     * 加载悬浮窗状态并执行必要的恢复操作
+     *
+     * ## BUG-00070 修复说明
+     * 解决悬浮球在App内不显示的启动恢复问题。关键逻辑：
+     * 1. 从持久化读取悬浮窗启用状态
+     * 2. 检查悬浮窗权限是否仍然有效
+     * 3. 权限有效且服务未运行时，自动启动服务
+     * 4. 权限丢失时，重置本地状态避免假死
+     *
+     * ## 调用时机
+     * - 应用启动时 (init块)
+     * - 权限状态变更后 (checkFloatingWindowPermission)
+     *
+     * ## 注意事项
+     * - 使用 isProcessingFloatingWindowToggle 防止并发启动
+     * - 权限检查和服务状态检查双重保护
+     */
     private fun loadFloatingWindowState() {
         val state = floatingWindowPreferencesRepository.loadState()
         val continuousEnabled = floatingWindowPreferencesRepository.isContinuousScreenshotEnabled()
@@ -455,7 +473,7 @@ class SettingsViewModel @Inject constructor(
                     }
                     
                     android.util.Log.d("SettingsViewModel", "检测到悬浮窗状态为启用，自动恢复服务")
-                    startFloatingWindowService()
+                    startFloatingWindowService(null)
                 } else {
                     android.util.Log.w("SettingsViewModel", "悬浮窗权限丢失，重置状态")
                     floatingWindowPreferencesRepository.saveEnabled(false)
@@ -484,14 +502,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun startFloatingWindowService() {
+    private fun startFloatingWindowService(displayId: Int?) {
         isProcessingFloatingWindowToggle = true
-        
+
         viewModelScope.launch {
             try {
+                android.util.Log.d(
+                    "SettingsViewModel",
+                    "startFloatingWindowService displayId=$displayId"
+                )
                 _uiState.update { it.copy(isLoading = true, error = null) }
-                
-                val startResult = floatingWindowManager.startService()
+
+                val startResult = floatingWindowManager.startService(displayId)
                 
                 when (startResult) {
                     is FloatingWindowManager.ServiceStartResult.Success -> {

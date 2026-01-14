@@ -269,6 +269,20 @@ interface FloatingWindowPreferencesRepository {
      */
     fun shouldStartAsBubble(): Boolean
 
+    // ==================== 显示屏管理 ====================
+
+    /**
+     * 保存悬浮窗所在显示屏ID（多显示屏场景）
+     */
+    fun saveDisplayId(displayId: Int)
+
+    /**
+     * 获取悬浮窗所在显示屏ID
+     *
+     * @return 显示屏ID，不存在则返回null
+     */
+    fun getDisplayId(): Int?
+
     // ==================== 截图设置 ====================
 
     /**

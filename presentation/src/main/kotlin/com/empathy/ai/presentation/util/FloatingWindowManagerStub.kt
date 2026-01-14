@@ -34,7 +34,9 @@ object FloatingWindowManagerStub : FloatingWindowManager {
         return FloatingWindowManager.PermissionResult.Denied("FloatingWindowManager未初始化")
     }
 
-    override fun startService(): FloatingWindowManager.ServiceStartResult {
+    override fun startService(
+        displayId: Int?
+    ): FloatingWindowManager.ServiceStartResult {
         return FloatingWindowManager.ServiceStartResult.Error("FloatingWindowManager未初始化")
     }
 

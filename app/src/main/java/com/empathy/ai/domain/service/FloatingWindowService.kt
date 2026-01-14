@@ -1,6 +1,7 @@
 package com.empathy.ai.domain.service
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,10 +10,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.hardware.display.DisplayManager
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
+import android.view.Display
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -49,6 +52,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -112,6 +116,7 @@ class FloatingWindowService : Service() {
     lateinit var topicRepository: com.empathy.ai.domain.repository.TopicRepository
     
     private lateinit var windowManager: WindowManager
+    private var targetDisplayId: Int? = null
     private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
     private var floatingViewV2: FloatingViewV2? = null  // TD-00009: 新版View
     private var useNewUI: Boolean = true  // TD-00009: 是否使用新UI
@@ -139,6 +144,7 @@ class FloatingWindowService : Service() {
     private var screenshotCaptureHelper: ScreenshotCaptureHelper? = null
     private val screenshotAttachments = mutableListOf<ScreenshotAttachment>()
     private var screenshotFloatingWasVisible = false
+    private var displayMonitorJob: Job? = null
     
     /**
      * 服务创建时调用
@@ -147,7 +153,7 @@ class FloatingWindowService : Service() {
      */
     override fun onCreate() {
         super.onCreate()
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        updateWindowManagerForDisplay(null)
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         screenshotCaptureHelper = ScreenshotCaptureHelper(this)
         
@@ -169,7 +175,17 @@ class FloatingWindowService : Service() {
      * @return START_STICKY 确保服务被杀死后自动重启
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val requestedDisplayId = intent?.getIntExtra(EXTRA_DISPLAY_ID, Display.DEFAULT_DISPLAY)
+                                ?: Display.DEFAULT_DISPLAY
+
+        android.util.Log.d(
+            "FloatingWindowService",
+            "onStartCommand requestedDisplayId=$requestedDisplayId, hasExtra=${intent?.hasExtra(EXTRA_DISPLAY_ID)}"
+        )
+
         try {
+            startDisplayMonitor()
+
             // 处理通知点击事件
             if (intent?.action == ACTION_RESTORE_DIALOG) {
                 android.util.Log.d("FloatingWindowService", "收到恢复对话框请求")
@@ -181,14 +197,24 @@ class FloatingWindowService : Service() {
                 handleMediaProjectionResult(intent)
                 return START_STICKY
             }
-            
+
+            val hasViews = hasExistingViews()
+            if (requestedDisplayId != null && requestedDisplayId != targetDisplayId && hasViews) {
+                rebindToDisplay(requestedDisplayId)
+                return START_STICKY
+            }
+
+            if (!hasViews) {
+                updateWindowManagerForDisplay(requestedDisplayId)
+            }
+
             // 启动前台服务
             val notification = createNotification()
             startForeground(NOTIFICATION_ID, notification)
             android.util.Log.d("FloatingWindowService", "前台服务启动成功")
-            
+
             // BUG-00019修复：幂等性检查 - 如果视图已存在则跳过创建
-            if (hasExistingViews()) {
+            if (hasViews) {
                 android.util.Log.d("FloatingWindowService", "视图已存在，跳过创建（幂等性保护）")
                 return START_STICKY
             }
@@ -230,10 +256,152 @@ class FloatingWindowService : Service() {
         
         return START_STICKY
     }
-    
+
+    /**
+     * 更新WindowManager以绑定到指定显示屏
+     *
+     * ## BUG-00070 修复说明
+     * 解决悬浮球在App内不显示的问题。关键修复：
+     * 1. 使用 createDisplayContext(display) 获取正确的 DisplayContext
+     * 2. 从 DisplayContext 获取 WindowManager 而非全局服务
+     * 3. 持久化 displayId 以支持服务重启后的恢复
+     *
+     * ## 多显示屏支持
+     * - 支持 Android R (30) 及以上的外部显示屏
+     * - 显示屏不可用时自动回退到默认显示屏
+     * - 保存/恢复 displayId 保持显示偏好设置
+     *
+     * @param displayId 要绑定的显示屏ID，null表示使用默认显示屏
+     */
+    private fun updateWindowManagerForDisplay(displayId: Int?) {
+        val resolvedDisplayId = displayId ?: Display.DEFAULT_DISPLAY
+        android.util.Log.d(
+            "FloatingWindowService",
+            "updateWindowManagerForDisplay input=$displayId resolved=$resolvedDisplayId"
+        )
+
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val display = displayManager.getDisplay(resolvedDisplayId)
+        if (display == null) {
+            android.util.Log.w(
+                "FloatingWindowService",
+                "显示屏不存在，使用默认显示屏: $resolvedDisplayId"
+            )
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            targetDisplayId = Display.DEFAULT_DISPLAY
+            floatingWindowPreferences.saveDisplayId(Display.DEFAULT_DISPLAY)
+            return
+        }
+
+        val displayContext = createDisplayContext(display)
+        windowManager = displayContext.getSystemService(WINDOW_SERVICE) as WindowManager
+        targetDisplayId = resolvedDisplayId
+        floatingWindowPreferences.saveDisplayId(resolvedDisplayId)
+        android.util.Log.d(
+            "FloatingWindowService",
+            "已绑定显示屏: $resolvedDisplayId name=${display.name}"
+        )
+    }
+
+    /**
+     * 将悬浮窗重新绑定到目标显示屏
+     *
+     * ## 使用场景
+     * 当用户连接/断开外部显示屏时，悬浮窗需要迁移到新的WindowManager
+     *
+     * ## 处理步骤
+     * 1. 保存当前视图状态（气泡状态、对话框可见性）
+     * 2. 移除所有已存在的悬浮视图
+     * 3. 更新WindowManager绑定到新显示屏
+     * 4. 恢复视图状态（气泡、对话框）
+     *
+     * ## 状态保护
+     * - 有进行中的AI请求时，气泡保持LOADING状态
+     * - 对话框状态丢失时可从持久化恢复
+     *
+     * @param requestedDisplayId 目标显示屏ID
+     */
+    private fun rebindToDisplay(requestedDisplayId: Int) {
+        android.util.Log.d(
+            "FloatingWindowService",
+            "rebindToDisplay from=$targetDisplayId to=$requestedDisplayId"
+        )
+
+        val previousWindowManager = windowManager
+        val hadBubble = floatingBubbleView != null
+        val hadDialog = floatingViewV2?.visibility == View.VISIBLE || floatingView?.visibility == View.VISIBLE
+        val bubbleState = if (hasActiveAiRequest) {
+            FloatingBubbleState.LOADING
+        } else {
+            floatingWindowPreferences.getBubbleState()
+        }
+
+        try {
+            floatingBubbleView?.let { bubble ->
+                if (bubble.parent != null) {
+                    previousWindowManager.removeView(bubble)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧悬浮球失败", e)
+        }
+
+        try {
+            minimizedIndicatorV2?.let { indicator ->
+                if (indicator.parent != null) {
+                    previousWindowManager.removeView(indicator)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧最小化指示器失败", e)
+        }
+
+        try {
+            floatingViewV2?.let { view ->
+                if (view.parent != null) {
+                    previousWindowManager.removeView(view)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧FloatingViewV2失败", e)
+        }
+
+        try {
+            floatingView?.let { view ->
+                if (view.parent != null) {
+                    previousWindowManager.removeView(view)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧FloatingView失败", e)
+        }
+
+        updateWindowManagerForDisplay(requestedDisplayId)
+
+        if (hadBubble) {
+            floatingBubbleView?.cleanup()
+            floatingBubbleView = null
+            showFloatingBubble(bubbleState)
+            return
+        }
+
+        if (hadDialog) {
+            if (useNewUI) {
+                if (floatingViewV2 == null) {
+                    createAndShowFloatingViewV2()
+                } else {
+                    addFloatingViewV2ToWindow()
+                    floatingViewV2?.visibility = View.VISIBLE
+                }
+            } else {
+                showFloatingView()
+            }
+        }
+    }
+
     /**
      * 检查是否已有视图存在
-     * 
+     *
      * BUG-00019: 用于幂等性检查，避免重复创建视图
      * 
      * @return true 如果悬浮球或对话框视图已存在
@@ -372,9 +540,11 @@ class FloatingWindowService : Service() {
             android.util.Log.e("FloatingWindowService", "移除悬浮视图失败", e)
         }
         floatingView = null
-        
+
         try {
             // 取消所有协程
+            displayMonitorJob?.cancel()
+            displayMonitorJob = null
             serviceScope.cancel()
             android.util.Log.d("FloatingWindowService", "协程作用域已取消")
         } catch (e: Exception) {
@@ -3205,6 +3375,88 @@ class FloatingWindowService : Service() {
         floatingWindowPreferences.clearMinimizeState()
     }
 
+    private fun startDisplayMonitor() {
+        displayMonitorJob?.cancel()
+        displayMonitorJob = serviceScope.launch {
+            val activityManager = getSystemService(ACTIVITY_SERVICE) as? ActivityManager
+            if (activityManager == null) {
+                android.util.Log.w("FloatingWindowService", "心跳检测初始化失败: 无法获取ActivityManager")
+                return@launch
+            }
+
+            // 安全异常计数，用于重试逻辑
+            var securityExceptionCount = 0
+            val maxSecurityExceptionRetries = 3
+
+            while (isActive) {
+                try {
+                    val topPackage = getForegroundAppPackage(activityManager)
+                    val boundDisplay = targetDisplayId
+                    val shouldSwitchToDefault =
+                        topPackage != packageName && boundDisplay != null && boundDisplay != Display.DEFAULT_DISPLAY
+
+                    if (shouldSwitchToDefault) {
+                        android.util.Log.d(
+                            "FloatingWindowService",
+                            "心跳检测: 前台app=$topPackage，当前绑定=$boundDisplay，切回默认display"
+                        )
+                        rebindToDisplay(Display.DEFAULT_DISPLAY)
+                    }
+
+                    // 成功时重置安全异常计数
+                    securityExceptionCount = 0
+                } catch (se: SecurityException) {
+                    securityExceptionCount++
+                    if (securityExceptionCount >= maxSecurityExceptionRetries) {
+                        android.util.Log.w("FloatingWindowService", "心跳检测连续失败 $maxSecurityExceptionRetries 次，停止检测")
+                        break
+                    }
+                    android.util.Log.w("FloatingWindowService", "心跳检测权限异常，第 $securityExceptionCount 次，重试...")
+                    delay(DISPLAY_MONITOR_INTERVAL_MS)
+                } catch (e: Exception) {
+                    android.util.Log.w("FloatingWindowService", "心跳检测异常", e)
+                }
+
+                delay(DISPLAY_MONITOR_INTERVAL_MS)
+            }
+        }
+    }
+
+    /**
+     * 获取前台应用包名
+     *
+     * 兼容处理不同 API 级别的心跳检测方案：
+     * - API 29+: getRunningTasks() 受限，返回 null（无法检测前台应用）
+     * - API 21-28: 使用 getRunningTasks 获取前台任务
+     *
+     * @param activityManager ActivityManager 实例
+     * @return 前台应用包名，如果无法获取则返回 null
+     */
+    @Suppress("DEPRECATION")
+    private fun getForegroundAppPackage(activityManager: ActivityManager): String? {
+        // API 29+ getRunningTasks() 始终返回空列表，无法获取前台应用
+        // 这是 Android 的隐私限制，只能降级处理
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            android.util.Log.d(
+                "FloatingWindowService",
+                "心跳检测: API ${Build.VERSION.SDK_INT}，getRunningTasks() 受限，跳过前台应用检测"
+            )
+            return null
+        }
+
+        // API 21-28: 使用已废弃的 getRunningTasks
+        return try {
+            val tasks = activityManager.getRunningTasks(1)
+            tasks.firstOrNull()?.topActivity?.packageName
+        } catch (se: SecurityException) {
+            android.util.Log.w("FloatingWindowService", "获取前台任务权限失败", se)
+            null
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "获取前台任务异常", e)
+            null
+        }
+    }
+
     // ==================== 【TD-00016】对话主题功能 ====================
     
     /**
@@ -3458,6 +3710,11 @@ class FloatingWindowService : Service() {
         const val ACTION_RESTORE_DIALOG = "com.empathy.ai.ACTION_RESTORE_DIALOG"
 
         /**
+         * 目标显示屏ID
+         */
+        const val EXTRA_DISPLAY_ID = "extra_display_id"
+
+        /**
          * 截图权限回调 Action
          */
         const val ACTION_MEDIA_PROJECTION_RESULT = "com.empathy.ai.ACTION_MEDIA_PROJECTION_RESULT"
@@ -3523,6 +3780,16 @@ class FloatingWindowService : Service() {
          * 单次消息最多附件数
          */
         private const val SCREENSHOT_MAX_ATTACHMENTS = 5
+
+        /**
+         * 无效显示屏ID
+         */
+        private const val INVALID_DISPLAY_ID = -1
+
+        /**
+         * 显示监测心跳间隔（毫秒）
+         */
+        private const val DISPLAY_MONITOR_INTERVAL_MS = 2000L
     }
 }
   
