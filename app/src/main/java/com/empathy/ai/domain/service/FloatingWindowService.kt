@@ -1,13 +1,21 @@
 package com.empathy.ai.domain.service
 
+import android.app.Activity
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.graphics.Rect
+import android.hardware.display.DisplayManager
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
+import android.view.Display
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -19,6 +27,7 @@ import com.empathy.ai.domain.model.FloatingBubbleState
 import com.empathy.ai.domain.model.FloatingWindowError
 import com.empathy.ai.domain.model.FloatingWindowUiState
 import com.empathy.ai.domain.model.RefinementRequest
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.domain.repository.ContactRepository
 import com.empathy.ai.domain.usecase.AnalyzeChatUseCase
 import com.empathy.ai.domain.usecase.CheckDraftUseCase
@@ -28,16 +37,22 @@ import com.empathy.ai.domain.usecase.RefinementUseCase
 import com.empathy.ai.domain.util.ErrorHandler
 import com.empathy.ai.domain.util.FloatingView
 import com.empathy.ai.domain.util.FloatingViewDebugLogger
+import com.empathy.ai.domain.util.ScreenshotCaptureHelper
+import com.empathy.ai.domain.util.ScreenshotOverlayView
 import com.empathy.ai.notification.AiResultNotificationManager
 import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.presentation.ui.floating.FloatingBubbleView
 import com.empathy.ai.presentation.ui.floating.FloatingViewV2
+import com.empathy.ai.ui.ScreenshotPermissionActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -101,6 +116,7 @@ class FloatingWindowService : Service() {
     lateinit var topicRepository: com.empathy.ai.domain.repository.TopicRepository
     
     private lateinit var windowManager: WindowManager
+    private var targetDisplayId: Int? = null
     private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
     private var floatingViewV2: FloatingViewV2? = null  // TD-00009: 新版View
     private var useNewUI: Boolean = true  // TD-00009: 是否使用新UI
@@ -119,6 +135,16 @@ class FloatingWindowService : Service() {
     
     // 清理任务（用于取消定时清理）
     private var cleanupJob: kotlinx.coroutines.Job? = null
+
+    // 截图相关
+    private var screenshotOverlayView: ScreenshotOverlayView? = null
+    private var screenshotTimeoutJob: Job? = null
+    private var mediaProjection: MediaProjection? = null
+    private var mediaProjectionManager: MediaProjectionManager? = null
+    private var screenshotCaptureHelper: ScreenshotCaptureHelper? = null
+    private val screenshotAttachments = mutableListOf<ScreenshotAttachment>()
+    private var screenshotFloatingWasVisible = false
+    private var displayMonitorJob: Job? = null
     
     /**
      * 服务创建时调用
@@ -127,7 +153,9 @@ class FloatingWindowService : Service() {
      */
     override fun onCreate() {
         super.onCreate()
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        updateWindowManagerForDisplay(null)
+        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        screenshotCaptureHelper = ScreenshotCaptureHelper(this)
         
         // 启动性能监控
         performanceMonitor = com.empathy.ai.domain.util.PerformanceMonitor(this)
@@ -147,21 +175,46 @@ class FloatingWindowService : Service() {
      * @return START_STICKY 确保服务被杀死后自动重启
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val requestedDisplayId = intent?.getIntExtra(EXTRA_DISPLAY_ID, Display.DEFAULT_DISPLAY)
+                                ?: Display.DEFAULT_DISPLAY
+
+        android.util.Log.d(
+            "FloatingWindowService",
+            "onStartCommand requestedDisplayId=$requestedDisplayId, hasExtra=${intent?.hasExtra(EXTRA_DISPLAY_ID)}"
+        )
+
         try {
+            startDisplayMonitor()
+
             // 处理通知点击事件
             if (intent?.action == ACTION_RESTORE_DIALOG) {
                 android.util.Log.d("FloatingWindowService", "收到恢复对话框请求")
                 restoreFromMinimized()
                 return START_STICKY
             }
-            
+
+            if (intent?.action == ACTION_MEDIA_PROJECTION_RESULT) {
+                handleMediaProjectionResult(intent)
+                return START_STICKY
+            }
+
+            val hasViews = hasExistingViews()
+            if (requestedDisplayId != null && requestedDisplayId != targetDisplayId && hasViews) {
+                rebindToDisplay(requestedDisplayId)
+                return START_STICKY
+            }
+
+            if (!hasViews) {
+                updateWindowManagerForDisplay(requestedDisplayId)
+            }
+
             // 启动前台服务
             val notification = createNotification()
             startForeground(NOTIFICATION_ID, notification)
             android.util.Log.d("FloatingWindowService", "前台服务启动成功")
-            
+
             // BUG-00019修复：幂等性检查 - 如果视图已存在则跳过创建
-            if (hasExistingViews()) {
+            if (hasViews) {
                 android.util.Log.d("FloatingWindowService", "视图已存在，跳过创建（幂等性保护）")
                 return START_STICKY
             }
@@ -203,10 +256,152 @@ class FloatingWindowService : Service() {
         
         return START_STICKY
     }
-    
+
+    /**
+     * 更新WindowManager以绑定到指定显示屏
+     *
+     * ## BUG-00070 修复说明
+     * 解决悬浮球在App内不显示的问题。关键修复：
+     * 1. 使用 createDisplayContext(display) 获取正确的 DisplayContext
+     * 2. 从 DisplayContext 获取 WindowManager 而非全局服务
+     * 3. 持久化 displayId 以支持服务重启后的恢复
+     *
+     * ## 多显示屏支持
+     * - 支持 Android R (30) 及以上的外部显示屏
+     * - 显示屏不可用时自动回退到默认显示屏
+     * - 保存/恢复 displayId 保持显示偏好设置
+     *
+     * @param displayId 要绑定的显示屏ID，null表示使用默认显示屏
+     */
+    private fun updateWindowManagerForDisplay(displayId: Int?) {
+        val resolvedDisplayId = displayId ?: Display.DEFAULT_DISPLAY
+        android.util.Log.d(
+            "FloatingWindowService",
+            "updateWindowManagerForDisplay input=$displayId resolved=$resolvedDisplayId"
+        )
+
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val display = displayManager.getDisplay(resolvedDisplayId)
+        if (display == null) {
+            android.util.Log.w(
+                "FloatingWindowService",
+                "显示屏不存在，使用默认显示屏: $resolvedDisplayId"
+            )
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            targetDisplayId = Display.DEFAULT_DISPLAY
+            floatingWindowPreferences.saveDisplayId(Display.DEFAULT_DISPLAY)
+            return
+        }
+
+        val displayContext = createDisplayContext(display)
+        windowManager = displayContext.getSystemService(WINDOW_SERVICE) as WindowManager
+        targetDisplayId = resolvedDisplayId
+        floatingWindowPreferences.saveDisplayId(resolvedDisplayId)
+        android.util.Log.d(
+            "FloatingWindowService",
+            "已绑定显示屏: $resolvedDisplayId name=${display.name}"
+        )
+    }
+
+    /**
+     * 将悬浮窗重新绑定到目标显示屏
+     *
+     * ## 使用场景
+     * 当用户连接/断开外部显示屏时，悬浮窗需要迁移到新的WindowManager
+     *
+     * ## 处理步骤
+     * 1. 保存当前视图状态（气泡状态、对话框可见性）
+     * 2. 移除所有已存在的悬浮视图
+     * 3. 更新WindowManager绑定到新显示屏
+     * 4. 恢复视图状态（气泡、对话框）
+     *
+     * ## 状态保护
+     * - 有进行中的AI请求时，气泡保持LOADING状态
+     * - 对话框状态丢失时可从持久化恢复
+     *
+     * @param requestedDisplayId 目标显示屏ID
+     */
+    private fun rebindToDisplay(requestedDisplayId: Int) {
+        android.util.Log.d(
+            "FloatingWindowService",
+            "rebindToDisplay from=$targetDisplayId to=$requestedDisplayId"
+        )
+
+        val previousWindowManager = windowManager
+        val hadBubble = floatingBubbleView != null
+        val hadDialog = floatingViewV2?.visibility == View.VISIBLE || floatingView?.visibility == View.VISIBLE
+        val bubbleState = if (hasActiveAiRequest) {
+            FloatingBubbleState.LOADING
+        } else {
+            floatingWindowPreferences.getBubbleState()
+        }
+
+        try {
+            floatingBubbleView?.let { bubble ->
+                if (bubble.parent != null) {
+                    previousWindowManager.removeView(bubble)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧悬浮球失败", e)
+        }
+
+        try {
+            minimizedIndicatorV2?.let { indicator ->
+                if (indicator.parent != null) {
+                    previousWindowManager.removeView(indicator)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧最小化指示器失败", e)
+        }
+
+        try {
+            floatingViewV2?.let { view ->
+                if (view.parent != null) {
+                    previousWindowManager.removeView(view)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧FloatingViewV2失败", e)
+        }
+
+        try {
+            floatingView?.let { view ->
+                if (view.parent != null) {
+                    previousWindowManager.removeView(view)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "移除旧FloatingView失败", e)
+        }
+
+        updateWindowManagerForDisplay(requestedDisplayId)
+
+        if (hadBubble) {
+            floatingBubbleView?.cleanup()
+            floatingBubbleView = null
+            showFloatingBubble(bubbleState)
+            return
+        }
+
+        if (hadDialog) {
+            if (useNewUI) {
+                if (floatingViewV2 == null) {
+                    createAndShowFloatingViewV2()
+                } else {
+                    addFloatingViewV2ToWindow()
+                    floatingViewV2?.visibility = View.VISIBLE
+                }
+            } else {
+                showFloatingView()
+            }
+        }
+    }
+
     /**
      * 检查是否已有视图存在
-     * 
+     *
      * BUG-00019: 用于幂等性检查，避免重复创建视图
      * 
      * @return true 如果悬浮球或对话框视图已存在
@@ -261,6 +456,16 @@ class FloatingWindowService : Service() {
             android.util.Log.d("FloatingWindowService", "清理任务已取消")
         } catch (e: Exception) {
             android.util.Log.e("FloatingWindowService", "取消清理任务失败", e)
+        }
+
+        try {
+            cancelScreenshotTimeout()
+            hideScreenshotOverlay()
+            screenshotOverlayView = null
+            releaseMediaProjection()
+            clearScreenshotAttachments()
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "清理截图资源失败", e)
         }
         
         try {
@@ -335,9 +540,11 @@ class FloatingWindowService : Service() {
             android.util.Log.e("FloatingWindowService", "移除悬浮视图失败", e)
         }
         floatingView = null
-        
+
         try {
             // 取消所有协程
+            displayMonitorJob?.cancel()
+            displayMonitorJob = null
             serviceScope.cancel()
             android.util.Log.d("FloatingWindowService", "协程作用域已取消")
         } catch (e: Exception) {
@@ -1967,6 +2174,14 @@ class FloatingWindowService : Service() {
                 android.util.Log.d("FloatingWindowService", "收到最小化回调，准备调用minimizeFloatingViewV2()")
                 minimizeFloatingViewV2()
             }
+
+            setOnScreenshotClickListener {
+                startScreenshotFlow()
+            }
+
+            setOnScreenshotDeleteListener { attachmentId ->
+                removeScreenshotAttachment(attachmentId)
+            }
             
             // 【TD-00016】主题设置按钮点击回调
             setOnTopicClickListener {
@@ -1994,6 +2209,7 @@ class FloatingWindowService : Service() {
             currentUiState = savedState
             floatingViewV2?.restoreState(savedState)
         }
+        updateScreenshotAttachmentsUi()
 
         // 配置布局参数
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -2196,6 +2412,216 @@ class FloatingWindowService : Service() {
         }
     }
 
+    // ==================== 截图功能 ====================
+    //
+    // PRD-00036/FD-00036:
+    // - 入口位于悬浮窗，触发后隐藏悬浮窗 → 展示全屏半透明遮罩 → 拖拽框选 → 松手截图 → 插入输入框缩略图列表。
+    // - 连续截屏默认关闭；开启后遮罩保留 1.5s 允许再次拖拽追加（最多 5 张），超时自动退出。
+
+    private fun startScreenshotFlow() {
+        if (mediaProjection == null) {
+            requestMediaProjectionPermission()
+            return
+        }
+        beginScreenshotSession()
+    }
+
+    private fun requestMediaProjectionPermission() {
+        try {
+            val intent = Intent(this, ScreenshotPermissionActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "无法发起截图权限请求", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun handleMediaProjectionResult(intent: Intent) {
+        val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
+        val data = intent.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            android.widget.Toast.makeText(this, "未授予截图权限", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            mediaProjection?.stop()
+        } catch (_: Exception) {
+        }
+        mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
+        if (mediaProjection == null) {
+            android.widget.Toast.makeText(this, "截图权限初始化失败", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        beginScreenshotSession()
+    }
+
+    private fun beginScreenshotSession() {
+        screenshotFloatingWasVisible = floatingViewV2?.visibility == View.VISIBLE
+        floatingViewV2?.visibility = View.GONE
+        showScreenshotOverlay()
+    }
+
+    private fun showScreenshotOverlay() {
+        val overlay = screenshotOverlayView ?: ScreenshotOverlayView(this).also { view ->
+            view.onSelectionStart = { cancelScreenshotTimeout() }
+            view.onSelectionComplete = { rect -> captureSelection(rect) }
+            screenshotOverlayView = view
+        }
+        overlay.hintText = if (floatingWindowPreferences.isContinuousScreenshotEnabled()) {
+            getString(R.string.screenshot_hint_continue)
+        } else {
+            null
+        }
+        overlay.clearSelection()
+        if (overlay.parent == null) {
+            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE
+            }
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+            }
+            windowManager.addView(overlay, params)
+        }
+    }
+
+    private fun hideScreenshotOverlay() {
+        screenshotOverlayView?.let { overlay ->
+            if (overlay.parent != null) {
+                windowManager.removeView(overlay)
+            }
+        }
+    }
+
+    private fun captureSelection(rect: Rect) {
+        hideScreenshotOverlay()
+        serviceScope.launch {
+            val projection = mediaProjection
+            if (projection == null) {
+                endScreenshotSession()
+                return@launch
+            }
+            delay(SCREENSHOT_CAPTURE_DELAY_MS)
+            val helper = screenshotCaptureHelper ?: ScreenshotCaptureHelper(this@FloatingWindowService)
+            val attachment = helper.captureRegion(projection, rect)
+            if (attachment != null) {
+                addScreenshotAttachment(attachment)
+            } else {
+                android.widget.Toast.makeText(
+                    this@FloatingWindowService,
+                    "截图失败，请重试",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            if (floatingWindowPreferences.isContinuousScreenshotEnabled()) {
+                showScreenshotOverlay()
+                scheduleScreenshotTimeout()
+            } else {
+                endScreenshotSession()
+            }
+        }
+    }
+
+    private fun scheduleScreenshotTimeout() {
+        cancelScreenshotTimeout()
+        screenshotTimeoutJob = serviceScope.launch {
+            delay(SCREENSHOT_CONTINUOUS_WINDOW_MS)
+            endScreenshotSession()
+        }
+    }
+
+    private fun cancelScreenshotTimeout() {
+        screenshotTimeoutJob?.cancel()
+        screenshotTimeoutJob = null
+    }
+
+    private fun endScreenshotSession() {
+        cancelScreenshotTimeout()
+        hideScreenshotOverlay()
+        restoreFloatingViewAfterScreenshot()
+        releaseMediaProjection()
+    }
+
+    private fun restoreFloatingViewAfterScreenshot() {
+        if (screenshotFloatingWasVisible) {
+            floatingViewV2?.visibility = View.VISIBLE
+        }
+        screenshotFloatingWasVisible = false
+    }
+
+    private fun releaseMediaProjection() {
+        try {
+            mediaProjection?.stop()
+        } catch (_: Exception) {
+        }
+        mediaProjection = null
+    }
+
+    private fun addScreenshotAttachment(attachment: ScreenshotAttachment) {
+        if (screenshotAttachments.size >= SCREENSHOT_MAX_ATTACHMENTS) {
+            screenshotCaptureHelper?.deleteAttachment(attachment)
+            android.widget.Toast.makeText(
+                this,
+                "截图已达上限，已忽略本次截图",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        screenshotAttachments.add(attachment)
+        updateScreenshotAttachmentsUi()
+    }
+
+    private fun removeScreenshotAttachment(attachmentId: String) {
+        val iterator = screenshotAttachments.iterator()
+        while (iterator.hasNext()) {
+            val attachment = iterator.next()
+            if (attachment.id == attachmentId) {
+                screenshotCaptureHelper?.deleteAttachment(attachment)
+                iterator.remove()
+                break
+            }
+        }
+        updateScreenshotAttachmentsUi()
+    }
+
+    private fun clearScreenshotAttachments() {
+        screenshotAttachments.forEach { attachment ->
+            screenshotCaptureHelper?.deleteAttachment(attachment)
+        }
+        screenshotAttachments.clear()
+        updateScreenshotAttachmentsUi()
+    }
+
+    private fun updateScreenshotAttachmentsUi() {
+        floatingViewV2?.setScreenshotAttachments(screenshotAttachments.toList())
+    }
+
+    private suspend fun getAttachmentsForSend(): List<ScreenshotAttachment> {
+        if (screenshotAttachments.isEmpty()) return emptyList()
+        val provider = aiProviderRepository.getDefaultProvider().getOrNull()
+        val supportsImage = provider?.getDefaultModel()?.supportsImage == true
+        if (!supportsImage) {
+            android.widget.Toast.makeText(
+                this,
+                "当前模型不支持图片理解，已仅发送文字内容",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return emptyList()
+        }
+        return screenshotAttachments.toList()
+    }
+
     /**
      * 处理新版分析请求
      * 
@@ -2210,8 +2636,9 @@ class FloatingWindowService : Service() {
         serviceScope.launch {
             try {
                 val timeoutMs = getAiTimeout()
+                val attachments = getAttachmentsForSend()
                 val result = withTimeout(timeoutMs) {
-                    analyzeChatUseCase(contactId, listOf(text))
+                    analyzeChatUseCase(contactId, listOf(text), attachments)
                 }
                 
                 result.fold(
@@ -2219,6 +2646,9 @@ class FloatingWindowService : Service() {
                         val aiResult = AiResult.Analysis(analysisResult)
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        if (attachments.isNotEmpty()) {
+                            clearScreenshotAttachments()
+                        }
                         // TD-00010: 标记AI请求成功
                         onAiRequestCompleted(ActionType.ANALYZE)
                     },
@@ -2254,8 +2684,9 @@ class FloatingWindowService : Service() {
         serviceScope.launch {
             try {
                 val timeoutMs = getAiTimeout()
+                val attachments = getAttachmentsForSend()
                 val result = withTimeout(timeoutMs) {
-                    polishDraftUseCase(contactId, text)
+                    polishDraftUseCase(contactId, text, attachments)
                 }
                 
                 result.fold(
@@ -2263,6 +2694,9 @@ class FloatingWindowService : Service() {
                         val aiResult = AiResult.Polish(polishResult)
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        if (attachments.isNotEmpty()) {
+                            clearScreenshotAttachments()
+                        }
                         // TD-00010: 标记AI请求成功
                         onAiRequestCompleted(ActionType.POLISH)
                     },
@@ -2298,8 +2732,9 @@ class FloatingWindowService : Service() {
         serviceScope.launch {
             try {
                 val timeoutMs = getAiTimeout()
+                val attachments = getAttachmentsForSend()
                 val result = withTimeout(timeoutMs) {
-                    generateReplyUseCase(contactId, text)
+                    generateReplyUseCase(contactId, text, attachments)
                 }
                 
                 result.fold(
@@ -2307,6 +2742,9 @@ class FloatingWindowService : Service() {
                         val aiResult = AiResult.Reply(replyResult)
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
+                        if (attachments.isNotEmpty()) {
+                            clearScreenshotAttachments()
+                        }
                         // TD-00010: 标记AI请求成功
                         onAiRequestCompleted(ActionType.REPLY)
                     },
@@ -2620,6 +3058,7 @@ class FloatingWindowService : Service() {
             
             // 恢复状态
             restoreFloatingViewV2State()
+            updateScreenshotAttachmentsUi()
             
             // 添加到窗口
             addFloatingViewV2ToWindow()
@@ -2687,6 +3126,14 @@ class FloatingWindowService : Service() {
             setOnMinimizeListener {
                 android.util.Log.d("FloatingWindowService", "收到最小化回调")
                 minimizeFloatingViewV2()
+            }
+
+            setOnScreenshotClickListener {
+                startScreenshotFlow()
+            }
+
+            setOnScreenshotDeleteListener { attachmentId ->
+                removeScreenshotAttachment(attachmentId)
             }
             
             // 【TD-00016】主题设置按钮点击回调
@@ -2926,6 +3373,88 @@ class FloatingWindowService : Service() {
 
         // 清除最小化状态
         floatingWindowPreferences.clearMinimizeState()
+    }
+
+    private fun startDisplayMonitor() {
+        displayMonitorJob?.cancel()
+        displayMonitorJob = serviceScope.launch {
+            val activityManager = getSystemService(ACTIVITY_SERVICE) as? ActivityManager
+            if (activityManager == null) {
+                android.util.Log.w("FloatingWindowService", "心跳检测初始化失败: 无法获取ActivityManager")
+                return@launch
+            }
+
+            // 安全异常计数，用于重试逻辑
+            var securityExceptionCount = 0
+            val maxSecurityExceptionRetries = 3
+
+            while (isActive) {
+                try {
+                    val topPackage = getForegroundAppPackage(activityManager)
+                    val boundDisplay = targetDisplayId
+                    val shouldSwitchToDefault =
+                        topPackage != packageName && boundDisplay != null && boundDisplay != Display.DEFAULT_DISPLAY
+
+                    if (shouldSwitchToDefault) {
+                        android.util.Log.d(
+                            "FloatingWindowService",
+                            "心跳检测: 前台app=$topPackage，当前绑定=$boundDisplay，切回默认display"
+                        )
+                        rebindToDisplay(Display.DEFAULT_DISPLAY)
+                    }
+
+                    // 成功时重置安全异常计数
+                    securityExceptionCount = 0
+                } catch (se: SecurityException) {
+                    securityExceptionCount++
+                    if (securityExceptionCount >= maxSecurityExceptionRetries) {
+                        android.util.Log.w("FloatingWindowService", "心跳检测连续失败 $maxSecurityExceptionRetries 次，停止检测")
+                        break
+                    }
+                    android.util.Log.w("FloatingWindowService", "心跳检测权限异常，第 $securityExceptionCount 次，重试...")
+                    delay(DISPLAY_MONITOR_INTERVAL_MS)
+                } catch (e: Exception) {
+                    android.util.Log.w("FloatingWindowService", "心跳检测异常", e)
+                }
+
+                delay(DISPLAY_MONITOR_INTERVAL_MS)
+            }
+        }
+    }
+
+    /**
+     * 获取前台应用包名
+     *
+     * 兼容处理不同 API 级别的心跳检测方案：
+     * - API 29+: getRunningTasks() 受限，返回 null（无法检测前台应用）
+     * - API 21-28: 使用 getRunningTasks 获取前台任务
+     *
+     * @param activityManager ActivityManager 实例
+     * @return 前台应用包名，如果无法获取则返回 null
+     */
+    @Suppress("DEPRECATION")
+    private fun getForegroundAppPackage(activityManager: ActivityManager): String? {
+        // API 29+ getRunningTasks() 始终返回空列表，无法获取前台应用
+        // 这是 Android 的隐私限制，只能降级处理
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            android.util.Log.d(
+                "FloatingWindowService",
+                "心跳检测: API ${Build.VERSION.SDK_INT}，getRunningTasks() 受限，跳过前台应用检测"
+            )
+            return null
+        }
+
+        // API 21-28: 使用已废弃的 getRunningTasks
+        return try {
+            val tasks = activityManager.getRunningTasks(1)
+            tasks.firstOrNull()?.topActivity?.packageName
+        } catch (se: SecurityException) {
+            android.util.Log.w("FloatingWindowService", "获取前台任务权限失败", se)
+            null
+        } catch (e: Exception) {
+            android.util.Log.w("FloatingWindowService", "获取前台任务异常", e)
+            null
+        }
     }
 
     // ==================== 【TD-00016】对话主题功能 ====================
@@ -3179,6 +3708,26 @@ class FloatingWindowService : Service() {
          * 恢复对话框的 Action
          */
         const val ACTION_RESTORE_DIALOG = "com.empathy.ai.ACTION_RESTORE_DIALOG"
+
+        /**
+         * 目标显示屏ID
+         */
+        const val EXTRA_DISPLAY_ID = "extra_display_id"
+
+        /**
+         * 截图权限回调 Action
+         */
+        const val ACTION_MEDIA_PROJECTION_RESULT = "com.empathy.ai.ACTION_MEDIA_PROJECTION_RESULT"
+
+        /**
+         * 截图授权结果码
+         */
+        const val EXTRA_RESULT_CODE = "extra_result_code"
+
+        /**
+         * 截图授权数据
+         */
+        const val EXTRA_RESULT_DATA = "extra_result_data"
         
         /**
          * 操作超时时间（毫秒）
@@ -3216,6 +3765,31 @@ class FloatingWindowService : Service() {
          * 根据需求 8.4，已完成的指示器在 10 分钟后自动清理
          */
         private const val CLEANUP_DELAY_MS = 10 * 60 * 1000L // 10 分钟
+
+        /**
+         * 截图前等待遮罩隐藏的延迟
+         */
+        private const val SCREENSHOT_CAPTURE_DELAY_MS = 100L
+
+        /**
+         * 连续截图等待窗口（毫秒）
+         */
+        private const val SCREENSHOT_CONTINUOUS_WINDOW_MS = 1500L
+
+        /**
+         * 单次消息最多附件数
+         */
+        private const val SCREENSHOT_MAX_ATTACHMENTS = 5
+
+        /**
+         * 无效显示屏ID
+         */
+        private const val INVALID_DISPLAY_ID = -1
+
+        /**
+         * 显示监测心跳间隔（毫秒）
+         */
+        private const val DISPLAY_MONITOR_INTERVAL_MS = 2000L
     }
 }
   

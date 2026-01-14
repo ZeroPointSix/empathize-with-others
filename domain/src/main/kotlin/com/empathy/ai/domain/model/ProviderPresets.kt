@@ -30,11 +30,13 @@ object ProviderPresets {
             models = listOf(
                 AiModel(
                     id = "gpt-4",
-                    displayName = "GPT-4"
+                    displayName = "GPT-4",
+                    supportsImage = true
                 ),
                 AiModel(
                     id = "gpt-4-turbo",
-                    displayName = "GPT-4 Turbo"
+                    displayName = "GPT-4 Turbo",
+                    supportsImage = true
                 )
             ),
             defaultModelId = "gpt-4-turbo",
@@ -59,7 +61,8 @@ object ProviderPresets {
             models = listOf(
                 AiModel(
                     id = "gpt-3.5-turbo",
-                    displayName = "GPT-3.5 Turbo"
+                    displayName = "GPT-3.5 Turbo",
+                    supportsImage = true
                 )
             ),
             defaultModelId = "gpt-3.5-turbo",
@@ -84,11 +87,13 @@ object ProviderPresets {
             models = listOf(
                 AiModel(
                     id = "gemini-pro",
-                    displayName = "Gemini Pro"
+                    displayName = "Gemini Pro",
+                    supportsImage = true
                 ),
                 AiModel(
                     id = "gemini-1.5-pro",
-                    displayName = "Gemini 1.5 Pro"
+                    displayName = "Gemini 1.5 Pro",
+                    supportsImage = true
                 )
             ),
             defaultModelId = "gemini-1.5-pro",
@@ -113,11 +118,13 @@ object ProviderPresets {
             models = listOf(
                 AiModel(
                     id = "deepseek-chat",
-                    displayName = "DeepSeek Chat"
+                    displayName = "DeepSeek Chat",
+                    supportsImage = true
                 ),
                 AiModel(
                     id = "deepseek-coder",
-                    displayName = "DeepSeek Coder"
+                    displayName = "DeepSeek Coder",
+                    supportsImage = true
                 )
             ),
             defaultModelId = "deepseek-chat",
@@ -154,7 +161,8 @@ object ProviderPresets {
             models = listOf(
                 AiModel(
                     id = modelId,
-                    displayName = modelName
+                    displayName = modelName,
+                    supportsImage = true
                 )
             ),
             defaultModelId = modelId,

@@ -1,5 +1,26 @@
 package com.empathy.ai.data.repository
 
+import com.empathy.ai.data.local.ApiKeyStorage
+import com.empathy.ai.data.local.ProxyPreferences
+import com.empathy.ai.data.local.dao.AiProviderDao
+import com.empathy.ai.domain.model.AiModel
+import com.empathy.ai.domain.model.AiProvider
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
 /**
  * AiProviderRepository 线程调度测试
  *
@@ -25,6 +46,7 @@ class AiProviderRepositoryThreadingTest {
 
     private lateinit var dao: AiProviderDao
     private lateinit var apiKeyStorage: ApiKeyStorage
+    private lateinit var proxyPreferences: ProxyPreferences
     private lateinit var moshi: Moshi
     private lateinit var repository: AiProviderRepositoryImpl
 
@@ -43,11 +65,12 @@ class AiProviderRepositoryThreadingTest {
         
         dao = mockk(relaxed = true)
         apiKeyStorage = mockk(relaxed = true)
+        proxyPreferences = mockk(relaxed = true)
         moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
         
-        repository = AiProviderRepositoryImpl(dao, apiKeyStorage, moshi)
+        repository = AiProviderRepositoryImpl(dao, apiKeyStorage, proxyPreferences, moshi)
     }
 
     @After

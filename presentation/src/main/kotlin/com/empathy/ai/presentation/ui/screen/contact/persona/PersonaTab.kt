@@ -3,6 +3,7 @@ package com.empathy.ai.presentation.ui.screen.contact.persona
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,6 +70,8 @@ import com.empathy.ai.presentation.ui.component.persona.InferredTag
 import com.empathy.ai.presentation.ui.component.persona.ModernFloatingSearchBar
 import com.empathy.ai.presentation.ui.component.state.EmptyType
 import com.empathy.ai.presentation.ui.component.state.EmptyView
+import com.empathy.ai.presentation.util.buildHighlightedText
+import com.empathy.ai.presentation.util.createSearchHighlightStyle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -104,6 +108,10 @@ fun PersonaTab(
 ) {
     // 使用响应式尺寸
     val dimensions = AdaptiveDimensions.current
+    val highlightStyle = createSearchHighlightStyle(
+        isDarkTheme = isSystemInDarkTheme(),
+        baseColor = iOSBlue
+    )
     
     // 🆕 使用 rememberSaveable 持久化搜索关键词（配置变更时保持）
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -258,6 +266,8 @@ fun PersonaTab(
                             categoryName = category,
                             facts = categoryFacts,
                             isExpanded = category in expandedCategories,
+                            searchQuery = searchQuery,
+                            highlightStyle = highlightStyle,
                             onToggle = {
                                 expandedCategories = if (category in expandedCategories) {
                                     expandedCategories - category
@@ -292,6 +302,8 @@ private fun SimpleCategoryCard(
     categoryName: String,
     facts: List<Fact>,
     isExpanded: Boolean,
+    searchQuery: String,
+    highlightStyle: SpanStyle,
     onToggle: () -> Unit,
     onFactClick: (Fact) -> Unit,
     onFactLongClick: (Fact) -> Unit,
@@ -335,7 +347,11 @@ private fun SimpleCategoryCard(
                 
                 // 分类名 - 使用响应式字体
                 Text(
-                    text = categoryName,
+                    text = buildHighlightedText(
+                        text = categoryName,
+                        query = searchQuery,
+                        highlightStyle = highlightStyle
+                    ),
                     fontSize = dimensions.fontSizeSubtitle,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black,
@@ -373,7 +389,9 @@ private fun SimpleCategoryCard(
                             text = fact.value,
                             color = categoryColor,
                             onClick = { onFactClick(fact) },
-                            onLongClick = { onFactLongClick(fact) }
+                            onLongClick = { onFactLongClick(fact) },
+                            highlightQuery = searchQuery,
+                            highlightStyle = highlightStyle
                         )
                     }
                 }
@@ -396,6 +414,8 @@ private fun SimpleTagChip(
     color: Color,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    highlightQuery: String,
+    highlightStyle: SpanStyle,
     modifier: Modifier = Modifier
 ) {
     // 使用响应式尺寸
@@ -412,7 +432,11 @@ private fun SimpleTagChip(
         color = color.copy(alpha = 0.12f)
     ) {
         Text(
-            text = text,
+            text = buildHighlightedText(
+                text = text,
+                query = highlightQuery,
+                highlightStyle = highlightStyle
+            ),
             fontSize = dimensions.fontSizeBody,
             color = color.copy(alpha = 0.9f),
             fontWeight = FontWeight.Medium,

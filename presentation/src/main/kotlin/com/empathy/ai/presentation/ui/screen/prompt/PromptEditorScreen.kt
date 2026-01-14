@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FormatListBulleted
@@ -77,6 +78,11 @@ fun PromptEditorScreen(
     viewModel: PromptEditorViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 系统返回手势按“取消编辑”逻辑处理（包含未保存确认）
+    BackHandler {
+        viewModel.onEvent(PromptEditorUiEvent.CancelEdit)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.result.collect { result ->

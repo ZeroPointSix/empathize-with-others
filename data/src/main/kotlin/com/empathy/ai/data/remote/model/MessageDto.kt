@@ -39,7 +39,7 @@ import com.squareup.moshi.JsonClass
  * ```
  *
  * @property role 角色: "system" | "user" | "assistant"
- * @property content 消息内容
+ * @property content 消息内容（文本或多模态内容列表）
  *
  * 示例:
  * ```json
@@ -55,5 +55,11 @@ data class MessageDto(
     val role: String,
 
     @Json(name = "content")
-    val content: String
-)
+    val content: Any
+) {
+    companion object {
+        fun text(role: String, content: String): MessageDto = MessageDto(role, content)
+        fun multimodal(role: String, parts: List<MessageContentPartDto>): MessageDto =
+            MessageDto(role, parts)
+    }
+}

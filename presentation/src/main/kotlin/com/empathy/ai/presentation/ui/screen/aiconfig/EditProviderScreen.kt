@@ -228,6 +228,10 @@ private fun EditProviderScreenContent(
                             displayName = model.displayName,
                             isDefault = model.id == uiState.formDefaultModelId,
                             onClick = { onEvent(AiConfigUiEvent.SetFormDefaultModel(model.id)) },
+                            supportsImage = model.supportsImage,
+                            onSupportsImageChange = { enabled ->
+                                onEvent(AiConfigUiEvent.UpdateFormModelImageSupport(model.id, enabled))
+                            },
                             showDivider = index < uiState.formModels.lastIndex,
                             // BUG-00038 P3修复：添加排序功能
                             onMoveUp = if (index > 0) {

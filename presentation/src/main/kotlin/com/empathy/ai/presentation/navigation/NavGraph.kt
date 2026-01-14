@@ -1,5 +1,6 @@
 package com.empathy.ai.presentation.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -9,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -104,7 +106,8 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     includeTabScreens: Boolean = true,
-    useTransition: Boolean = true
+    useTransition: Boolean = true,
+    onAiAdvisorChatClosed: () -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -258,18 +261,29 @@ fun NavGraph(
             if (includeTabScreens) {
                 AiAdvisorScreen(
                     onNavigateToChat = { contactId ->
-                        // BUG-00068修复: 使用CONTACT_LIST作为稳定锚点，避免回退栈残留旧会话
-                        // popUpTo(CONTACT_LIST)确保返回时能正确回到联系人Tab
-                        // saveState=true保持Tab页面状态，避免重建
+                        // BUG-00068修复: 使用AI_ADVISOR作为popUpTo锚点
+                        // 原设计: popUpTo(CONTACT_LIST) 会导致跨Tab回退，破坏返回语义
+                        // 问题: 从设置Tab进入AI军师后返回会回到联系人而非设置
+                        // 方案: popUpTo(AI_ADVISOR) 保持AI军师子栈独立，由MainActivity统一处理Tab恢复
+                        Log.d(
+                            "AiAdvisorNav",
+                            "NavGraph onNavigateToChat contactId=$contactId current=${navController.currentBackStackEntry?.destination?.route}"
+                        )
+                        val popAnchorRoute = navController.aiAdvisorPopAnchor()
                         navController.navigate(NavRoutes.aiAdvisorChat(contactId)) {
-                            popUpTo(NavRoutes.CONTACT_LIST) { saveState = true }
+                            popUpTo(popAnchorRoute) { saveState = true }
                             launchSingleTop = true
                         }
                     },
                     onNavigateToContactSelect = {
-                        // BUG-00068修复: 同样使用CONTACT_LIST锚点，保持返回一致性
+                        // BUG-00068修复: 同样使用AI_ADVISOR锚点，保持子栈独立性
+                        Log.d(
+                            "AiAdvisorNav",
+                            "NavGraph onNavigateToContactSelect current=${navController.currentBackStackEntry?.destination?.route}"
+                        )
+                        val popAnchorRoute = navController.aiAdvisorPopAnchor()
                         navController.navigate(NavRoutes.AI_ADVISOR_CONTACTS) {
-                            popUpTo(NavRoutes.CONTACT_LIST) { saveState = true }
+                            popUpTo(popAnchorRoute) { saveState = true }
                             launchSingleTop = true
                         }
                     }
@@ -307,7 +321,25 @@ fun NavGraph(
             AiAdvisorChatScreen(
                 createNew = createNew,  // BUG-00058: 传递createNew参数
                 sessionId = sessionId,  // BUG-00061: 传递sessionId参数
-                onNavigateBack = { navController.navigateUp() },
+                onNavigateBack = {
+                    // BUG-00069修复: 优先按照自然返回栈返回，避免强制跳转导致二次返回
+                    // 原设计: 直接 popBackStack(CONTACT_LIST) 导致从AI军师返回时跳过入口页
+                    // 问题: 破坏了导航栈层次，用户体验混乱
+                    // 方案: 先尝试navigateUp()自然返回，失败时fallback到CONTACT_LIST
+                    val currentRoute = navController.currentBackStackEntry?.destination?.route
+                    Log.d("AiAdvisorNav", "ChatBack pressed current=$currentRoute")
+                    val popped = navController.navigateUp()
+                    Log.d("AiAdvisorNav", "ChatBack navigateUp result=$popped")
+                    if (!popped) {
+                        navController.popBackStack(NavRoutes.CONTACT_LIST, false)
+                        Log.w(
+                            "AiAdvisorNav",
+                            "ChatBack fallback to CONTACT_LIST due to empty stack"
+                        )
+                    }
+                    // BUG-00069: 通知MainActivity恢复上一个非AI Tab
+                    onAiAdvisorChatClosed()
+                },
                 onNavigateToContact = { newContactId ->
                     navController.navigate(NavRoutes.aiAdvisorChat(newContactId)) {
                         popUpTo(NavRoutes.AI_ADVISOR_CHAT) { inclusive = true }
@@ -476,7 +508,15 @@ fun NavGraph(
             val contactId = backStackEntry.arguments?.getString(NavRoutes.CONTACT_DETAIL_TAB_ARG_ID) ?: ""
             ContactDetailTabScreen(
                 contactId = contactId,
-                onNavigateBack = { navController.navigateUp() },
+                onNavigateBack = {
+                    val popped = navController.popBackStack(NavRoutes.CONTACT_LIST, false)
+                    if (!popped) {
+                        navController.navigate(NavRoutes.CONTACT_LIST) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
                 onNavigateToPromptEditor = { route ->
                     navController.navigate(route) {
                         launchSingleTop = true
@@ -543,6 +583,25 @@ fun NavGraph(
                 onNavigateBack = { navController.navigateUp() }
             )
         }
+    }
+}
+
+// 辅助函数: AI军师相关页面在非Tab导航栈中可能没有AI_ADVISOR锚点
+// 若锚点不存在，回退至CONTACT_LIST避免清空根栈导致无法返回
+internal fun NavController.aiAdvisorPopAnchor(): String {
+    return if (hasBackStackRoute(NavRoutes.AI_ADVISOR)) {
+        NavRoutes.AI_ADVISOR
+    } else {
+        NavRoutes.CONTACT_LIST
+    }
+}
+
+internal fun NavController.hasBackStackRoute(route: String): Boolean {
+    return try {
+        getBackStackEntry(route)
+        true
+    } catch (_: IllegalArgumentException) {
+        false
     }
 }
 

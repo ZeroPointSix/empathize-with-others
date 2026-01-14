@@ -5,6 +5,7 @@ import com.empathy.ai.domain.model.PromptContext
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.model.SafetyCheckResult
 import com.empathy.ai.domain.model.TagType
+import com.empathy.ai.domain.model.ScreenshotAttachment
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
@@ -66,7 +67,8 @@ class CheckDraftUseCase @Inject constructor(
     suspend operator fun invoke(
         contactId: String,
         draftSnapshot: String,
-        enableDeepCheck: Boolean = false
+        enableDeepCheck: Boolean = false,
+        attachments: List<ScreenshotAttachment> = emptyList()
     ): Result<SafetyCheckResult> {
         return try {
             // 读取本地优先模式设置
@@ -155,7 +157,8 @@ class CheckDraftUseCase @Inject constructor(
                     provider = defaultProvider,
                     draft = prefixedDraft,  // 使用带前缀的内容
                     riskRules = riskRules,
-                    systemInstruction = systemInstruction
+                    systemInstruction = systemInstruction,
+                    attachments = attachments
                 ).getOrThrow()
 
                 return Result.success(deepCheckResult)

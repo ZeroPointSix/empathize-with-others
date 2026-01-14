@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ContactProfile
@@ -114,6 +115,10 @@ fun ContactDetailTabScreen(
     val summaryUiState by manualSummaryViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    BackHandler {
+        onNavigateBack()
+    }
+
     // 加载联系人数据
     LaunchedEffect(contactId) {
         viewModel.loadContactDetail(contactId)
@@ -128,10 +133,12 @@ fun ContactDetailTabScreen(
     }
 
     // 显示错误消息
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let { error ->
+    LaunchedEffect(uiState.error, uiState.isLoading, uiState.hasLoadedContact) {
+        if (uiState.hasLoadedContact && !uiState.isLoading) {
+            uiState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
             viewModel.onEvent(ContactDetailUiEvent.ClearError)
+            }
         }
     }
 
@@ -226,7 +233,10 @@ private fun ContactDetailTabScreenContent(
                 uiState.isLoading -> {
                     LoadingIndicatorFullScreen(message = "加载联系人信息...")
                 }
-                uiState.error != null && uiState.contact == null -> {
+                !uiState.hasLoadedContact -> {
+                    LoadingIndicatorFullScreen(message = "加载联系人信息...")
+                }
+                uiState.error != null && uiState.contact == null && uiState.hasLoadedContact && !uiState.isLoading -> {
                     ErrorView(
                         message = uiState.error,
                         onRetry = { onEvent(ContactDetailUiEvent.RefreshData) }
@@ -256,7 +266,7 @@ private fun ContactDetailTabScreenContent(
                         )
                     }
                 }
-                else -> {
+                uiState.hasLoadedContact -> {
                     // 空状态
                     ErrorView(
                         message = "未找到联系人",

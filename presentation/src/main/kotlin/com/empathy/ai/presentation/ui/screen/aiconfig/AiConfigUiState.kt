@@ -167,7 +167,8 @@ data class AiConfigUiState(
  */
 data class FormModel(
     val id: String,
-    val displayName: String = ""
+    val displayName: String = "",
+    val supportsImage: Boolean = false
 )
 
 /**

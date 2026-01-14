@@ -127,7 +127,7 @@ class ContactListViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(isLoading = true, error = null) }
+                _uiState.update { it.copy(isLoading = true, error = null, hasLoadedContacts = false) }
 
                 // 收集联系人数据流
                 getAllContactsUseCase().collect { contacts ->
@@ -136,7 +136,9 @@ class ContactListViewModel @Inject constructor(
                             isLoading = false,
                             contacts = contacts,
                             filteredContacts = contacts,
-                            hasMore = contacts.size >= currentState.pageSize
+                            hasMore = contacts.size >= currentState.pageSize,
+                            hasLoadedContacts = true,
+                            error = null
                         )
                     }
                     isInitialized = true
@@ -145,7 +147,8 @@ class ContactListViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "加载联系人失败"
+                        error = e.message ?: "加载联系人失败",
+                        hasLoadedContacts = true
                     )
                 }
             }

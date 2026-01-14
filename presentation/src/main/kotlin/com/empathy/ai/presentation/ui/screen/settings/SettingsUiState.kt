@@ -40,6 +40,7 @@ import com.empathy.ai.domain.model.AiProvider
  * @property appVersion 应用版本号
  * @property floatingWindowEnabled 悬浮窗是否启用
  * @property hasFloatingWindowPermission 悬浮窗权限是否已获取
+ * @property continuousScreenshotEnabled 连续截屏是否启用
  * @property showProviderDialog 是否显示服务商选择对话框
  * @property showClearDataDialog 是否显示清除数据确认对话框
  * @property showPermissionDialog 是否显示悬浮窗权限请求对话框
@@ -74,6 +75,7 @@ data class SettingsUiState(
     // 悬浮窗设置
     val floatingWindowEnabled: Boolean = false,
     val hasFloatingWindowPermission: Boolean = false,
+    val continuousScreenshotEnabled: Boolean = false,
 
     // 交互状态
     val showProviderDialog: Boolean = false,

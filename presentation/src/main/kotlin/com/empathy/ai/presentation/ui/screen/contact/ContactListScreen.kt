@@ -171,7 +171,7 @@ private fun ContactListScreenContent(
                 uiState.isLoading -> {
                     ContactListSkeleton()
                 }
-                uiState.error != null -> {
+                uiState.error != null && uiState.hasLoadedContacts -> {
                     FriendlyErrorCard(
                         error = UserFriendlyError(
                             title = "出错了",
@@ -439,7 +439,8 @@ private fun SearchModeContent(
                                     ContactListItem(
                                         contact = contact,
                                         onClick = { onContactClick(contact.id) },
-                                        showDivider = index < searchResults.size - 1
+                                        showDivider = index < searchResults.size - 1,
+                                        highlightQuery = searchQuery
                                     )
                                 }
                             }
