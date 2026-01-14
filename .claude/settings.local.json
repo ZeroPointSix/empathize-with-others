@@ -59,7 +59,9 @@
       "Skill(debug)",
       "Skill(test)",
       "Bash(timeout:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(cmd:*)"
     ],
     "deny": [],
     "ask": []

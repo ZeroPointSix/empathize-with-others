@@ -66,7 +66,7 @@ sealed interface SettingsUiEvent {
     /**
      * 切换悬浮窗功能
      */
-    data object ToggleFloatingWindow : SettingsUiEvent
+    data class ToggleFloatingWindow(val displayId: Int?) : SettingsUiEvent
 
     /**
      * 切换连续截屏

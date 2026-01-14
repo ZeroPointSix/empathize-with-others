@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -241,6 +242,8 @@ private fun SettingsScreenContent(
     promptScenes: List<PromptScene>,
     modifier: Modifier = Modifier
 ) {
+    val displayId = LocalView.current.display?.displayId
+
     Scaffold(
         modifier = modifier,
         containerColor = iOSBackground,
@@ -327,7 +330,13 @@ private fun SettingsScreenContent(
                         trailing = {
                             IOSSwitch(
                                 checked = uiState.floatingWindowEnabled,
-                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleFloatingWindow) },
+                                onCheckedChange = {
+                                    android.util.Log.d(
+                                        "SettingsScreen",
+                                        "ToggleFloatingWindow displayId=$displayId"
+                                    )
+                                    onEvent(SettingsUiEvent.ToggleFloatingWindow(displayId))
+                                },
                                 enabled = uiState.hasFloatingWindowPermission || !uiState.floatingWindowEnabled
                             )
                         },

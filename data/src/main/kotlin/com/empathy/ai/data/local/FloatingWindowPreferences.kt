@@ -254,6 +254,15 @@ class FloatingWindowPreferences @Inject constructor(
 
     override fun shouldStartAsBubble(): Boolean = getDisplayMode() == DISPLAY_MODE_BUBBLE
 
+    override fun saveDisplayId(displayId: Int) {
+        prefs.edit { putInt(KEY_DISPLAY_ID, displayId) }
+    }
+
+    override fun getDisplayId(): Int? {
+        val savedId = prefs.getInt(KEY_DISPLAY_ID, INVALID_POSITION)
+        return if (savedId == INVALID_POSITION) null else savedId
+    }
+
     override fun saveContinuousScreenshotEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_CONTINUOUS_SCREENSHOT_ENABLED, enabled) }
     }
@@ -281,6 +290,7 @@ class FloatingWindowPreferences @Inject constructor(
         private const val KEY_MINIMIZE_TIMESTAMP = "minimize_timestamp"
         private const val KEY_MINIMIZE_REQUEST_INFO = "minimize_request_info"
         private const val KEY_DISPLAY_MODE = "display_mode"
+        private const val KEY_DISPLAY_ID = "display_id"
         private const val KEY_CONTINUOUS_SCREENSHOT_ENABLED = "continuous_screenshot_enabled"
         private const val MINIMIZE_VALIDITY_PERIOD = 10 * 60 * 1000L
         const val DISPLAY_MODE_BUBBLE = "BUBBLE"

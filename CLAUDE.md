@@ -6,9 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **共情AI助手 (Empathy AI)** - Android 智能社交沟通辅助应用。
 - **架构**: Clean Architecture + MVVM + Jetpack Compose
-- **语言**: Kotlin 2.0+ (K2 Compiler)
+- **语言**: Kotlin 2.0.21 (K2 Compiler)
+- **核心依赖**:
+    - AGP 8.7.3 / Compose BOM 2024.12.01 / Hilt 2.52
+    - Room 2.6.1 / Retrofit 2.11.0 / Coroutines 1.9.0
 - **原则**: 零后端 (Zero-Backend)、BYOK (Bring Your Own Key)、隐私优先
-- **状态**: v1.1.0 (Dev), Room v16
+- **状态**: v1.1.0 (Dev)
 
 ## 常用开发命令
 
@@ -55,6 +58,17 @@ scripts\quick-error.bat            # 获取最近 ERROR (一次性)
 # AI 功能调试
 scripts\ai-debug.bat               # 实时监听 AI 请求/响应 (简略)
 scripts\ai-debug-full.bat          # 完整 AI 日志 (含 Prompt)
+
+### Kiro 快速命令 (`.kiro/commands/`)
+```bash
+/kiro QuickBuild    # 快速构建
+/kiro QuickTest     # 快速测试
+/kiro GenTest       # 生成测试用例
+/kiro CodeReview    # 代码审查
+/kiro DocReview     # 文档审查
+/kiro Research      # 深度研究
+/kiro Ask           # 需求澄清
+/git                # Git 智能操作
 ```
 
 ## 架构与代码结构
@@ -106,6 +120,12 @@ Rules/            -> 开发规范与多 Agent 协作规则
 
 ## 多 Agent 协作
 
--   **规范**: 参考 `Rules/` 目录下的文档。
+**重要**: 开始任务前**必须**先读取 `WORKSPACE.md` 检查是否有冲突任务。
+
+-   **Agent 角色**:
+    -   **Roo**: 代码审查 (Review)
+    -   **Kiro**: 代码开发与调试
+    -   **Claude**: 功能设计与文档编写
+-   **规范**: 参考 `Rules/` 目录下的文档，特别是 `Rules/workspace-rules.md`。
 -   **文档**: 功能规格在 `.kiro/specs/`，Bug 修复文档在 `文档/开发文档/BUG/`。
 -   **任务**: 复杂任务请先阅读 `.kiro/steering/quick-start.md`。
