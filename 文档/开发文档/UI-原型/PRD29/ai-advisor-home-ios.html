@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI军师 - 主页 (Gemini布局 + iOS风格)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+      background: #F2F2F7;
+      overflow-x: hidden;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .ios-search { background: rgba(142, 142, 147, 0.12); border-radius: 10px; }
+    .ios-card-group { background: white; border-radius: 10px; }
+    .ios-list-item { transition: background 0.15s ease; }
+    .ios-list-item:active { background: rgba(0, 0, 0, 0.05); }
+    .content-card {
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.2s ease;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .content-card:active { transform: scale(0.97); }
+    .section-title {
+      color: #8E8E93;
+      font-size: 13px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .avatar-indigo { background: #E8EAF6; color: #5C6BC0; }
+    .avatar-blue { background: #E3F2FD; color: #42A5F5; }
+    .avatar-rose { background: #FCE4EC; color: #EC407A; }
+    .avatar-emerald { background: #E8F5E9; color: #66BB6A; }
+    .avatar-cyan { background: #E0F7FA; color: #26C6DA; }
+  </style>
+</head>
+<body>
+  <div class="w-full min-h-full bg-[#F2F2F7] flex flex-col">
+    
+    <!-- 顶部栏 -->
+    <div class="flex items-center justify-between px-4 pt-12 pb-2 bg-[#F2F2F7]">
+      <button class="w-10 h-10 flex items-center justify-center -ml-2">
+        <span class="material-symbols-outlined text-[#007AFF] text-[24px]">menu</span>
+      </button>
+      <h1 class="text-[17px] font-semibold text-slate-900">AI 军师</h1>
+      <button class="w-10 h-10 flex items-center justify-center -mr-2">
+        <span class="material-symbols-outlined text-[#007AFF] text-[24px]">search</span>
+      </button>
+    </div>
+
+    <!-- 1. 搜索锚点区 -->
+    <div class="px-4 py-2 bg-[#F2F2F7]">
+      <div class="ios-search flex items-center gap-2 px-3 py-2">
+        <span class="material-symbols-outlined text-[#8E8E93] text-[20px]">search</span>
+        <input type="text" placeholder="搜索对话" 
+          class="flex-1 bg-transparent text-[15px] text-slate-900 placeholder:text-[#8E8E93] border-none focus:ring-0 focus:outline-none"/>
+      </div>
+    </div>
+
+    <!-- 2. 核心操作区 -->
+    <div class="px-4 py-3 flex items-center justify-between">
+      <button class="flex items-center gap-2 py-2 active:opacity-70 transition-opacity">
+        <span class="material-symbols-outlined text-[#007AFF] text-[22px]">edit_square</span>
+        <span class="text-[15px] text-[#007AFF] font-medium">发起新对话</span>
+      </button>
+      <button class="w-10 h-10 flex items-center justify-center border border-[#C7C7CC] rounded-lg active:bg-slate-100">
+        <span class="material-symbols-outlined text-[#8E8E93] text-[20px]">photo_camera</span>
+      </button>
+    </div>
+
+    <!-- 3. 最近对话区 -->
+    <div class="px-4 pt-2 pb-32 flex-1">
+      <div class="py-2"><span class="section-title">最近对话</span></div>
+      <div class="ios-card-group overflow-hidden mt-1">
+        <button class="ios-list-item w-full flex items-center px-4 py-3 border-b border-slate-100">
+          <div class="w-11 h-11 rounded-lg avatar-indigo flex items-center justify-center shrink-0 font-semibold text-[16px]">张</div>
+          <div class="ml-3 flex-1 min-w-0 text-left">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-medium text-slate-900">张三</span>
+                <span class="text-[11px] text-[#8E8E93]">亲密</span>
+              </div>
+              <span class="text-[11px] text-[#8E8E93]">10:30</span>
+            </div>
+            <p class="text-[13px] text-[#8E8E93] truncate mt-0.5">最近工作好累啊，每天加班...</p>
+          </div>
+        </button>
+        <button class="ios-list-item w-full flex items-center px-4 py-3 border-b border-slate-100">
+          <div class="w-11 h-11 rounded-lg avatar-blue flex items-center justify-center shrink-0 font-semibold text-[16px]">李</div>
+          <div class="ml-3 flex-1 min-w-0 text-left">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-medium text-slate-900">李四</span>
+                <span class="text-[11px] text-[#8E8E93]">熟悉</span>
+              </div>
+              <span class="text-[11px] text-[#8E8E93]">昨天</span>
+            </div>
+            <p class="text-[13px] text-[#8E8E93] truncate mt-0.5">周末有空吗？一起吃个饭</p>
+          </div>
+        </button>
+        <button class="ios-list-item w-full flex items-center px-4 py-3 border-b border-slate-100">
+          <div class="w-11 h-11 rounded-lg avatar-rose flex items-center justify-center shrink-0 font-semibold text-[16px]">王</div>
+          <div class="ml-3 flex-1 min-w-0 text-left">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-medium text-slate-900">王五</span>
+                <span class="text-[11px] text-[#8E8E93]">普通</span>
+              </div>
+              <span class="text-[11px] text-[#8E8E93]">周一</span>
+            </div>
+            <p class="text-[13px] text-[#8E8E93] truncate mt-0.5">项目进度怎么样了？</p>
+          </div>
+        </button>
+        <button class="ios-list-item w-full flex items-center px-4 py-3 border-b border-slate-100">
+          <div class="w-11 h-11 rounded-lg avatar-emerald flex items-center justify-center shrink-0 font-semibold text-[16px]">赵</div>
+          <div class="ml-3 flex-1 min-w-0 text-left">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-medium text-slate-900">赵六</span>
+                <span class="text-[11px] text-[#8E8E93]">新认识</span>
+              </div>
+              <span class="text-[11px] text-[#8E8E93]">12/28</span>
+            </div>
+            <p class="text-[13px] text-[#8E8E93] truncate mt-0.5">很高兴认识你！</p>
+          </div>
+        </button>
+        <button class="ios-list-item w-full flex items-center px-4 py-3">
+          <div class="w-11 h-11 rounded-lg avatar-cyan flex items-center justify-center shrink-0 font-semibold text-[16px]">陈</div>
+          <div class="ml-3 flex-1 min-w-0 text-left">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-medium text-slate-900">陈小美</span>
+                <span class="text-[11px] text-[#8E8E93]">熟悉</span>
+              </div>
+              <span class="text-[11px] text-[#8E8E93]">12/25</span>
+            </div>
+            <p class="text-[13px] text-[#8E8E93] truncate mt-0.5">今天心情不太好...</p>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-[#F2F2F7] border-t border-[#C6C6C8]">
+      <div class="h-[50px] flex items-center justify-around px-4">
+        <button class="flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8E8E93]">
+          <span class="material-symbols-outlined text-[24px]">contacts</span>
+          <span class="text-[10px]">联系人</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center justify-center gap-0.5 text-[#007AFF]">
+          <span class="material-symbols-outlined text-[24px]">smart_toy</span>
+          <span class="text-[10px]">AI军师</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8E8E93]">
+          <span class="material-symbols-outlined text-[24px]">settings</span>
+          <span class="text-[10px]">设置</span>
+        </button>
+      </div>
+      <div class="h-[34px] bg-[#F2F2F7] flex justify-center items-start pt-2">
+        <div class="w-[134px] h-[5px] bg-black rounded-full opacity-20"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
