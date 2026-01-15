@@ -1,4 +1,4 @@
-package com.empathy.ai.domain.service
+package com.empathy.ai.service
 
 import android.app.Activity
 import android.app.ActivityManager
@@ -6,6 +6,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.pm.ServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -210,7 +211,7 @@ class FloatingWindowService : Service() {
 
             // 启动前台服务
             val notification = createNotification()
-            startForeground(NOTIFICATION_ID, notification)
+            startForegroundWithTypes(notification, includeMediaProjection = false)
             android.util.Log.d("FloatingWindowService", "前台服务启动成功")
 
             // BUG-00019修复：幂等性检查 - 如果视图已存在则跳过创建
@@ -231,7 +232,7 @@ class FloatingWindowService : Service() {
             // 尝试使用最简单的通知
             try {
                 val fallbackNotification = createFallbackNotification()
-                startForeground(NOTIFICATION_ID, fallbackNotification)
+                startForegroundWithTypes(fallbackNotification, includeMediaProjection = false)
                 android.util.Log.w("FloatingWindowService", "使用降级通知启动前台服务成功")
                 
                 // BUG-00019修复：幂等性检查
@@ -2453,6 +2454,7 @@ class FloatingWindowService : Service() {
             android.widget.Toast.makeText(this, "截图权限初始化失败", android.widget.Toast.LENGTH_SHORT).show()
             return
         }
+        updateForegroundServiceType(includeMediaProjection = true)
         beginScreenshotSession()
     }
 
@@ -2551,6 +2553,7 @@ class FloatingWindowService : Service() {
         hideScreenshotOverlay()
         restoreFloatingViewAfterScreenshot()
         releaseMediaProjection()
+        updateForegroundServiceType(includeMediaProjection = false)
     }
 
     private fun restoreFloatingViewAfterScreenshot() {
@@ -2566,6 +2569,59 @@ class FloatingWindowService : Service() {
         } catch (_: Exception) {
         }
         mediaProjection = null
+    }
+
+    /**
+     * 动态更新前台服务类型
+     *
+     * Android 14+ 要求根据前台服务的实际用途声明服务类型。
+     * 此方法在截图功能启用/停用时动态切换服务类型。
+     *
+     * @param includeMediaProjection 是否包含媒体投影类型（截图时需要）
+     *
+     * 相关 BUG: BUG-00071, BUG-00072 (Android 14+ 前台服务合规性修复)
+     */
+    private fun updateForegroundServiceType(includeMediaProjection: Boolean) {
+        try {
+            val notification = createNotification()
+            startForegroundWithTypes(notification, includeMediaProjection)
+            android.util.Log.d(
+                "FloatingWindowService",
+                "更新前台服务类型 includeMediaProjection=$includeMediaProjection"
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "更新前台服务类型失败", e)
+        }
+    }
+
+    /**
+     * 启动前台服务并根据 Android 版本设置正确的服务类型
+     *
+     * Android 14+ (API 34+) 需要明确声明前台服务类型，否则系统会抛出异常。
+     * - SPECIAL_USE: 用于特殊用途的前台服务（悬浮窗服务）
+     * - MEDIA_PROJECTION: 用于媒体投影的前台服务（截图功能）
+     *
+     * @param notification 通知对象
+     * @param includeMediaProjection 是否包含媒体投影类型（截图时需要）
+     *
+     * 相关文档: Android 14 前台服务类型规范
+     */
+    private fun startForegroundWithTypes(
+        notification: Notification,
+        includeMediaProjection: Boolean
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            var type = 0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            }
+            if (includeMediaProjection) {
+                type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            }
+            startForeground(NOTIFICATION_ID, notification, type)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     private fun addScreenshotAttachment(attachment: ScreenshotAttachment) {

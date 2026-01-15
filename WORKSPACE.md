@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-15 10:02 | 更新者: Codex (BUG-00071 黑屏问题跟踪)
+> 最后更新: 2026-01-15 16:09 | 更新者: Codex (BUG-00073 OPPO 真机悬浮球不显示修复)
 
 
 ## 📋 当前工作状态
@@ -15,6 +15,8 @@
 | BUG-00071 | 截图黑屏问题排查 | Codex | 进行中 | P0 | 2026-01-14 20:40 | 2026-01-14 |
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-15 - **BUG-00073 OPPO 真机悬浮球不显示修复** - Codex - 相关文档: [BUG-00073](文档/开发文档/BUG/BUG-00073-OPPO真机悬浮球不显示问题.md)
+- [x] 2026-01-15 - **RULE-00001 口语化输入规则补充** - Codex - 相关文档: [RulesReadMe](Rules/RulesReadMe.md)
 - [x] 2026-01-14 - **BUG-00071 截图权限持久化与图片理解策略调整** - Codex - 相关文档: [BUG-00071](文档/开发文档/BUG/BUG-00071-截图权限与图片理解策略调整.md)
 - [x] 2026-01-14 - **WORKSPACE 清空进行中任务** - Codex - 按用户指令
 - [x] 2026-01-13 - **BUG-00070 悬浮球App内不显示修复** - Codex - 相关文档: [BUG-00070](文档/开发文档/BUG/BUG-00070-悬浮球App内不显示问题.md), [TE-00070](文档/开发文档/TE/TE-00070-悬浮球App内不显示测试用例.md)
@@ -370,6 +372,8 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 |---------|---------|---------|------|----------|--------|
 
+| RULE | - | RulesReadMe.md | v1.1 | 2026-01-15 | Codex |
+
 | MA | - | FREE-20260112-contact-search-highlight.md | v1.7 | 2026-01-12 | Codex |
 
 | MA | - | 智能体代码复用与规范统一评估报告 | v1.0 | 2026-01-03 | Roo |
@@ -382,7 +386,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 | BUG | BUG-00071 | 截图权限与图片理解策略调整 | v1.5 | 2026-01-14 | Codex |
 | BUG | BUG-00072 | 截图黑屏排查尝试记录 | v1.0 | 2026-01-15 | Codex |
-
+| BUG | BUG-00073 | OPPO真机悬浮球不显示问题 | v1.0 | 2026-01-15 | Codex |
 
 | BUG | BUG-00070 | 悬浮球App内不显示问题 | v1.0 | 2026-01-13 | Codex |
 
@@ -399,7 +403,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ### Codex (Free Explorer)
-- **最后活动**: 2026-01-15 10:02 - BUG-00071 黑屏问题跟踪中
+- **最后活动**: 2026-01-15 16:09 - BUG-00073 OPPO 真机悬浮球不显示修复
 - **当前任务**: BUG-00071 截图黑屏问题排查
 - **待处理**: UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
 
@@ -438,6 +442,19 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ## 📝 变更日志
+### 2026-01-15 - Codex (BUG-00073 OPPO 真机悬浮球不显示修复)
+- 修复前台服务类型导致的启动拦截，恢复悬浮球显示。
+- 新增 BUG-00073 记录问题、根因与修复方案。
+- 修改的文件列表：
+  - `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
+  - `gradle.properties`
+  - `文档/开发文档/BUG/BUG-00073-OPPO真机悬浮球不显示问题.md`
+  - `WORKSPACE.md`
+### 2026-01-15 - Codex (RULE-00001 口语化输入规则补充)
+- 新增规则：用户口语化输入理解与不确定时询问。
+- 修改的文件列表：
+  - `Rules/RulesReadMe.md`
+  - `WORKSPACE.md`
 ### 2026-01-15 - Codex (BUG-00072 截图黑屏排查尝试记录)
 - 新增 BUG-00072 记录黑屏问题的尝试路径与结论。
 - 修改的文件列表：

@@ -61,7 +61,8 @@
       "Bash(timeout:*)",
       "Bash(git push)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(gradlew.bat clean assembleDebug:*)"
     ],
     "deny": [],
     "ask": []
