@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI军师 - 对话界面 (iOS风格)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+      background: #F2F2F7;
+      overflow: hidden;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* iOS 快捷按钮 */
+    .ios-action-btn {
+      background: white;
+      border-radius: 14px;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .ios-action-btn:active {
+      background: #F2F2F7;
+      transform: scale(0.98);
+    }
+    
+    /* iOS 输入框容器 */
+    .ios-input-container {
+      background: white;
+      border-radius: 22px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* iOS 图标按钮 */
+    .ios-icon-btn {
+      transition: all 0.15s ease;
+    }
+    .ios-icon-btn:active {
+      opacity: 0.6;
+      transform: scale(0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="w-full h-full bg-[#F2F2F7] flex flex-col">
+    
+    <!-- 状态栏占位 -->
+    <div class="h-11 shrink-0 bg-[#F2F2F7]"></div>
+    
+    <!-- 头部导航 -->
+    <header class="shrink-0 px-4 py-3 flex items-center justify-between bg-[#F2F2F7]">
+      <button class="w-10 h-10 flex items-center justify-center -ml-2 ios-icon-btn">
+        <span class="material-symbols-outlined text-[#007AFF] text-[28px]">menu</span>
+      </button>
+      <h1 class="text-[17px] font-semibold text-slate-900">AI 军师</h1>
+      <div class="w-10"></div>
+    </header>
+    
+    <!-- 主内容区域 -->
+    <main class="flex-1 overflow-y-auto no-scrollbar px-4 py-6">
+      <!-- 欢迎区域 - 共情品牌 -->
+      <div class="text-center mb-8">
+        <!-- 共情Logo - 无限符号心形 -->
+        <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#FF6B6B] to-[#FF8E53] flex items-center justify-center shadow-lg">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <!-- 无限符号形状的心 -->
+            <path d="M24 16C20 12 14 12 10 16C6 20 6 26 10 30L24 42L38 30C42 26 42 20 38 16C34 12 28 12 24 16Z" 
+                  stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M24 16C28 12 34 12 38 16" 
+                  stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+          </svg>
+        </div>
+        <h2 class="text-[22px] font-semibold text-slate-900 mb-2">共情</h2>
+        <p class="text-[14px] text-[#8E8E93]">懂你所想，助你表达</p>
+      </div>
+      
+    </main>
+    
+    <!-- 底部输入区域 -->
+    <footer class="shrink-0 px-4 pb-6">
+      <div class="ios-input-container px-4 py-3 flex items-center gap-3">
+        <button class="ios-icon-btn w-9 h-9 flex items-center justify-center">
+          <span class="material-symbols-outlined text-[#007AFF] text-[24px]">add_circle</span>
+        </button>
+        <input 
+          type="text" 
+          placeholder="输入消息或粘贴聊天记录..." 
+          class="flex-1 bg-transparent text-[15px] text-slate-900 placeholder:text-[#8E8E93] outline-none"
+        />
+        <button class="ios-icon-btn w-9 h-9 flex items-center justify-center">
+          <span class="material-symbols-outlined text-[#8E8E93] text-[24px]">mic</span>
+        </button>
+        <button class="ios-icon-btn w-9 h-9 flex items-center justify-center">
+          <span class="material-symbols-outlined text-[#007AFF] text-[24px]">send</span>
+        </button>
+      </div>
+    </footer>
+    
+    <!-- iOS Home Indicator -->
+    <div class="h-8 shrink-0 flex items-center justify-center bg-[#F2F2F7]">
+      <div class="w-32 h-1 bg-black/20 rounded-full"></div>
+    </div>
+    
+  </div>
+</body>
+</html>

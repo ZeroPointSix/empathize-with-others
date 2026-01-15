@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>事实流页 - FactStreamTab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow: auto;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* 卡片统一样式 - 大圆角 + 柔和投影 */
+        .card-elevated {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 8px 32px -8px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+        
+        /* 时间线连接线 */
+        .timeline-line {
+            width: 2px;
+            background: linear-gradient(180deg, #E2E8F0 0%, #CBD5E1 100%);
+        }
+        
+        /* 情绪节点颜色 - EmotionType枚举 (6种类型) */
+        .emotion-sweet { background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%); }
+        .emotion-conflict { background: linear-gradient(135deg, #FFA07A 0%, #FF6347 100%); }
+        .emotion-neutral { background: linear-gradient(135deg, #B0C4DE 0%, #87CEEB 100%); }
+        .emotion-gift { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
+        .emotion-date { background: linear-gradient(135deg, #DDA0DD 0%, #BA55D3 100%); }
+        .emotion-deep-talk { background: linear-gradient(135deg, #98D8C8 0%, #20B2AA 100%); }
+        
+        /* 分段控制器 */
+        .segment-control {
+            background: rgba(118, 118, 128, 0.12);
+            border-radius: 10px;
+            padding: 3px;
+        }
+        .segment-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #8E8E93;
+            transition: all 0.2s ease;
+        }
+        .segment-active {
+            background: white;
+            color: #000;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 筛选胶囊 */
+        .filter-chip {
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .filter-chip-active {
+            background: #007AFF;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+        .filter-chip-inactive {
+            background: white;
+            color: #666;
+            border: 1px solid #E5E5EA;
+        }
+        .filter-chip-inactive:hover {
+            background: #F8F8FA;
+            border-color: #D1D1D6;
+        }
+        
+        /* 图标背景色块 */
+        .icon-bg-sweet { background: #FFF0F3; }
+        .icon-bg-conflict { background: #FFF4F0; }
+        .icon-bg-gift { background: #FFFBEB; }
+        .icon-bg-date { background: #FAF5FF; }
+        .icon-bg-ai { background: #F0F7FF; }
+        .icon-bg-manual { background: #F0FDF4; }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        /* 视图切换 */
+        .view-timeline { display: block; }
+        .view-list { display: none; }
+        .show-list .view-timeline { display: none; }
+        .show-list .view-list { display: block; }
+    </style>
+</head>
+<body>
+    <div id="app" class="w-full h-full bg-[#F5F5F7] flex flex-col font-sans select-none overflow-hidden">
+        
+        <!-- 固定头部导航 -->
+        <div class="sticky top-0 z-50 bg-[#F5F5F7]/95 backdrop-blur-xl border-b border-slate-200/50">
+            <!-- 顶部操作栏 -->
+            <div class="flex justify-between items-center px-4 h-[52px]">
+                <button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/60 hover:bg-white transition-colors text-slate-900 backdrop-blur-md shadow-sm border border-white/30" title="返回">
+                    <span class="material-symbols-outlined text-[22px]">arrow_back</span>
+                </button>
+                <h1 class="text-[17px] font-bold text-black">小红</h1>
+                <div class="flex gap-2">
+                    <!-- 添加事实按钮 -->
+                    <button id="btn-add" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/60 hover:bg-white transition-colors text-[#007AFF] backdrop-blur-md shadow-sm border border-white/30" title="添加事实">
+                        <span class="material-symbols-outlined text-[22px]">add</span>
+                    </button>
+                    <!-- 筛选按钮 -->
+                    <button id="btn-filter" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/60 hover:bg-white transition-colors text-slate-900 backdrop-blur-md shadow-sm border border-white/30" title="筛选">
+                        <span class="material-symbols-outlined text-[22px]">filter_list</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 标签页导航 -->
+            <div class="flex justify-around items-end px-2 h-11 mt-1">
+                <button class="px-4 py-2.5 text-[15px] font-medium text-[#8E8E93] hover:text-slate-700 transition-colors">概览</button>
+                <button class="relative px-4 py-2.5 text-[15px] font-bold text-black">
+                    事实流
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#007AFF] rounded-full"></div>
+                </button>
+                <button class="px-4 py-2.5 text-[15px] font-medium text-[#8E8E93] hover:text-slate-700 transition-colors">标签画像</button>
+                <button class="px-4 py-2.5 text-[15px] font-medium text-[#8E8E93] hover:text-slate-700 transition-colors">资料库</button>
+            </div>
+        </div>
+
+        <!-- 视图切换控件 -->
+        <div class="px-4 py-3 flex items-center justify-between bg-[#F5F5F7]">
+            <div class="segment-control flex flex-1 mr-3">
+                <button id="btn-timeline" class="segment-btn segment-active flex-1" onclick="switchView('timeline')">
+                    时光轴
+                </button>
+                <button id="btn-list" class="segment-btn flex-1" onclick="switchView('list')">
+                    清单
+                </button>
+            </div>
+        </div>
+
+        <!-- 筛选标签 -->
+        <div class="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
+            <span class="filter-chip filter-chip-active" data-filter="ALL">全部</span>
+            <span class="filter-chip filter-chip-inactive" data-filter="SWEET">❤️ 甜蜜</span>
+            <span class="filter-chip filter-chip-inactive" data-filter="CONFLICT">⛈️ 冲突</span>
+            <span class="filter-chip filter-chip-inactive" data-filter="DATE">🍽️ 约会</span>
+            <span class="filter-chip filter-chip-inactive" data-filter="AI_SUMMARY">🤖 AI总结</span>
+        </div>
+
+
+        <!-- ==================== 时光轴视图 ==================== -->
+        <main class="view-timeline flex-1 overflow-y-auto no-scrollbar px-4 pb-28 space-y-4">
+            
+            <!-- 对话记录 - 甜蜜类型 -->
+            <div class="flex gap-3 animate-fade-in" style="animation-delay: 0.1s;">
+                <!-- 左侧：情绪节点 + 连接线 -->
+                <div class="flex flex-col items-center w-12 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full emotion-sweet flex items-center justify-center shadow-lg ring-4 ring-white">
+                        <span class="text-white text-base">❤️</span>
+                    </div>
+                    <div class="timeline-line flex-1 my-2"></div>
+                </div>
+                
+                <!-- 右侧：对话卡片 -->
+                <div class="flex-1 card-elevated p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full icon-bg-sweet flex items-center justify-center">
+                                <span class="material-symbols-outlined text-pink-500 text-sm filled">chat_bubble</span>
+                            </div>
+                            <span class="text-[13px] text-[#8E8E93] font-medium">今天 14:30</span>
+                        </div>
+                        <button class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors" title="更多操作">
+                            <span class="material-symbols-outlined text-[#C7C7CC] text-lg">more_horiz</span>
+                        </button>
+                    </div>
+                    <p class="text-[15px] text-[#333] leading-relaxed mb-3">
+                        <span class="text-[#007AFF] font-semibold">我：</span>
+                        今天想约她出去吃饭，不知道选什么餐厅好
+                    </p>
+                    <div class="bg-[#F0F7FF] rounded-xl p-3">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="material-symbols-outlined text-[#007AFF] text-sm">psychology</span>
+                            <span class="text-[12px] text-[#007AFF] font-semibold">AI 建议</span>
+                        </div>
+                        <p class="text-[14px] text-[#555] leading-relaxed">
+                            建议选择她之前提到喜欢的川菜馆，用轻松的方式邀请
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 日总结 -->
+            <div class="flex gap-3 animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="flex flex-col items-center w-12 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full emotion-neutral flex items-center justify-center shadow-lg ring-4 ring-white">
+                        <span class="material-symbols-outlined text-white text-lg">psychology</span>
+                    </div>
+                    <div class="timeline-line flex-1 my-2"></div>
+                </div>
+                
+                <div class="flex-1 card-elevated p-4 border-l-4 border-l-purple-400">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 rounded-full icon-bg-ai flex items-center justify-center">
+                            <span class="material-symbols-outlined text-purple-500 text-sm filled">auto_awesome</span>
+                        </div>
+                        <span class="text-[14px] font-semibold text-purple-600">AI 日总结</span>
+                        <span class="text-[12px] text-[#8E8E93] ml-auto">昨天</span>
+                    </div>
+                    <p class="text-[15px] text-[#333] leading-relaxed mb-3">
+                        今天的互动整体氛围不错，你们讨论了周末的计划，她表现出对户外活动的兴趣。
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <span class="px-2.5 py-1 bg-purple-50 text-purple-600 rounded-full text-[12px] font-medium">讨论周末计划</span>
+                        <span class="px-2.5 py-1 bg-purple-50 text-purple-600 rounded-full text-[12px] font-medium">户外活动兴趣</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
+                        <span class="material-symbols-outlined text-base">trending_up</span>
+                        <span class="text-[13px] font-semibold">关系分数 +2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户手动添加的事实 -->
+            <div class="flex gap-3 animate-fade-in" style="animation-delay: 0.3s;">
+                <div class="flex flex-col items-center w-12 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-300 to-cyan-400 flex items-center justify-center shadow-lg ring-4 ring-white">
+                        <span class="material-symbols-outlined text-white text-lg">edit_note</span>
+                    </div>
+                    <div class="timeline-line flex-1 my-2"></div>
+                </div>
+                
+                <div class="flex-1 card-elevated p-4 bg-gradient-to-br from-teal-50/50 to-cyan-50/50">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full icon-bg-manual flex items-center justify-center">
+                                <span class="material-symbols-outlined text-teal-500 text-sm filled">bookmark</span>
+                            </div>
+                            <span class="text-[14px] font-semibold text-teal-700">兴趣爱好</span>
+                        </div>
+                        <span class="text-[12px] text-[#8E8E93]">12-20 10:30</span>
+                    </div>
+                    <p class="text-[15px] text-[#333] leading-relaxed mb-2">喜欢周末去爬山，特别是秋天的时候</p>
+                    <span class="inline-flex items-center gap-1 text-[12px] text-[#007AFF] font-medium bg-blue-50 px-2 py-0.5 rounded-full">
+                        <span class="material-symbols-outlined text-xs">person</span>
+                        手动添加
+                    </span>
+                </div>
+            </div>
+
+            <!-- 冲突类型 -->
+            <div class="flex gap-3 animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="flex flex-col items-center w-12 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full emotion-conflict flex items-center justify-center shadow-lg ring-4 ring-white">
+                        <span class="text-white text-base">⛈️</span>
+                    </div>
+                    <div class="timeline-line flex-1 my-2"></div>
+                </div>
+                
+                <div class="flex-1 card-elevated p-4 border-l-4 border-l-orange-400">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full icon-bg-conflict flex items-center justify-center">
+                                <span class="material-symbols-outlined text-orange-500 text-sm filled">warning</span>
+                            </div>
+                            <span class="text-[12px] text-[#8E8E93]">12-18 20:15</span>
+                        </div>
+                        <span class="px-2.5 py-1 bg-orange-100 text-orange-600 rounded-full text-[11px] font-semibold">需要注意</span>
+                    </div>
+                    <p class="text-[15px] text-[#333] leading-relaxed mb-3">
+                        <span class="text-[#007AFF] font-semibold">我：</span>
+                        不小心提到了她不喜欢的话题
+                    </p>
+                    <div class="bg-orange-50 rounded-xl p-3">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="material-symbols-outlined text-orange-500 text-sm">tips_and_updates</span>
+                            <span class="text-[12px] text-orange-600 font-semibold">AI 提醒</span>
+                        </div>
+                        <p class="text-[14px] text-[#555] leading-relaxed">
+                            建议避免这个话题，可以转移到她感兴趣的事情上
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 礼物记录 -->
+            <div class="flex gap-3 animate-fade-in" style="animation-delay: 0.5s;">
+                <div class="flex flex-col items-center w-12 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full emotion-gift flex items-center justify-center shadow-lg ring-4 ring-white">
+                        <span class="text-white text-base">🎁</span>
+                    </div>
+                    <div class="timeline-line flex-1 my-2"></div>
+                </div>
+                
+                <div class="flex-1 card-elevated p-4 bg-gradient-to-br from-amber-50/50 to-yellow-50/50">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full icon-bg-gift flex items-center justify-center">
+                                <span class="material-symbols-outlined text-amber-500 text-sm filled">redeem</span>
+                            </div>
+                            <span class="text-[14px] font-semibold text-amber-700">礼物记录</span>
+                        </div>
+                        <span class="text-[12px] text-[#8E8E93]">12-15</span>
+                    </div>
+                    <p class="text-[15px] text-[#333] leading-relaxed mb-2">送了一本她喜欢的作家的新书</p>
+                    <div class="flex items-center gap-2 text-amber-600">
+                        <span class="material-symbols-outlined text-base filled">favorite</span>
+                        <span class="text-[13px] font-medium">她很开心</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 约会记录 -->
+            <div class="flex gap-3 animate-fade-in" style="animation-delay: 0.6s;">
+                <div class="flex flex-col items-center w-12 flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full emotion-date flex items-center justify-center shadow-lg ring-4 ring-white">
+                        <span class="text-white text-base">🍽️</span>
+                    </div>
+                    <div class="timeline-line flex-1 my-2 opacity-0"></div>
+                </div>
+                
+                <div class="flex-1 card-elevated p-4 bg-gradient-to-br from-purple-50/50 to-pink-50/50">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full icon-bg-date flex items-center justify-center">
+                                <span class="material-symbols-outlined text-purple-500 text-sm filled">restaurant</span>
+                            </div>
+                            <span class="text-[14px] font-semibold text-purple-700">约会记录</span>
+                        </div>
+                        <span class="text-[12px] text-[#8E8E93]">12-10</span>
+                    </div>
+                    <p class="text-[15px] text-[#333] leading-relaxed mb-2">一起去了新开的咖啡店，聊了很多</p>
+                    <div class="flex items-center gap-2 text-purple-600">
+                        <span class="material-symbols-outlined text-base filled">mood</span>
+                        <span class="text-[13px] font-medium">氛围很好</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 加载更多提示 -->
+            <div class="text-center py-6">
+                <p class="text-[13px] text-[#C7C7CC]">下拉加载更多...</p>
+            </div>
+
+        </main>
+
+        <!-- ==================== 清单视图 ==================== -->
+        <main class="view-list flex-1 overflow-y-auto no-scrollbar px-4 pb-28">
+            
+            <!-- 日期分组标题 -->
+            <div class="sticky top-0 z-10 bg-[#F5F5F7]/95 backdrop-blur-sm py-2 mb-2">
+                <span class="text-[13px] font-semibold text-[#8E8E93]">今天</span>
+            </div>
+            
+            <!-- 清单项 - 对话记录 -->
+            <div class="card-elevated mb-3 overflow-hidden animate-fade-in" style="animation-delay: 0.1s;">
+                <div class="flex items-center p-4">
+                    <!-- 左侧图标 -->
+                    <div class="w-10 h-10 rounded-xl icon-bg-sweet flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-lg">❤️</span>
+                    </div>
+                    <!-- 中间内容 -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[15px] font-semibold text-[#333]">对话记录</span>
+                            <span class="px-2 py-0.5 bg-pink-100 text-pink-600 rounded text-[11px] font-medium">甜蜜</span>
+                        </div>
+                        <p class="text-[14px] text-[#666] truncate">今天想约她出去吃饭，不知道选什么餐厅好</p>
+                    </div>
+                    <!-- 右侧时间和箭头 -->
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                        <span class="text-[12px] text-[#C7C7CC]">14:30</span>
+                        <span class="material-symbols-outlined text-[#C7C7CC] text-lg">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期分组标题 -->
+            <div class="sticky top-0 z-10 bg-[#F5F5F7]/95 backdrop-blur-sm py-2 mb-2 mt-4">
+                <span class="text-[13px] font-semibold text-[#8E8E93]">昨天</span>
+            </div>
+
+            <!-- 清单项 - AI总结 -->
+            <div class="card-elevated mb-3 overflow-hidden animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="flex items-center p-4">
+                    <div class="w-10 h-10 rounded-xl icon-bg-ai flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="material-symbols-outlined text-purple-500 text-lg filled">auto_awesome</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[15px] font-semibold text-[#333]">AI 日总结</span>
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded text-[11px] font-medium">+2分</span>
+                        </div>
+                        <p class="text-[14px] text-[#666] truncate">今天的互动整体氛围不错，你们讨论了周末的计划</p>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                        <span class="text-[12px] text-[#C7C7CC]">23:00</span>
+                        <span class="material-symbols-outlined text-[#C7C7CC] text-lg">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期分组标题 -->
+            <div class="sticky top-0 z-10 bg-[#F5F5F7]/95 backdrop-blur-sm py-2 mb-2 mt-4">
+                <span class="text-[13px] font-semibold text-[#8E8E93]">12月20日 周五</span>
+            </div>
+
+            <!-- 清单项 - 手动事实 -->
+            <div class="card-elevated mb-3 overflow-hidden animate-fade-in" style="animation-delay: 0.3s;">
+                <div class="flex items-center p-4">
+                    <div class="w-10 h-10 rounded-xl icon-bg-manual flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="material-symbols-outlined text-teal-500 text-lg filled">bookmark</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[15px] font-semibold text-[#333]">兴趣爱好</span>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-[11px] font-medium">手动</span>
+                        </div>
+                        <p class="text-[14px] text-[#666] truncate">喜欢周末去爬山，特别是秋天的时候</p>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                        <span class="text-[12px] text-[#C7C7CC]">10:30</span>
+                        <span class="material-symbols-outlined text-[#C7C7CC] text-lg">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期分组标题 -->
+            <div class="sticky top-0 z-10 bg-[#F5F5F7]/95 backdrop-blur-sm py-2 mb-2 mt-4">
+                <span class="text-[13px] font-semibold text-[#8E8E93]">12月18日 周三</span>
+            </div>
+
+            <!-- 清单项 - 冲突 -->
+            <div class="card-elevated mb-3 overflow-hidden animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="flex items-center p-4">
+                    <div class="w-10 h-10 rounded-xl icon-bg-conflict flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-lg">⛈️</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[15px] font-semibold text-[#333]">对话记录</span>
+                            <span class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[11px] font-medium">冲突</span>
+                        </div>
+                        <p class="text-[14px] text-[#666] truncate">不小心提到了她不喜欢的话题</p>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                        <span class="text-[12px] text-[#C7C7CC]">20:15</span>
+                        <span class="material-symbols-outlined text-[#C7C7CC] text-lg">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期分组标题 -->
+            <div class="sticky top-0 z-10 bg-[#F5F5F7]/95 backdrop-blur-sm py-2 mb-2 mt-4">
+                <span class="text-[13px] font-semibold text-[#8E8E93]">12月15日 周日</span>
+            </div>
+
+            <!-- 清单项 - 礼物 -->
+            <div class="card-elevated mb-3 overflow-hidden animate-fade-in" style="animation-delay: 0.5s;">
+                <div class="flex items-center p-4">
+                    <div class="w-10 h-10 rounded-xl icon-bg-gift flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-lg">🎁</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[15px] font-semibold text-[#333]">礼物记录</span>
+                            <span class="px-2 py-0.5 bg-amber-100 text-amber-600 rounded text-[11px] font-medium">礼物</span>
+                        </div>
+                        <p class="text-[14px] text-[#666] truncate">送了一本她喜欢的作家的新书</p>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                        <span class="material-symbols-outlined text-amber-500 text-base filled">favorite</span>
+                        <span class="material-symbols-outlined text-[#C7C7CC] text-lg">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期分组标题 -->
+            <div class="sticky top-0 z-10 bg-[#F5F5F7]/95 backdrop-blur-sm py-2 mb-2 mt-4">
+                <span class="text-[13px] font-semibold text-[#8E8E93]">12月10日 周二</span>
+            </div>
+
+            <!-- 清单项 - 约会 -->
+            <div class="card-elevated mb-3 overflow-hidden animate-fade-in" style="animation-delay: 0.6s;">
+                <div class="flex items-center p-4">
+                    <div class="w-10 h-10 rounded-xl icon-bg-date flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-lg">🍽️</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[15px] font-semibold text-[#333]">约会记录</span>
+                            <span class="px-2 py-0.5 bg-purple-100 text-purple-600 rounded text-[11px] font-medium">约会</span>
+                        </div>
+                        <p class="text-[14px] text-[#666] truncate">一起去了新开的咖啡店，聊了很多</p>
+                    </div>
+                    <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                        <span class="material-symbols-outlined text-purple-500 text-base filled">mood</span>
+                        <span class="material-symbols-outlined text-[#C7C7CC] text-lg">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 加载更多提示 -->
+            <div class="text-center py-6">
+                <p class="text-[13px] text-[#C7C7CC]">下拉加载更多...</p>
+            </div>
+
+        </main>
+
+        <!-- 手动总结悬浮按钮 -->
+        <button class="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg shadow-purple-300/50 flex items-center justify-center z-20 active:scale-95 transition-transform hover:shadow-xl" title="手动触发AI总结">
+            <span class="material-symbols-outlined text-white text-2xl">summarize</span>
+        </button>
+
+    </div>
+
+    <script>
+        // 视图切换
+        function switchView(view) {
+            const app = document.getElementById('app');
+            const btnTimeline = document.getElementById('btn-timeline');
+            const btnList = document.getElementById('btn-list');
+            
+            if (view === 'list') {
+                app.classList.add('show-list');
+                btnTimeline.classList.remove('segment-active');
+                btnList.classList.add('segment-active');
+            } else {
+                app.classList.remove('show-list');
+                btnTimeline.classList.add('segment-active');
+                btnList.classList.remove('segment-active');
+            }
+        }
+        
+        // 筛选标签点击
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.filter-chip').forEach(c => {
+                    c.classList.remove('filter-chip-active');
+                    c.classList.add('filter-chip-inactive');
+                });
+                this.classList.remove('filter-chip-inactive');
+                this.classList.add('filter-chip-active');
+                console.log('Filter:', this.dataset.filter);
+            });
+        });
+        
+        // 添加事实按钮
+        document.getElementById('btn-add').addEventListener('click', () => {
+            console.log('Event: ShowAddFactToStreamDialog');
+        });
+        
+        // 筛选按钮
+        document.getElementById('btn-filter').addEventListener('click', () => {
+            console.log('Event: ShowFilterDialog');
+        });
+    </script>
+
+    <!-- 
+    ============================================================
+    代码映射说明 (基于实际Kotlin代码 - 2025-12-25更新)
+    ============================================================
+    
+    【UI优化说明 - 2025-12-25】
+    本次优化遵循以下设计规范：
+    
+    1. 全局基础优化 (Global Foundations)
+       - 背景色：#F5F5F7（浅灰底色）
+       - 卡片样式：16px大圆角 + 柔和弥散投影
+       - 字体：Inter现代无衬线字体
+       - 颜色层级：
+         * 标题：#000000（黑色加粗）
+         * 操作按钮：#007AFF（主题蓝）
+         * 小标题：#8E8E93（中灰色）
+         * 正文：#333333（深灰色）
+         * 辅助文字：#C7C7CC（浅灰色）
+    
+    2. 双视图设计
+       - 时光轴视图（Timeline View）：
+         * 左侧情绪节点 + 连接线
+         * 右侧内容卡片
+         * 情绪节点带白色ring-4边框，增加立体感
+       - 清单视图（List View）：
+         * 日期分组标题（sticky定位）
+         * 紧凑的列表项设计
+         * 左侧图标采用圆角方形彩色背景
+    
+    3. 图标统一化
+       - 所有图标放置在统一形状的彩色背景色块中
+       - 甜蜜：粉色背景 #FFF0F3
+       - 冲突：橙色背景 #FFF4F0
+       - 礼物：金黄色背景 #FFFBEB
+       - 约会：紫色背景 #FAF5FF
+       - AI：蓝色背景 #F0F7FF
+       - 手动：绿色背景 #F0FDF4
+    
+    4. 分段控制器优化
+       - 圆角背景：rgba(118, 118, 128, 0.12)
+       - 选中状态：白色背景 + 阴影
+       - 平滑过渡动画
+    
+    5. 筛选标签胶囊化
+       - 圆润胶囊形状（20px圆角）
+       - 选中状态：蓝色背景 + 阴影
+       - 未选中状态：白色背景 + 边框
+    
+    【文件映射】
+    - FactStreamTab.kt: 事实流标签页主容器，整合双视图和顶部控件
+    - FactStreamTopBar.kt: 顶部控件（SegmentedControl视图切换 + 添加/筛选按钮）
+    - TimelineView.kt: 时光轴视图（性能优化版，分页加载，自动降级）
+    - ListView.kt: 清单列表视图（高信息密度，快速检索）
+    - EmotionalTimelineNode.kt: 情绪节点组件（左侧圆形图标）
+    - QuickFilterChips.kt: 快速筛选标签组件
+    
+    【卡片组件映射】
+    - ConversationCard.kt: 对话记录卡片
+    - AiSummaryCard.kt: AI总结卡片
+    - MilestoneCard.kt: 里程碑卡片
+    - PhotoMomentCard.kt: 照片时刻卡片
+    - UserFactCard: TimelineView.kt内部私有组件
+    
+    【数据模型】
+    - TimelineItem (sealed class) - 5种类型:
+      ├─ Conversation(id, timestamp, emotionType, log: ConversationLog)
+      ├─ AiSummary(id, timestamp, emotionType, summary: DailySummary)
+      ├─ UserFact(id, timestamp, emotionType, fact: Fact)
+      ├─ Milestone(id, timestamp, emotionType, title, description, icon)
+      └─ PhotoMoment(id, timestamp, emotionType, ...)
+    
+    - ConversationLog: 对话日志
+      ├─ id: Long
+      ├─ contactId: String
+      ├─ userInput: String
+      ├─ aiResponse: String
+      ├─ timestamp: Long
+      └─ isSummarized: Boolean
+    
+    - DailySummary: 日总结
+      ├─ id: Long
+      ├─ contactId: String
+      ├─ summaryDate: String
+      ├─ content: String
+      ├─ keyEvents: List<KeyEvent>
+      ├─ relationshipScoreChange: Int
+      └─ relationshipTrend: RelationshipTrend
+    
+    - Fact: 事实模型
+      ├─ id: String
+      ├─ key: String (分类名)
+      ├─ value: String (内容)
+      ├─ source: FactSource (MANUAL/AI_INFERRED)
+      └─ timestamp: Long
+    
+    【枚举定义】
+    - EmotionType枚举 (6种):
+      ├─ SWEET("❤️", "甜蜜")
+      ├─ CONFLICT("⛈️", "冲突")
+      ├─ GIFT("🎁", "礼物")
+      ├─ DATE("🍽️", "约会")
+      ├─ DEEP_TALK("💬", "深聊")
+      └─ NEUTRAL("⭕", "日常")
+    
+    - ViewMode枚举 (2种):
+      ├─ Timeline("时光轴")
+      └─ List("清单")
+    
+    - FilterType枚举 (5种) - 注意：没有GIFT筛选:
+      ├─ ALL("全部")
+      ├─ AI_SUMMARY("只看AI")
+      ├─ CONFLICT("只看冲突")
+      ├─ DATE("只看约会")
+      └─ SWEET("只看甜蜜")
+    
+    【交互事件 (ContactDetailUiEvent)】
+    - SwitchViewMode(mode: ViewMode): 切换视图模式
+    - ToggleFilter(filter: FilterType): 切换筛选条件
+    - ShowAddFactToStreamDialog: 显示添加事实对话框
+    - HideAddFactToStreamDialog: 隐藏添加事实对话框
+    - AddFactToStream(key, value): 添加事实到时间流
+    - EditConversation(logId, newContent): 编辑对话 (TD-00012)
+    - DeleteConversation(logId): 删除对话
+    - StartEditFact(fact): 开始编辑事实 (TD-00012)
+    - ConfirmEditFact(factId, newKey, newValue): 确认编辑事实
+    - DeleteFactById(factId): 删除事实
+    - StartEditSummary(summaryId): 开始编辑总结 (TD-00012)
+    - ConfirmEditSummary(summaryId, newContent): 确认编辑总结
+    - DeleteSummary(summaryId): 删除总结
+    
+    【性能优化 (PerformanceMetrics)】
+    - INITIAL_LOAD_COUNT = 50: 初始加载条数
+    - PAGE_SIZE = 20: 分页加载增量
+    - FRAME_TIME_WARNING_MS: 帧时间警告阈值
+    - 使用稳定的key参数（item.id）
+    - 使用contentType优化不同卡片类型复用
+    - 自动降级机制：连续3次掉帧触发简化渲染（隐藏左侧情绪节点）
+    - derivedStateOf优化滚动检测
+    
+    【回调函数映射】
+    - onViewModeChange: (ViewMode) -> Unit
+    - onFilterToggle: (FilterType) -> Unit
+    - onItemClick: ((TimelineItem) -> Unit)?
+    - onFilterButtonClick: (() -> Unit)?
+    - onConversationEdit: ((Long) -> Unit)?
+    - onFactEdit: ((String) -> Unit)?
+    - onSummaryEdit: ((Long) -> Unit)?
+    - onAddFactClick: (() -> Unit)?
+    -->
+</body>
+</html>
