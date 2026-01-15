@@ -1,3 +1,11 @@
+// Package factstream 实现了事实流标签页组件
+//
+// 业务背景:
+//   - 事实流是联系人详情的核心标签页，展示对话/事实/总结的时间线
+//
+// 任务追踪:
+//   - BUG-00071: 事实流对话/总结编辑点击无响应修复
+//   - 修复 handleItemClick 回调路由，确保点击对话/总结可进入编辑
 package com.empathy.ai.presentation.ui.screen.contact.factstream
 
 import androidx.compose.foundation.background
@@ -109,7 +117,26 @@ fun FactStreamTab(
     // 清单视图的选择状态
     var selectedItems by remember { mutableStateOf<Set<String>>(emptySet()) }
     var isSelectionMode by remember { mutableStateOf(false) }
-    
+
+    // [BUG-00071 Fix] 点击回调路由处理
+    // 问题：之前点击对话/总结无响应，因为 ModernTimelineView/ListView 只调用 onItemClick
+    // 解决：统一在 FactStreamTab 层根据 item 类型分发到对应的编辑回调
+    // - Conversation → onConversationEdit(logId)
+    // - AiSummary → onSummaryEdit(summaryId)
+    // - UserFact → 由 Modern 组件内部处理 onFactEdit
+    // - 其他 → onItemClick（如有）
+    val handleItemClick: (TimelineItem) -> Unit = { item ->
+        when (item) {
+            is TimelineItem.Conversation -> {
+                onConversationEdit?.invoke(item.log.id) ?: onItemClick?.invoke(item)
+            }
+            is TimelineItem.AiSummary -> {
+                onSummaryEdit?.invoke(item.summary.id) ?: onItemClick?.invoke(item)
+            }
+            else -> onItemClick?.invoke(item)
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -167,7 +194,7 @@ fun FactStreamTab(
             when (mode) {
                 ViewMode.Timeline -> ModernTimelineView(
                     items = filteredItems,
-                    onItemClick = onItemClick,
+                    onItemClick = handleItemClick,  // BUG-00071: 使用统一回调路由
                     onFactEdit = onFactEdit  // BUG-00065: 传递事实编辑回调
                 )
                 ViewMode.List -> ModernListView(
@@ -182,7 +209,7 @@ fun FactStreamTab(
                                 selectedItems + item.id
                             }
                         } else {
-                            onItemClick?.invoke(item)
+                            handleItemClick(item)  // BUG-00071: 使用统一回调路由
                         }
                     },
                     onItemSelect = { id, selected ->

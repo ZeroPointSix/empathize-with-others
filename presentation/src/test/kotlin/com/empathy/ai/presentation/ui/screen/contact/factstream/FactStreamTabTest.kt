@@ -1,5 +1,12 @@
 package com.empathy.ai.presentation.ui.screen.contact.factstream
 
+import com.empathy.ai.domain.model.ConversationLog
+import com.empathy.ai.domain.model.DailySummary
+import com.empathy.ai.domain.model.EmotionType
+import com.empathy.ai.domain.model.KeyEvent
+import com.empathy.ai.domain.model.RelationshipTrend
+import com.empathy.ai.domain.model.TagUpdate
+import com.empathy.ai.domain.model.TimelineItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -7,13 +14,15 @@ import org.junit.Test
 
 /**
  * FactStreamTab 单元测试
- * 
+ *
  * TD-00020 T069: 测试视图切换、筛选功能、时光轴渲染
- * 
+ * BUG-00071: 测试点击回调路由（对话/总结/事实）
+ *
  * 关键测试场景:
  * - 时光轴/清单视图切换
  * - 情绪类型筛选（全部/甜蜜/冲突等）
  * - 空数据状态显示
+ * - 点击回调路由 (BUG-00071)
  */
 class FactStreamTabTest {
 
@@ -256,5 +265,226 @@ class FactStreamTabTest {
         assertEquals(0, item.scoreChange)
         assertFalse(item.hasPositiveScoreChange)
         assertFalse(item.hasNegativeScoreChange)
+    }
+
+    // ============================================================
+    // BUG-00071: 点击回调路由测试
+    // ============================================================
+
+    @Test
+    fun `handleItemClick routes Conversation to onConversationEdit callback`() {
+        // 测试数据来源: BUG-00071 验收标准
+        // 点击对话记录应触发 onConversationEdit 回调
+
+        // Arrange
+        val conversationLog = ConversationLog(
+            id = 123L,
+            contactId = "contact-1",
+            userInput = "【对方说】：早安",
+            aiResponse = null,
+            timestamp = System.currentTimeMillis(),
+            isSummarized = false
+        )
+        val conversationItem = TimelineItem.Conversation(
+            id = "conv-1",
+            timestamp = System.currentTimeMillis(),
+            emotionType = EmotionType.SWEET,
+            log = conversationLog
+        )
+
+        var editedLogId: Long? = null
+        val onConversationEdit: (Long) -> Unit = { logId ->
+            editedLogId = logId
+        }
+        val onItemClick: (TimelineItem) -> Unit = { /* 未调用 */ }
+
+        val handleItemClick: (TimelineItem) -> Unit = { item ->
+            when (item) {
+                is TimelineItem.Conversation -> {
+                    onConversationEdit.invoke(item.log.id) ?: onItemClick.invoke(item)
+                }
+                else -> onItemClick.invoke(item)
+            }
+        }
+
+        // Act
+        handleItemClick(conversationItem)
+
+        // Assert
+        assertEquals(123L, editedLogId)
+    }
+
+    @Test
+    fun `handleItemClick routes AiSummary to onSummaryEdit callback`() {
+        // 测试数据来源: BUG-00071 验收标准
+        // 点击 AI 总结应触发 onSummaryEdit 回调
+
+        // Arrange
+        val summary = DailySummary(
+            id = 456L,
+            contactId = "contact-1",
+            summaryDate = "2026-01-15",
+            content = "今天的互动很愉快",
+            keyEvents = listOf(
+                KeyEvent(event = "看电影", importance = 8)
+            ),
+            newFacts = emptyList(),
+            updatedTags = listOf(
+                TagUpdate(action = "ADD", type = "STRATEGY_GREEN", content = "电影")
+            ),
+            relationshipScoreChange = 5,
+            relationshipTrend = RelationshipTrend.IMPROVING
+        )
+        val summaryItem = TimelineItem.AiSummary(
+            id = "summary-1",
+            timestamp = System.currentTimeMillis(),
+            emotionType = EmotionType.NEUTRAL,
+            summary = summary
+        )
+
+        var editedSummaryId: Long? = null
+        val onSummaryEdit: (Long) -> Unit = { summaryId ->
+            editedSummaryId = summaryId
+        }
+        val onItemClick: (TimelineItem) -> Unit = { /* 未调用 */ }
+
+        val handleItemClick: (TimelineItem) -> Unit = { item ->
+            when (item) {
+                is TimelineItem.AiSummary -> {
+                    onSummaryEdit.invoke(item.summary.id) ?: onItemClick.invoke(item)
+                }
+                else -> onItemClick.invoke(item)
+            }
+        }
+
+        // Act
+        handleItemClick(summaryItem)
+
+        // Assert
+        assertEquals(456L, editedSummaryId)
+    }
+
+    @Test
+    fun `handleItemClick routes other items to onItemClick callback`() {
+        // 测试数据来源: BUG-00071 验收标准
+        // 点击其他类型（如里程碑）应触发 onItemClick 回调
+
+        // Arrange
+        val milestone = TimelineItem.Milestone(
+            id = "milestone-1",
+            timestamp = System.currentTimeMillis(),
+            emotionType = EmotionType.GIFT,
+            title = "相识100天",
+            description = "感谢陪伴",
+            icon = "🏆"
+        )
+
+        var clickedItem: TimelineItem? = null
+        val onItemClick: (TimelineItem) -> Unit = { item ->
+            clickedItem = item
+        }
+
+        val handleItemClick: (TimelineItem) -> Unit = { item ->
+            when (item) {
+                is TimelineItem.Conversation -> { /* 未调用 */ }
+                is TimelineItem.AiSummary -> { /* 未调用 */ }
+                else -> onItemClick.invoke(item)
+            }
+        }
+
+        // Act
+        handleItemClick(milestone)
+
+        // Assert
+        assertEquals(milestone, clickedItem)
+    }
+
+    @Test
+    fun `handleItemClick falls back to onItemClick when onConversationEdit is null`() {
+        // 测试数据来源: BUG-00071 边界条件
+        // 如果 onConversationEdit 为 null，应降级到 onItemClick
+
+        // Arrange
+        val conversationLog = ConversationLog(
+            id = 123L,
+            contactId = "contact-1",
+            userInput = "测试内容",
+            aiResponse = null,
+            timestamp = System.currentTimeMillis(),
+            isSummarized = false
+        )
+        val conversationItem = TimelineItem.Conversation(
+            id = "conv-1",
+            timestamp = System.currentTimeMillis(),
+            emotionType = EmotionType.NEUTRAL,
+            log = conversationLog
+        )
+
+        var clickedItem: TimelineItem? = null
+        val onConversationEdit: ((Long) -> Unit)? = null
+        val onItemClick: (TimelineItem) -> Unit = { item ->
+            clickedItem = item
+        }
+
+        val handleItemClick: (TimelineItem) -> Unit = { item ->
+            when (item) {
+                is TimelineItem.Conversation -> {
+                    onConversationEdit?.invoke(item.log.id) ?: onItemClick.invoke(item)
+                }
+                else -> onItemClick.invoke(item)
+            }
+        }
+
+        // Act
+        handleItemClick(conversationItem)
+
+        // Assert
+        assertEquals(conversationItem, clickedItem)
+    }
+
+    @Test
+    fun `handleItemClick falls back to onItemClick when onSummaryEdit is null`() {
+        // 测试数据来源: BUG-00071 边界条件
+        // 如果 onSummaryEdit 为 null，应降级到 onItemClick
+
+        // Arrange
+        val summary = DailySummary(
+            id = 456L,
+            contactId = "contact-1",
+            summaryDate = "2026-01-15",
+            content = "测试总结",
+            keyEvents = emptyList(),
+            newFacts = emptyList(),
+            updatedTags = emptyList(),
+            relationshipScoreChange = 0,
+            relationshipTrend = RelationshipTrend.STABLE
+        )
+        val summaryItem = TimelineItem.AiSummary(
+            id = "summary-1",
+            timestamp = System.currentTimeMillis(),
+            emotionType = EmotionType.NEUTRAL,
+            summary = summary
+        )
+
+        var clickedItem: TimelineItem? = null
+        val onSummaryEdit: ((Long) -> Unit)? = null
+        val onItemClick: (TimelineItem) -> Unit = { item ->
+            clickedItem = item
+        }
+
+        val handleItemClick: (TimelineItem) -> Unit = { item ->
+            when (item) {
+                is TimelineItem.AiSummary -> {
+                    onSummaryEdit?.invoke(item.summary.id) ?: onItemClick.invoke(item)
+                }
+                else -> onItemClick.invoke(item)
+            }
+        }
+
+        // Act
+        handleItemClick(summaryItem)
+
+        // Assert
+        assertEquals(summaryItem, clickedItem)
     }
 }

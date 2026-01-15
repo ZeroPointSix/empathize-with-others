@@ -1,3 +1,16 @@
+// Package message 实现了对话气泡组件
+//
+// 业务背景 (PRD-00008):
+//   - 对方说的话和我的回复需要区分展示
+//   - UI层隐藏身份前缀，以自然对话流形式展示
+//
+// 设计决策 (PRD-00008/6.2):
+//   - CONTACT(对方): 气泡靠左，浅灰背景
+//   - USER(我): 气泡靠右，主题色背景
+//   - LEGACY(旧数据): 居中显示，中性背景
+//
+// 任务追踪:
+//   - FEATURE-20260114: 身份前缀历史功能实现
 package com.empathy.ai.presentation.ui.component.message
 
 import androidx.compose.foundation.clickable
@@ -14,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ConversationLog
@@ -43,21 +57,27 @@ import java.util.Locale
 fun ConversationBubble(
     log: ConversationLog,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    showHeader: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip
 ) {
     // 解析身份前缀，使用 remember 缓存结果避免重复计算
+    // [Performance] 重组时直接使用缓存结果，避免重复字符串解析
     val parseResult = remember(log.userInput) {
         IdentityPrefixHelper.parse(log.userInput)
     }
 
-    // 根据身份确定对齐方式
+    // 根据身份确定对齐方式 (PRD-00008/6.2)
+    // CONTACT → 左对齐, USER → 右对齐, LEGACY → 居中
     val alignment = when (parseResult.role) {
         IdentityPrefixHelper.IdentityRole.CONTACT -> Alignment.Start
         IdentityPrefixHelper.IdentityRole.USER -> Alignment.End
         IdentityPrefixHelper.IdentityRole.LEGACY -> Alignment.CenterHorizontally
     }
 
-    // 根据身份确定背景色
+    // 根据身份确定背景色 (PRD-00008/6.2)
+    // CONTACT → 浅灰, USER → 主题色, LEGACY → 中性
     val backgroundColor = when (parseResult.role) {
         IdentityPrefixHelper.IdentityRole.CONTACT ->
             MaterialTheme.colorScheme.surfaceVariant
@@ -67,7 +87,8 @@ fun ConversationBubble(
             MaterialTheme.colorScheme.surface
     }
 
-    // 根据身份确定气泡形状（不同角的圆角大小）
+    // 根据身份确定气泡形状 (PRD-00008/6.2)
+    // 气泡靠近屏幕边缘的一角圆角较小，模拟真实聊天软件效果
     val bubbleShape = when (parseResult.role) {
         IdentityPrefixHelper.IdentityRole.CONTACT ->
             RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp)  // 左上角小
@@ -91,21 +112,23 @@ fun ConversationBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = alignment
     ) {
-        // 标签和时间
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 4.dp)
-        ) {
-            Text(
-                text = parseResult.role.displayName,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = " · ${formatTime(log.timestamp)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        if (showHeader) {
+            // 标签和时间
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 4.dp)
+            ) {
+                Text(
+                    text = parseResult.role.displayName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = " · ${formatTime(log.timestamp)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // 气泡
@@ -123,10 +146,12 @@ fun ConversationBubble(
                 )
         ) {
             Text(
-                text = parseResult.content,  // 显示纯文本，不含前缀
+                text = parseResult.content,  // 显示纯文本，不含前缀 (PRD-00008/6.2)
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(12.dp),
+                maxLines = maxLines,
+                overflow = overflow
             )
         }
     }
@@ -145,7 +170,10 @@ fun ConversationBubble(
     content: String,
     timestamp: Long,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    showHeader: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip
 ) {
     // 解析身份前缀
     val parseResult = remember(content) {
@@ -193,21 +221,23 @@ fun ConversationBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = alignment
     ) {
-        // 标签和时间
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 4.dp)
-        ) {
-            Text(
-                text = parseResult.role.displayName,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = " · ${formatTime(timestamp)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        if (showHeader) {
+            // 标签和时间
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 4.dp)
+            ) {
+                Text(
+                    text = parseResult.role.displayName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = " · ${formatTime(timestamp)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // 气泡
@@ -228,7 +258,9 @@ fun ConversationBubble(
                 text = parseResult.content,
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(12.dp),
+                maxLines = maxLines,
+                overflow = overflow
             )
         }
     }
