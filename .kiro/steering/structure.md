@@ -19,11 +19,11 @@
 
 ## 多模块架构 (TD-00017 Clean Architecture模块化改造)
 
-> 2026-01-14 更新 - 基于实际代码架构扫描
+> 2026-01-15 更新 - 基于实际代码架构扫描
 >
-> 当前分支: BUG-floatwindow（悬浮窗功能修复分支）
-> 当前工作: BUG-00070 修复App首页显示悬浮窗按钮问题
-> 当前版本: v1.1.0 (versionCode: 10100, dev阶段)
+> 当前分支: BUG-FIX（Bug修复分支）
+> 当前工作: BUG-00073 OPPO真机悬浮球不显示问题修复
+> 当前版本: v1.1.0 (versionCode: 10101, dev阶段)
 
 ### 模块结构
 
@@ -62,7 +62,7 @@
 | `:presentation` | Android Library | Compose UI、ViewModel、Navigation、Theme | :domain |
 | `:app` | Application | 应用入口、Android服务、应用级DI模块 | :domain, :data, :presentation |
 
-**当前版本**: v1.1.0 (versionCode: 10100)
+**当前版本**: v1.1.0 (versionCode: 10101)
 **发布阶段**: dev
 **数据库版本**: Room v16
 
@@ -364,36 +364,36 @@ class ChatViewModel @Inject constructor(
 
 ## 当前实现状态（2026-01-13更新）
 
-### 模块文件统计（基于实际代码架构扫描）
+### 模块文件统计（基于实际代码架构扫描 - 2026-01-15最新）
 
 | 模块 | 主源码 | 单元测试 | Android测试 | 总计 |
 |------|--------|---------|------------|------|
-| **:domain** | 198 | 27 | 0 | 225 |
-| **:data** | 79 | 25 | 6 | 110 |
-| **:presentation** | 310 | 62 | 7 | 379 |
-| **:app** | 28 | 141 | 8 | 177 |
-| **总计** | **615** | **255** | **21** | **891** |
+| **:domain** | 213 | 40 | 0 | 253 |
+| **:data** | 108 | 23 | 6 | 137 |
+| **:presentation** | 285 | 36 | 7 | 328 |
+| **:app** | 30 | - | - | 30 |
+| **总计** | **636** | **99** | **13** | **748** |
 
 **文件构成详细说明**：
-- **主源码**：615个文件
-  - domain: 198个（96模型 + 18仓库接口 + 51用例 + 2服务 + 29工具 + 2其他）
-  - data: 79个（11DAO + 11Entity + 18仓库实现 + 8DI + 6parser + 其他）
-  - presentation: 310个（27ViewModel + 5导航 + 13主题 + 264UI组件/屏幕 + 其他）
-  - app: 28个（16DI + Application + Service + 其他）
-- **单元测试**：255个文件
-- **Android测试**：21个文件
+- **主源码**：636个文件
+  - domain: 213个（173模型 + 18仓库接口 + 60用例 + 2服务 + 29工具 + 其他）
+  - data: 108个（10DAO + 11Entity + 27仓库实现 + 8DI + 6parser + 其他）
+  - presentation: 285个（27ViewModel + 5导航 + 12主题 + 93屏幕 + 180+组件 + 其他）
+  - app: 30个（14DI + Application + Service + 其他）
+- **单元测试**：99个文件
+- **Android测试**：13个文件
 
 ### 数据库版本历史
 
 | 版本 | 更新内容 | 状态 |
 |------|----------|------|
 | v1→v15 | 基础功能迭代 | 已完成 |
-| v16 | 新增AI军师会话相关表 | 已完成 |
+| v16 | 新增AI军师会话相关表、is_pinned字段 | 已完成 |
 
 **迁移脚本**：16个增量迁移脚本（MIGRATION_1_2 ~ MIGRATION_15_16）
 
 **数据库表**（11张表）：
-1. profiles - 联系人档案
+1. profiles - 联系人档案（含is_pinned字段）
 2. brain_tags - 大脑标签
 3. ai_providers - AI服务商
 4. conversation_logs - 对话记录
@@ -454,9 +454,12 @@ class ChatViewModel @Inject constructor(
 
 ---
 
-**文档版本**: 3.3
-**最后更新**: 2026-01-14
+**文档版本**: 3.4
+**最后更新**: 2026-01-15
 **更新内容**:
-- 更新当前分支为 BUG-floatwindow
-- 更新当前工作状态（BUG-00070 悬浮窗功能修复）
+- 更新当前分支为 BUG-FIX
+- 更新当前工作状态（BUG-00073 OPPO真机悬浮球不显示问题）
+- 更新文件统计：636个主源码文件，99个测试文件
+- 更新代码结构：UseCase从51个增加到60个
+- 更新Repository实现：增加到27个实现
 - 保持架构统计同步

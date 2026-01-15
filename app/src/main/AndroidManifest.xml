@@ -47,7 +47,7 @@
 
         <!-- 悬浮窗服务 -->
         <service
-            android:name=".domain.service.FloatingWindowService"
+            android:name=".service.FloatingWindowService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse|mediaProjection">

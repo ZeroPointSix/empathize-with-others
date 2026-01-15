@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
-import com.empathy.ai.domain.service.FloatingWindowService
+import com.empathy.ai.service.FloatingWindowService
 
 /**
  * MediaProjection 授权中转页。

@@ -9,7 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.empathy.ai.R
 import com.empathy.ai.domain.model.ActionType
-import com.empathy.ai.domain.service.FloatingWindowService
+import com.empathy.ai.service.FloatingWindowService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

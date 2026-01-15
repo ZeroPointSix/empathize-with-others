@@ -7,7 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import com.empathy.ai.domain.service.FloatingWindowService
+import com.empathy.ai.service.FloatingWindowService
 import com.empathy.ai.domain.util.FloatingWindowManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
