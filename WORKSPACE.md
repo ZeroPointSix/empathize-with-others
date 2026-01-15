@@ -23,8 +23,10 @@
 | BUG-00068 | AI军师联系人切换回退异常排查 | Codex | 进行中 | P0 | 2026-01-11 12:55 | 2026-01-11 |
 | BUG-00068-02 | AI军师联系人切换回退异常修复 | Codex | 已完成 | P0 | 2026-01-11 13:40 | 2026-01-11 |
 | CR-00001 | 代码变更审查（当前工作区） | Roo | 进行中 | P1 | 2026-01-11 09:41 | 2026-01-11 |
+| PRD-00008 | 输入内容身份识别与双向对话历史（Feature Explorer） | Codex | 进行中 | P1 | 2026-01-14 21:15 | 2026-01-14 |
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-15 - **BUG-00071 事实流对话/总结编辑点击无响应修复** - Codex - 相关文档: [BUG-00071](文档/开发文档/BUG/BUG-00071-事实流对话与总结编辑点击无响应.md)
 - [x] 2026-01-13 - **BUG-00070 悬浮球App内不显示修复** - Codex - 相关文档: [BUG-00070](文档/开发文档/BUG/BUG-00070-悬浮球App内不显示问题.md), [TE-00070](文档/开发文档/TE/TE-00070-悬浮球App内不显示测试用例.md)
 - [x] 2026-01-12 - **FREE-00007 BrainTag 返回行为一致性修复** - Codex
 - [x] 2026-01-12 - **FREE-00006 ModernPersonaTab 无结果关键词提示** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
@@ -208,6 +210,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 | DR | DR-00024 | TDD-00024图标和版本号自动更新审查报告 | v1.0 | 2025-12-31 | Roo |
 | DR | DR-00024 | FD-00024图标和版本号自动更新审查报告 | v1.0 | 2025-12-31 | Roo |
 | BUG | BUG-00070 | 悬浮球App内不显示问题 | v1.0 | 2026-01-13 | Codex |
+| BUG | BUG-00071 | 事实流对话与总结编辑点击无响应 | v1.0 | 2026-01-15 | Codex |
 | TE | TE-00070 | 悬浮球App内不显示测试用例 | v1.0 | 2026-01-13 | Codex |
 
 ---
@@ -215,9 +218,9 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ## 🤖 AI 工具协作状态
 
 ### Codex (Free Explorer)
-- **最后活动**: 2026-01-13 - 完成 BUG-00070 悬浮球App内不显示修复  
+- **最后活动**: 2026-01-15 - 完成 BUG-00071 事实流对话/总结编辑点击无响应修复
 - **当前任务**: 无
-- **待处理**: UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
+- **待处理**: 事实流编辑点击验收 + UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
 
 ### Roo (Review)
 - **最后活动**: 2026-01-01 - 完成 Multi-Agent Explorer 决策日志机制升级提交
@@ -236,6 +239,13 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ---
 
 ## 📝 变更日志
+
+### 2026-01-15 - Codex (BUG-00071 事实流对话/总结编辑点击无响应修复)
+- 事实流对话与总结点击编辑回调补齐，保持事实编辑逻辑不变
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/factstream/FactStreamTab.kt`
+  - `文档/开发文档/BUG/BUG-00071-事实流对话与总结编辑点击无响应.md`
+  - `WORKSPACE.md`
 
 ### 2026-01-13 - Codex (BUG-00070 悬浮球App内不显示修复)
 - 新增 BUG/TE 文档并补齐多显示屏 displayId 透传与恢复
