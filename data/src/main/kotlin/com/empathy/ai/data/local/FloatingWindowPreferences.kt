@@ -4,9 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Parcel
-import android.util.Base64
 import androidx.core.content.edit
+import com.empathy.ai.data.local.MediaProjectionHolder
 import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.FloatingBubbleState
 import com.empathy.ai.domain.model.FloatingWindowState
@@ -33,7 +32,7 @@ class FloatingWindowPreferences @Inject constructor(
         PREFS_NAME,
         Context.MODE_PRIVATE
     )
-    
+
     override fun saveState(state: FloatingWindowState) {
         prefs.edit {
             putBoolean(KEY_IS_ENABLED, state.isEnabled)
@@ -288,15 +287,9 @@ class FloatingWindowPreferences @Inject constructor(
             clearMediaProjectionPermissionInternal()
             return
         }
-        val encoded = encodeIntent(data) ?: run {
-            clearMediaProjectionPermissionInternal()
-            return
-        }
-        prefs.edit {
-            putInt(KEY_MEDIA_PROJECTION_RESULT_CODE, resultCode)
-            putString(KEY_MEDIA_PROJECTION_RESULT_DATA, encoded)
-            putInt(KEY_MEDIA_PROJECTION_DATA_VERSION, MEDIA_PROJECTION_DATA_VERSION)
-        }
+        mediaProjectionPermissionCache = MediaProjectionPermission(resultCode, data)
+        clearMediaProjectionPermissionPersisted()
+        android.util.Log.d(TAG, "MediaProjection 授权已缓存（仅内存）")
     }
 
     fun getMediaProjectionPermission(): MediaProjectionPermission? {
@@ -304,51 +297,20 @@ class FloatingWindowPreferences @Inject constructor(
     }
 
     private fun getMediaProjectionPermissionInternal(): MediaProjectionPermission? {
-        val version = prefs.getInt(KEY_MEDIA_PROJECTION_DATA_VERSION, 0)
-        if (version != MEDIA_PROJECTION_DATA_VERSION) {
-            clearMediaProjectionPermissionInternal()
-            return null
-        }
-        val encoded = prefs.getString(KEY_MEDIA_PROJECTION_RESULT_DATA, null) ?: return null
-        val resultCode = prefs.getInt(KEY_MEDIA_PROJECTION_RESULT_CODE, Activity.RESULT_CANCELED)
-        val intent = decodeIntent(encoded) ?: run {
-            clearMediaProjectionPermissionInternal()
-            return null
-        }
-        return MediaProjectionPermission(resultCode, intent)
+        return mediaProjectionPermissionCache
     }
 
     private fun clearMediaProjectionPermissionInternal() {
+        mediaProjectionPermissionCache = null
+        clearMediaProjectionPermissionPersisted()
+        MediaProjectionHolder.clear()
+    }
+
+    private fun clearMediaProjectionPermissionPersisted() {
         prefs.edit {
             remove(KEY_MEDIA_PROJECTION_RESULT_CODE)
             remove(KEY_MEDIA_PROJECTION_RESULT_DATA)
             remove(KEY_MEDIA_PROJECTION_DATA_VERSION)
-        }
-    }
-
-    private fun encodeIntent(intent: Intent): String? {
-        return try {
-            val parcel = Parcel.obtain()
-            parcel.writeParcelable(intent, 0)
-            val bytes = parcel.marshall()
-            parcel.recycle()
-            Base64.encodeToString(bytes, Base64.NO_WRAP)
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun decodeIntent(encoded: String): Intent? {
-        return try {
-            val bytes = Base64.decode(encoded, Base64.NO_WRAP)
-            val parcel = Parcel.obtain()
-            parcel.unmarshall(bytes, 0, bytes.size)
-            parcel.setDataPosition(0)
-            val intent = parcel.readParcelable<Intent>(Intent::class.java.classLoader)
-            parcel.recycle()
-            intent
-        } catch (_: Exception) {
-            null
         }
     }
 
@@ -383,7 +345,8 @@ class FloatingWindowPreferences @Inject constructor(
         const val DEFAULT_INPUT_TEXT = ""
         const val DEFAULT_POSITION = 0
         const val INVALID_POSITION = -1
-        private const val MEDIA_PROJECTION_DATA_VERSION = 1
+        @Volatile
+        private var mediaProjectionPermissionCache: MediaProjectionPermission? = null
     }
 }
 
