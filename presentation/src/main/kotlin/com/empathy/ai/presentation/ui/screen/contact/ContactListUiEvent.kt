@@ -1,6 +1,7 @@
 package com.empathy.ai.presentation.ui.screen.contact
 
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.ContactSortOption
 
 /**
  * 联系人列表界面的用户事件
@@ -141,19 +142,10 @@ sealed interface ContactListUiEvent {
     // === 排序相关事件 ===
 
     /**
-     * 按名称排序
+     * 更新排序选项
+     * @param option 排序选项
      */
-    data object SortByName : ContactListUiEvent
-
-    /**
-     * 按创建时间排序
-     */
-    data object SortByCreatedTime : ContactListUiEvent
-
-    /**
-     * 按最近活动时间排序
-     */
-    data object SortByLastActivity : ContactListUiEvent
+    data class UpdateSortOption(val option: ContactSortOption) : ContactListUiEvent
 
     // === 通用事件 ===
 

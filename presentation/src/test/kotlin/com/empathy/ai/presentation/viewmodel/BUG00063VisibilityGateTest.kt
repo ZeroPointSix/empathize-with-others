@@ -132,7 +132,7 @@ class BUG00063VisibilityGateTest {
     @Test
     fun `refreshNavigationTarget 应重新检查联系人存在性`() = runTest {
         // Given: 联系人被删除场景
-        every { aiAdvisorPreferences.getLastContactId() } returns testContactId
+        every { aiAdvisorPreferences.getLastContactId() } returns testContactId andThen null
         coEvery { contactRepository.getProfile(testContactId) } returns Result.success(null)
 
         val viewModel = createViewModel()

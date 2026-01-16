@@ -1,6 +1,6 @@
 # 工作空间状态中心
 
-> 最后更新: 2026-01-13 | 更新者: Codex (BUG-00070 悬浮球App内不显示修复)
+> 最后更新: 2026-01-14 | 更新者: Codex (FEATURE-00001 联系人列表排序偏好探索)
 
 ## 📋 当前工作状态
 
@@ -28,6 +28,7 @@
 
 ### 已完成任务（最近7条）
 - [x] 2026-01-15 - **BUG-00071 事实流对话/总结编辑点击无响应修复** - Codex - 相关文档: [BUG-00071](文档/开发文档/BUG/BUG-00071-事实流对话与总结编辑点击无响应.md)
+- [x] 2026-01-14 - **FEATURE-00001 联系人列表排序偏好探索** - Codex - 相关文档: [FEATURE-20260114](文档/开发文档/MA/FEATURE/FEATURE-20260114-联系人列表排序偏好.md)
 - [x] 2026-01-13 - **BUG-00070 悬浮球App内不显示修复** - Codex - 相关文档: [BUG-00070](文档/开发文档/BUG/BUG-00070-悬浮球App内不显示问题.md), [TE-00070](文档/开发文档/TE/TE-00070-悬浮球App内不显示测试用例.md)
 - [x] 2026-01-12 - **FREE-00007 BrainTag 返回行为一致性修复** - Codex
 - [x] 2026-01-12 - **FREE-00006 ModernPersonaTab 无结果关键词提示** - Codex - 相关文档: [FREE-20260112](文档/开发文档/MA/FREE/FREE-20260112-contact-search-highlight.md)
@@ -204,6 +205,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 ### 文档版本
 | 文档类型 | 最新编号 | 文档名称 | 版本 | 最后更新 | 更新者 |
+| MA | - | FEATURE-20260114-联系人列表排序偏好.md | v1.0 | 2026-01-14 | Codex |
 |---------|---------|---------|------|----------|--------|
 | MA | - | FREE-20260112-contact-search-highlight.md | v1.7 | 2026-01-12 | Codex |
 | MA | - | 智能体代码复用与规范统一评估报告 | v1.0 | 2026-01-03 | Roo |
@@ -219,9 +221,15 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ## 🤖 AI 工具协作状态
 
 ### Codex (Free Explorer)
+<<<<<<< HEAD
 - **最后活动**: 2026-01-15 - 完成 BUG-00071 事实流对话/总结编辑点击无响应修复
 - **当前任务**: BUG-00074 悬浮球重新生成UI层级混乱问题修复
 - **待处理**: 事实流编辑点击验收 + UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
+=======
+- **最后活动**: 2026-01-14 - 完成 FEATURE-00001 联系人列表排序偏好探索  
+- **当前任务**: 无
+- **待处理**: 无（已完成回归测试）
+>>>>>>> freedom-feature2
 
 ### Roo (Review)
 - **最后活动**: 2026-01-01 - 完成 Multi-Agent Explorer 决策日志机制升级提交
@@ -240,6 +248,35 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ---
 
 ## 📝 变更日志
+### 2026-01-14 - Codex (FEATURE-00001 联系人列表排序偏好探索)
+- 完成联系人列表排序偏好探索并生成FEATURE报告
+- 修改的文件列表：
+  - `domain/src/main/kotlin/com/empathy/ai/domain/model/ContactSortOption.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/repository/ContactSortPreferencesRepository.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/usecase/GetContactSortOptionUseCase.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/usecase/SaveContactSortOptionUseCase.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/usecase/SortContactsUseCase.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/local/ContactSortPreferences.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/di/RepositoryModule.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactListUiState.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactListUiEvent.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/ContactListViewModel.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactListScreen.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00063ContactSearchTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00059RegenerateMessageRoleTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00060SessionManagementTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00063VisibilityGateTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/SettingsViewModelBug00070Test.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/GetContactSortOptionUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/SaveContactSortOptionUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/SortContactsUseCaseTest.kt`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/MA/FEATURE/FEATURE-20260114-联系人列表排序偏好.md`
+- 回归测试：
+  - `.\gradlew.bat :presentation:testDebugUnitTest --tests '*BUG00058*' --tests '*BUG00059*' --tests '*BUG00060*' --tests '*BUG00061*' --tests '*BUG00063*' --tests '*BUG00064*' --tests '*BUG00066*' --tests '*BUG00068*'` ✅
+  - `.\gradlew.bat :domain:test` ✅
+- 相关文档链接：`文档/开发文档/MA/FEATURE/FEATURE-20260114-联系人列表排序偏好.md`
+
 
 ### 2026-01-15 - Codex (BUG-00071 事实流对话/总结编辑点击无响应修复)
 - 事实流对话与总结点击编辑回调补齐，保持事实编辑逻辑不变

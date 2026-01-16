@@ -1,6 +1,7 @@
 package com.empathy.ai.presentation.ui.screen.contact
 
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.ContactSortOption
 
 /**
  * 联系人列表界面的UI状态
@@ -17,6 +18,7 @@ import com.empathy.ai.domain.model.ContactProfile
  * ├── 选择状态        ← selectedContactIds, isSelectionMode
  * ├── 交互状态        ← showAddContactDialog, showDeleteConfirmDialog...
  * ├── 分页状态        ← hasMore, currentPage, pageSize
+ * ├── 排序状态        ← sortOption
  * └── 导航状态        ← shouldNavigateToChat, shouldNavigateToEdit...
  * ```
  *
@@ -51,6 +53,7 @@ import com.empathy.ai.domain.model.ContactProfile
  * @property shouldNavigateToEdit 待编辑的联系人ID
  * @property shouldNavigateToSettings 是否应导航到设置页
  * @property shouldNavigateBack 是否应返回
+ * @property sortOption 当前排序选项
  */
 data class ContactListUiState(
     // 通用状态
@@ -86,6 +89,7 @@ data class ContactListUiState(
     val shouldNavigateToEdit: String = "",
     val shouldNavigateToSettings: Boolean = false,
     val shouldNavigateBack: Boolean = false,
+    val sortOption: ContactSortOption = ContactSortOption.NAME,
     // 首次加载完成标记，避免初始错误闪现
     val hasLoadedContacts: Boolean = false
 ) {

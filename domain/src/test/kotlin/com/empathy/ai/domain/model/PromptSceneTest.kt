@@ -12,13 +12,13 @@ class PromptSceneTest {
 
     @Test
     fun `should have six scenes including deprecated`() {
-        assertEquals(6, PromptScene.entries.size)
+        assertEquals(7, PromptScene.entries.size)
     }
 
     @Test
     fun `should have four active scenes`() {
         val activeScenes = PromptScene.entries.filter { !it.isDeprecated }
-        assertEquals(4, activeScenes.size)
+        assertEquals(5, activeScenes.size)
     }
 
     @Test
