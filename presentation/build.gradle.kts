@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.kotlin.kapt)  // 使用KAPT替代KSP处理Hilt，解决多模块兼容性问题
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -36,13 +36,9 @@ android {
         jvmTarget = "17"
     }
 
-    // KAPT配置 - Hilt编译器参数
-    kapt {
-        correctErrorTypes = true
-        arguments {
-            arg("dagger.fastInit", "enabled")
-            arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-        }
+    ksp {
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
 
     buildFeatures {
@@ -94,9 +90,9 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.hilt.navigation.compose)
 
-    // Hilt - 使用KAPT替代KSP，解决多模块兼容性问题
+    // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

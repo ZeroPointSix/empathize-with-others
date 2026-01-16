@@ -1,11 +1,492 @@
 {
     "currentVersion": {
-        "version": "1.1.0",
-        "versionCode": 10100,
+        "version": "1.3.0",
+        "versionCode": 10300,
         "stage": "dev",
-        "updatedAt": "2026-01-02T02:37:21.626166100Z"
+        "updatedAt": "2026-01-14T10:11:27.801895844Z"
     },
     "history": [
+        {
+            "version": "1.3.0",
+            "versionCode": 10300,
+            "stage": "dev",
+            "date": "2026-01-14T10:11:27.801895844Z",
+            "commits": [
+                "修复悬浮球在App内不显示的问题 (BUG-00070)",
+                "enhance contact search highlight and BrainTag back",
+                "增强全局搜索高亮体验并修复BrainTag返回行为",
+                "更新模型预设支持多模态并添加管理报告",
+                "merge fix-arch reports and add manage/tsg",
+                "实现截屏功能并支持多模态AI分析 (PRD-00036)",
+                "增强AI军师导航锚点自适应回退逻辑",
+                "优化AI军师返回路径并修复导航栈独立性 (BUG-00069)",
+                "修复切屏回退与联系人错误闪现问题 (BUG-00069)",
+                "修复Tab缓存场景下导航副作用可见性问题 (BUG-00063)",
+                "add BUG-00063 screen switch optimization"
+            ],
+            "changelog": "### ✨ 新功能\n- enhance contact search highlight and BrainTag back\n- 增强全局搜索高亮体验并修复BrainTag返回行为\n- 更新模型预设支持多模态并添加管理报告\n- 实现截屏功能并支持多模态AI分析 (PRD-00036)\n\n### 🐛 Bug修复\n- 修复悬浮球在App内不显示的问题 (BUG-00070)\n- 增强AI军师导航锚点自适应回退逻辑\n- 优化AI军师返回路径并修复导航栈独立性 (BUG-00069)\n- 修复切屏回退与联系人错误闪现问题 (BUG-00069)\n- 修复Tab缓存场景下导航副作用可见性问题 (BUG-00063)\n\n### 📝 文档更新\n- merge fix-arch reports and add manage/tsg\n- add BUG-00063 screen switch optimization"
+        },
+        {
+            "version": "1.2.16",
+            "versionCode": 10216,
+            "stage": "dev",
+            "date": "2026-01-12T03:59:54.479467726Z",
+            "commits": [
+                "更新版本号到 1.2.15 [skip ci]",
+                "更新版本号到 1.2.14 [skip ci]",
+                "更新版本号到 1.2.13 [skip ci]",
+                "更新版本号到 1.2.12 [skip ci]",
+                "更新版本号到 1.2.11 [skip ci]",
+                "更新版本号到 1.2.10 [skip ci]",
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.15 [skip ci]\n- 🔧 更新版本号到 1.2.14 [skip ci]\n- 🔧 更新版本号到 1.2.13 [skip ci]\n- 🔧 更新版本号到 1.2.12 [skip ci]\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.15",
+            "versionCode": 10215,
+            "stage": "dev",
+            "date": "2026-01-12T03:55:07.242688354Z",
+            "commits": [
+                "更新版本号到 1.2.14 [skip ci]",
+                "更新版本号到 1.2.13 [skip ci]",
+                "更新版本号到 1.2.12 [skip ci]",
+                "更新版本号到 1.2.11 [skip ci]",
+                "更新版本号到 1.2.10 [skip ci]",
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.14 [skip ci]\n- 🔧 更新版本号到 1.2.13 [skip ci]\n- 🔧 更新版本号到 1.2.12 [skip ci]\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.14",
+            "versionCode": 10214,
+            "stage": "dev",
+            "date": "2026-01-12T03:51:48.452150947Z",
+            "commits": [
+                "更新版本号到 1.2.13 [skip ci]",
+                "更新版本号到 1.2.12 [skip ci]",
+                "更新版本号到 1.2.11 [skip ci]",
+                "更新版本号到 1.2.10 [skip ci]",
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.13 [skip ci]\n- 🔧 更新版本号到 1.2.12 [skip ci]\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.13",
+            "versionCode": 10213,
+            "stage": "dev",
+            "date": "2026-01-12T03:41:28.157003647Z",
+            "commits": [
+                "更新版本号到 1.2.12 [skip ci]",
+                "更新版本号到 1.2.11 [skip ci]",
+                "更新版本号到 1.2.10 [skip ci]",
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.12 [skip ci]\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.12",
+            "versionCode": 10212,
+            "stage": "dev",
+            "date": "2026-01-12T03:19:22.791963416Z",
+            "commits": [
+                "更新版本号到 1.2.11 [skip ci]",
+                "更新版本号到 1.2.10 [skip ci]",
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.11",
+            "versionCode": 10211,
+            "stage": "dev",
+            "date": "2026-01-12T03:00:22.938391729Z",
+            "commits": [
+                "更新版本号到 1.2.10 [skip ci]",
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.10",
+            "versionCode": 10210,
+            "stage": "dev",
+            "date": "2026-01-12T02:42:23.193424522Z",
+            "commits": [
+                "触发 GitHub Actions 验证签名配置修复",
+                "更新版本号到 1.2.9 [skip ci]",
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.9",
+            "versionCode": 10209,
+            "stage": "dev",
+            "date": "2026-01-11T15:03:44.002171677Z",
+            "commits": [
+                "更新版本号到 1.2.8 [skip ci]",
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.8",
+            "versionCode": 10208,
+            "stage": "dev",
+            "date": "2026-01-11T14:39:28.971816679Z",
+            "commits": [
+                "更新版本号到 1.2.7 [skip ci]",
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.7",
+            "versionCode": 10207,
+            "stage": "dev",
+            "date": "2026-01-11T14:35:16.415876112Z",
+            "commits": [
+                "更新版本号到 1.2.6 [skip ci]",
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.6",
+            "versionCode": 10206,
+            "stage": "dev",
+            "date": "2026-01-11T14:20:42.921533171Z",
+            "commits": [
+                "更新版本号到 1.2.5 [skip ci]",
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.5",
+            "versionCode": 10205,
+            "stage": "dev",
+            "date": "2026-01-11T13:18:54.009120942Z",
+            "commits": [
+                "resolve signing keystore path from root",
+                "更新版本号到 1.2.4 [skip ci]",
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.4",
+            "versionCode": 10204,
+            "stage": "dev",
+            "date": "2026-01-11T12:52:46.631883263Z",
+            "commits": [
+                "trigger workflow",
+                "更新版本号到 1.2.4 [skip ci]",
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🔧 其他变更\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.4",
+            "versionCode": 10204,
+            "stage": "dev",
+            "date": "2026-01-11T10:41:48.475154645Z",
+            "commits": [
+                "fix release keystore path",
+                "更新版本号到 1.2.4 [skip ci]",
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🔧 其他变更\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.4",
+            "versionCode": 10204,
+            "stage": "production",
+            "date": "2026-01-11T10:23:00.417350890Z",
+            "commits": [
+                "write keystore under app for release"
+            ],
+            "changelog": "### 🔧 其他变更\n- 👷 write keystore under app for release"
+        },
+        {
+            "version": "1.2.4",
+            "versionCode": 10204,
+            "stage": "production",
+            "date": "2026-01-11T10:06:35.715802507Z",
+            "commits": [
+                "serialize version update runs",
+                "更新版本号到 1.2.3 [skip ci]",
+                "re-encode launcher foreground mipmap pngs"
+            ],
+            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground mipmap pngs\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.3 [skip ci]\n- 👷 serialize version update runs"
+        },
+        {
+            "version": "1.2.3",
+            "versionCode": 10203,
+            "stage": "dev",
+            "date": "2026-01-11T10:02:36.954266050Z",
+            "commits": [
+                "re-encode launcher foreground mipmap pngs"
+            ],
+            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground mipmap pngs"
+        },
+        {
+            "version": "1.2.2",
+            "versionCode": 10202,
+            "stage": "production",
+            "date": "2026-01-11T09:44:55.098020243Z",
+            "commits": [
+                "rebase before pushing version updates",
+                "更新版本号到 1.2.1 [skip ci]",
+                "re-encode launcher foreground png",
+                "更新版本号到 1.2.0 [skip ci]",
+                "skip existing tag creation",
+                "更新版本号到 1.2.0 [skip ci]",
+                "sanitize keystore base64 in release job"
+            ],
+            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground png\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.1 [skip ci]\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 👷 rebase before pushing version updates\n- 👷 skip existing tag creation\n- 👷 sanitize keystore base64 in release job"
+        },
+        {
+            "version": "1.2.1",
+            "versionCode": 10201,
+            "stage": "dev",
+            "date": "2026-01-11T09:36:07.126116466Z",
+            "commits": [
+                "re-encode launcher foreground png",
+                "更新版本号到 1.2.0 [skip ci]",
+                "skip existing tag creation",
+                "更新版本号到 1.2.0 [skip ci]",
+                "sanitize keystore base64 in release job"
+            ],
+            "changelog": "### 🐛 Bug修复\n- re-encode launcher foreground png\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 👷 skip existing tag creation\n- 👷 sanitize keystore base64 in release job"
+        },
+        {
+            "version": "1.2.0",
+            "versionCode": 10200,
+            "stage": "production",
+            "date": "2026-01-11T09:15:39.145189936Z",
+            "commits": [
+                "skip existing tag creation",
+                "更新版本号到 1.2.0 [skip ci]",
+                "sanitize keystore base64 in release job"
+            ],
+            "changelog": "### 🔧 其他变更\n- 🔧 更新版本号到 1.2.0 [skip ci]\n- 👷 skip existing tag creation\n- 👷 sanitize keystore base64 in release job"
+        },
+        {
+            "version": "1.2.0",
+            "versionCode": 10200,
+            "stage": "production",
+            "date": "2026-01-11T09:00:30.206879447Z",
+            "commits": [
+                "sanitize keystore base64 in release job"
+            ],
+            "changelog": "### 🔧 其他变更\n- 👷 sanitize keystore base64 in release job"
+        },
+        {
+            "version": "1.2.0",
+            "versionCode": 10200,
+            "stage": "production",
+            "date": "2026-01-11T08:39:51.737293816Z",
+            "commits": [
+                "add signing env for version analysis",
+                "remove hardcoded org.gradle.java.home",
+                "slim repo for open source",
+                "add release publish to version update",
+                "修复消息重新生成角色错乱问题 (BUG-00059)",
+                "add BUG-00058 fix summary",
+                "导航栈治理与测试资源优化 (PRD-00035/BUG-00068)",
+                "实现页面缓存解决Tab切换黑屏问题",
+                "新增大脑标签编辑功能 (BUG-00066)",
+                "新增AI军师流式消息功能",
+                "更新BUG文档记录 (BUG-00063/64)",
+                "修复联系人搜索功能问题 (BUG-00063)",
+                "修复AI手动总结功能未生效问题 (BUG-00064)",
+                "添加 BUG-00064 AI总结功能未生效修复方案文档",
+                "修复提示词编辑器场景切换问题 (BUG-00061)",
+                "更新 BUG 文档 - 新增 8 个 bug 文档，修改 1 个，删除 1 个",
+                "AI军师会话管理功能增强 - 修复BUG-00058/59/60/61",
+                "修复AI军师对话界面可读性问题 (BUG-00057)",
+                "修复AI配置请求超时问题 (BUG-00054)",
+                "修复AI配置与用户画像多项问题 (BUG-00053/54/56)",
+                "修复全局字体响应式适配问题 (BUG-00055)",
+                "修复界面布局与字体自适应问题 (BUG-00052)",
+                "文档重构与规范更新",
+                "新增开发者模式与系统提示词管理功能 (PRD-00033)",
+                "TD-00031知识查询超时优化与代码质量提升",
+                "新增悬浮窗快速问答功能 (PRD-00031)",
+                "AI军师会话隔离与Markdown渲染增强 (FD-00030)",
+                "AI军师UI优化 - 更名为心语助手",
+                "清理历史归档文件",
+                "完成PRD-00029 AI军师UI架构优化 - 三页面导航实现",
+                "添加PRD-00029 AI军师UI优化需求完整文档",
+                "修复AI军师流式对话终止后重新生成消息角色错误问题(BUG-00048) + 系统提示词优化总结",
+                "实现AI军师流式对话升级功能",
+                "更新项目文档统计并增强测试和功能",
+                "更新AI军师功能(TD-00026)文档和项目状态统计",
+                "新增AI Advisor智能体对话功能模块",
+                "清理临时文档目录并新增智能体代码复用评估报告",
+                "清理归档文档并添加代码分析报告",
+                "增强悬浮窗功能和调试能力",
+                "完成TD-00025 AI配置功能完善",
+                "修复.gitignore，移除buildSrc/build/构建产物跟踪",
+                "添加PRD24测试覆盖分析报告",
+                "修复.gitignore，移除buildSrc/build/构建产物跟踪",
+                "添加test-PRD24分支合并完成报告",
+                "添加PRD24测试覆盖分析报告",
+                "补充测试用例，提升覆盖率到97.6%",
+                "实现版本号和图标自动更新系统",
+                "提交多智能体探索报告作为主分支参考",
+                "添加TD-00026 AI军师对话功能探索报告及工作树管理审查报告",
+                "添加工作树管理报告和探索报告 (TD-00027 Phase1)",
+                "引入决策日志(Decision Journal)机制并增强智能体工作流",
+                "更新WORKSPACE并新增AI配置、军师对话及项目修复相关开发文档",
+                "添加图标和版本号自动更新功能(Task 00024)相关文档及审查报告",
+                "添加智能体工作审查报告和PRD-00023文档",
+                "添加架构审查报告",
+                "添加test分支测试探索报告文档",
+                "引入 Task Runner 智能体及诚实性监督体系",
+                "更新代码分析报告格式",
+                "重构技能体系并更新项目统计文档",
+                "完成BUG-00038 UI交互与适配问题系统性修复V2",
+                "添加BUG-00038-UI交互与适配问题系统性分析V2文档",
+                "实现iOS风格对话框组件并优化响应式字体适配系统",
+                "更新项目文档与统计信息",
+                "优化悬浮球UI为iOS风格设计并添加开发调试工具",
+                "重构用户画像界面为iOS风格并添加代码分析技能支持",
+                "实现AI配置页面iOS风格UI优化",
+                "实现PRD-00021设置界面UI优化设计稿和文档体系\\n\\n- 创建iOS风格的设置界面HTML设计稿（AI配置、添加服务商、个人画像）\\n- 建立完整的PRD-00021文档体系（PRD、FD、TDD、CN、RE、TD）\\n- 删除过时的.specify配置目录和临时文件\\n- 准备iOS风格UI组件（IOSLargeNavigationBar、IOSProviderItem）\\n\\n这些变更为设置界面UI优化项目提供了完整的设计参考和实施指南，\\n确保后续开发能够严格按照iOS风格规范进行实现。",
+                "UI/UX系统化改进与联系人详情页优化",
+                "代码简洁化重构与配置优化",
+                "完成Clean Architecture多模块改造(TD-00017 65/65)",
+                "实现对话主题功能(TD-00016) - 完整的五层架构实现",
+                "实现用户画像系统完整功能",
+                "实现用户画像系统完整功能",
+                "完成TD-00010悬浮球状态指示与拖动功能，修复BUG-00014/BUG-00015",
+                "添加悬浮窗功能重构完整设计文档集",
+                "优化AI回复质量与人设，清理冗余测试代码",
+                "提示词管理系统全面实现与项目文档刷新"
+            ],
+            "changelog": "### ✨ 新功能\n- 导航栈治理与测试资源优化 (PRD-00035/BUG-00068)\n- 实现页面缓存解决Tab切换黑屏问题\n- 新增大脑标签编辑功能 (BUG-00066)\n- 新增AI军师流式消息功能\n- AI军师会话管理功能增强 - 修复BUG-00058/59/60/61\n- 新增开发者模式与系统提示词管理功能 (PRD-00033)\n- 新增悬浮窗快速问答功能 (PRD-00031)\n- AI军师会话隔离与Markdown渲染增强 (FD-00030)\n- AI军师UI优化 - 更名为心语助手\n- 完成PRD-00029 AI军师UI架构优化 - 三页面导航实现\n- 实现AI军师流式对话升级功能\n- 新增AI Advisor智能体对话功能模块\n- 增强悬浮窗功能和调试能力\n- **AI-Config**: 完成TD-00025 AI配置功能完善\n- **TD-00024**: 实现版本号和图标自动更新系统\n- **multi-agent-explorer**: 引入决策日志(Decision Journal)机制并增强智能体工作流\n- **ma**: 引入 Task Runner 智能体及诚实性监督体系\n- 实现iOS风格对话框组件并优化响应式字体适配系统\n- 更新项目文档与统计信息\n- **ui**: 优化悬浮球UI为iOS风格设计并添加开发调试工具\n- 重构用户画像界面为iOS风格并添加代码分析技能支持\n- **TD-00021**: 实现AI配置页面iOS风格UI优化\n- 实现PRD-00021设置界面UI优化设计稿和文档体系\\n\\n- 创建iOS风格的设置界面HTML设计稿（AI配置、添加服务商、个人画像）\\n- 建立完整的PRD-00021文档体系（PRD、FD、TDD、CN、RE、TD）\\n- 删除过时的.specify配置目录和临时文件\\n- 准备iOS风格UI组件（IOSLargeNavigationBar、IOSProviderItem）\\n\\n这些变更为设置界面UI优化项目提供了完整的设计参考和实施指南，\\n确保后续开发能够严格按照iOS风格规范进行实现。\n- UI/UX系统化改进与联系人详情页优化\n- 实现对话主题功能(TD-00016) - 完整的五层架构实现\n- 实现用户画像系统完整功能\n- 实现用户画像系统完整功能\n- 完成TD-00010悬浮球状态指示与拖动功能，修复BUG-00014/BUG-00015\n- 添加悬浮窗功能重构完整设计文档集\n- 优化AI回复质量与人设，清理冗余测试代码\n- 提示词管理系统全面实现与项目文档刷新\n\n### 🐛 Bug修复\n- 修复消息重新生成角色错乱问题 (BUG-00059)\n- 修复联系人搜索功能问题 (BUG-00063)\n- 修复AI手动总结功能未生效问题 (BUG-00064)\n- 修复提示词编辑器场景切换问题 (BUG-00061)\n- 修复AI军师对话界面可读性问题 (BUG-00057)\n- 修复AI配置请求超时问题 (BUG-00054)\n- 修复AI配置与用户画像多项问题 (BUG-00053/54/56)\n- 修复全局字体响应式适配问题 (BUG-00055)\n- 修复界面布局与字体自适应问题 (BUG-00052)\n- 修复AI军师流式对话终止后重新生成消息角色错误问题(BUG-00048) + 系统提示词优化总结\n- 完成BUG-00038 UI交互与适配问题系统性修复V2\n\n### ♻️ 代码重构\n- TD-00031知识查询超时优化与代码质量提升\n- 重构技能体系并更新项目统计文档\n- 代码简洁化重构与配置优化\n- 完成Clean Architecture多模块改造(TD-00017 65/65)\n\n### 📝 文档更新\n- add BUG-00058 fix summary\n- 更新BUG文档记录 (BUG-00063/64)\n- 添加 BUG-00064 AI总结功能未生效修复方案文档\n- 更新 BUG 文档 - 新增 8 个 bug 文档，修改 1 个，删除 1 个\n- 文档重构与规范更新\n- 添加PRD-00029 AI军师UI优化需求完整文档\n- 更新项目文档统计并增强测试和功能\n- 更新AI军师功能(TD-00026)文档和项目状态统计\n- 清理临时文档目录并新增智能体代码复用评估报告\n- 清理归档文档并添加代码分析报告\n- **TEST**: 添加PRD24测试覆盖分析报告\n- **MANAGE**: 添加test-PRD24分支合并完成报告\n- **TD-00024**: 添加PRD24测试覆盖分析报告\n- 提交多智能体探索报告作为主分支参考\n- 添加TD-00026 AI军师对话功能探索报告及工作树管理审查报告\n- 添加工作树管理报告和探索报告 (TD-00027 Phase1)\n- 更新WORKSPACE并新增AI配置、军师对话及项目修复相关开发文档\n- 添加图标和版本号自动更新功能(Task 00024)相关文档及审查报告\n- 添加智能体工作审查报告和PRD-00023文档\n- 添加架构审查报告\n- 添加test分支测试探索报告文档\n- 更新代码分析报告格式\n- 添加BUG-00038-UI交互与适配问题系统性分析V2文档\n\n### 🔧 其他变更\n- ✅ **TD-00024**: 补充测试用例，提升覆盖率到97.6%\n- 🔧 slim repo for open source\n- 🔧 清理历史归档文件\n- 🔧 修复.gitignore，移除buildSrc/build/构建产物跟踪\n- 🔧 修复.gitignore，移除buildSrc/build/构建产物跟踪\n- 👷 add signing env for version analysis\n- 👷 remove hardcoded org.gradle.java.home\n- 👷 add release publish to version update"
+        },
         {
             "version": "1.1.0",
             "versionCode": 10100,
