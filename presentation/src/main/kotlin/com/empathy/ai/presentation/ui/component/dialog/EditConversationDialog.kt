@@ -227,7 +227,7 @@ fun EditConversationDialog(
                     }
                     
                     // 分隔线
-                    Divider(
+                    HorizontalDivider(
                         color = Color.Black.copy(alpha = 0.1f),
                         thickness = 0.5.dp
                     )

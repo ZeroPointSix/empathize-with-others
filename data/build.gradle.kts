@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)  // 保留KSP用于Room和Moshi
-    alias(libs.plugins.kotlin.kapt)  // 使用KAPT处理Hilt
 }
 
 android {
@@ -41,15 +40,8 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
         arg("room.incremental", "true")
         arg("room.generateKotlin", "true")
-    }
-
-    // KAPT配置 - 用于Hilt，解决多模块兼容性问题
-    kapt {
-        correctErrorTypes = true
-        arguments {
-            arg("dagger.fastInit", "enabled")
-            arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-        }
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
 
     testOptions {
@@ -77,7 +69,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.core.ktx)
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)  // 使用KAPT替代KSP处理Hilt
+    ksp(libs.hilt.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)

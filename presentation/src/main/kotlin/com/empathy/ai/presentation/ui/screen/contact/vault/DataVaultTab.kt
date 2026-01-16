@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -205,7 +205,7 @@ private fun PreviewDataVaultTabFull() {
                 DataSourceInfo(
                     id = "chat",
                     title = "聊天记录",
-                    icon = Icons.Default.Chat,
+                    icon = Icons.AutoMirrored.Filled.Chat,
                     count = 128,
                     status = DataStatus.COMPLETED
                 ),
@@ -233,7 +233,7 @@ private fun PreviewDataVaultTabFull() {
                 DataSourceInfo(
                     id = "note",
                     title = "备注",
-                    icon = Icons.Default.Note,
+                    icon = Icons.AutoMirrored.Filled.Note,
                     count = 12,
                     status = DataStatus.COMPLETED
                 )
