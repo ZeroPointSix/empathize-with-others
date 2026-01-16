@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 添加变更日志
 - 更新文档版本（如适用）
 
-详细规则参见 `Rules/workspace-rules.md`
+详细规则参见 `.kiro/steering/rules.md`
 
 ## 常用开发命令
 
@@ -45,11 +45,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 基础构建
 gradlew.bat assembleDebug          # Debug 构建
 gradlew.bat assembleRelease        # Release 构建
-gradlew.bat clean                  # 清理
+gradlew.bat clean                  # 清理构建产物
 
-# 快速开发脚本 (Windows)
-scripts\quick-build.bat            # 快速构建 (跳过 lint/test)
-scripts\dev-cycle.bat              # 开发循环 (构建+测试+安装)
+# 模块构建（增量编译更快）
+gradlew.bat :domain:build          # 构建 domain 模块
+gradlew.bat :data:assembleDebug    # 构建 data 模块
+gradlew.bat :presentation:assembleDebug  # 构建 presentation 模块
+
+# 安装到设备
+gradlew.bat installDebug           # 安装 Debug APK
+gradlew.bat installRelease         # 安装 Release APK
 ```
 
 ### 测试与检查
@@ -57,6 +62,7 @@ scripts\dev-cycle.bat              # 开发循环 (构建+测试+安装)
 # 单元测试
 gradlew.bat test                   # 运行所有单元测试
 gradlew.bat :domain:test           # 运行 domain 模块测试
+gradlew.bat :data:test             # 运行 data 模块测试
 gradlew.bat :presentation:test     # 运行 presentation 模块测试
 
 # 运行特定测试
@@ -64,35 +70,32 @@ gradlew.bat :domain:test --tests "com.empathy.ai.domain.usecase.SendAdvisorMessa
 gradlew.bat :presentation:test --tests "*BUG00068*"
 
 # Android 连接测试 (需连接设备/模拟器)
-gradlew.bat connectedAndroidTest
+gradlew.bat connectedAndroidTest   # 运行所有设备测试
 
 # 代码质量
-gradlew.bat lint                   # 全局 Lint
-gradlew.bat ktlintCheck            # 代码风格检查
+gradlew.bat lint                   # 全局 Lint 检查
+gradlew.bat :app:lintDebug         # 仅检查 app 模块
 ```
 
 ### 调试工具
 ```bash
-# 日志调试
-scripts\logcat.bat                 # 查看 WARN+ 日志
-scripts\logcat.bat -e              # 仅查看 ERROR
-scripts\quick-error.bat            # 获取最近 ERROR (一次性)
+# ADB 日志调试
+adb logcat -v time                 # 完整日志（带时间戳）
+adb logcat *:W                     # 仅显示 WARN 及以上级别
+adb logcat -s "EmpathyAI"          # 过滤应用标签
 
-# AI 功能调试
-scripts\ai-debug.bat               # 实时监听 AI 请求/响应 (简略)
-scripts\ai-debug-full.bat          # 完整 AI 日志 (含 Prompt)
+# 清空应用数据
+adb shell pm clear com.empathy.ai
 
-### Kiro 快速命令 (`.kiro/commands/`)
-```bash
-/kiro QuickBuild    # 快速构建
-/kiro QuickTest     # 快速测试
-/kiro GenTest       # 生成测试用例
-/kiro CodeReview    # 代码审查
-/kiro DocReview     # 文档审查
-/kiro Research      # 深度研究
-/kiro Ask           # 需求澄清
-/git                # Git 智能操作
+# AI 功能专用日志
+adb logcat -s "AiRepository" "AiAdvisor" "OpenAiApi"
 ```
+
+### 版本管理
+版本号通过 `gradle.properties` 配置，由 VersionUpdatePlugin 自动管理：
+- `APP_VERSION_NAME`: 版本名称（如 1.1.0）
+- `APP_VERSION_CODE`: 版本号（如 10100）
+- 每次构建自动备份版本配置，保留最近50个备份
 
 ## 架构与代码结构
 
@@ -103,7 +106,7 @@ app/              -> Application入口, DI配置, Service (依赖 data, presenta
 presentation/     -> UI (Compose), ViewModel, Navigation (依赖 domain)
 domain/           -> 纯 Kotlin 业务逻辑, UseCase, Repository 接口 (无 Android 依赖)
 data/             -> Repository 实现, Room DB, Network (依赖 domain)
-Rules/            -> 开发规范与多 Agent 协作规则
+.kiro/            -> 开发规范与多 Agent 协作规则
 ```
 
 ### 关键架构规则
@@ -116,7 +119,7 @@ Rules/            -> 开发规范与多 Agent 协作规则
 ### Hilt 依赖注入
 -   **Data 模块 (8个DI)**: DatabaseModule, NetworkModule, RepositoryModule, MemoryModule, PromptModule, DispatcherModule, OkHttpClientFactory, Qualifiers
 -   **App 模块 (16个DI)**: LoggerModule, AppDispatcherModule, ServiceModule, FloatingWindowModule, NotificationModule, SummaryModule, EditModule, PersonaModule, TopicModule, UserProfileModule, AiAdvisorModule, ProxyModule, ApiUsageModule, SystemPromptModule, FloatingWindowManagerModule
--   **注解处理**: Data 模块使用 KSP (Room)，App/Presentation 使用 KAPT (Hilt)。
+-   **注解处理**: Data 模块使用 KSP (Room, Moshi)，App/Presentation 使用 KSP (Hilt)。
 
 ### 版本目录管理
 项目使用 Gradle 版本目录 (`gradle/libs.versions.toml`) 统一管理依赖版本：
@@ -169,7 +172,7 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **测试用例**: `文档/开发文档/TE/`
 
 ### 关键规范文档
-- **工作空间规则**: `Rules/workspace-rules.md`
+- **工作空间规则**: `.kiro/steering/rules.md`
 - **项目开发规范**: `Rules/项目开发规范.md`
 
 ## 核心架构模式
