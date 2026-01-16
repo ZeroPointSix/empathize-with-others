@@ -131,7 +131,7 @@ fun ProviderFormDialog(
                     }
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 // 表单内容
                 LazyColumn(
@@ -374,7 +374,7 @@ fun ProviderFormDialog(
                     }
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 // 底部按钮
                 Row(

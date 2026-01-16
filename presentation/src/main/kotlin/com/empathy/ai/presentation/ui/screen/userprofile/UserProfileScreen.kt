@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -444,7 +445,7 @@ private fun getDimensionIcon(dimension: UserProfileDimension): ImageVector {
         UserProfileDimension.PERSONALITY_TRAITS -> Icons.Default.Psychology
         UserProfileDimension.VALUES -> Icons.Default.Diamond
         UserProfileDimension.INTERESTS -> Icons.Default.Palette
-        UserProfileDimension.COMMUNICATION_STYLE -> Icons.Default.Chat
+        UserProfileDimension.COMMUNICATION_STYLE -> Icons.AutoMirrored.Filled.Chat
         UserProfileDimension.SOCIAL_PREFERENCES -> Icons.Default.Groups
     }
 }
@@ -761,7 +762,7 @@ private fun IOSEditTagDialog(
                 }
                 
                 // 分隔线
-                Divider(
+                HorizontalDivider(
                     color = Color.Black.copy(alpha = 0.1f),
                     thickness = 0.5.dp
                 )
@@ -1009,7 +1010,7 @@ private fun IOSExportDialog(
                 }
                 
                 // 分隔线
-                Divider(
+                HorizontalDivider(
                     color = Color.Black.copy(alpha = 0.1f),
                     thickness = 0.5.dp
                 )

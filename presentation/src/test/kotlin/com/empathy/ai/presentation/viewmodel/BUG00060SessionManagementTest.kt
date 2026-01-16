@@ -140,9 +140,9 @@ class BUG00060SessionManagementTest {
         
         // When: 生成标题
         val title = generateSessionTitle(longMessage)
-        
+
         // Then: 标题应该被截断并添加"..."
-        assertEquals("这是一条非常非常非常非常非常...", title)
+        assertEquals("这是一条非常非常非常非常非常长的消息内容...", title)
         assertTrue(title.length <= 23) // 20 + "..."
     }
 

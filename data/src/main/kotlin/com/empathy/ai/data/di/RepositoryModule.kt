@@ -1,6 +1,7 @@
 package com.empathy.ai.data.di
 
 import com.empathy.ai.data.local.AiAdvisorPreferences
+import com.empathy.ai.data.local.ContactSortPreferences
 import com.empathy.ai.data.local.CleanupPreferencesImpl
 import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.data.parser.AiSummaryResponseParserImpl
@@ -21,6 +22,7 @@ import com.empathy.ai.domain.repository.AiRepository
 import com.empathy.ai.domain.repository.ApiUsageRepository
 import com.empathy.ai.domain.repository.BrainTagRepository
 import com.empathy.ai.domain.repository.ContactRepository
+import com.empathy.ai.domain.repository.ContactSortPreferencesRepository
 import com.empathy.ai.domain.repository.DeveloperModeRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
 import com.empathy.ai.domain.repository.PrivacyRepository
@@ -47,6 +49,11 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindContactRepository(impl: ContactRepositoryImpl): ContactRepository
+
+    @Binds
+    abstract fun bindContactSortPreferencesRepository(
+        impl: ContactSortPreferences
+    ): ContactSortPreferencesRepository
 
     @Binds
     abstract fun bindBrainTagRepository(impl: BrainTagRepositoryImpl): BrainTagRepository
