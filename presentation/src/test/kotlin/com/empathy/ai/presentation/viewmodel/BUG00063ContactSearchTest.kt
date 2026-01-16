@@ -2,9 +2,13 @@ package com.empathy.ai.presentation.viewmodel
 
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.Fact
+import com.empathy.ai.domain.model.ContactSortOption
 import com.empathy.ai.domain.model.FactSource
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
+import com.empathy.ai.domain.usecase.GetContactSortOptionUseCase
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
+import com.empathy.ai.domain.usecase.SaveContactSortOptionUseCase
+import com.empathy.ai.domain.usecase.SortContactsUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -33,6 +37,9 @@ class BUG00063ContactSearchTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var getAllContactsUseCase: GetAllContactsUseCase
     private lateinit var deleteContactUseCase: DeleteContactUseCase
+    private lateinit var getContactSortOptionUseCase: GetContactSortOptionUseCase
+    private lateinit var saveContactSortOptionUseCase: SaveContactSortOptionUseCase
+    private lateinit var sortContactsUseCase: SortContactsUseCase
 
     private val sampleContacts = listOf(
         ContactProfile(
@@ -68,6 +75,9 @@ class BUG00063ContactSearchTest {
         Dispatchers.setMain(testDispatcher)
         getAllContactsUseCase = mockk()
         deleteContactUseCase = mockk()
+        getContactSortOptionUseCase = mockk()
+        saveContactSortOptionUseCase = mockk()
+        sortContactsUseCase = SortContactsUseCase()
     }
 
     @After
@@ -77,7 +87,15 @@ class BUG00063ContactSearchTest {
 
     private fun createViewModel(contacts: List<ContactProfile> = sampleContacts): ContactListViewModel {
         coEvery { getAllContactsUseCase() } returns flowOf(contacts)
-        return ContactListViewModel(getAllContactsUseCase, deleteContactUseCase)
+        coEvery { getContactSortOptionUseCase() } returns Result.success(ContactSortOption.NAME)
+        coEvery { saveContactSortOptionUseCase(any()) } returns Result.success(Unit)
+        return ContactListViewModel(
+            getAllContactsUseCase,
+            deleteContactUseCase,
+            getContactSortOptionUseCase,
+            saveContactSortOptionUseCase,
+            sortContactsUseCase
+        )
     }
 
     // ==================== TC-001: 点击搜索图标展开搜索框 ====================

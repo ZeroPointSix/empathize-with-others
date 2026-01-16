@@ -1,7 +1,6 @@
 package com.empathy.ai.presentation.viewmodel
 
 import android.app.Application
-import com.empathy.ai.data.local.FloatingWindowPreferences
 import com.empathy.ai.domain.model.FloatingWindowState
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
@@ -250,7 +249,8 @@ class SettingsViewModelBug00070Test {
 
         // Then: 应该返回Error状态
         assertTrue(result is FloatingWindowManager.ServiceStartResult.Error)
-        assertEquals("启动失败", result.message)
+        val error = result as FloatingWindowManager.ServiceStartResult.Error
+        assertEquals("启动失败", error.message)
     }
 
     /**
