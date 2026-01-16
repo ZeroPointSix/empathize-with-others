@@ -61,7 +61,12 @@
       "Bash(timeout:*)",
       "Bash(git push)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(.gradlew.bat :presentation:testDebugUnitTest --tests \"*ContactList*\" --tests \"*ContactSort*\" --tests \"*SortContacts*\" --tests \"*BUG00063*\")",
+      "Bash(gradlew.bat :presentation:testDebugUnitTest:*)",
+      "Bash(git checkout:*)",
+      "Bash(.gradlew.bat :presentation:testDebugUnitTest --tests \"*ContactListSortFeatureTest\" --tests \"*SortContacts*\" --tests \"*GetContactSortOption*\" --tests \"*SaveContactSortOption*\" --tests \"*BUG00063*\")",
+      "Bash(./gradlew.bat:*)"
     ],
     "deny": [],
     "ask": []

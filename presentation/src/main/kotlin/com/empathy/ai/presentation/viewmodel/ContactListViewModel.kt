@@ -3,8 +3,12 @@ package com.empathy.ai.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.ContactSortOption
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
+import com.empathy.ai.domain.usecase.GetContactSortOptionUseCase
+import com.empathy.ai.domain.usecase.SaveContactSortOptionUseCase
+import com.empathy.ai.domain.usecase.SortContactsUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,7 +26,7 @@ import javax.inject.Inject
  * 管理联系人列表的完整交互逻辑：
  * - 联系人列表加载和分页
  * - 搜索过滤（按名称、标签、关系阶段）
- * - 排序方式切换（最近互动/关系分数/添加时间）
+ * - 排序方式切换（姓名/最近互动/关系分数）
  * - 批量操作支持（删除、标签管理）
  * - 多选模式和全选功能
  *
@@ -49,7 +53,10 @@ import javax.inject.Inject
 @HiltViewModel
 class ContactListViewModel @Inject constructor(
     private val getAllContactsUseCase: GetAllContactsUseCase,
-    private val deleteContactUseCase: DeleteContactUseCase
+    private val deleteContactUseCase: DeleteContactUseCase,
+    private val getContactSortOptionUseCase: GetContactSortOptionUseCase,
+    private val saveContactSortOptionUseCase: SaveContactSortOptionUseCase,
+    private val sortContactsUseCase: SortContactsUseCase
 ) : ViewModel() {
 
     // 私有可变状态（只能内部修改）
@@ -58,12 +65,11 @@ class ContactListViewModel @Inject constructor(
     // 公开不可变状态（外部只读）
     val uiState: StateFlow<ContactListUiState> = _uiState.asStateFlow()
 
-    // 是否已初始化
-    private var isInitialized = false
-
     init {
         // ViewModel创建时自动加载数据
-        loadContacts()
+        // 先加载排序选项，确保联系人列表排序时使用正确的排序选项
+        loadSortOption()
+        // loadSortOption 完成后会自动触发 loadContacts
     }
 
     /**
@@ -106,9 +112,7 @@ class ContactListViewModel @Inject constructor(
             is ContactListUiEvent.HideDeleteConfirmDialog -> hideDeleteConfirmDialog()
 
             // === 排序相关事件 ===
-            is ContactListUiEvent.SortByName -> sortByName()
-            is ContactListUiEvent.SortByCreatedTime -> sortByCreatedTime()
-            is ContactListUiEvent.SortByLastActivity -> sortByLastActivity()
+            is ContactListUiEvent.UpdateSortOption -> updateSortOption(event.option)
 
             // === 通用事件 ===
             is ContactListUiEvent.ClearError -> clearError()
@@ -121,10 +125,9 @@ class ContactListViewModel @Inject constructor(
      * 加载联系人列表
      *
      * 使用Flow收集数据，实现响应式更新
+     * 注意：应该只在排序选项加载完成后调用
      */
     private fun loadContacts() {
-        if (isInitialized) return // 避免重复初始化
-
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true, error = null, hasLoadedContacts = false) }
@@ -132,16 +135,19 @@ class ContactListViewModel @Inject constructor(
                 // 收集联系人数据流
                 getAllContactsUseCase().collect { contacts ->
                     _uiState.update { currentState ->
+                        val sortedContacts = sortContactsUseCase(
+                            contacts,
+                            currentState.sortOption
+                        )
                         currentState.copy(
                             isLoading = false,
                             contacts = contacts,
-                            filteredContacts = contacts,
+                            filteredContacts = sortedContacts,
                             hasMore = contacts.size >= currentState.pageSize,
                             hasLoadedContacts = true,
                             error = null
                         )
                     }
-                    isInitialized = true
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -241,16 +247,17 @@ class ContactListViewModel @Inject constructor(
         val filteredContacts = currentState.contacts.filter { contact ->
             contact.name.contains(query, ignoreCase = true) ||
             contact.targetGoal.contains(query, ignoreCase = true) ||
-            contact.facts.any { fact -> 
-                fact.key.contains(query, ignoreCase = true) || 
-                fact.value.contains(query, ignoreCase = true) 
+            contact.facts.any { fact ->
+                fact.key.contains(query, ignoreCase = true) ||
+                fact.value.contains(query, ignoreCase = true)
             }
         }
+        val sortedResults = sortContactsUseCase(filteredContacts, currentState.sortOption)
 
         _uiState.update {
             it.copy(
                 isSearching = true,
-                searchResults = filteredContacts
+                searchResults = sortedResults
             )
         }
     }
@@ -398,22 +405,53 @@ class ContactListViewModel @Inject constructor(
 
     // === 排序相关方法 ===
 
-    private fun sortByName() {
-        val currentState = _uiState.value
-        val sortedContacts = currentState.filteredContacts.sortedBy { it.name }
-        _uiState.update { it.copy(filteredContacts = sortedContacts) }
+    private fun loadSortOption() {
+        viewModelScope.launch {
+            getContactSortOptionUseCase()
+                .onSuccess { option ->
+                    _uiState.update { it.copy(sortOption = option) }
+                    // 排序选项加载完成后，再加载联系人列表
+                    loadContacts()
+                }
+                .onFailure { error ->
+                    // 加载失败时使用默认值并记录错误，但继续加载联系人
+                    // 可以考虑添加日志记录
+                    loadContacts()
+                }
+        }
     }
 
-    private fun sortByCreatedTime() {
-        // 这里假设联系人按创建时间排序（实际项目中可能需要添加创建时间字段）
-        val currentState = _uiState.value
-        _uiState.update { it.copy(filteredContacts = currentState.contacts) }
+    private fun updateSortOption(option: ContactSortOption) {
+        _uiState.update { it.copy(sortOption = option) }
+        applySorting()
+        viewModelScope.launch {
+            saveContactSortOptionUseCase(option)
+                .onFailure { error ->
+                    // 保存失败时更新错误状态，用户可以看到提示
+                    _uiState.update {
+                        it.copy(error = "保存排序偏好失败: ${error.message}")
+                    }
+                }
+        }
     }
 
-    private fun sortByLastActivity() {
-        // 这里需要按最后活动时间排序（实际项目中需要添加活动时间字段）
+    private fun applySorting() {
         val currentState = _uiState.value
-        _uiState.update { it.copy(filteredContacts = currentState.contacts) }
+        val sortedContacts = sortContactsUseCase(
+            currentState.contacts,
+            currentState.sortOption
+        )
+        val sortedSearchResults = if (currentState.isShowingSearchResults) {
+            sortContactsUseCase(currentState.searchResults, currentState.sortOption)
+        } else {
+            currentState.searchResults
+        }
+        _uiState.update {
+            it.copy(
+                filteredContacts = sortedContacts,
+                searchResults = sortedSearchResults
+            )
+        }
     }
 
     // === 对话框管理方法 ===
