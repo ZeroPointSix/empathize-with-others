@@ -1,13 +1,11 @@
 package com.empathy.ai.ui
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import com.empathy.ai.data.local.FloatingWindowPreferences
-import com.empathy.ai.data.local.MediaProjectionHolder
 import com.empathy.ai.domain.util.MediaProjectionPermissionConstants
 import com.empathy.ai.service.FloatingWindowService
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,15 +44,6 @@ class ScreenshotPermissionActivity : ComponentActivity() {
                 "ScreenshotPermission",
                 "截图权限返回 resultCode=$resultCode, data=${data != null}, source=$requestSource"
             )
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                val projection = projectionManager.getMediaProjection(resultCode, data)
-                if (projection == null) {
-                    android.util.Log.w("ScreenshotPermission", "MediaProjection 创建失败")
-                }
-                MediaProjectionHolder.store(projection)
-            } else {
-                MediaProjectionHolder.clear()
-            }
             floatingWindowPreferences.saveMediaProjectionPermission(resultCode, data)
             val resultIntent = Intent(this, FloatingWindowService::class.java).apply {
                 action = FloatingWindowService.ACTION_MEDIA_PROJECTION_RESULT

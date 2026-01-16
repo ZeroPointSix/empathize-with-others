@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import com.empathy.ai.data.local.MediaProjectionHolder
 import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.FloatingBubbleState
 import com.empathy.ai.domain.model.FloatingWindowState
@@ -303,7 +302,6 @@ class FloatingWindowPreferences @Inject constructor(
     private fun clearMediaProjectionPermissionInternal() {
         mediaProjectionPermissionCache = null
         clearMediaProjectionPermissionPersisted()
-        MediaProjectionHolder.clear()
     }
 
     private fun clearMediaProjectionPermissionPersisted() {

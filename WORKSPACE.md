@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-16 22:02 | 更新者: Codex (BUG-00072 修复实现 + 1.6.0 构建安装)
+> 最后更新: 2026-01-16 22:15 | 更新者: Codex (BUG-00072 修复崩溃原因定位并调整实现)
 
 
 ## 📋 当前工作状态
@@ -17,6 +17,7 @@
 
 ### 测试记录
 - 2026-01-16 21:44 `:presentation:testDebugUnitTest` 失败（29/1004），为既有用例失败，需后续单独处理。
+- 2026-01-16 21:56 OPPO 崩溃：`ScreenshotPermissionActivity` 内调用 `getMediaProjection` 触发 `SecurityException`。
 
 ### 已完成任务（最近7条）
 - [x] 2026-01-15 - **MANAGE-20260115 工作树管理与探索审查** - Codex - 相关文档: [MANAGE-20260115](文档/开发文档/MA/MANAGE/MANAGE-20260115-worktree-manager.md)
