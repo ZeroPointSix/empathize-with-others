@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-16 17:20 | 更新者: Codex (BUG-00072 截图权限与截图流程修复)
+> 最后更新: 2026-01-16 21:30 | 更新者: Codex (BUG-00072 OPPO 真机日志补充与根因更新)
 
 
 ## 📋 当前工作状态
@@ -13,9 +13,9 @@
 | 任务ID | 任务名称 | 负责AI | 状态 | 优先级 | 开始时间 | 预计完成 |
 |--------|---------|--------|------|--------|----------|----------|
 | BUG-00071 | 截图黑屏问题排查 | Codex | 进行中 | P0 | 2026-01-14 20:40 | 2026-01-14 |
+| BUG-00072 | 截图权限缓存失效与 MediaProjection 恢复失败修复 | Codex | 进行中 | P0 | 2026-01-16 20:10 | 2026-01-16 |
 
 ### 已完成任务（最近7条）
-- [x] 2026-01-16 - **BUG-00072 截图权限与截图流程修复** - Codex - 相关文档: [BUG-00072](文档/开发文档/BUG/BUG-00072-截图黑屏排查尝试记录.md)
 - [x] 2026-01-15 - **MANAGE-20260115 工作树管理与探索审查** - Codex - 相关文档: [MANAGE-20260115](文档/开发文档/MA/MANAGE/MANAGE-20260115-worktree-manager.md)
 - [x] 2026-01-15 - **BUG-00073 OPPO 真机悬浮球不显示修复** - Codex - 相关文档: [BUG-00073](文档/开发文档/BUG/BUG-00073-OPPO真机悬浮球不显示问题.md)
 - [x] 2026-01-15 - **RULE-00001 口语化输入规则补充** - Codex - 相关文档: [RulesReadMe](Rules/RulesReadMe.md)
@@ -388,11 +388,12 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 | DR | DR-00024 | FD-00024图标和版本号自动更新审查报告 | v1.0 | 2025-12-31 | Roo |
 
 | BUG | BUG-00071 | 截图权限与图片理解策略调整 | v1.5 | 2026-01-14 | Codex |
-| BUG | BUG-00072 | 截图黑屏排查尝试记录 | v1.0 | 2026-01-15 | Codex |
+| BUG | BUG-00072 | 截图黑屏排查尝试记录 | v1.1 | 2026-01-16 | Codex |
 | BUG | BUG-00073 | OPPO真机悬浮球不显示问题 | v1.0 | 2026-01-15 | Codex |
 
 | BUG | BUG-00070 | 悬浮球App内不显示问题 | v1.0 | 2026-01-13 | Codex |
 
+| TE | TE-00072 | 截图权限与截图流程测试用例 | v1.0 | 2026-01-16 | Codex |
 | TE | TE-00070 | 悬浮球App内不显示测试用例 | v1.0 | 2026-01-13 | Codex |
 
 
@@ -445,6 +446,32 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ## 📝 变更日志
+### 2026-01-16 - Codex (BUG-00072 授权缓存与日志补齐)
+- 截图权限缓存改为进程级缓存，避免授权落盘失败导致设置页开关不刷新。
+- 权限回调与截图入口增加日志，便于定位授权保存与恢复链路。
+- 构建与安装：`gradlew.bat assembleDebug` ✅，`adb install -r` ✅。
+- 修改的文件列表：
+  - `app/src/main/java/com/empathy/ai/ui/ScreenshotPermissionActivity.kt`
+  - `app/src/main/java/com/empathy/ai/service/FloatingWindowService.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/local/FloatingWindowPreferences.kt`
+  - `文档/开发文档/BUG/BUG-00072-截图黑屏排查尝试记录.md`
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-16 - Codex (BUG-00072 授权落盘与截图流程复测)
+- 截图权限授权结果增加内存缓存，授权回调在 Activity 先落盘，设置页返回后可刷新开关状态。
+- 新增 TE-00072 截图权限与截图流程测试用例。
+- 更新 BUG-00072 记录复测现象与修复计划。
+- 构建与安装：`gradlew.bat assembleDebug` ✅，`adb install -r` ✅。
+- 测试：`:presentation:testDebugUnitTest --tests SettingsViewModelBug00070Test` 失败（2用例失败，详见构建输出）。
+- 修改的文件列表：
+  - `app/src/main/java/com/empathy/ai/ui/ScreenshotPermissionActivity.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/local/FloatingWindowPreferences.kt`
+  - `文档/开发文档/BUG/BUG-00072-截图黑屏排查尝试记录.md`
+  - `文档/开发文档/TE/TE-00072-截图权限与截图流程测试用例.md`
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
 ### 2026-01-16 - Codex (BUG-00072 截图权限与截图流程修复)
 - 设置页新增截图权限开关，授权结果缓存供悬浮球截图复用。
 - 悬浮球截图未授权时提示用户先在设置页授权。
