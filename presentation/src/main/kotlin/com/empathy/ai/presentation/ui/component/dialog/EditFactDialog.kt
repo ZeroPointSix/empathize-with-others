@@ -22,7 +22,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -30,6 +30,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -191,7 +192,10 @@ fun EditFactDialog(
                             label = { Text(stringResource(R.string.fact_type_label)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .menuAnchor(),
+                                .menuAnchor(
+                                    type = MenuAnchorType.PrimaryEditable,
+                                    enabled = true
+                                ),
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                             isError = !keyValidation.isValid(),
                             supportingText = {
@@ -310,7 +314,7 @@ fun EditFactDialog(
                 }
                 
                 // 分隔线
-                Divider(
+                HorizontalDivider(
                     color = Color.Black.copy(alpha = 0.1f),
                     thickness = 0.5.dp
                 )

@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Star
@@ -154,7 +154,7 @@ private fun getItemIcon(item: TimelineItem): ImageVector {
     return when (item) {
         is TimelineItem.AiSummary -> Icons.Default.Psychology
         is TimelineItem.Milestone -> Icons.Default.Star
-        is TimelineItem.Conversation -> Icons.Default.Chat
+        is TimelineItem.Conversation -> Icons.AutoMirrored.Filled.Chat
         is TimelineItem.PhotoMoment -> Icons.Default.Star
         is TimelineItem.UserFact -> Icons.Default.Edit
     }

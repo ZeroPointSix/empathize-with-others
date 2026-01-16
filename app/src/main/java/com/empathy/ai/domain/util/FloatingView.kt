@@ -106,19 +106,14 @@ class FloatingView(context: Context) : FrameLayout(context) {
             android.util.Log.d("FloatingView", "主布局加载成功")
             
             // 初始化视图组件
-            floatingButton = findViewById(R.id.floating_button)
-            menuLayout = findViewById(R.id.menu_layout)
-            btnAnalyze = findViewById(R.id.btn_analyze)
-            btnCheck = findViewById(R.id.btn_check)
-            
-            // 验证关键组件是否成功初始化
-            if (floatingButton == null || menuLayout == null || btnAnalyze == null || btnCheck == null) {
-                throw RuntimeException("关键视图组件初始化失败: " +
-                    "floatingButton=${floatingButton != null}, " +
-                    "menuLayout=${menuLayout != null}, " +
-                    "btnAnalyze=${btnAnalyze != null}, " +
-                    "btnCheck=${btnCheck != null}")
-            }
+            floatingButton = findViewById<FloatingActionButton>(R.id.floating_button)
+                ?: throw IllegalStateException("floating_button missing in floating_view.xml")
+            menuLayout = findViewById<LinearLayout>(R.id.menu_layout)
+                ?: throw IllegalStateException("menu_layout missing in floating_view.xml")
+            btnAnalyze = findViewById<MaterialButton>(R.id.btn_analyze)
+                ?: throw IllegalStateException("btn_analyze missing in floating_view.xml")
+            btnCheck = findViewById<MaterialButton>(R.id.btn_check)
+                ?: throw IllegalStateException("btn_check missing in floating_view.xml")
             
             android.util.Log.d("FloatingView", "所有视图组件初始化成功")
             
@@ -2897,19 +2892,14 @@ class FloatingView(context: Context) : FrameLayout(context) {
             android.util.Log.d("FloatingView", "简化版布局文件加载成功")
             
             // 初始化视图组件
-            floatingButton = findViewById(R.id.floating_button)
-            menuLayout = findViewById(R.id.menu_layout)
-            btnAnalyze = findViewById(R.id.btn_analyze)
-            btnCheck = findViewById(R.id.btn_check)
-            
-            // 验证关键组件是否成功初始化
-            if (floatingButton == null || menuLayout == null || btnAnalyze == null || btnCheck == null) {
-                throw RuntimeException("简化布局关键视图组件初始化失败: " +
-                    "floatingButton=${floatingButton != null}, " +
-                    "menuLayout=${menuLayout != null}, " +
-                    "btnAnalyze=${btnAnalyze != null}, " +
-                    "btnCheck=${btnCheck != null}")
-            }
+            floatingButton = findViewById<FloatingActionButton>(R.id.floating_button)
+                ?: throw IllegalStateException("floating_button missing in simple_floating_view.xml")
+            menuLayout = findViewById<LinearLayout>(R.id.menu_layout)
+                ?: throw IllegalStateException("menu_layout missing in simple_floating_view.xml")
+            btnAnalyze = findViewById<MaterialButton>(R.id.btn_analyze)
+                ?: throw IllegalStateException("btn_analyze missing in simple_floating_view.xml")
+            btnCheck = findViewById<MaterialButton>(R.id.btn_check)
+                ?: throw IllegalStateException("btn_check missing in simple_floating_view.xml")
             
             // 设置按钮点击事件
             setupButtonMode()

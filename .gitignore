@@ -1,43 +1,40 @@
+# Android Studio / IntelliJ IDEA
 *.iml
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea/
 .DS_Store
-/build
+
+# 构建产物
+build/
+*/build/
 /captures
 .externalNativeBuild
 .cxx
+*.apk
+*.aab
+
+# 本地配置
 local.properties
 
-# 临时构建日志
+# 敏感文件（密钥库）
+*.jks
+*.keystore
+keystore*.txt
+key.properties
+
+# 日志文件
+*.log
 build_*.txt
 build_log.txt
 sourcesets.txt
-
-# JVM崩溃日志
 hs_err_pid*.log
 replay_pid*.log
-
-# 发布文件（已归档到releases目录）
-*.apk
-*.jks
-
-# 模块构建目录
-/app/build
-/domain/build
-/data/build
-/presentation/build
-/buildSrc/build
-
-# APK分析临时目录
-temp_apk_analysis/
-temp_apk_check/
-temp_dex_analysis/
+ai_*.log
 
 # 临时文件
+temp*/
 nul
+ui*.xml
+
+# 备份目录（如果不需要版本管理）
+backups/
