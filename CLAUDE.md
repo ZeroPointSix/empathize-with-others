@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **原则**: 零后端 (Zero-Backend)、BYOK (Bring Your Own Key)、隐私优先
 - **当前版本**: v1.1.0 (versionCode: 10100, dev阶段)
 - **数据库**: Room v16 (11张表)
+- **模块统计**: 615个主源码文件，255个单元测试，21个Android测试
 
 ## 多 AI 协作规则（最高优先级）
 
@@ -172,7 +173,7 @@ implementation("androidx.core:core-ktx:1.15.0")
 - **测试用例**: `文档/开发文档/TE/`
 
 ### 关键规范文档
-- **工作空间规则**: `.kiro/steering/rules.md`
+- **工作空间规则**: `Rules/workspace-rules.md`
 - **项目开发规范**: `Rules/项目开发规范.md`
 
 ## 核心架构模式
