@@ -43,7 +43,6 @@ import com.empathy.ai.domain.util.ScreenshotCaptureHelper
 import com.empathy.ai.domain.util.ScreenshotOverlayView
 import com.empathy.ai.notification.AiResultNotificationManager
 import com.empathy.ai.data.local.FloatingWindowPreferences
-import com.empathy.ai.data.local.MediaProjectionHolder
 import com.empathy.ai.presentation.ui.floating.FloatingBubbleView
 import com.empathy.ai.presentation.ui.floating.FloatingViewV2
 import com.empathy.ai.ui.ScreenshotPermissionActivity
@@ -2467,12 +2466,6 @@ class FloatingWindowService : Service() {
             mediaProjection?.stop()
         } catch (_: Exception) {
         }
-        MediaProjectionHolder.take()?.let { projection ->
-            mediaProjection = projection
-            updateForegroundServiceType(includeMediaProjection = true)
-            beginScreenshotSession()
-            return
-        }
         updateForegroundServiceType(includeMediaProjection = true)
         mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
         if (mediaProjection == null) {
@@ -2484,12 +2477,6 @@ class FloatingWindowService : Service() {
     }
 
     private fun restoreMediaProjectionFromCache(): Boolean {
-        MediaProjectionHolder.take()?.let { projection ->
-            android.util.Log.d("FloatingWindowService", "restoreMediaProjectionFromCache: hit=holder")
-            mediaProjection = projection
-            updateForegroundServiceType(includeMediaProjection = true)
-            return true
-        }
         val cached = floatingWindowPreferences.getMediaProjectionPermission() ?: return false
         android.util.Log.d("FloatingWindowService", "restoreMediaProjectionFromCache: hit=permission")
         updateForegroundServiceType(includeMediaProjection = true)
