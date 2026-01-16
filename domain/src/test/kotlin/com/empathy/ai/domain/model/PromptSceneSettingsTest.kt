@@ -21,11 +21,12 @@ class PromptSceneSettingsTest {
     fun `getSettingsScenes应该返回4个核心场景`() {
         val scenes = PromptScene.getSettingsScenes()
 
-        assertEquals(4, scenes.size)
+        assertEquals(5, scenes.size)
         assertTrue(scenes.contains(PromptScene.ANALYZE))
         assertTrue(scenes.contains(PromptScene.POLISH))
         assertTrue(scenes.contains(PromptScene.REPLY))
         assertTrue(scenes.contains(PromptScene.SUMMARY))
+        assertTrue(scenes.contains(PromptScene.AI_ADVISOR))
     }
 
     @Test
@@ -70,18 +71,19 @@ class PromptSceneSettingsTest {
     fun `SETTINGS_SCENE_ORDER应该按正确顺序排列`() {
         val order = PromptScene.SETTINGS_SCENE_ORDER
 
-        assertEquals(4, order.size)
+        assertEquals(5, order.size)
         assertEquals(PromptScene.ANALYZE, order[0])
         assertEquals(PromptScene.POLISH, order[1])
         assertEquals(PromptScene.REPLY, order[2])
         assertEquals(PromptScene.SUMMARY, order[3])
+        assertEquals(PromptScene.AI_ADVISOR, order[4])
     }
 
     @Test
     fun `getActiveScenes应该返回非废弃场景`() {
         val activeScenes = PromptScene.getActiveScenes()
 
-        assertEquals(4, activeScenes.size)
+        assertEquals(5, activeScenes.size)
         activeScenes.forEach { scene ->
             assertFalse(scene.isDeprecated)
         }
@@ -107,6 +109,7 @@ class PromptSceneSettingsTest {
         assertFalse(PromptScene.POLISH.isDeprecated)
         assertFalse(PromptScene.REPLY.isDeprecated)
         assertFalse(PromptScene.SUMMARY.isDeprecated)
+        assertFalse(PromptScene.AI_ADVISOR.isDeprecated)
     }
 
     @Test
@@ -115,6 +118,7 @@ class PromptSceneSettingsTest {
         assertTrue(PromptScene.POLISH.showInSettings)
         assertTrue(PromptScene.REPLY.showInSettings)
         assertTrue(PromptScene.SUMMARY.showInSettings)
+        assertTrue(PromptScene.AI_ADVISOR.showInSettings)
     }
 
     @Test

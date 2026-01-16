@@ -24,9 +24,9 @@ class GlobalPromptConfigTest {
         assertEquals(GlobalPromptConfig.CURRENT_VERSION, config.version)
         assertNotNull(config.lastModified)
         assertTrue(config.lastModified.isNotEmpty())
-        // 只包含活跃场景（4个：ANALYZE, POLISH, REPLY, SUMMARY）
+        // 只包含活跃场景（5个：ANALYZE, POLISH, REPLY, SUMMARY, AI_ADVISOR）
         assertEquals(PromptScene.getActiveScenes().size, config.prompts.size)
-        assertEquals(4, config.prompts.size)
+        assertEquals(5, config.prompts.size)
     }
 
     @Test
@@ -36,7 +36,8 @@ class GlobalPromptConfigTest {
             PromptScene.ANALYZE to "分析提示词",
             PromptScene.SUMMARY to "总结提示词",
             PromptScene.POLISH to "润色提示词",
-            PromptScene.REPLY to "回复提示词"
+            PromptScene.REPLY to "回复提示词",
+            PromptScene.AI_ADVISOR to "军师提示词"
         )
 
         // When
