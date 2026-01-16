@@ -1,3 +1,17 @@
+// Package card 实现了对话记录卡片组件
+//
+// 业务背景 (PRD-00008):
+//   - 输入内容身份识别与双向对话历史
+//   - 对方说的话和我的回复需要区分展示
+//   - UI层隐藏身份前缀，以自然对话流形式展示
+//
+// 设计决策 (PRD-00008/6.2):
+//   - 存储层：带身份前缀（【对方说】/【我正在回复】）
+//   - 展示层：解析前缀，以气泡形式左右对齐
+//
+// 任务追踪:
+//   - BUG-00071: 事实流对话/总结编辑点击无响应修复
+//   - FEATURE-20260114: 身份前缀历史功能实现
 package com.empathy.ai.presentation.ui.component.card
 
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -23,10 +38,12 @@ import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ConversationLog
 import com.empathy.ai.domain.model.EmotionType
 import com.empathy.ai.domain.model.TimelineItem
+import com.empathy.ai.domain.util.IdentityPrefixHelper
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.Dimensions
 import com.empathy.ai.presentation.theme.EmpathyTheme
 import com.empathy.ai.presentation.ui.component.emotion.GlassmorphicCard
+import com.empathy.ai.presentation.ui.component.message.ConversationBubble
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -50,7 +67,14 @@ fun ConversationCard(
     onLongClick: (() -> Unit)? = null
 ) {
     val dimensions = AdaptiveDimensions.current
-    
+
+    // [Strategy] 身份前缀解析与缓存 (PRD-00008)
+    // 使用 remember 避免重组时重复解析，提升性能
+    // parseResult.role: CONTACT(对方) → 左对齐, USER(我) → 右对齐, LEGACY(旧数据) → 居中
+    val parseResult = remember(item.log.userInput) {
+        IdentityPrefixHelper.parse(item.log.userInput)
+    }
+
     GlassmorphicCard(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick ?: onLongClick // 点击时触发编辑
@@ -63,7 +87,7 @@ fun ConversationCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = formatTime(item.log.timestamp),
+                    text = "${parseResult.role.displayName} · ${formatTime(item.log.timestamp)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -101,11 +125,14 @@ fun ConversationCard(
             
             Spacer(modifier = Modifier.height(dimensions.spacingSmall))
             
-            // 用户输入
-            Text(
-                text = "你：${item.log.userInput}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+            // 对话气泡（隐藏前缀，按身份左右对齐）
+            // [Design Decision] PRD-00008/6.2: 复用 ConversationBubble 组件
+            // - showHeader=false: 卡片头部已显示时间，避免重复
+            // - maxLines=3: 限制行数，避免长文本把卡片撑高
+            // - 气泡会根据 parseResult.role 自动左右对齐
+            ConversationBubble(
+                log = item.log,
+                showHeader = false,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
