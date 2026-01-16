@@ -295,6 +295,16 @@ interface FloatingWindowPreferencesRepository {
      */
     fun isContinuousScreenshotEnabled(): Boolean
 
+    /**
+     * 是否已缓存截图权限（MediaProjection 授权结果）
+     */
+    fun hasScreenshotPermission(): Boolean
+
+    /**
+     * 清除缓存的截图权限
+     */
+    fun clearScreenshotPermission()
+
     companion object {
         const val DISPLAY_MODE_BUBBLE = "BUBBLE"
         const val DISPLAY_MODE_DIALOG = "DIALOG"

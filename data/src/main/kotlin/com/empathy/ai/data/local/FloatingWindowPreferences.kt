@@ -1,7 +1,11 @@
 package com.empathy.ai.data.local
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Parcel
+import android.util.Base64
 import androidx.core.content.edit
 import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.FloatingBubbleState
@@ -271,6 +275,83 @@ class FloatingWindowPreferences @Inject constructor(
         return prefs.getBoolean(KEY_CONTINUOUS_SCREENSHOT_ENABLED, false)
     }
 
+    override fun hasScreenshotPermission(): Boolean {
+        return getMediaProjectionPermissionInternal() != null
+    }
+
+    override fun clearScreenshotPermission() {
+        clearMediaProjectionPermissionInternal()
+    }
+
+    fun saveMediaProjectionPermission(resultCode: Int, data: Intent?) {
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            clearMediaProjectionPermissionInternal()
+            return
+        }
+        val encoded = encodeIntent(data) ?: run {
+            clearMediaProjectionPermissionInternal()
+            return
+        }
+        prefs.edit {
+            putInt(KEY_MEDIA_PROJECTION_RESULT_CODE, resultCode)
+            putString(KEY_MEDIA_PROJECTION_RESULT_DATA, encoded)
+            putInt(KEY_MEDIA_PROJECTION_DATA_VERSION, MEDIA_PROJECTION_DATA_VERSION)
+        }
+    }
+
+    fun getMediaProjectionPermission(): MediaProjectionPermission? {
+        return getMediaProjectionPermissionInternal()
+    }
+
+    private fun getMediaProjectionPermissionInternal(): MediaProjectionPermission? {
+        val version = prefs.getInt(KEY_MEDIA_PROJECTION_DATA_VERSION, 0)
+        if (version != MEDIA_PROJECTION_DATA_VERSION) {
+            clearMediaProjectionPermissionInternal()
+            return null
+        }
+        val encoded = prefs.getString(KEY_MEDIA_PROJECTION_RESULT_DATA, null) ?: return null
+        val resultCode = prefs.getInt(KEY_MEDIA_PROJECTION_RESULT_CODE, Activity.RESULT_CANCELED)
+        val intent = decodeIntent(encoded) ?: run {
+            clearMediaProjectionPermissionInternal()
+            return null
+        }
+        return MediaProjectionPermission(resultCode, intent)
+    }
+
+    private fun clearMediaProjectionPermissionInternal() {
+        prefs.edit {
+            remove(KEY_MEDIA_PROJECTION_RESULT_CODE)
+            remove(KEY_MEDIA_PROJECTION_RESULT_DATA)
+            remove(KEY_MEDIA_PROJECTION_DATA_VERSION)
+        }
+    }
+
+    private fun encodeIntent(intent: Intent): String? {
+        return try {
+            val parcel = Parcel.obtain()
+            parcel.writeParcelable(intent, 0)
+            val bytes = parcel.marshall()
+            parcel.recycle()
+            Base64.encodeToString(bytes, Base64.NO_WRAP)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun decodeIntent(encoded: String): Intent? {
+        return try {
+            val bytes = Base64.decode(encoded, Base64.NO_WRAP)
+            val parcel = Parcel.obtain()
+            parcel.unmarshall(bytes, 0, bytes.size)
+            parcel.setDataPosition(0)
+            val intent = parcel.readParcelable<Intent>(Intent::class.java.classLoader)
+            parcel.recycle()
+            intent
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     companion object {
         private const val TAG = "FloatingWindowPrefs"
         private const val PREFS_NAME = "floating_window_prefs"
@@ -292,6 +373,9 @@ class FloatingWindowPreferences @Inject constructor(
         private const val KEY_DISPLAY_MODE = "display_mode"
         private const val KEY_DISPLAY_ID = "display_id"
         private const val KEY_CONTINUOUS_SCREENSHOT_ENABLED = "continuous_screenshot_enabled"
+        private const val KEY_MEDIA_PROJECTION_RESULT_CODE = "media_projection_result_code"
+        private const val KEY_MEDIA_PROJECTION_RESULT_DATA = "media_projection_result_data"
+        private const val KEY_MEDIA_PROJECTION_DATA_VERSION = "media_projection_data_version"
         private const val MINIMIZE_VALIDITY_PERIOD = 10 * 60 * 1000L
         const val DISPLAY_MODE_BUBBLE = "BUBBLE"
         const val DISPLAY_MODE_DIALOG = "DIALOG"
@@ -299,5 +383,11 @@ class FloatingWindowPreferences @Inject constructor(
         const val DEFAULT_INPUT_TEXT = ""
         const val DEFAULT_POSITION = 0
         const val INVALID_POSITION = -1
+        private const val MEDIA_PROJECTION_DATA_VERSION = 1
     }
 }
+
+data class MediaProjectionPermission(
+    val resultCode: Int,
+    val data: Intent
+)

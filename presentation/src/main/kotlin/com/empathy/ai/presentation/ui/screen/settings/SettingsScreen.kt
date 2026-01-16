@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,9 +27,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.domain.util.MediaProjectionPermissionConstants
 import com.empathy.ai.presentation.navigation.NavRoutes
 import com.empathy.ai.presentation.navigation.PromptEditorRoutes
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
@@ -49,6 +54,8 @@ import com.empathy.ai.presentation.ui.component.navigation.EmpathyBottomNavigati
 import com.empathy.ai.presentation.ui.screen.settings.component.DeveloperOptionsSection
 import com.empathy.ai.presentation.viewmodel.DeveloperModeViewModel
 import com.empathy.ai.presentation.viewmodel.SettingsViewModel
+
+private const val SCREENSHOT_PERMISSION_ACTIVITY = "com.empathy.ai.ui.ScreenshotPermissionActivity"
 
 /**
  * 设置页面（iOS风格）
@@ -146,6 +153,7 @@ fun SettingsScreen(
     val isDeveloperMode by developerModeViewModel.isDeveloperMode.collectAsStateWithLifecycle()
     val toastMessage by developerModeViewModel.toastMessage.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     // 显示Toast消息
     LaunchedEffect(toastMessage) {
@@ -159,6 +167,16 @@ fun SettingsScreen(
             kotlinx.coroutines.delay(3000)
             viewModel.onEvent(SettingsUiEvent.ClearSuccessMessage)
         }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshScreenshotPermissionState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     DisposableEffect(Unit) {
@@ -197,6 +215,33 @@ fun SettingsScreen(
                 } catch (e: Exception) {
                     android.util.Log.e("SettingsScreen", "跳转权限设置失败", e)
                 }
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.pendingScreenshotPermissionRequest, isVisible) {
+        if (!isVisible) {
+            if (uiState.pendingScreenshotPermissionRequest) {
+                viewModel.onEvent(SettingsUiEvent.ScreenshotPermissionRequestHandled)
+            }
+            return@LaunchedEffect
+        }
+
+        if (uiState.pendingScreenshotPermissionRequest) {
+            viewModel.onEvent(SettingsUiEvent.ScreenshotPermissionRequestHandled)
+            try {
+                val intent = Intent().apply {
+                    setClassName(context.packageName, SCREENSHOT_PERMISSION_ACTIVITY)
+                    putExtra(
+                        MediaProjectionPermissionConstants.EXTRA_REQUEST_SOURCE,
+                        MediaProjectionPermissionConstants.REQUEST_SOURCE_SETTINGS
+                    )
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                Log.d("SettingsScreen", "已发起截图权限请求")
+            } catch (e: Exception) {
+                Log.e("SettingsScreen", "发起截图权限请求失败", e)
             }
         }
     }
@@ -342,6 +387,23 @@ private fun SettingsScreenContent(
                         },
                         onClick = if (!uiState.hasFloatingWindowPermission) {
                             { onEvent(SettingsUiEvent.ShowPermissionDialog) }
+                        } else null
+                    )
+                    IOSSettingsItem(
+                        icon = Icons.Default.Info,
+                        iconBackgroundColor = iOSBlue,
+                        title = "截图权限",
+                        subtitle = if (uiState.hasScreenshotPermission) null else "需要截图权限",
+                        showArrow = false,
+                        showDivider = true,
+                        trailing = {
+                            IOSSwitch(
+                                checked = uiState.hasScreenshotPermission,
+                                onCheckedChange = { onEvent(SettingsUiEvent.ToggleScreenshotPermission) }
+                            )
+                        },
+                        onClick = if (!uiState.hasScreenshotPermission) {
+                            { onEvent(SettingsUiEvent.ToggleScreenshotPermission) }
                         } else null
                     )
                     IOSSettingsItem(

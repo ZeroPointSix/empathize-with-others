@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-15 16:09 | 更新者: Codex (BUG-00073 OPPO 真机悬浮球不显示修复)
+> 最后更新: 2026-01-16 17:20 | 更新者: Codex (BUG-00072 截图权限与截图流程修复)
 
 
 ## 📋 当前工作状态
@@ -15,6 +15,8 @@
 | BUG-00071 | 截图黑屏问题排查 | Codex | 进行中 | P0 | 2026-01-14 20:40 | 2026-01-14 |
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-16 - **BUG-00072 截图权限与截图流程修复** - Codex - 相关文档: [BUG-00072](文档/开发文档/BUG/BUG-00072-截图黑屏排查尝试记录.md)
+- [x] 2026-01-15 - **MANAGE-20260115 工作树管理与探索审查** - Codex - 相关文档: [MANAGE-20260115](文档/开发文档/MA/MANAGE/MANAGE-20260115-worktree-manager.md)
 - [x] 2026-01-15 - **BUG-00073 OPPO 真机悬浮球不显示修复** - Codex - 相关文档: [BUG-00073](文档/开发文档/BUG/BUG-00073-OPPO真机悬浮球不显示问题.md)
 - [x] 2026-01-15 - **RULE-00001 口语化输入规则补充** - Codex - 相关文档: [RulesReadMe](Rules/RulesReadMe.md)
 - [x] 2026-01-14 - **BUG-00071 截图权限持久化与图片理解策略调整** - Codex - 相关文档: [BUG-00071](文档/开发文档/BUG/BUG-00071-截图权限与图片理解策略调整.md)
@@ -375,6 +377,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 | RULE | - | RulesReadMe.md | v1.1 | 2026-01-15 | Codex |
 
 | MA | - | FREE-20260112-contact-search-highlight.md | v1.7 | 2026-01-12 | Codex |
+| MA | - | MANAGE-20260115-worktree-manager.md | v1.0 | 2026-01-15 | Codex |
 
 | MA | - | 智能体代码复用与规范统一评估报告 | v1.0 | 2026-01-03 | Roo |
 
@@ -403,7 +406,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ### Codex (Free Explorer)
-- **最后活动**: 2026-01-15 16:09 - BUG-00073 OPPO 真机悬浮球不显示修复
+- **最后活动**: 2026-01-15 17:18 - 工作树管理与探索审查
 - **当前任务**: BUG-00071 截图黑屏问题排查
 - **待处理**: UI 预览验证（搜索高亮/无结果/搜索栏/PersonaTabV2/ModernPersonaTab/分类匹配/自动展开/关键词提示）
 
@@ -442,6 +445,28 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ## 📝 变更日志
+### 2026-01-16 - Codex (BUG-00072 截图权限与截图流程修复)
+- 设置页新增截图权限开关，授权结果缓存供悬浮球截图复用。
+- 悬浮球截图未授权时提示用户先在设置页授权。
+- 新增截图权限开关测试用例。
+- 修改的文件列表：
+  - `domain/src/main/kotlin/com/empathy/ai/domain/util/MediaProjectionPermissionConstants.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/repository/FloatingWindowPreferencesRepository.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/local/FloatingWindowPreferences.kt`
+  - `app/src/main/java/com/empathy/ai/service/FloatingWindowService.kt`
+  - `app/src/main/java/com/empathy/ai/ui/ScreenshotPermissionActivity.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/settings/SettingsScreen.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/settings/SettingsUiEvent.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/settings/SettingsUiState.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/SettingsViewModel.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/SettingsViewModelBug00070Test.kt`
+  - `文档/开发文档/BUG/BUG-00072-截图黑屏排查尝试记录.md`
+  - `WORKSPACE.md`
+### 2026-01-15 - Codex (工作树管理与探索审查)
+- 生成工作树管理报告并输出合并建议清单。
+- 修改的文件列表：
+  - `文档/开发文档/MA/MANAGE/MANAGE-20260115-worktree-manager.md`
+  - `WORKSPACE.md`
 ### 2026-01-15 - Codex (BUG-00073 OPPO 真机悬浮球不显示修复)
 - 修复前台服务类型导致的启动拦截，恢复悬浮球显示。
 - 新增 BUG-00073 记录问题、根因与修复方案。

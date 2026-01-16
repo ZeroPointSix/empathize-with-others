@@ -72,6 +72,11 @@ sealed interface SettingsUiEvent {
      * 切换连续截屏
      */
     data object ToggleContinuousScreenshot : SettingsUiEvent
+
+    /**
+     * 切换截图权限（缓存授权）
+     */
+    data object ToggleScreenshotPermission : SettingsUiEvent
     
     /**
      * 请求悬浮窗权限（触发权限请求流程）
@@ -82,6 +87,11 @@ sealed interface SettingsUiEvent {
      * 权限请求已处理（UI层调用，清除pending标志）
      */
     data object PermissionRequestHandled : SettingsUiEvent
+
+    /**
+     * 截图权限请求已处理（UI层调用，清除pending标志）
+     */
+    data object ScreenshotPermissionRequestHandled : SettingsUiEvent
     
     /**
      * 显示权限说明对话框
