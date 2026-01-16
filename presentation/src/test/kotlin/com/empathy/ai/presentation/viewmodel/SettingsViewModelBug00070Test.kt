@@ -6,6 +6,7 @@ import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
 import com.empathy.ai.domain.repository.SettingsRepository
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.presentation.ui.screen.settings.SettingsUiEvent
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
@@ -74,10 +75,13 @@ class SettingsViewModelBug00070Test {
             buttonY = 0
         )
         every { mockPreferencesRepository.isContinuousScreenshotEnabled() } returns false
+        every { mockPreferencesRepository.hasScreenshotPermission() } returns false
         coEvery { mockSettingsRepository.getDataMaskingEnabled() } returns Result.success(true)
         coEvery { mockSettingsRepository.getLocalFirstModeEnabled() } returns Result.success(true)
         coEvery { mockSettingsRepository.getHistoryConversationCount() } returns Result.success(5)
         every { mockAiProviderRepository.getAllProviders() } returns flowOf(emptyList())
+        every { mockFloatingWindowManager.hasPermission() } returns FloatingWindowManager.PermissionResult.Granted
+        every { mockFloatingWindowManager.isServiceRunning() } returns false
     }
 
     @After
@@ -199,6 +203,43 @@ class SettingsViewModelBug00070Test {
         assertTrue(enabled)
     }
 
+    /**
+     * 测试截图权限开关 - 未授权时应触发权限请求
+     */
+    @Test
+    fun `toggle screenshot permission should request when not granted`() = runTest {
+        // Given: 未授权
+        every { mockPreferencesRepository.hasScreenshotPermission() } returns false
+        val viewModel = createViewModel()
+
+        // When: 切换截图权限开关
+        viewModel.onEvent(SettingsUiEvent.ToggleScreenshotPermission)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then: 应触发权限请求
+        assertTrue(viewModel.uiState.value.pendingScreenshotPermissionRequest)
+    }
+
+    /**
+     * 测试截图权限开关 - 已授权时应清除权限
+     */
+    @Test
+    fun `toggle screenshot permission should clear when granted`() = runTest {
+        // Given: 已授权
+        every { mockPreferencesRepository.hasScreenshotPermission() } returns true
+        every { mockPreferencesRepository.clearScreenshotPermission() } just Runs
+        val viewModel = createViewModel()
+
+        // When: 切换截图权限开关
+        viewModel.onEvent(SettingsUiEvent.ToggleScreenshotPermission)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then: 权限被清除
+        verify { mockPreferencesRepository.clearScreenshotPermission() }
+        assertFalse(viewModel.uiState.value.hasScreenshotPermission)
+        assertEquals("截图权限已清除", viewModel.uiState.value.successMessage)
+    }
+
     // ==================== 多显示屏支持测试 ====================
 
     /**
@@ -266,5 +307,15 @@ class SettingsViewModelBug00070Test {
 
         // Then: 应该返回Error状态
         assertTrue(result is FloatingWindowManager.PermissionResult.Error)
+    }
+
+    private fun createViewModel(): SettingsViewModel {
+        return SettingsViewModel(
+            mockApplication,
+            mockSettingsRepository,
+            mockPreferencesRepository,
+            mockAiProviderRepository,
+            mockFloatingWindowManager
+        )
     }
 }

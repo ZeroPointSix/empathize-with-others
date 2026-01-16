@@ -82,6 +82,7 @@ class SettingsViewModel @Inject constructor(
         loadSettings()
         checkFloatingWindowPermission()
         loadFloatingWindowState()
+        refreshScreenshotPermissionState()
         loadProviders()
     }
 
@@ -98,8 +99,10 @@ class SettingsViewModel @Inject constructor(
             is SettingsUiEvent.ClearAllData -> clearAllData()
             is SettingsUiEvent.ToggleFloatingWindow -> toggleFloatingWindow(event.displayId)
             is SettingsUiEvent.ToggleContinuousScreenshot -> toggleContinuousScreenshot()
+            is SettingsUiEvent.ToggleScreenshotPermission -> toggleScreenshotPermission()
             is SettingsUiEvent.RequestFloatingWindowPermission -> requestFloatingWindowPermission()
             is SettingsUiEvent.PermissionRequestHandled -> clearPendingPermissionRequest()
+            is SettingsUiEvent.ScreenshotPermissionRequestHandled -> clearPendingScreenshotPermissionRequest()
             is SettingsUiEvent.ShowPermissionDialog -> showPermissionDialog()
             is SettingsUiEvent.HidePermissionDialog -> hidePermissionDialog()
             is SettingsUiEvent.CheckFloatingWindowPermission -> checkFloatingWindowPermission()
@@ -456,10 +459,12 @@ class SettingsViewModel @Inject constructor(
     private fun loadFloatingWindowState() {
         val state = floatingWindowPreferencesRepository.loadState()
         val continuousEnabled = floatingWindowPreferencesRepository.isContinuousScreenshotEnabled()
+        val hasScreenshotPermission = floatingWindowPreferencesRepository.hasScreenshotPermission()
         _uiState.update {
             it.copy(
                 floatingWindowEnabled = state.isEnabled,
-                continuousScreenshotEnabled = continuousEnabled
+                continuousScreenshotEnabled = continuousEnabled,
+                hasScreenshotPermission = hasScreenshotPermission
             )
         }
         
@@ -500,6 +505,27 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun toggleScreenshotPermission() {
+        viewModelScope.launch {
+            if (_uiState.value.hasScreenshotPermission) {
+                floatingWindowPreferencesRepository.clearScreenshotPermission()
+                _uiState.update {
+                    it.copy(
+                        hasScreenshotPermission = false,
+                        successMessage = "截图权限已清除"
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(pendingScreenshotPermissionRequest = true) }
+            }
+        }
+    }
+
+    fun refreshScreenshotPermissionState() {
+        val hasPermission = floatingWindowPreferencesRepository.hasScreenshotPermission()
+        _uiState.update { it.copy(hasScreenshotPermission = hasPermission) }
     }
 
     private fun startFloatingWindowService(displayId: Int?) {
@@ -651,6 +677,10 @@ class SettingsViewModel @Inject constructor(
      */
     private fun clearPendingPermissionRequest() {
         _uiState.update { it.copy(pendingPermissionRequest = false) }
+    }
+
+    private fun clearPendingScreenshotPermissionRequest() {
+        _uiState.update { it.copy(pendingScreenshotPermissionRequest = false) }
     }
 
 }

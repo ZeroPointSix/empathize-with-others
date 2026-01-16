@@ -38,6 +38,7 @@ import com.empathy.ai.domain.usecase.RefinementUseCase
 import com.empathy.ai.domain.util.ErrorHandler
 import com.empathy.ai.domain.util.FloatingView
 import com.empathy.ai.domain.util.FloatingViewDebugLogger
+import com.empathy.ai.domain.util.MediaProjectionPermissionConstants
 import com.empathy.ai.domain.util.ScreenshotCaptureHelper
 import com.empathy.ai.domain.util.ScreenshotOverlayView
 import com.empathy.ai.notification.AiResultNotificationManager
@@ -2420,8 +2421,8 @@ class FloatingWindowService : Service() {
     // - 连续截屏默认关闭；开启后遮罩保留 1.5s 允许再次拖拽追加（最多 5 张），超时自动退出。
 
     private fun startScreenshotFlow() {
-        if (mediaProjection == null) {
-            requestMediaProjectionPermission()
+        if (mediaProjection == null && !restoreMediaProjectionFromCache()) {
+            notifyScreenshotPermissionMissing()
             return
         }
         beginScreenshotSession()
@@ -2431,6 +2432,10 @@ class FloatingWindowService : Service() {
         try {
             val intent = Intent(this, ScreenshotPermissionActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra(
+                    MediaProjectionPermissionConstants.EXTRA_REQUEST_SOURCE,
+                    MediaProjectionPermissionConstants.REQUEST_SOURCE_FLOATING
+                )
             }
             startActivity(intent)
         } catch (e: Exception) {
@@ -2441,8 +2446,15 @@ class FloatingWindowService : Service() {
     private fun handleMediaProjectionResult(intent: Intent) {
         val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
         val data = intent.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
+        val requestSource = intent.getStringExtra(MediaProjectionPermissionConstants.EXTRA_REQUEST_SOURCE)
         if (resultCode != Activity.RESULT_OK || data == null) {
             android.widget.Toast.makeText(this, "未授予截图权限", android.widget.Toast.LENGTH_SHORT).show()
+            floatingWindowPreferences.clearScreenshotPermission()
+            return
+        }
+        floatingWindowPreferences.saveMediaProjectionPermission(resultCode, data)
+        if (requestSource == MediaProjectionPermissionConstants.REQUEST_SOURCE_SETTINGS) {
+            android.widget.Toast.makeText(this, "截图权限已授权", android.widget.Toast.LENGTH_SHORT).show()
             return
         }
         try {
@@ -2456,6 +2468,26 @@ class FloatingWindowService : Service() {
         }
         updateForegroundServiceType(includeMediaProjection = true)
         beginScreenshotSession()
+    }
+
+    private fun restoreMediaProjectionFromCache(): Boolean {
+        val cached = floatingWindowPreferences.getMediaProjectionPermission() ?: return false
+        val projection = try {
+            mediaProjectionManager?.getMediaProjection(cached.resultCode, cached.data)
+        } catch (_: Exception) {
+            null
+        }
+        if (projection == null) {
+            floatingWindowPreferences.clearScreenshotPermission()
+            return false
+        }
+        mediaProjection = projection
+        updateForegroundServiceType(includeMediaProjection = true)
+        return true
+    }
+
+    private fun notifyScreenshotPermissionMissing() {
+        android.widget.Toast.makeText(this, "请先在设置中开启截图权限", android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun beginScreenshotSession() {

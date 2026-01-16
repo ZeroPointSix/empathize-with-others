@@ -41,10 +41,12 @@ import com.empathy.ai.domain.model.AiProvider
  * @property floatingWindowEnabled 悬浮窗是否启用
  * @property hasFloatingWindowPermission 悬浮窗权限是否已获取
  * @property continuousScreenshotEnabled 连续截屏是否启用
+ * @property hasScreenshotPermission 是否已缓存截图权限
  * @property showProviderDialog 是否显示服务商选择对话框
  * @property showClearDataDialog 是否显示清除数据确认对话框
  * @property showPermissionDialog 是否显示悬浮窗权限请求对话框
  * @property pendingPermissionRequest 是否需要触发权限请求（ViewModel → UI）
+ * @property pendingScreenshotPermissionRequest 是否需要触发截图权限请求（ViewModel → UI）
  */
 data class SettingsUiState(
     // 通用状态
@@ -76,6 +78,7 @@ data class SettingsUiState(
     val floatingWindowEnabled: Boolean = false,
     val hasFloatingWindowPermission: Boolean = false,
     val continuousScreenshotEnabled: Boolean = false,
+    val hasScreenshotPermission: Boolean = false,
 
     // 交互状态
     val showProviderDialog: Boolean = false,
@@ -83,7 +86,8 @@ data class SettingsUiState(
     val showPermissionDialog: Boolean = false,
 
     // 权限请求
-    val pendingPermissionRequest: Boolean = false
+    val pendingPermissionRequest: Boolean = false,
+    val pendingScreenshotPermissionRequest: Boolean = false
 ) {
     /** 是否已配置至少一个服务商 */
     val hasProvider: Boolean get() = providersList.isNotEmpty()

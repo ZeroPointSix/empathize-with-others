@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
+import com.empathy.ai.domain.util.MediaProjectionPermissionConstants
 import com.empathy.ai.service.FloatingWindowService
 
 /**
@@ -30,10 +31,12 @@ class ScreenshotPermissionActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE) {
+            val requestSource = intent.getStringExtra(MediaProjectionPermissionConstants.EXTRA_REQUEST_SOURCE)
             val resultIntent = Intent(this, FloatingWindowService::class.java).apply {
                 action = FloatingWindowService.ACTION_MEDIA_PROJECTION_RESULT
                 putExtra(FloatingWindowService.EXTRA_RESULT_CODE, resultCode)
                 putExtra(FloatingWindowService.EXTRA_RESULT_DATA, data)
+                putExtra(MediaProjectionPermissionConstants.EXTRA_REQUEST_SOURCE, requestSource)
             }
             startService(resultIntent)
             finish()
