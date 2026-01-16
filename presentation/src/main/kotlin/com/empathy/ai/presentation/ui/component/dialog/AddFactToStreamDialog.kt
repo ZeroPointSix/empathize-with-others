@@ -78,7 +78,10 @@ fun AddFactToStreamDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(
+                                type = MenuAnchorType.PrimaryEditable,
+                                enabled = true
+                            )
                     )
                     
                     ExposedDropdownMenu(

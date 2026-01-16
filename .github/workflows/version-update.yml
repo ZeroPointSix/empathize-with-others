@@ -42,6 +42,10 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: version-update-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   JAVA_VERSION: '17'
   GRADLE_VERSION: '8.13'
@@ -75,7 +79,7 @@ jobs:
       
       - name: 授予Gradle执行权限
         run: chmod +x ./gradlew
-      
+
       - name: 分析Git提交
         id: analyze
         run: |
@@ -104,7 +108,7 @@ jobs:
           PARAMS="--stage=${{ steps.stage.outputs.stage }}"
           
           if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-            PARAMS="$PARAMS --dry-run"
+            PARAMS="$PARAMS --preview"
           fi
           
           if [ "${{ github.event.inputs.force }}" == "true" ]; then
@@ -145,6 +149,7 @@ jobs:
       - name: 推送更改
         if: github.event.inputs.dry_run != 'true'
         run: |
+          git pull --rebase origin ${{ github.ref_name }}
           git push origin ${{ github.ref_name }}
           echo "✅ 已推送到远程仓库"
       
@@ -152,6 +157,10 @@ jobs:
         if: github.event.inputs.dry_run != 'true' && steps.stage.outputs.stage == 'production'
         run: |
           VERSION=$(grep "APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2)
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "🏷️ 标签已存在: v$VERSION"
+            exit 0
+          fi
           git tag -a "v$VERSION" -m "Release v$VERSION"
           git push origin "v$VERSION"
           echo "🏷️ 已创建标签: v$VERSION"
@@ -229,19 +238,21 @@ jobs:
 
       - name: 准备签名配置
         run: |
-          if [ -z "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" ]; then
+          RAW_KEYSTORE="${{ secrets.RELEASE_STORE_FILE_BASE64 }}"
+          RAW_KEYSTORE_CLEAN=$(printf "%s" "$RAW_KEYSTORE" | tr -d '\n\r ')
+          if [ -z "$RAW_KEYSTORE_CLEAN" ]; then
             echo "缺少 RELEASE_STORE_FILE_BASE64，无法构建 Release APK"
             exit 1
           fi
 
-          echo "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" | base64 --decode > empathy-release-key.jks
+          printf "%s" "$RAW_KEYSTORE_CLEAN" | base64 --decode > app/empathy-release-key.jks
 
           {
-            echo "RELEASE_STORE_FILE=empathy-release-key.jks"
-            echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
-            echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
-            echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
-          } >> gradle.properties
+            echo "ORG_GRADLE_PROJECT_RELEASE_STORE_FILE=app/empathy-release-key.jks"
+            echo "ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+            echo "ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+            echo "ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+          } >> "$GITHUB_ENV"
 
       - name: 授予Gradle执行权限
         run: chmod +x ./gradlew

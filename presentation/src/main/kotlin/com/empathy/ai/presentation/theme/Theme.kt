@@ -1,7 +1,9 @@
 package com.empathy.ai.presentation.theme
 
-import android.app.Activity
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -14,7 +16,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 
 /**
  * 浅色配色方案
@@ -164,11 +165,25 @@ fun EmpathyTheme(
     }
 
     val view = LocalView.current
-    if (!view.isInEditMode) {
+    val activity = view.context as? ComponentActivity
+    if (!view.isInEditMode && activity != null) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            val statusBarStyle = if (darkTheme) {
+                SystemBarStyle.dark(colorScheme.surface.toArgb())
+            } else {
+                SystemBarStyle.light(
+                    colorScheme.surface.toArgb(),
+                    colorScheme.surfaceVariant.copy(alpha = 0.12f).toArgb()
+                )
+            }
+            val navigationBarStyle = SystemBarStyle.auto(
+                lightScrim = colorScheme.background.copy(alpha = 0.9f).toArgb(),
+                darkScrim = colorScheme.background.toArgb()
+            )
+            activity.enableEdgeToEdge(
+                statusBarStyle = statusBarStyle,
+                navigationBarStyle = navigationBarStyle
+            )
         }
     }
 

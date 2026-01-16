@@ -25,7 +25,7 @@ import java.io.File
  * ```
  * ./gradlew updateVersionAndIcon
  * ./gradlew updateVersionAndIcon --stage=beta
- * ./gradlew updateVersionAndIcon --dry-run
+ * ./gradlew updateVersionAndIcon --preview
  * ./gradlew updateVersionAndIcon --force
  * ```
  * 
@@ -50,8 +50,8 @@ abstract class UpdateVersionAndIconTask : DefaultTask() {
         stage.set(stageValue)
     }
     
-    @Option(option = "dry-run", description = "预览模式，不实际执行更新")
-    fun setDryRunOption(dryRunValue: Boolean) {
+    @Option(option = "preview", description = "预览模式，不实际执行更新")
+    fun setPreviewOption(dryRunValue: Boolean) {
         dryRun.set(dryRunValue)
     }
     
