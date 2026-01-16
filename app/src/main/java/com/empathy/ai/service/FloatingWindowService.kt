@@ -700,6 +700,7 @@ class FloatingWindowService : Service() {
      *
      * @return 默认布局参数
      */
+    @Suppress("DEPRECATION")
     private fun createDefaultLayoutParams(): WindowManager.LayoutParams {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams(
@@ -2045,21 +2046,20 @@ class FloatingWindowService : Service() {
                 .build()
         } catch (e: Exception) {
             android.util.Log.e("FloatingWindowService", "创建降级通知也失败，使用最基础通知", e)
-            
-            // 最后的降级方案：使用最基础的 Notification
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification.Builder(this, CHANNEL_ID)
-                    .setContentTitle("AI 助手")
-                    .setContentText("运行中")
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .build()
+
+            val fallbackChannelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                CHANNEL_ID
             } else {
-                Notification.Builder(this)
-                    .setContentTitle("AI 助手")
-                    .setContentText("运行中")
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .build()
+                "${CHANNEL_ID}_legacy"
             }
+            val builder = NotificationCompat.Builder(this, fallbackChannelId)
+
+            builder
+                .setContentTitle("AI 助手")
+                .setContentText("运行中")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setOngoing(true)
+                .build()
         }
     }
     
@@ -2880,6 +2880,7 @@ class FloatingWindowService : Service() {
      * TD-00010修复：添加AI请求状态回调，支持悬浮球状态指示和通知
      */
     private fun handleRegenerateV2(tab: ActionType, instruction: String?) {
+        ensureFloatingViewVisibleForRegenerate()
         floatingViewV2?.showLoading("AI正在重新生成...")
         
         // TD-00010: 标记AI请求开始
@@ -2923,6 +2924,16 @@ class FloatingWindowService : Service() {
                 onAiRequestFailed(e)
             }
         }
+    }
+
+    private fun ensureFloatingViewVisibleForRegenerate() {
+        val displayMode = floatingWindowPreferences.getDisplayMode()
+        val viewIsShown = floatingViewV2?.isShown
+        if (!shouldExpandForRegenerate(displayMode, viewIsShown)) {
+            return
+        }
+
+        expandFromBubble()
     }
     
     // ==================== TD-00010: 悬浮球管理方法 ====================
@@ -3846,6 +3857,14 @@ class FloatingWindowService : Service() {
          * 显示监测心跳间隔（毫秒）
          */
         private const val DISPLAY_MONITOR_INTERVAL_MS = 2000L
+
+        internal fun shouldExpandForRegenerate(displayMode: String, viewIsShown: Boolean?): Boolean {
+            if (displayMode == FloatingWindowPreferences.DISPLAY_MODE_BUBBLE) {
+                return true
+            }
+
+            return viewIsShown != true
+        }
     }
 }
   

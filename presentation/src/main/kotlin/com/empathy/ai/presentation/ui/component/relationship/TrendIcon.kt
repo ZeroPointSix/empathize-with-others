@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingFlat
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -64,17 +64,17 @@ fun TrendIcon(
 private fun getTrendInfo(trend: RelationshipTrend): Triple<ImageVector, Color, String> {
     return when (trend) {
         RelationshipTrend.IMPROVING -> Triple(
-            Icons.Default.TrendingUp,
+            Icons.AutoMirrored.Filled.TrendingUp,
             MaterialTheme.colorScheme.primary,
             "改善中"
         )
         RelationshipTrend.STABLE -> Triple(
-            Icons.Default.TrendingFlat,
+            Icons.AutoMirrored.Filled.TrendingFlat,
             MaterialTheme.colorScheme.tertiary,
             "稳定"
         )
         RelationshipTrend.DECLINING -> Triple(
-            Icons.Default.TrendingDown,
+            Icons.AutoMirrored.Filled.TrendingDown,
             MaterialTheme.colorScheme.error,
             "下降中"
         )

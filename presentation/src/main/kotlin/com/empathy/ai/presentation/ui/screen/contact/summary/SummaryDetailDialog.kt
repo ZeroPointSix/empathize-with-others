@@ -13,9 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingFlat
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -370,9 +370,9 @@ private fun RelationshipChangeSection(
                 Text(text = "📈 关系变化")
                 Icon(
                     imageVector = when (trend) {
-                        RelationshipTrend.IMPROVING -> Icons.Default.TrendingUp
-                        RelationshipTrend.DECLINING -> Icons.Default.TrendingDown
-                        RelationshipTrend.STABLE -> Icons.Default.TrendingFlat
+                        RelationshipTrend.IMPROVING -> Icons.AutoMirrored.Filled.TrendingUp
+                        RelationshipTrend.DECLINING -> Icons.AutoMirrored.Filled.TrendingDown
+                        RelationshipTrend.STABLE -> Icons.AutoMirrored.Filled.TrendingFlat
                     },
                     contentDescription = null,
                     tint = when (trend) {

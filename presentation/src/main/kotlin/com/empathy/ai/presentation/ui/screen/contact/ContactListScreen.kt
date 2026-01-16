@@ -9,7 +9,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -26,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.domain.model.ContactSortOption
 import com.empathy.ai.domain.model.Fact
 import com.empathy.ai.presentation.navigation.NavRoutes
 import com.empathy.ai.presentation.theme.EmpathyTheme
@@ -143,6 +146,8 @@ private fun ContactListScreenContent(
     showBottomBar: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    // 排序菜单状态提升到父组件，确保在多个地方调用时状态一致
+    var isSortMenuExpanded by remember { mutableStateOf(false) }
     Scaffold(
         modifier = modifier,
         containerColor = iOSBackground,
@@ -198,7 +203,14 @@ private fun ContactListScreenContent(
                         // iOS大标题导航栏
                         IOSLargeTitleHeader(
                             title = "联系人",
-                            onSearchClick = { onEvent(ContactListUiEvent.StartSearch) }
+                            sortOption = uiState.sortOption,
+                            isSortMenuExpanded = isSortMenuExpanded,
+                            onSortMenuExpandedChange = { isSortMenuExpanded = it },
+                            onSearchClick = { onEvent(ContactListUiEvent.StartSearch) },
+                            onSortOptionSelected = { option ->
+                                isSortMenuExpanded = false
+                                onEvent(ContactListUiEvent.UpdateSortOption(option))
+                            }
                         )
                         // 空状态
                         Box(
@@ -216,8 +228,15 @@ private fun ContactListScreenContent(
                 else -> {
                     ContactListWithHeader(
                         contacts = uiState.displayContacts,
+                        sortOption = uiState.sortOption,
+                        isSortMenuExpanded = isSortMenuExpanded,
+                        onSortMenuExpandedChange = { isSortMenuExpanded = it },
                         onContactClick = onNavigateToDetail,
-                        onSearchClick = { onEvent(ContactListUiEvent.StartSearch) }
+                        onSearchClick = { onEvent(ContactListUiEvent.StartSearch) },
+                        onSortOptionSelected = { option ->
+                            isSortMenuExpanded = false
+                            onEvent(ContactListUiEvent.UpdateSortOption(option))
+                        }
                     )
                 }
             }
@@ -231,11 +250,17 @@ private fun ContactListScreenContent(
 @Composable
 private fun IOSLargeTitleHeader(
     title: String,
+    sortOption: ContactSortOption,
+    isSortMenuExpanded: Boolean,
+    onSortMenuExpandedChange: (Boolean) -> Unit,
     onSearchClick: () -> Unit,
+    onSortOptionSelected: (ContactSortOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimensions = AdaptiveDimensions.current
-    
+    // 缓存排序标签文本，避免每次重组都创建新字符串
+    val sortLabel = remember(sortOption) { sortOption.toLabel() }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -250,6 +275,43 @@ private fun IOSLargeTitleHeader(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box {
+                Icon(
+                    imageVector = Icons.Default.Sort,
+                    contentDescription = "排序",
+                    tint = iOSBlue,
+                    modifier = Modifier
+                        .size(dimensions.iconSizeLarge)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onSortMenuExpandedChange(true) }
+                        )
+                )
+                DropdownMenu(
+                    expanded = isSortMenuExpanded,
+                    onDismissRequest = { onSortMenuExpandedChange(false) }
+                ) {
+                    // 排序选项列表
+                    val sortOptions = listOf(
+                        ContactSortOption.NAME to "姓名",
+                        ContactSortOption.LAST_INTERACTION to "最近互动",
+                        ContactSortOption.RELATIONSHIP_SCORE to "关系分数"
+                    )
+
+                    sortOptions.forEach { (option, label) ->
+                        SortMenuItem(
+                            text = label,
+                            isSelected = sortOption == option,
+                            onClick = {
+                                onSortMenuExpandedChange(false)
+                                onSortOptionSelected(option)
+                            }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.width(dimensions.spacingSmall))
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "搜索",
@@ -269,9 +331,35 @@ private fun IOSLargeTitleHeader(
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
             color = iOSTextPrimary,
+            modifier = Modifier.padding(bottom = dimensions.spacingXSmall)
+        )
+        Text(
+            text = "排序：$sortLabel",
+            fontSize = dimensions.fontSizeCaption,
+            color = iOSTextSecondary,
             modifier = Modifier.padding(bottom = dimensions.spacingSmall)
         )
     }
+}
+
+@Composable
+private fun SortMenuItem(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    DropdownMenuItem(
+        text = { Text(text) },
+        leadingIcon = {
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null
+                )
+            }
+        },
+        onClick = onClick
+    )
 }
 
 /**
@@ -280,8 +368,12 @@ private fun IOSLargeTitleHeader(
 @Composable
 private fun ContactListWithHeader(
     contacts: List<ContactProfile>,
+    sortOption: ContactSortOption,
+    isSortMenuExpanded: Boolean,
+    onSortMenuExpandedChange: (Boolean) -> Unit,
     onContactClick: (String) -> Unit,
     onSearchClick: () -> Unit,
+    onSortOptionSelected: (ContactSortOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimensions = AdaptiveDimensions.current
@@ -295,7 +387,11 @@ private fun ContactListWithHeader(
         item {
             IOSLargeTitleHeader(
                 title = "联系人",
-                onSearchClick = onSearchClick
+                sortOption = sortOption,
+                isSortMenuExpanded = isSortMenuExpanded,
+                onSortMenuExpandedChange = onSortMenuExpandedChange,
+                onSearchClick = onSearchClick,
+                onSortOptionSelected = onSortOptionSelected
             )
         }
 
@@ -353,6 +449,14 @@ private fun ContactList(
                 showDivider = index < contacts.size - 1
             )
         }
+    }
+}
+
+private fun ContactSortOption.toLabel(): String {
+    return when (this) {
+        ContactSortOption.NAME -> "姓名"
+        ContactSortOption.LAST_INTERACTION -> "最近互动"
+        ContactSortOption.RELATIONSHIP_SCORE -> "关系分数"
     }
 }
 

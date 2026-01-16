@@ -21,7 +21,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -216,7 +216,7 @@ fun EditSummaryDialog(
                 }
                 
                 // 分隔线
-                Divider(
+                HorizontalDivider(
                     color = Color.Black.copy(alpha = 0.1f),
                     thickness = 0.5.dp
                 )

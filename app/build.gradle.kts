@@ -1,10 +1,34 @@
+import org.gradle.api.GradleException
+import org.gradle.api.Project
+import java.io.File
+import java.io.FileInputStream
+import java.security.KeyStore
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)  // 保留KSP用于Room和Moshi
-    alias(libs.plugins.kotlin.kapt)  // 使用KAPT处理Hilt
+}
+
+val releaseSigningRequired = project.requiresReleaseSigning()
+val releaseSigning = project.loadReleaseSigningCredentials()
+val enforceReleaseSigning = (project.findProperty("RELEASE_SIGNING_STRICT") as? String)
+    ?.toBoolean()
+    ?: false
+
+if (releaseSigningRequired && releaseSigning == null) {
+    if (enforceReleaseSigning) {
+        throw GradleException(
+            "Release signing config is missing. Configure RELEASE_* properties via local gradle.properties or environment variables."
+        )
+    } else {
+        logger.warn(
+            "Release signing credentials are missing. Falling back to debug keystore for release build. " +
+                "Set RELEASE_SIGNING_STRICT=true to enforce real release signing."
+        )
+    }
 }
 
 android {
@@ -12,11 +36,13 @@ android {
     compileSdk = 35
 
     signingConfigs {
-        create("release") {
-            keyAlias = (project.findProperty("RELEASE_KEY_ALIAS") as? String) ?: "empathy-key"
-            keyPassword = (project.findProperty("RELEASE_KEY_PASSWORD") as? String) ?: "empathy123"
-            storeFile = file((project.findProperty("RELEASE_STORE_FILE") as? String) ?: "../empathy-release-key.jks")
-            storePassword = (project.findProperty("RELEASE_STORE_PASSWORD") as? String) ?: "empathy123"
+        if (releaseSigning != null) {
+            create("release") {
+                keyAlias = releaseSigning.keyAlias
+                keyPassword = releaseSigning.keyPassword
+                storeFile = file(releaseSigning.storeFilePath)
+                storePassword = releaseSigning.storePassword
+            }
         }
     }
 
@@ -46,7 +72,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigning != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -100,15 +130,8 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
         arg("room.incremental", "true")
         arg("room.generateKotlin", "true")
-    }
-
-    // KAPT配置 - 用于Hilt，解决多模块兼容性问题
-    kapt {
-        correctErrorTypes = true
-        arguments {
-            arg("dagger.fastInit", "enabled")
-            arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-        }
+        arg("dagger.fastInit", "enabled")
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
 
     // 单元测试配置
@@ -180,7 +203,7 @@ dependencies {
 
     // Hilt (依赖注入) - 使用KAPT替代KSP，解决多模块兼容性问题
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
     // Room (本地数据库) - app模块需要Room用于DI配置
@@ -229,5 +252,62 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.compiler)
+    kspAndroidTest(libs.hilt.compiler)
+}
+
+data class SigningCredentials(
+    val storeFilePath: String,
+    val keyAlias: String,
+    val keyPassword: String,
+    val storePassword: String
+)
+
+fun Project.loadReleaseSigningCredentials(): SigningCredentials? {
+    fun resolve(name: String): String? {
+        val projectValue = (findProperty(name) as? String)?.takeIf { it.isNotBlank() }
+        val envValue = System.getenv(name)?.takeIf { it.isNotBlank() }
+        return projectValue ?: envValue
+    }
+
+    val keyAlias = resolve("RELEASE_KEY_ALIAS") ?: return null
+    val keyPassword = resolve("RELEASE_KEY_PASSWORD") ?: return null
+    val storePassword = resolve("RELEASE_STORE_PASSWORD") ?: return null
+    val storePath = resolve("RELEASE_STORE_FILE") ?: return null
+    val storeFile = rootProject.file(storePath)
+    val credentials = SigningCredentials(storeFile.absolutePath, keyAlias, keyPassword, storePassword)
+    credentials.validate()
+    return credentials
+}
+
+fun Project.requiresReleaseSigning(): Boolean {
+    val requestedTasks = gradle.startParameter.taskNames
+    if (requestedTasks.isEmpty()) {
+        return false
+    }
+
+    return requestedTasks.any { task ->
+        val normalized = task.lowercase()
+        normalized.contains("release") ||
+            normalized.contains("bundle") ||
+            normalized.contains("publish") ||
+            normalized.contains("upload")
+    }
+}
+
+fun SigningCredentials.validate() {
+    val file = File(storeFilePath)
+    if (!file.exists()) {
+        throw GradleException("Release keystore not found at $storeFilePath")
+    }
+    try {
+        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+        FileInputStream(file).use { input ->
+            keyStore.load(input, storePassword.toCharArray())
+        }
+        if (!keyStore.containsAlias(keyAlias)) {
+            throw GradleException("Release keystore is missing alias '$keyAlias'")
+        }
+    } catch (e: Exception) {
+        throw GradleException("Invalid release keystore configuration: ${e.message}", e)
+    }
 }

@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -617,14 +617,14 @@ private fun DataVaultTabContent(
         DataSourceInfo(
             id = "chat",
             title = "聊天记录",
-            icon = Icons.Default.Chat,
+            icon = Icons.AutoMirrored.Filled.Chat,
             count = uiState.conversationCount,
             status = if (uiState.conversationCount > 0) DataStatus.COMPLETED else DataStatus.NOT_AVAILABLE
         ),
         DataSourceInfo(
             id = "summary",
             title = "AI总结",
-            icon = Icons.Default.Note,
+            icon = Icons.AutoMirrored.Filled.Note,
             count = uiState.summaryCount,
             status = if (uiState.summaryCount > 0) DataStatus.COMPLETED else DataStatus.NOT_AVAILABLE
         ),

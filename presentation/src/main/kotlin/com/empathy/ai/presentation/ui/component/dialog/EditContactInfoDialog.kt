@@ -225,7 +225,7 @@ fun EditContactNameDialog(
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = CancelButtonColor
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
                             brush = SolidColor(CancelButtonColor)
                         )
                     ) {
@@ -324,7 +324,7 @@ fun EditContactGoalDialog(
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = CancelButtonColor
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
                             brush = SolidColor(CancelButtonColor)
                         )
                     ) {
@@ -448,7 +448,7 @@ fun EditContactInfoDialog(
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = CancelButtonColor
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
                             brush = SolidColor(CancelButtonColor)
                         )
                     ) {

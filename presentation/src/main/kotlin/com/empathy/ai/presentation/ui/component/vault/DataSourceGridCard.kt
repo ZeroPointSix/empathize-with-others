@@ -36,7 +36,7 @@ import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 
 
 /**
@@ -171,7 +171,7 @@ private fun DataSourceGridCardCompletedPreview() {
     EmpathyTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             DataSourceGridCard(
-                icon = Icons.Default.Chat,
+                icon = Icons.AutoMirrored.Filled.Chat,
                 title = "聊天记录",
                 subtitle = "最近更新：今天",
                 count = 256,
@@ -188,7 +188,7 @@ private fun DataSourceGridCardNotAvailablePreview() {
     EmpathyTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             DataSourceGridCard(
-                icon = Icons.Default.Chat,
+                icon = Icons.AutoMirrored.Filled.Chat,
                 title = "语音消息",
                 subtitle = "暂不支持",
                 count = 0,
