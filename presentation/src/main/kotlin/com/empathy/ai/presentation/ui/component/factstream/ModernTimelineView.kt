@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.empathy.ai.domain.model.ConversationLog
@@ -38,6 +39,7 @@ import com.empathy.ai.domain.model.RelationshipTrend
 import com.empathy.ai.domain.model.TagUpdate
 import com.empathy.ai.domain.model.TimelineItem
 import com.empathy.ai.presentation.theme.EmpathyTheme
+import com.empathy.ai.presentation.ui.component.message.ConversationBubble
 import com.empathy.ai.presentation.ui.component.state.EmptyView
 import kotlinx.coroutines.delay
 
@@ -172,24 +174,35 @@ private fun ModernTimelineRow(
             
             // 右侧：内容卡片
             Column(modifier = Modifier.weight(1f)) {
-                ModernTimelineCard(
-                    title = getItemTitle(item),
-                    content = getItemContent(item),
-                    time = formatTimeOnly(item.timestamp),
-                    sourceLabel = getSourceLabel(item),
-                    isAiSummary = item is TimelineItem.AiSummary,
-                    aiSuggestion = getAiSuggestion(item),
-                    scoreChange = getScoreChange(item),
-                    tags = getTags(item),
-                    onClick = {
-                        // BUG-00065: 区分事实类型的点击
-                        if (item is TimelineItem.UserFact && onFactEdit != null) {
-                            onFactEdit(item.fact.id)  // 事实类型：触发编辑
-                        } else {
-                            onClick()  // 其他类型：通用点击
+                // 对话类型使用 ConversationBubble 实现左右对齐
+                if (item is TimelineItem.Conversation) {
+                    ConversationBubble(
+                        log = item.log,
+                        showHeader = false,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        onClick = { onClick() }
+                    )
+                } else {
+                    ModernTimelineCard(
+                        title = getItemTitle(item),
+                        content = getItemContent(item),
+                        time = formatTimeOnly(item.timestamp),
+                        sourceLabel = getSourceLabel(item),
+                        isAiSummary = item is TimelineItem.AiSummary,
+                        aiSuggestion = getAiSuggestion(item),
+                        scoreChange = getScoreChange(item),
+                        tags = getTags(item),
+                        onClick = {
+                            // BUG-00065: 区分事实类型的点击
+                            if (item is TimelineItem.UserFact && onFactEdit != null) {
+                                onFactEdit(item.fact.id)  // 事实类型：触发编辑
+                            } else {
+                                onClick()  // 其他类型：通用点击
+                            }
                         }
-                    }
-                )
+                    )
+                }
                 
                 if (!isLast) {
                     Spacer(modifier = Modifier.height(16.dp))
