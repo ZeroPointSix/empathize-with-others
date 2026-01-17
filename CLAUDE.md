@@ -13,16 +13,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **仓库配置**: 腾讯云/阿里云镜像加速（优先使用腾讯云）
 - **构建系统**: 自定义 BuildSrc 模块，支持版本自动管理和图标更新
 - **原则**: 零后端 (Zero-Backend)、BYOK (Bring Your Own Key)、隐私优先
-- **状态**: v1.1.0 (versionCode: 10101, Dev)
+- **状态**: v1.11.0 (versionCode: 11100, Dev)
 - **模块结构**:
   - `app/` - Application 层 (服务、通知、UI 工具类)
   - `domain/` - 纯业务逻辑 (UseCase、Repository 接口、模型)
   - `data/` - 数据层 (Repository 实现、数据库、网络)
   - `presentation/` - UI 层 (Compose、ViewModel、导航)
 
-**代码规模统计** (基于 2026-01-15 最新扫描):
+**代码规模统计** (基于 2026-01-17 最新扫描):
 - **主源码**: 636个文件 (domain: 213个, data: 108个, presentation: 285个, app: 30个)
-- **测试文件**: 99个 (单元测试: 99个, Android测试: 13个)
+- **测试文件**: 112个 (单元测试: 99个, Android测试: 13个)
 - **ViewModel**: 27个
 - **UseCase**: 60个
 - **Repository**: 18个接口 + 27个实现
@@ -167,7 +167,7 @@ Rules/            -> 开发规范与多 Agent 协作规则
 buildSrc/         -> 自定义构建工具 (版本管理、图标更新、备份)
 ```
 
-**详细代码统计** (2026-01-15):
+**详细代码统计** (2026-01-17):
 - **domain模块** (213个文件): 173模型 + 18仓库接口 + 60用例 + 2服务 + 29工具
 - **data模块** (108个文件): 10DAO + 11Entity + 27仓库实现 + 8DI + 6parser
 - **presentation模块** (285个文件): 27ViewModel + 5导航 + 12主题 + 93屏幕 + 180+组件

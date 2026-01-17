@@ -324,7 +324,8 @@ class AiProviderRepositoryImpl @Inject constructor(
                             .map { dto ->
                                 AiModel(
                                     id = dto.id,
-                                    displayName = generateDisplayName(dto.id)
+                                    displayName = generateDisplayName(dto.id),
+                                    supportsImage = isVisionModel(dto.id)
                                 )
                             }
                             .sortedBy { it.id }
@@ -388,6 +389,71 @@ class AiProviderRepositoryImpl @Inject constructor(
             "qwen", "llama", "mistral", "gemini", "palm"
         )
         return includePatterns.any { lowerCaseId.contains(it) }
+    }
+
+    /**
+     * 判断模型是否支持图片理解（Vision）
+     *
+     * 业务规则 (PRD-00036/3.5):
+     * - 支持图片的模型才能发送截图附件
+     * - 根据模型 ID 智能判断是否支持图片
+     *
+     * 支持图片的模型特征：
+     * - GPT-4 系列（gpt-4, gpt-4-turbo, gpt-4o 等）
+     * - Claude 3 系列（claude-3-opus, claude-3-sonnet 等）
+     * - Gemini 系列（gemini-pro-vision, gemini-1.5 等）
+     * - Qwen-VL 系列
+     * - 其他明确标注 vision/vl 的模型
+     *
+     * 不支持图片的模型：
+     * - GPT-3.5 系列
+     * - DeepSeek 纯文本模型
+     * - 其他未明确支持的模型
+     *
+     * @see AiRepositoryImpl.buildUserMessage 图片消息构建逻辑
+     * @see AiModel.supportsImage 模型图片支持标志
+     *
+     * --- Change Log ---
+     * 2026-01-17 PRD-00036: 新增 Vision 模型智能判断功能
+     *   - 支持 GPT-4/4o/4-turbo、Claude 3 系列、Gemini 系列等
+     *   - 排除 GPT-3.5、DeepSeek 纯文本模型
+     *   - 用于 AiModel.supportsImage 属性填充
+     * --- Change Log ---
+     */
+    private fun isVisionModel(modelId: String): Boolean {
+        val lowerCaseId = modelId.lowercase()
+
+        // 明确支持图片的模型模式
+        val visionPatterns = listOf(
+            "gpt-4",           // GPT-4 系列都支持图片
+            "gpt-4o",          // GPT-4o 系列
+            "gpt-4-turbo",     // GPT-4 Turbo
+            "claude-3",        // Claude 3 系列
+            "claude-2",        // Claude 2 系列 (旧版仍支持图片)
+            "claude-opus",     // Claude Opus
+            "claude-sonnet",   // Claude Sonnet
+            "gemini",          // Gemini 系列
+            "vision",          // 明确标注 vision
+            "-vl",             // VL (Vision-Language) 模型
+            "qwen-vl",         // Qwen-VL 系列
+            "glm-4v",          // GLM-4V 系列
+            "yi-vision"        // Yi-Vision 系列
+        )
+
+        // 明确不支持图片的模型模式
+        val nonVisionPatterns = listOf(
+            "gpt-3.5",         // GPT-3.5 不支持图片
+            "deepseek-chat",   // DeepSeek Chat 纯文本
+            "deepseek-coder"   // DeepSeek Coder 纯文本
+        )
+
+        // 先检查是否明确不支持
+        if (nonVisionPatterns.any { lowerCaseId.contains(it) }) {
+            return false
+        }
+
+        // 再检查是否支持
+        return visionPatterns.any { lowerCaseId.contains(it) }
     }
 
     private fun generateDisplayName(modelId: String): String {

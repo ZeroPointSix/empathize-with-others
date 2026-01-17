@@ -121,6 +121,7 @@ class FloatingWindowService : Service() {
     private var targetDisplayId: Int? = null
     private var floatingView: FloatingView? = null  // 旧版View（保留兼容）
     private var floatingViewV2: FloatingViewV2? = null  // TD-00009: 新版View
+    private var imagePreviewView: com.empathy.ai.presentation.ui.component.dialog.ImagePreviewView? = null  // PRD-00036, BUG-00074: 截图预览视图
     private var useNewUI: Boolean = true  // TD-00009: 是否使用新UI
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
@@ -527,7 +528,20 @@ class FloatingWindowService : Service() {
             android.util.Log.e("FloatingWindowService", "移除FloatingViewV2失败", e)
         }
         floatingViewV2 = null
-        
+
+        try {
+            // PRD-00036, BUG-00074: 移除截图预览视图
+            imagePreviewView?.let {
+                if (it.parent != null) {
+                    windowManager.removeView(it)
+                    android.util.Log.d("FloatingWindowService", "ImagePreviewView移除成功")
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "移除ImagePreviewView失败", e)
+        }
+        imagePreviewView = null
+
         try {
             // 移除旧版悬浮视图
             floatingView?.let {
@@ -2238,6 +2252,39 @@ class FloatingWindowService : Service() {
     }
 
     /**
+     * 显示截图预览视图 (PRD-00036, BUG-00074修复)
+     *
+     * 使用WindowManager方式而不是Dialog，避免Service context的限制
+     *
+     * @param imagePath 图片本地路径
+     */
+    private fun showScreenshotPreview(imagePath: String) {
+        try {
+            android.util.Log.d("FloatingWindowService", "显示截图预览: $imagePath")
+
+            // BUG-00074修复：关闭之前的预览视图（如果存在）
+            imagePreviewView?.let {
+                try {
+                    windowManager.removeView(it)
+                } catch (e: Exception) {
+                    android.util.Log.w("FloatingWindowService", "移除旧预览视图失败", e)
+                }
+            }
+
+            // 创建并显示新的预览视图
+            imagePreviewView = com.empathy.ai.presentation.ui.component.dialog.ImagePreviewView(
+                this,
+                windowManager,
+                imagePath
+            )
+            imagePreviewView?.show()
+        } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "显示截图预览失败", e)
+            android.widget.Toast.makeText(this, "预览失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
      * 隐藏新版悬浮视图（关闭按钮行为）
      * 
      * 修改：关闭按钮现在执行最小化操作（显示悬浮球），而不是完全退出服务
@@ -2421,16 +2468,23 @@ class FloatingWindowService : Service() {
     // - 连续截屏默认关闭；开启后遮罩保留 1.5s 允许再次拖拽追加（最多 5 张），超时自动退出。
 
     private fun startScreenshotFlow() {
-        android.util.Log.d("FloatingWindowService", "startScreenshotFlow: mediaProjection=${mediaProjection != null}")
+        android.util.Log.d(
+            "FloatingWindowService",
+            "startScreenshotFlow: ts=${System.currentTimeMillis()} mediaProjection=${mediaProjection != null} continuous=${floatingWindowPreferences.isContinuousScreenshotEnabled()} attachments=${screenshotAttachments.size}"
+        )
         if (mediaProjection == null && !restoreMediaProjectionFromCache()) {
-            notifyScreenshotPermissionMissing()
+            // Android 14+ 需要每次重新请求权限
+            android.util.Log.d("FloatingWindowService", "startScreenshotFlow: 请求截图权限")
+            requestMediaProjectionPermission()
             return
         }
+        updateForegroundServiceType(includeMediaProjection = true)
         beginScreenshotSession()
     }
 
     private fun requestMediaProjectionPermission() {
         try {
+            android.util.Log.d("FloatingWindowService", "requestMediaProjectionPermission: start")
             val intent = Intent(this, ScreenshotPermissionActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 putExtra(
@@ -2440,6 +2494,7 @@ class FloatingWindowService : Service() {
             }
             startActivity(intent)
         } catch (e: Exception) {
+            android.util.Log.e("FloatingWindowService", "requestMediaProjectionPermission: failed", e)
             android.widget.Toast.makeText(this, "无法发起截图权限请求", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
@@ -2453,10 +2508,12 @@ class FloatingWindowService : Service() {
             "handleMediaProjectionResult resultCode=$resultCode data=${data != null} source=$requestSource"
         )
         if (resultCode != Activity.RESULT_OK || data == null) {
+            android.util.Log.w("FloatingWindowService", "handleMediaProjectionResult: permission denied")
             android.widget.Toast.makeText(this, "未授予截图权限", android.widget.Toast.LENGTH_SHORT).show()
             floatingWindowPreferences.clearScreenshotPermission()
             return
         }
+        android.util.Log.d("FloatingWindowService", "handleMediaProjectionResult: permission granted")
         floatingWindowPreferences.saveMediaProjectionPermission(resultCode, data)
         if (requestSource == MediaProjectionPermissionConstants.REQUEST_SOURCE_SETTINGS) {
             android.widget.Toast.makeText(this, "截图权限已授权", android.widget.Toast.LENGTH_SHORT).show()
@@ -2469,14 +2526,22 @@ class FloatingWindowService : Service() {
         updateForegroundServiceType(includeMediaProjection = true)
         mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
         if (mediaProjection == null) {
+            android.util.Log.e("FloatingWindowService", "handleMediaProjectionResult: mediaProjection=null")
             android.widget.Toast.makeText(this, "截图权限初始化失败", android.widget.Toast.LENGTH_SHORT).show()
             updateForegroundServiceType(includeMediaProjection = false)
             return
         }
+        android.util.Log.d("FloatingWindowService", "handleMediaProjectionResult: mediaProjection ready")
         beginScreenshotSession()
     }
 
     private fun restoreMediaProjectionFromCache(): Boolean {
+        // Android 14+ (API 34+) 的 MediaProjection token 只能使用一次
+        // 不能从缓存恢复，必须每次重新请求权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            android.util.Log.d("FloatingWindowService", "restoreMediaProjectionFromCache: Android 14+ 不支持从缓存恢复")
+            return false
+        }
         val cached = floatingWindowPreferences.getMediaProjectionPermission() ?: return false
         android.util.Log.d("FloatingWindowService", "restoreMediaProjectionFromCache: hit=permission")
         updateForegroundServiceType(includeMediaProjection = true)
@@ -2502,14 +2567,24 @@ class FloatingWindowService : Service() {
 
     private fun beginScreenshotSession() {
         screenshotFloatingWasVisible = floatingViewV2?.visibility == View.VISIBLE
+        android.util.Log.d(
+            "FloatingWindowService",
+            "beginScreenshotSession: floatingWasVisible=$screenshotFloatingWasVisible"
+        )
         floatingViewV2?.visibility = View.GONE
         showScreenshotOverlay()
     }
 
     private fun showScreenshotOverlay() {
         val overlay = screenshotOverlayView ?: ScreenshotOverlayView(this).also { view ->
-            view.onSelectionStart = { cancelScreenshotTimeout() }
-            view.onSelectionComplete = { rect -> captureSelection(rect) }
+            view.onSelectionStart = {
+                android.util.Log.d("FloatingWindowService", "onSelectionStart: screenshot selection")
+                cancelScreenshotTimeout()
+            }
+            view.onSelectionComplete = { rect ->
+                android.util.Log.d("FloatingWindowService", "onSelectionComplete: rect=$rect")
+                captureSelection(rect)
+            }
             screenshotOverlayView = view
         }
         overlay.hintText = if (floatingWindowPreferences.isContinuousScreenshotEnabled()) {
@@ -2519,6 +2594,10 @@ class FloatingWindowService : Service() {
         }
         overlay.clearSelection()
         if (overlay.parent == null) {
+            android.util.Log.d(
+                "FloatingWindowService",
+                "showScreenshotOverlay: addView hint=${overlay.hintText != null}"
+            )
             val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             } else {
@@ -2536,6 +2615,8 @@ class FloatingWindowService : Service() {
                 gravity = Gravity.TOP or Gravity.START
             }
             windowManager.addView(overlay, params)
+        } else {
+            android.util.Log.d("FloatingWindowService", "showScreenshotOverlay: reuse existing overlay")
         }
     }
 
@@ -2548,22 +2629,59 @@ class FloatingWindowService : Service() {
     }
 
     private fun captureSelection(rect: Rect) {
+        android.util.Log.d(
+            "FloatingWindowService",
+            "captureSelection: rect=$rect ts=${System.currentTimeMillis()} mediaProjection=${mediaProjection != null}"
+        )
         hideScreenshotOverlay()
         serviceScope.launch {
             val projection = mediaProjection
             if (projection == null) {
+                android.util.Log.w("FloatingWindowService", "captureSelection: mediaProjection=null, end session")
                 endScreenshotSession()
                 return@launch
             }
+            android.util.Log.d(
+                "FloatingWindowService",
+                "captureSelection: delay ${SCREENSHOT_CAPTURE_DELAY_MS}ms before capture"
+            )
             delay(SCREENSHOT_CAPTURE_DELAY_MS)
             val helper = screenshotCaptureHelper ?: ScreenshotCaptureHelper(this@FloatingWindowService)
-            val attachment = helper.captureRegion(projection, rect)
+            var invalidProjection = false
+            val attachment = try {
+                helper.captureRegion(projection, rect)
+            } catch (e: SecurityException) {
+                invalidProjection = true
+                android.util.Log.e("FloatingWindowService", "captureSelection: invalid media projection", e)
+                val retry = retryCaptureWithRestoredProjection(helper, rect)
+                if (retry == null) {
+                    android.util.Log.w(
+                        "FloatingWindowService",
+                        "captureSelection: restore projection failed, request permission"
+                    )
+                    floatingWindowPreferences.clearScreenshotPermission()
+                    requestMediaProjectionPermission()
+                } else {
+                    android.util.Log.d("FloatingWindowService", "captureSelection: retry after restore success")
+                }
+                retry
+            }
             if (attachment != null) {
+                android.util.Log.d(
+                    "FloatingWindowService",
+                    "captureSelection: success path=${attachment.localPath} size=${attachment.sizeBytes} w=${attachment.width} h=${attachment.height}"
+                )
                 addScreenshotAttachment(attachment)
             } else {
+                android.util.Log.w("FloatingWindowService", "captureSelection: failed (attachment=null)")
+                val message = if (invalidProjection) {
+                    "截图权限已失效，请重新授权"
+                } else {
+                    "截图失败，请重试"
+                }
                 android.widget.Toast.makeText(
                     this@FloatingWindowService,
-                    "截图失败，请重试",
+                    message,
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
             }
@@ -2574,6 +2692,23 @@ class FloatingWindowService : Service() {
             } else {
                 endScreenshotSession()
             }
+        }
+    }
+
+    private suspend fun retryCaptureWithRestoredProjection(
+        helper: ScreenshotCaptureHelper,
+        rect: Rect
+    ): ScreenshotAttachment? {
+        releaseMediaProjection()
+        if (!restoreMediaProjectionFromCache()) {
+            return null
+        }
+        val projection = mediaProjection ?: return null
+        return try {
+            helper.captureRegion(projection, rect)
+        } catch (e: SecurityException) {
+            android.util.Log.e("FloatingWindowService", "retryCaptureWithRestoredProjection failed", e)
+            null
         }
     }
 
@@ -2594,8 +2729,10 @@ class FloatingWindowService : Service() {
         cancelScreenshotTimeout()
         hideScreenshotOverlay()
         restoreFloatingViewAfterScreenshot()
-        releaseMediaProjection()
-        updateForegroundServiceType(includeMediaProjection = false)
+        // 不再释放 mediaProjection，允许用户多次截图而不需要重新请求权限
+        // releaseMediaProjection() 只在服务销毁时调用
+        // BUG-00072: 保持 MediaProjection 前台服务类型开启，避免后续截图失败
+        // updateForegroundServiceType(includeMediaProjection = false)
     }
 
     private fun restoreFloatingViewAfterScreenshot() {
@@ -2669,6 +2806,10 @@ class FloatingWindowService : Service() {
     private fun addScreenshotAttachment(attachment: ScreenshotAttachment) {
         if (screenshotAttachments.size >= SCREENSHOT_MAX_ATTACHMENTS) {
             screenshotCaptureHelper?.deleteAttachment(attachment)
+            android.util.Log.w(
+                "FloatingWindowService",
+                "addScreenshotAttachment: reach limit=${SCREENSHOT_MAX_ATTACHMENTS}, drop=${attachment.localPath}"
+            )
             android.widget.Toast.makeText(
                 this,
                 "截图已达上限，已忽略本次截图",
@@ -2677,6 +2818,10 @@ class FloatingWindowService : Service() {
             return
         }
         screenshotAttachments.add(attachment)
+        android.util.Log.d(
+            "FloatingWindowService",
+            "addScreenshotAttachment: count=${screenshotAttachments.size} path=${attachment.localPath}"
+        )
         updateScreenshotAttachmentsUi()
     }
 
@@ -2694,6 +2839,10 @@ class FloatingWindowService : Service() {
     }
 
     private fun clearScreenshotAttachments() {
+        android.util.Log.d(
+            "FloatingWindowService",
+            "clearScreenshotAttachments: count=${screenshotAttachments.size}"
+        )
         screenshotAttachments.forEach { attachment ->
             screenshotCaptureHelper?.deleteAttachment(attachment)
         }
@@ -2702,22 +2851,29 @@ class FloatingWindowService : Service() {
     }
 
     private fun updateScreenshotAttachmentsUi() {
+        android.util.Log.d(
+            "FloatingWindowService",
+            "updateScreenshotAttachmentsUi: count=${screenshotAttachments.size}"
+        )
         floatingViewV2?.setScreenshotAttachments(screenshotAttachments.toList())
     }
 
     private suspend fun getAttachmentsForSend(): List<ScreenshotAttachment> {
-        if (screenshotAttachments.isEmpty()) return emptyList()
-        val provider = aiProviderRepository.getDefaultProvider().getOrNull()
-        val supportsImage = provider?.getDefaultModel()?.supportsImage == true
-        if (!supportsImage) {
-            android.widget.Toast.makeText(
-                this,
-                "当前模型不支持图片理解，已仅发送文字内容",
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
+        if (screenshotAttachments.isEmpty()) {
+            android.util.Log.d("FloatingWindowService", "getAttachmentsForSend: empty")
             return emptyList()
         }
-        return screenshotAttachments.toList()
+        // 移除 supportsImage 判断，让用户自己选择模型
+        // 如果模型不支持图片，由服务端返回错误
+        val snapshot = screenshotAttachments.toList()
+        android.util.Log.d("FloatingWindowService", "getAttachmentsForSend: count=${snapshot.size}")
+        snapshot.forEachIndexed { index, attachment ->
+            android.util.Log.d(
+                "FloatingWindowService",
+                "getAttachmentsForSend[$index]: path=${attachment.localPath} size=${attachment.sizeBytes} w=${attachment.width} h=${attachment.height}"
+            )
+        }
+        return snapshot
     }
 
     /**
@@ -2735,6 +2891,10 @@ class FloatingWindowService : Service() {
             try {
                 val timeoutMs = getAiTimeout()
                 val attachments = getAttachmentsForSend()
+                android.util.Log.d(
+                    "FloatingWindowService",
+                    "handleAnalyzeV2: attachments=${attachments.size} contactId=$contactId"
+                )
                 val result = withTimeout(timeoutMs) {
                     analyzeChatUseCase(contactId, listOf(text), attachments)
                 }
@@ -2745,6 +2905,7 @@ class FloatingWindowService : Service() {
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
                         if (attachments.isNotEmpty()) {
+                            android.util.Log.d("FloatingWindowService", "handleAnalyzeV2: clear attachments")
                             clearScreenshotAttachments()
                         }
                         // TD-00010: 标记AI请求成功
@@ -2783,6 +2944,10 @@ class FloatingWindowService : Service() {
             try {
                 val timeoutMs = getAiTimeout()
                 val attachments = getAttachmentsForSend()
+                android.util.Log.d(
+                    "FloatingWindowService",
+                    "handlePolishV2: attachments=${attachments.size} contactId=$contactId"
+                )
                 val result = withTimeout(timeoutMs) {
                     polishDraftUseCase(contactId, text, attachments)
                 }
@@ -2793,6 +2958,7 @@ class FloatingWindowService : Service() {
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
                         if (attachments.isNotEmpty()) {
+                            android.util.Log.d("FloatingWindowService", "handlePolishV2: clear attachments")
                             clearScreenshotAttachments()
                         }
                         // TD-00010: 标记AI请求成功
@@ -2831,6 +2997,10 @@ class FloatingWindowService : Service() {
             try {
                 val timeoutMs = getAiTimeout()
                 val attachments = getAttachmentsForSend()
+                android.util.Log.d(
+                    "FloatingWindowService",
+                    "handleReplyV2: attachments=${attachments.size} contactId=$contactId"
+                )
                 val result = withTimeout(timeoutMs) {
                     generateReplyUseCase(contactId, text, attachments)
                 }
@@ -2841,6 +3011,7 @@ class FloatingWindowService : Service() {
                         currentUiState = currentUiState.copy(lastResult = aiResult)
                         floatingViewV2?.showResult(aiResult)
                         if (attachments.isNotEmpty()) {
+                            android.util.Log.d("FloatingWindowService", "handleReplyV2: clear attachments")
                             clearScreenshotAttachments()
                         }
                         // TD-00010: 标记AI请求成功
@@ -3244,7 +3415,12 @@ class FloatingWindowService : Service() {
             setOnScreenshotDeleteListener { attachmentId ->
                 removeScreenshotAttachment(attachmentId)
             }
-            
+
+            // PRD-00036: 设置截图预览监听器
+            setOnScreenshotPreviewListener { imagePath ->
+                showScreenshotPreview(imagePath)
+            }
+
             // 【TD-00016】主题设置按钮点击回调
             setOnTopicClickListener {
                 android.util.Log.d("FloatingWindowService", "主题按钮被点击（setupFloatingViewV2Callbacks）")

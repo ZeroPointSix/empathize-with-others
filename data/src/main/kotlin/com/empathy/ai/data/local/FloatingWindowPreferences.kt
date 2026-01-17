@@ -287,8 +287,21 @@ class FloatingWindowPreferences @Inject constructor(
             return
         }
         mediaProjectionPermissionCache = MediaProjectionPermission(resultCode, data)
-        clearMediaProjectionPermissionPersisted()
-        android.util.Log.d(TAG, "MediaProjection 授权已缓存（仅内存）")
+
+        // BUG-00073: 尝试持久化权限,避免应用重启后重复请求
+        // 注意: Intent.toUri() 可能抛出异常 (如 Intent 包含不可序列化的 Extra)
+        try {
+            val intentUri = data.toUri(Intent.URI_INTENT_SCHEME)
+            prefs.edit {
+                putInt(KEY_MEDIA_PROJECTION_RESULT_CODE, resultCode)
+                putString(KEY_MEDIA_PROJECTION_RESULT_DATA, intentUri)
+                putInt(KEY_MEDIA_PROJECTION_DATA_VERSION, 1)
+            }
+            android.util.Log.d(TAG, "MediaProjection 授权已缓存（内存+持久化）")
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "MediaProjection 权限持久化失败", e)
+            android.util.Log.d(TAG, "MediaProjection 授权已缓存（仅内存）")
+        }
     }
 
     fun getMediaProjectionPermission(): MediaProjectionPermission? {
@@ -296,7 +309,28 @@ class FloatingWindowPreferences @Inject constructor(
     }
 
     private fun getMediaProjectionPermissionInternal(): MediaProjectionPermission? {
-        return mediaProjectionPermissionCache
+        // 优先返回内存缓存
+        if (mediaProjectionPermissionCache != null) {
+            return mediaProjectionPermissionCache
+        }
+
+        // BUG-00073: 尝试从持久化存储恢复权限
+        try {
+            val resultCode = prefs.getInt(KEY_MEDIA_PROJECTION_RESULT_CODE, -1)
+            val intentUri = prefs.getString(KEY_MEDIA_PROJECTION_RESULT_DATA, null)
+
+            if (resultCode != -1 && intentUri != null) {
+                val intent = Intent.parseUri(intentUri, Intent.URI_INTENT_SCHEME)
+                mediaProjectionPermissionCache = MediaProjectionPermission(resultCode, intent)
+                android.util.Log.d(TAG, "MediaProjection 权限从持久化存储恢复成功")
+                return mediaProjectionPermissionCache
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "MediaProjection 权限恢复失败", e)
+            clearMediaProjectionPermissionPersisted()
+        }
+
+        return null
     }
 
     private fun clearMediaProjectionPermissionInternal() {

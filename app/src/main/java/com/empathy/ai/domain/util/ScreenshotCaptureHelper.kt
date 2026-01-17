@@ -10,7 +10,11 @@ import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.WindowManager
 import com.empathy.ai.domain.model.ScreenshotAttachment
 import kotlinx.coroutines.Dispatchers
@@ -26,14 +30,24 @@ import kotlin.math.roundToInt
  * 区域截图捕获与本地临时落盘。
  *
  * 业务背景 (PRD-00036/2.1):
- * - 用户希望把第三方 App 里的图片/视频画面“截一块”快速塞进悬浮窗输入框，作为对话上下文。
+ * - 用户希望把第三方 App 里的图片/视频画面"截一块"快速塞进悬浮窗输入框，作为对话上下文。
  *
  * 设计决策 (TDD-00036):
- * - MediaProjection 只能拿到“整屏图像”，因此先整屏抓取，再按 `region` 裁剪。
- * - 附件只存放在 `cacheDir/screenshots`，用于“发送前临时附件”；由上层在发送后清理 (PRD-00036/3.6)。
+ * - MediaProjection 只能拿到"整屏图像"，因此先整屏抓取，再按 `region` 裁剪。
+ * - 附件只存放在 `cacheDir/screenshots`，用于"发送前临时附件"；由上层在发送后清理 (PRD-00036/3.6)。
  *
  * 性能与带宽 (TDD-00036/1.4):
  * - 限制最大边长为 `MAX_SIDE_PX`，并将 JPEG 体积控制在 `MAX_FILE_BYTES` 以内，避免插入多张截图时爆内存/超请求体。
+ *
+ * @see FloatingWindowService 截图流程入口
+ *
+ * --- Change Log ---
+ * 2026-01-17 BUG-00072: 添加详细日志埋点，定位截图失败原因
+ *   - captureRegion() 添加全流程时间戳日志 (start/metrics/createVirtualDisplay/crop/save/end)
+ *   - acquireLatestBitmap() 添加重试次数日志
+ *   - imageToBitmap/clampRect/saveToCache 添加失败日志
+ *   - Android 14+ MediaProjection.Callback 注册与注销，确保资源正确释放
+ * --- Change Log ---
  */
 class ScreenshotCaptureHelper(private val context: Context) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -42,10 +56,22 @@ class ScreenshotCaptureHelper(private val context: Context) {
         mediaProjection: MediaProjection,
         region: Rect
     ): ScreenshotAttachment? = withContext(Dispatchers.IO) {
+        val startMs = SystemClock.elapsedRealtime()
+        Log.d("ScreenshotCapture", "captureRegion start ts=$startMs region=$region sdk=${Build.VERSION.SDK_INT}")
         val metrics = getScreenMetrics()
         val screenWidth = metrics.widthPixels
         val screenHeight = metrics.heightPixels
-        if (screenWidth <= 0 || screenHeight <= 0) return@withContext null
+        if (screenWidth <= 0 || screenHeight <= 0) {
+            Log.w(
+                "ScreenshotCapture",
+                "captureRegion invalid metrics ts=$startMs width=$screenWidth height=$screenHeight"
+            )
+            return@withContext null
+        }
+        Log.d(
+            "ScreenshotCapture",
+            "captureRegion metrics ts=$startMs width=$screenWidth height=$screenHeight density=${metrics.densityDpi}"
+        )
 
         val imageReader = ImageReader.newInstance(
             screenWidth,
@@ -54,7 +80,18 @@ class ScreenshotCaptureHelper(private val context: Context) {
             2
         )
         var virtualDisplay: VirtualDisplay? = null
+        // Android 14 (API 34+) 要求在 createVirtualDisplay 之前注册 Callback
+        var projectionCallback: MediaProjection.Callback? = null
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                projectionCallback = object : MediaProjection.Callback() {
+                    override fun onStop() {
+                        Log.d("ScreenshotCapture", "MediaProjection stopped ts=$startMs")
+                    }
+                }
+                mediaProjection.registerCallback(projectionCallback, Handler(Looper.getMainLooper()))
+            }
+            Log.d("ScreenshotCapture", "captureRegion createVirtualDisplay ts=$startMs")
             virtualDisplay = mediaProjection.createVirtualDisplay(
                 "screenshot",
                 screenWidth,
@@ -66,8 +103,18 @@ class ScreenshotCaptureHelper(private val context: Context) {
                 null
             )
 
-            val bitmap = acquireLatestBitmap(imageReader, screenWidth, screenHeight) ?: return@withContext null
-            val safeRect = clampRect(region, screenWidth, screenHeight) ?: return@withContext null
+            val bitmap = acquireLatestBitmap(imageReader, screenWidth, screenHeight)
+            if (bitmap == null) {
+                Log.w("ScreenshotCapture", "captureRegion acquireLatestBitmap failed ts=$startMs")
+                return@withContext null
+            }
+            val safeRect = clampRect(region, screenWidth, screenHeight)
+            if (safeRect == null) {
+                Log.w("ScreenshotCapture", "captureRegion invalid selection ts=$startMs region=$region")
+                bitmap.recycle()
+                return@withContext null
+            }
+            Log.d("ScreenshotCapture", "captureRegion cropRect ts=$startMs rect=$safeRect")
             val cropped = Bitmap.createBitmap(
                 bitmap,
                 safeRect.left,
@@ -82,8 +129,21 @@ class ScreenshotCaptureHelper(private val context: Context) {
                 cropped.recycle()
             }
 
-            return@withContext saveToCache(scaled)
+            val attachment = saveToCache(scaled)
+            if (attachment == null) {
+                Log.w("ScreenshotCapture", "captureRegion saveToCache failed ts=$startMs")
+            } else {
+                Log.d(
+                    "ScreenshotCapture",
+                    "captureRegion saved ts=$startMs path=${attachment.localPath} size=${attachment.sizeBytes} w=${attachment.width} h=${attachment.height}"
+                )
+            }
+            return@withContext attachment
+        } catch (e: SecurityException) {
+            Log.e("ScreenshotCapture", "captureRegion failed ts=$startMs", e)
+            throw e
         } catch (e: Exception) {
+            Log.e("ScreenshotCapture", "captureRegion failed ts=$startMs", e)
             null
         } finally {
             try {
@@ -94,6 +154,15 @@ class ScreenshotCaptureHelper(private val context: Context) {
                 imageReader.close()
             } catch (_: Exception) {
             }
+            // 取消注册 Callback (Android 14+)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && projectionCallback != null) {
+                    mediaProjection.unregisterCallback(projectionCallback)
+                }
+            } catch (_: Exception) {
+            }
+            val durationMs = SystemClock.elapsedRealtime() - startMs
+            Log.d("ScreenshotCapture", "captureRegion end ts=$startMs durationMs=$durationMs")
         }
     }
 
@@ -110,13 +179,17 @@ class ScreenshotCaptureHelper(private val context: Context) {
         height: Int
     ): Bitmap? {
         // MediaProjection 输出到 ImageReader 的首帧可能为空；短暂轮询可提升稳定性（不同设备/模拟器上差异明显）。
-        repeat(6) {
+        repeat(6) { index ->
             delay(50)
             val image = reader.acquireLatestImage() ?: return@repeat
             val bitmap = imageToBitmap(image, width, height)
             image.close()
-            if (bitmap != null) return bitmap
+            if (bitmap != null) {
+                Log.d("ScreenshotCapture", "acquireLatestBitmap success attempt=${index + 1}")
+                return bitmap
+            }
         }
+        Log.w("ScreenshotCapture", "acquireLatestBitmap failed after retries")
         return null
     }
 
@@ -137,6 +210,7 @@ class ScreenshotCaptureHelper(private val context: Context) {
             bitmap.recycle()
             cropped
         } catch (e: Exception) {
+            Log.w("ScreenshotCapture", "imageToBitmap failed", e)
             null
         }
     }
@@ -146,7 +220,10 @@ class ScreenshotCaptureHelper(private val context: Context) {
         val top = rect.top.coerceIn(0, maxHeight - 1)
         val right = rect.right.coerceIn(1, maxWidth)
         val bottom = rect.bottom.coerceIn(1, maxHeight)
-        if (right <= left || bottom <= top) return null
+        if (right <= left || bottom <= top) {
+            Log.w("ScreenshotCapture", "clampRect invalid rect=$rect max=$maxWidth x $maxHeight")
+            return null
+        }
         return Rect(left, top, right, bottom)
     }
 
@@ -184,6 +261,10 @@ class ScreenshotCaptureHelper(private val context: Context) {
             createdAt = System.currentTimeMillis()
         )
         bitmap.recycle()
+        Log.d(
+            "ScreenshotCapture",
+            "saveToCache success path=${attachment.localPath} size=${attachment.sizeBytes} w=${attachment.width} h=${attachment.height}"
+        )
         return attachment
     }
 
