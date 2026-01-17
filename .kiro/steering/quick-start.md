@@ -8,11 +8,10 @@
 
 ## 🆕 多模块架构 (TD-00017)
 
-> 2026-01-14 更新 - 项目已完成Clean Architecture多模块改造
+> 2026-01-17 更新 - 项目已完成Clean Architecture多模块改造
 >
-> 当前分支: BUG-floatwindow（悬浮窗功能修复分支）
-> 当前工作: BUG-00070 修复App首页显示悬浮窗按钮问题
-> 当前版本: v1.1.0 (versionCode: 10100, dev阶段)
+> 当前分支: BUG-FIX（悬浮窗与截图功能修复分支）
+> 当前版本: v1.11.0 (versionCode: 11100, dev阶段)
 
 项目采用Clean Architecture多模块架构：
 ```
@@ -232,6 +231,7 @@ adb logcat > logcat.txt      # 保存到文件
 - 为每个Migration编写单元测试
 - 避免使用fallbackToDestructiveMigration()
 - **当前数据库版本**: v16 (包含AI军师会话表)
+- **测试文件统计**: 99个单元测试 + 13个Android测试 = 112个测试文件
 
 ### AI军师模块最佳实践（v16新增）
 - 使用AiAdvisorSession管理会话

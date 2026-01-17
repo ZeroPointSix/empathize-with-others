@@ -87,6 +87,7 @@ class FloatingViewV2(
     private var onSubmitListener: ((ActionType, String, String) -> Unit)? = null
     private var onScreenshotClickListener: (() -> Unit)? = null
     private var onScreenshotDeleteListener: ((String) -> Unit)? = null
+    private var onScreenshotPreviewListener: ((String) -> Unit)? = null
     private var onCopyListener: ((String) -> Unit)? = null
     private var onRegenerateListener: ((ActionType, String?) -> Unit)? = null
     private var onMinimizeListener: (() -> Unit)? = null
@@ -533,6 +534,10 @@ class FloatingViewV2(
         onScreenshotDeleteListener = listener
     }
 
+    fun setOnScreenshotPreviewListener(listener: (String) -> Unit) {
+        onScreenshotPreviewListener = listener
+    }
+
     fun setOnCopyListener(listener: (String) -> Unit) {
         onCopyListener = listener
     }
@@ -634,6 +639,8 @@ class FloatingViewV2(
             )
             scaleType = ImageView.ScaleType.CENTER_CROP
             setImageBitmap(loadThumbnail(attachment.localPath, sizePx))
+            // PRD-00036: 添加缩略图点击预览功能
+            setOnClickListener { onScreenshotPreviewListener?.invoke(attachment.localPath) }
         }
         container.addView(imageView)
 

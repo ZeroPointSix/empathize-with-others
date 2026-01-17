@@ -919,8 +919,10 @@ $COMMON_JSON_RULES""".trim()
         attachments: List<ScreenshotAttachment>,
         supportsImage: Boolean
     ): MessageDto {
-        // PRD-00036/3.5：不支持图片或无附件时退化为纯文本 user message，保持兼容性。
-        if (attachments.isEmpty() || !supportsImage) {
+        Log.d("AiRepositoryImpl", "buildUserMessage: attachments=${attachments.size}, supportsImage=$supportsImage")
+        // 移除 supportsImage 判断，让用户自己选择模型，如果模型不支持图片则由服务端返回错误
+        if (attachments.isEmpty()) {
+            Log.d("AiRepositoryImpl", "buildUserMessage: 使用纯文本消息 (无附件)")
             return MessageDto.text(role = "user", content = prompt)
         }
         val parts = mutableListOf(
@@ -931,6 +933,7 @@ $COMMON_JSON_RULES""".trim()
         )
         attachments.forEach { attachment ->
             val dataUrl = encodeAttachmentToDataUrl(attachment) ?: return@forEach
+            Log.d("AiRepositoryImpl", "buildUserMessage: 添加图片附件 ${attachment.localPath}, base64长度=${dataUrl.length}")
             parts.add(
                 MessageContentPartDto(
                     type = "image_url",
@@ -938,6 +941,7 @@ $COMMON_JSON_RULES""".trim()
                 )
             )
         }
+        Log.d("AiRepositoryImpl", "buildUserMessage: 使用多模态消息，共 ${parts.size} 个部分")
         return MessageDto.multimodal(role = "user", parts = parts)
     }
 
