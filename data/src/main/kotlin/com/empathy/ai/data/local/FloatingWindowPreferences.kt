@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.core.content.edit
 import com.empathy.ai.domain.model.ActionType
 import com.empathy.ai.domain.model.FloatingBubbleState
@@ -282,11 +283,21 @@ class FloatingWindowPreferences @Inject constructor(
     }
 
     fun saveMediaProjectionPermission(resultCode: Int, data: Intent?) {
+        // BUG-00075: Android 14+ MediaProjection token 有且只能使用一次
+        // 内存缓存可在同进程内复用，但禁止持久化（token 跨进程/重启会失效）
         if (resultCode != Activity.RESULT_OK || data == null) {
             clearMediaProjectionPermissionInternal()
             return
         }
         mediaProjectionPermissionCache = MediaProjectionPermission(resultCode, data)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Android 14+ (UPSIDE_DOWN_CAKE): 仅保留内存缓存，不进行持久化
+            // 避免残留无效的持久化数据导致 getMediaProjectionPermissionInternal() 误判
+            clearMediaProjectionPermissionPersisted()
+            android.util.Log.d(TAG, "MediaProjection 授权已缓存（仅内存，Android 14+）")
+            return
+        }
 
         // BUG-00073: 尝试持久化权限,避免应用重启后重复请求
         // 注意: Intent.toUri() 可能抛出异常 (如 Intent 包含不可序列化的 Extra)
@@ -309,9 +320,19 @@ class FloatingWindowPreferences @Inject constructor(
     }
 
     private fun getMediaProjectionPermissionInternal(): MediaProjectionPermission? {
-        // 优先返回内存缓存
+        // 第一优先级: 内存缓存（同进程内可复用）
         if (mediaProjectionPermissionCache != null) {
             return mediaProjectionPermissionCache
+        }
+
+        // BUG-00075: Android 14+ 禁止从持久化恢复权限，必须重新请求
+        // 清理残留的持久化数据，避免 getMediaProjectionPermission() 误判为有权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (prefs.contains(KEY_MEDIA_PROJECTION_RESULT_CODE) || prefs.contains(KEY_MEDIA_PROJECTION_RESULT_DATA)) {
+                android.util.Log.d(TAG, "Android 14+ 忽略持久化 MediaProjection 权限缓存")
+                clearMediaProjectionPermissionPersisted()
+            }
+            return null
         }
 
         // BUG-00073: 尝试从持久化存储恢复权限

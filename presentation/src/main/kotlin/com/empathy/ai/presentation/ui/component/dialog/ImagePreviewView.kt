@@ -3,7 +3,9 @@ package com.empathy.ai.presentation.ui.component.dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.os.Build
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -51,6 +53,7 @@ class ImagePreviewView(
 
     private lateinit var imageView: ImageView
     private lateinit var progressBar: ProgressBar
+    private lateinit var backgroundView: View
     private var isShowing = false
 
     init {
@@ -66,22 +69,32 @@ class ImagePreviewView(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
-        setBackgroundColor(Color.parseColor("#CC000000"))
-        isClickable = true
-        isFocusable = true
 
-        // 点击外部关闭预览
-        setOnClickListener {
-            dismiss()
-        }
-
-        // 创建ImageView
-        imageView = ImageView(context).apply {
+        // 背景遮罩（点击外部关闭预览）
+        // BUG-00074 修复: 分离背景点击区域，避免与图片点击事件冲突
+        backgroundView = View(context).apply {
             layoutParams = LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT
             )
-            setPadding(dpToPx(32), dpToPx(32), dpToPx(32), dpToPx(32))
+            setBackgroundColor(Color.parseColor("#CC000000"))
+            isClickable = true
+            setOnClickListener { dismiss() }
+        }
+
+        // 计算图片最大显示尺寸（留出 64dp 边距）
+        val maxWidthPx = (resources.displayMetrics.widthPixels - dpToPx(64)).coerceAtLeast(1)
+        val maxHeightPx = (resources.displayMetrics.heightPixels - dpToPx(64)).coerceAtLeast(1)
+
+        // 创建ImageView
+        imageView = ImageView(context).apply {
+            layoutParams = LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
+            maxWidth = maxWidthPx
+            maxHeight = maxHeightPx
             scaleType = ImageView.ScaleType.FIT_CENTER
             adjustViewBounds = true
             // 点击图片不关闭预览（阻止事件传递）
@@ -98,6 +111,7 @@ class ImagePreviewView(
             isIndeterminate = true
         }
 
+        addView(backgroundView)
         addView(imageView)
         addView(progressBar)
     }
@@ -109,10 +123,18 @@ class ImagePreviewView(
         if (isShowing) return
 
         // 配置WindowManager参数
+        // BUG-00074 修复: 动态选择窗口类型，兼容 Android 8+ 和旧版本
+        val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            windowType,
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT

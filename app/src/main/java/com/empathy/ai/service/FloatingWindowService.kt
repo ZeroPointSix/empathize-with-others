@@ -2263,13 +2263,8 @@ class FloatingWindowService : Service() {
             android.util.Log.d("FloatingWindowService", "显示截图预览: $imagePath")
 
             // BUG-00074修复：关闭之前的预览视图（如果存在）
-            imagePreviewView?.let {
-                try {
-                    windowManager.removeView(it)
-                } catch (e: Exception) {
-                    android.util.Log.w("FloatingWindowService", "移除旧预览视图失败", e)
-                }
-            }
+            imagePreviewView?.dismiss()
+            imagePreviewView = null
 
             // 创建并显示新的预览视图
             imagePreviewView = com.empathy.ai.presentation.ui.component.dialog.ImagePreviewView(
@@ -2473,7 +2468,7 @@ class FloatingWindowService : Service() {
             "startScreenshotFlow: ts=${System.currentTimeMillis()} mediaProjection=${mediaProjection != null} continuous=${floatingWindowPreferences.isContinuousScreenshotEnabled()} attachments=${screenshotAttachments.size}"
         )
         if (mediaProjection == null && !restoreMediaProjectionFromCache()) {
-            // Android 14+ 需要每次重新请求权限
+            // Android 14+ 仅允许内存缓存复用，未命中则需重新授权
             android.util.Log.d("FloatingWindowService", "startScreenshotFlow: 请求截图权限")
             requestMediaProjectionPermission()
             return
@@ -2536,13 +2531,13 @@ class FloatingWindowService : Service() {
     }
 
     private fun restoreMediaProjectionFromCache(): Boolean {
-        // Android 14+ (API 34+) 的 MediaProjection token 只能使用一次
-        // 不能从缓存恢复，必须每次重新请求权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            android.util.Log.d("FloatingWindowService", "restoreMediaProjectionFromCache: Android 14+ 不支持从缓存恢复")
-            return false
-        }
         val cached = floatingWindowPreferences.getMediaProjectionPermission() ?: return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            android.util.Log.d(
+                "FloatingWindowService",
+                "restoreMediaProjectionFromCache: Android 14+ 使用内存缓存权限"
+            )
+        }
         android.util.Log.d("FloatingWindowService", "restoreMediaProjectionFromCache: hit=permission")
         updateForegroundServiceType(includeMediaProjection = true)
         val projection = try {
