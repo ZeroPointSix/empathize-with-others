@@ -120,6 +120,58 @@ cp local.properties.example local.properties
 - [技术栈说明](.kiro/steering/tech.md)
 - [架构设计](.kiro/steering/structure.md)
 
+## 🔀 分支合并流程 (必读)
+
+本项目使用 `BUG-FIX` 作为主要开发分支，`main` 作为稳定分支。合并时请遵循以下流程：
+
+### 标准合并流程
+
+```bash
+# 1. 确保在 BUG-FIX 分支
+git checkout BUG-FIX
+
+# 2. 先将 main 合并到 BUG-FIX，解决冲突
+git merge origin/main
+
+# 3. 解决冲突后提交
+git add <冲突文件>
+git commit -m "merge: 合并 main 分支到 BUG-FIX 并解决冲突"
+
+# 4. 切换到 main 分支（在 main 工作树执行）
+git checkout main
+
+# 5. 拉取最新 main
+git pull origin main
+
+# 6. 合并 BUG-FIX 到 main
+git merge BUG-FIX
+
+# 7. 推送到远程（需用户确认）
+git push origin main
+```
+
+### 冲突处理原则
+
+| 文件类型 | 处理策略 |
+|---------|---------|
+| `gradle.properties` | 保留**更高版本号**的变更 |
+| `version-history.json` | 保留**更完整版本历史**的变更 |
+| 业务代码 | 根据实际功能判断，必要时人工介入 |
+| 文档文件 | 保留包含更多内容的版本 |
+
+### 常见冲突场景
+
+1. **版本号冲突**: BUG-FIX (1.11.0) vs main (1.4.0) → 保留 BUG-FIX
+2. **版本历史冲突**: 保留版本号更高的完整历史
+3. **steering 文件冲突**: 保留包含最新决策的版本
+
+### 注意事项
+
+- ⚠️ **禁止**直接在 main 分支上开发
+- ⚠️ **禁止**跳过在 BUG-FIX 合并 main 的步骤
+- ✅ 每次合并前确保本地 main 是最新的
+- ✅ 冲突解决后先在本地测试通过
+
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
