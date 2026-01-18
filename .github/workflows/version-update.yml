@@ -53,6 +53,7 @@ env:
 jobs:
   version-update:
     name: 更新版本号和图标
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     
     permissions:
@@ -142,7 +143,7 @@ jobs:
           
           # 提交更改
           git add -A
-          git commit -m "chore: 更新版本号到 $VERSION [skip ci]"
+          git commit -m "chore: 更新版本号到 $VERSION"
           
           echo "✅ 已提交版本更新: $VERSION"
       
