@@ -38,7 +38,7 @@ Hilt在Clean Architecture多模块架构下的编译错误：`找不到符号 Ma
 
 ### 2.1 错误信息
 ```
-E:\hushaokang\Data-code\Love\presentation\build\generated\source\kapt\debug\com\empathy\ai\presentation\ui\MainActivity_GeneratedInjector.java:16: 错误: 找不到符号
+E:\项目的创建者\Data-code\Love\presentation\build\generated\source\kapt\debug\com\empathy\ai\presentation\ui\MainActivity_GeneratedInjector.java:16: 错误: 找不到符号
 void injectMainActivity(MainActivity mainActivity);
                         ^
 符号:   类 MainActivity

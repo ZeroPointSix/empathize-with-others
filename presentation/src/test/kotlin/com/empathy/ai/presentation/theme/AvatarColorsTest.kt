@@ -85,7 +85,7 @@ class AvatarColorsTest {
 
     @Test
     fun `getColorPair handles special characters`() {
-        val specialNames = listOf("@#\$%", "test@email.com", "name-with-dash", "name_with_underscore")
+        val specialNames = listOf("@#\$%", "project.creator@example.com", "name-with-dash", "name_with_underscore")
         specialNames.forEach { name ->
             val pair = AvatarColors.getColorPair(name)
             assertNotNull("Should handle special characters: $name", pair)

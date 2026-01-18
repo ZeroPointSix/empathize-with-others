@@ -127,7 +127,7 @@ class FeedTextUseCaseTest {
     fun `should apply privacy masking before AI extraction`() = runTest {
         // Given
         val contactId = "contact_1"
-        val inputText = "我的电话是13812345678，生日是12月21日"
+        val inputText = "我的电话是13000000000，生日是12月21日"
         val maskedText = "我的电话是[PHONE]，生日是12月21日"
         val expectedExtractedData = ExtractedData(
             facts = mapOf("生日" to "12月21日"),
@@ -136,7 +136,7 @@ class FeedTextUseCaseTest {
         )
 
         coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(
-            mapOf("13812345678" to "[PHONE]")
+            mapOf("13000000000" to "[PHONE]")
         )
         coEvery { aiRepository.extractTextInfo(maskedText) } returns Result.success(expectedExtractedData)
 
@@ -157,7 +157,7 @@ class FeedTextUseCaseTest {
     fun `should handle privacy mapping failure gracefully`() = runTest {
         // Given
         val contactId = "contact_1"
-        val inputText = "我的电话是13812345678，生日是12月21日"
+        val inputText = "我的电话是13000000000，生日是12月21日"
         val expectedExtractedData = ExtractedData(
             facts = mapOf("生日" to "12月21日"),
             redTags = emptyList(),

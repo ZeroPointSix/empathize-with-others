@@ -13,7 +13,7 @@
 
 | 工作树 | 分支 | 状态 |
 |--------|------|------|
-| `E:\hushaokang\Data-code\EnsoAi\Love` | master | 基准分支 |
+| `E:\项目的创建者\Data-code\EnsoAi\Love` | master | 基准分支 |
 | `feature-PRD24` | feature-PRD24 | 并行开发 |
 | `feature-PRD25` | feature-PRD25 | **当前审查分支** |
 | `feature-PRD26` | feature-PRD26 | 备用分支 |

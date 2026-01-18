@@ -329,7 +329,7 @@ scripts\ai-debug.bat -h           # 获取最近100条AI日志
 
 scripts\ai-debug.bat -h -n 200    # 获取最近200条AI日志
 
-scripts\ai-debug.bat -d 127.0.0.1:7555  # 指定MuMu模拟器
+scripts\ai-debug.bat -d 192.0.2.1:7555  # 指定MuMu模拟器
 
 
 
@@ -519,7 +519,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
   - `WORKSPACE.md`
 ### 2026-01-14 - Codex (BUG-00071 黑屏问题跟踪续六)
 - 构建验证：`gradlew.bat assembleDebug` ✅
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 ### 2026-01-14 - Codex (BUG-00071 黑屏问题跟踪续五)
 - 修复心跳检测在 API 29+ 前台包名为空时强制切回默认显示屏的问题。
 - 设置页“截图权限”改为单一开关并在恢复时刷新权限状态。
@@ -535,7 +535,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ### 2026-01-14 - Codex (BUG-00071 黑屏问题跟踪续四)
 - 修复跨显示屏重绑定导致的截图预览失效，补充预览日志。
 - 构建验证：`gradlew.bat assembleDebug` ✅
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 - 修改的文件列表：
   - `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
   - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/floating/FloatingViewV2.kt`
@@ -543,7 +543,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ### 2026-01-14 - Codex (BUG-00071 黑屏问题跟踪续三)
 - 截图链路增加诊断日志与采样亮度，文档补充调试说明。
 - 构建验证：`gradlew.bat assembleDebug` ✅
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 - 修改的文件列表：
   - `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
   - `app/src/main/java/com/empathy/ai/domain/util/ScreenshotCaptureHelper.kt`
@@ -553,7 +553,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ### 2026-01-14 - Codex (BUG-00071 黑屏问题跟踪续二)
 - 增加截图权限重置入口，按版本自动失效旧授权并释放投影。
 - 构建验证：`gradlew.bat assembleDebug` ✅
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 - 修改的文件列表：
   - `文档/开发文档/BUG/BUG-00071-截图权限与图片理解策略调整.md`
   - `data/src/main/kotlin/com/empathy/ai/data/local/FloatingWindowPreferences.kt`
@@ -568,7 +568,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ### 2026-01-14 - Codex (BUG-00071 黑屏问题跟踪续)
 - 更新 BUG-00071 文档补充预览诉求与黑屏假设，授权请求改为默认显示屏优先。
 - 构建验证：`gradlew.bat assembleDebug` ✅
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 - 修改的文件列表：
   - `文档/开发文档/BUG/BUG-00071-截图权限与图片理解策略调整.md`
   - `app/src/main/java/com/empathy/ai/ui/ScreenshotPermissionActivity.kt`
@@ -582,7 +582,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 ### 2026-01-14 - Codex (BUG-00071 截图权限持久化与策略调整)
 - 新增截图权限持久化与设置入口，移除本地图片能力拦截
 - 构建验证：`gradlew.bat assembleDebug` ✅
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 - 修改的文件列表：
   - `app/src/main/java/com/empathy/ai/domain/service/FloatingWindowService.kt`
   - `app/src/main/java/com/empathy/ai/ui/ScreenshotPermissionActivity.kt`
@@ -950,11 +950,11 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 ### 2026-01-11 - Codex (BUG-00068 MuMu 安装验证)
 
-- 设备确认：`adb devices -l` 发现 `127.0.0.1:7555`
+- 设备确认：`adb devices -l` 发现 `192.0.2.1:7555`
 
 - 构建验证：`gradlew.bat assembleDebug` ✅
 
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 
 ### 2026-01-11 - Codex (connectedAndroidTest 修复与执行)
 
@@ -1034,7 +1034,7 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 - 构建验证：`gradlew.bat assembleDebug` ✅
 
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 
 ### 2026-01-11 - Codex (BUG-00068 联系人切换回退异常修复)
 
@@ -1048,5 +1048,5 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 - 构建验证：`gradlew.bat assembleDebug` ✅
 
-- 安装验证：`adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 安装验证：`adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 

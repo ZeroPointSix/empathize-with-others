@@ -195,7 +195,7 @@ class PolishDraftUseCaseTest {
     @Test
     fun `should mask text before calling AI`() = runTest {
         // Given
-        val sensitiveText = "我的手机号是13812345678"
+        val sensitiveText = "我的手机号是13000000000"
         val maskedText = "我的手机号是[手机号_1]"
 
         coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)

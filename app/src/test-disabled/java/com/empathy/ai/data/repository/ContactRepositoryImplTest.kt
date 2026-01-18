@@ -63,7 +63,7 @@ class ContactRepositoryImplTest {
     @Test
     fun `toDomain - 有效的factsJson应该正确反序列化`() = runBlocking {
         // Given
-        val factsJson = "{\"phone\":\"13812345678\",\"address\":\"Beijing\"}"
+        val factsJson = "{\"phone\":\"13000000000\",\"address\":\"SampleAddress\"}"
         val entity = ContactProfileEntity(
             id = "test-1",
             name = "Test",
@@ -79,8 +79,8 @@ class ContactRepositoryImplTest {
         assertTrue(result.isSuccess)
         val profile = result.getOrNull()
         assertNotNull(profile)
-        assertEquals("13812345678", profile!!.facts["phone"])
-        assertEquals("Beijing", profile.facts["address"])
+        assertEquals("13000000000", profile!!.facts["phone"])
+        assertEquals("SampleAddress", profile.facts["address"])
     }
 
     @Test
@@ -195,7 +195,7 @@ class ContactRepositoryImplTest {
     @Test
     fun `updateContactFacts - 应该正确合并新的facts`() = runBlocking {
         // Given - 模拟已存在的联系人
-        val existingFactsJson = "{\"phone\":\"13812345678\",\"address\":\"Beijing\"}"
+        val existingFactsJson = "{\"phone\":\"13000000000\",\"address\":\"SampleAddress\"}"
         val existingEntity = ContactProfileEntity(
             id = "test-update",
             name = "Test",
@@ -206,7 +206,7 @@ class ContactRepositoryImplTest {
         every { mockDao.insertOrUpdate(any()) } just Runs
 
         // When - 更新facts,添加新字段并修改旧字段
-        val newFacts = mapOf("email" to "test@example.com", "phone" to "13999999999")
+        val newFacts = mapOf("email" to "project.creator@example.com", "phone" to "13000000000")
         val result = repository.updateContactFacts("test-update", newFacts)
 
         // Then

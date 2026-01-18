@@ -39,7 +39,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080,
             username = "",
             password = ""
@@ -50,7 +50,7 @@ class ProxyPreferencesTest {
         
         assertEquals("启用状态应正确", true, savedConfig.enabled)
         assertEquals("类型应为HTTP", TestProxyType.HTTP, savedConfig.type)
-        assertEquals("主机应正确", "proxy.example.com", savedConfig.host)
+        assertEquals("主机应正确", "proxy.example.invalid", savedConfig.host)
         assertEquals("端口应正确", 8080, savedConfig.port)
     }
 
@@ -59,7 +59,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.SOCKS5,
-            host = "socks.example.com",
+            host = "socks.example.invalid",
             port = 1080,
             username = "user",
             password = "pass"
@@ -69,7 +69,7 @@ class ProxyPreferencesTest {
         val savedConfig = config.copy()
         
         assertEquals("类型应为SOCKS5", TestProxyType.SOCKS5, savedConfig.type)
-        assertEquals("主机应正确", "socks.example.com", savedConfig.host)
+        assertEquals("主机应正确", "socks.example.invalid", savedConfig.host)
         assertEquals("端口应正确", 1080, savedConfig.port)
         assertEquals("用户名应正确", "user", savedConfig.username)
         assertEquals("密码应正确", "pass", savedConfig.password)
@@ -111,7 +111,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080
         )
         
@@ -135,7 +135,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 0
         )
         
@@ -147,7 +147,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 70000
         )
         
@@ -159,7 +159,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080
         )
         
@@ -173,7 +173,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = false,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080
         )
         
@@ -270,7 +270,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080,
             username = "user",
             password = "pass"
@@ -284,7 +284,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080,
             username = "",
             password = ""
@@ -298,7 +298,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080,
             username = "user",
             password = ""
@@ -312,7 +312,7 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080,
             username = "",
             password = "pass"
@@ -330,13 +330,13 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "proxy.example.com",
+            host = "proxy.example.invalid",
             port = 8080
         )
         
         val address = config.getProxyAddress()
         
-        assertEquals("代理地址应正确", "proxy.example.com:8080", address)
+        assertEquals("代理地址应正确", "proxy.example.invalid:8080", address)
     }
 
     @Test
@@ -344,13 +344,13 @@ class ProxyPreferencesTest {
         val config = TestProxyConfig(
             enabled = true,
             type = TestProxyType.HTTP,
-            host = "192.168.1.1",
+            host = "192.0.2.1",
             port = 3128
         )
         
         val address = config.getProxyAddress()
         
-        assertEquals("IP代理地址应正确", "192.168.1.1:3128", address)
+        assertEquals("IP代理地址应正确", "192.0.2.1:3128", address)
     }
 
     // ============================================================

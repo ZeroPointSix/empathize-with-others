@@ -172,7 +172,7 @@ private fun ProxySettingsContent(
                                     label = "地址",
                                     value = uiState.proxyHost,
                                     onValueChange = { onEvent(AiConfigUiEvent.UpdateProxyHost(it)) },
-                                    placeholder = "proxy.example.com"
+                                    placeholder = "proxy.example.invalid"
                                 )
                                 IOSFormField(
                                     label = "端口",
@@ -388,7 +388,7 @@ private fun ProxySettingsDialogEnabledPreview() {
             uiState = AiConfigUiState(
                 proxyEnabled = true,
                 proxyType = ProxyType.HTTP,
-                proxyHost = "proxy.example.com",
+                proxyHost = "proxy.example.invalid",
                 proxyPort = 8080
             ),
             onEvent = {},
@@ -405,7 +405,7 @@ private fun ProxySettingsDialogSuccessPreview() {
             uiState = AiConfigUiState(
                 proxyEnabled = true,
                 proxyType = ProxyType.SOCKS5,
-                proxyHost = "127.0.0.1",
+                proxyHost = "192.0.2.1",
                 proxyPort = 1080,
                 proxyTestResult = ProxyTestResult.Success(latencyMs = 45)
             ),

@@ -161,7 +161,7 @@ class AnalyzeChatUseCaseTest {
 
         val privacyMapping = mapOf(
             "张三" to "[NAME_01]",
-            "13800138000" to "[PHONE_01]"
+            "13000000000" to "[PHONE_01]"
         )
 
         coEvery { aiProviderRepository.getDefaultProvider() } returns Result.success(testProvider)
@@ -177,7 +177,7 @@ class AnalyzeChatUseCaseTest {
         )
         coEvery { aiRepository.analyzeChat(any(), any(), any()) } returns Result.success(expectedResult)
 
-        val rawContext = listOf("我是张三", "我的电话是13800138000")
+        val rawContext = listOf("我是张三", "我的电话是13000000000")
 
         // When
         val result = useCase(contactId = "contact_1", rawScreenContext = rawContext)
@@ -199,7 +199,7 @@ class AnalyzeChatUseCaseTest {
         assertTrue("应包含脱敏后的名称", prompt.contains("[NAME_01]"))
         assertTrue("应包含脱敏后的电话", prompt.contains("[PHONE_01]"))
         assertTrue("不应包含真实姓名", !prompt.contains("张三"))
-        assertTrue("不应包含真实电话", !prompt.contains("13800138000"))
+        assertTrue("不应包含真实电话", !prompt.contains("13000000000"))
     }
 
     @Test

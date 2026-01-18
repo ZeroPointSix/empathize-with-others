@@ -223,7 +223,7 @@ imagePreviewView = null
 
 4. **当前状态**：
    - 所有代码修改已完成
-   - APK已安装到MuMu模拟器（127.0.0.1:7555）
+   - APK已安装到MuMu模拟器（192.0.2.1:7555）
    - 等待用户测试截图预览功能
 
 ## 7. Optional Next Step

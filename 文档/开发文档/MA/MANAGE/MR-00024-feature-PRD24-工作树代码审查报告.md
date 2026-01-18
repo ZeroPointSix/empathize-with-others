@@ -6,7 +6,7 @@
 |------|------|
 | **审查编号** | MR-00024 |
 | **工作树** | feature-PRD24 |
-| **工作树路径** | `E:\hushaokang\Data-code\EnsoAi\Love\feature-PRD24` |
+| **工作树路径** | `E:\项目的创建者\Data-code\EnsoAi\Love\feature-PRD24` |
 | **当前分支** | feature-PRD24 |
 | **提交哈希** | 3ccf9a6 |
 | **审查日期** | 2026-01-01 |
@@ -21,11 +21,11 @@
 
 | 工作树路径 | 分支 | 提交哈希 | 状态 |
 |-----------|------|---------|------|
-| `E:\hushaokang\Data-code\Love` | master | 3d2fe78 | 主分支 |
-| `E:\hushaokang\Data-code\EnsoAi\Love\feature-PRD24` | feature-PRD24 | 3ccf9a6 | **待审查** |
-| `E:\hushaokang\Data-code\EnsoAi\Love\feature-PRD25` | feature-PRD25 | e29dd34 | 待审查 |
-| `E:\hushaokang\Data-code\EnsoAi\Love\feature-PRD26` | feature-PRD26 | e29dd34 | 待审查 |
-| `E:\hushaokang\Data-code\EnsoAi\Love\feature-PRD27` | feature-PRD27 | e29dd34 | 待审查 |
+| `E:\项目的创建者\Data-code\Love` | master | 3d2fe78 | 主分支 |
+| `E:\项目的创建者\Data-code\EnsoAi\Love\feature-PRD24` | feature-PRD24 | 3ccf9a6 | **待审查** |
+| `E:\项目的创建者\Data-code\EnsoAi\Love\feature-PRD25` | feature-PRD25 | e29dd34 | 待审查 |
+| `E:\项目的创建者\Data-code\EnsoAi\Love\feature-PRD26` | feature-PRD26 | e29dd34 | 待审查 |
+| `E:\项目的创建者\Data-code\EnsoAi\Love\feature-PRD27` | feature-PRD27 | e29dd34 | 待审查 |
 
 ### 1.2 代码变更统计
 

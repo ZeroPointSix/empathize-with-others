@@ -304,10 +304,10 @@ class CheckDraftUseCaseTest {
         )
         coEvery { brainTagRepository.getTagsForContact("contact_1") } returns flowOf(redTags)
         coEvery { privacyRepository.getPrivacyMapping() } returns Result.success(
-            mapOf("13812345678" to "[PHONE]")
+            mapOf("13000000000" to "[PHONE]")
         )
 
-        val draftWithSensitiveInfo = "我的电话是13812345678，请联系我"
+        val draftWithSensitiveInfo = "我的电话是13000000000，请联系我"
         val expectedAiResult = SafetyCheckResult(
             isSafe = true,
             triggeredRisks = emptyList(),

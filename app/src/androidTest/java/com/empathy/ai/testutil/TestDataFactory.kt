@@ -93,7 +93,7 @@ object TestDataFactory {
         id: String = "photo_test_1",
         timestamp: Long = System.currentTimeMillis(),
         emotionType: EmotionType = EmotionType.SWEET,
-        photoUrl: String = "https://example.com/photo.jpg",
+        photoUrl: String = "https://example.invalid/photo.jpg",
         description: String = "测试照片描述"
     ) = TimelineItem.PhotoMoment(
         id = id,

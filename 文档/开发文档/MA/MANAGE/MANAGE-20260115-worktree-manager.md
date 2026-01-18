@@ -15,10 +15,10 @@
 
 | 工作树路径 | 分支 | 状态 | 主要特征 |
 |---|---|---|---|
-| E:/hushaokang/Data-code/Love | main | ⚠️ 有未跟踪文件 | 存在 `项目整理报告.md` 未纳入版本控制 |
-| E:/hushaokang/Data-code/EnsoAi/Love/BUG-FIX | BUG-FIX | ⚠️ 有修改 | 本次管理任务已在 `WORKSPACE.md` 留痕；分支与 main 差异极大 |
-| E:/hushaokang/Data-code/EnsoAi/Love/freedom-feature | freedom-feature | ✅ 干净 | 无工作区改动，但分支与 main 差异极大 |
-| E:/hushaokang/Data-code/EnsoAi/Love/freedom-feature2 | freedom-feature2 | 🔴 脏 | 大量改动，包含联系人排序偏好功能与杂项文件 |
+| E:/项目的创建者/Data-code/Love | main | ⚠️ 有未跟踪文件 | 存在 `项目整理报告.md` 未纳入版本控制 |
+| E:/项目的创建者/Data-code/EnsoAi/Love/BUG-FIX | BUG-FIX | ⚠️ 有修改 | 本次管理任务已在 `WORKSPACE.md` 留痕；分支与 main 差异极大 |
+| E:/项目的创建者/Data-code/EnsoAi/Love/freedom-feature | freedom-feature | ✅ 干净 | 无工作区改动，但分支与 main 差异极大 |
+| E:/项目的创建者/Data-code/EnsoAi/Love/freedom-feature2 | freedom-feature2 | 🔴 脏 | 大量改动，包含联系人排序偏好功能与杂项文件 |
 
 ---
 
@@ -28,10 +28,10 @@
 
 | 工作树 | 决策日志位置 | 存在 | 质量评级 | 主要问题 |
 |---|---|---|---|---|
-| main | `E:/hushaokang/Data-code/Love/DECISION_JOURNAL.md` | ✅ | ⭐⭐⭐ | 内容详尽，但任务与分支不匹配（记录的是 `freedom` 分支自由探索） |
-| BUG-FIX | `E:/hushaokang/Data-code/EnsoAi/Love/BUG-FIX/DECISION_JOURNAL.md` | ✅ | ⭐⭐ | 内容与 BUG-FIX 分支实际工作不匹配，疑似模板复用未更新 |
-| freedom-feature | `E:/hushaokang/Data-code/EnsoAi/Love/freedom-feature/DECISION_JOURNAL.md` | ✅ | ⭐⭐ | 同上，与当前分支不匹配 |
-| freedom-feature2 | `E:/hushaokang/Data-code/EnsoAi/Love/freedom-feature2/DECISION_JOURNAL.md` | ✅ | ⭐⭐⭐⭐ | 记录完整，含方案对比、失败尝试与风险评估；但存在 `DECISION_JOURNAL.bak.md` 备份杂项 |
+| main | `E:/项目的创建者/Data-code/Love/DECISION_JOURNAL.md` | ✅ | ⭐⭐⭐ | 内容详尽，但任务与分支不匹配（记录的是 `freedom` 分支自由探索） |
+| BUG-FIX | `E:/项目的创建者/Data-code/EnsoAi/Love/BUG-FIX/DECISION_JOURNAL.md` | ✅ | ⭐⭐ | 内容与 BUG-FIX 分支实际工作不匹配，疑似模板复用未更新 |
+| freedom-feature | `E:/项目的创建者/Data-code/EnsoAi/Love/freedom-feature/DECISION_JOURNAL.md` | ✅ | ⭐⭐ | 同上，与当前分支不匹配 |
+| freedom-feature2 | `E:/项目的创建者/Data-code/EnsoAi/Love/freedom-feature2/DECISION_JOURNAL.md` | ✅ | ⭐⭐⭐⭐ | 记录完整，含方案对比、失败尝试与风险评估；但存在 `DECISION_JOURNAL.bak.md` 备份杂项 |
 
 ### 证据片段（决策日志不匹配）
 
@@ -58,7 +58,7 @@
 
 ## 工作树逐一审查
 
-### 1) main（E:/hushaokang/Data-code/Love）
+### 1) main（E:/项目的创建者/Data-code/Love）
 
 #### 发现
 - 存在未跟踪文件 `项目整理报告.md`，内容为开源整理总结，但未归档到项目文档体系。
@@ -86,7 +86,7 @@ chore: 项目整理 - 准备开源
 
 ---
 
-### 2) BUG-FIX（E:/hushaokang/Data-code/EnsoAi/Love/BUG-FIX）
+### 2) BUG-FIX（E:/项目的创建者/Data-code/EnsoAi/Love/BUG-FIX）
 
 #### 发现
 - 分支与 main 差异极大（900+ 文件级别），包含 `.idea`、`.claude`、`.kiro`、`backups/`、`tmpclaude-*`、`ui*.xml` 等大量环境/工具/备份文件。
@@ -106,7 +106,7 @@ chore: 项目整理 - 准备开源
 
 ---
 
-### 3) freedom-feature（E:/hushaokang/Data-code/EnsoAi/Love/freedom-feature）
+### 3) freedom-feature（E:/项目的创建者/Data-code/EnsoAi/Love/freedom-feature）
 
 #### 发现
 - 工作树干净（无未提交改动），但与 main 的差异极大，与 BUG-FIX 类似。
@@ -120,7 +120,7 @@ chore: 项目整理 - 准备开源
 
 ---
 
-### 4) freedom-feature2（E:/hushaokang/Data-code/EnsoAi/Love/freedom-feature2）
+### 4) freedom-feature2（E:/项目的创建者/Data-code/EnsoAi/Love/freedom-feature2）
 
 #### 变更概览
 该工作树为本次唯一存在明确功能产出的工作树，主要目标为“联系人列表排序偏好（持久化 + UI）”。变更可分为以下层次：

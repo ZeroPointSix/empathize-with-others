@@ -113,7 +113,7 @@ private suspend fun retryCaptureWithRestoredProjection(
 - 已完成修复并构建/安装到 MuMu：
   - `./gradlew.bat updateVersion` → 1.11.0
   - `./gradlew.bat assembleDebug`
-  - `adb -s 127.0.0.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk`
+  - `adb -s 192.0.2.1:7555 install -r app/build/outputs/apk/debug/app-debug.apk`
 - 本地日志读取并过滤：确认第二次截图 `Invalid media projection` 仍会出现（历史日志）。
 
 ## 7. Optional Next Step

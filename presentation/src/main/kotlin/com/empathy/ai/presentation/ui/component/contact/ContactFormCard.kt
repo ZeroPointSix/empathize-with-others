@@ -159,7 +159,7 @@ private fun ContactFormCardFilledPreview() {
             ContactFormCard(
                 formData = ContactFormData(
                     name = "张三",
-                    contact = "13800138000",
+                    contact = "13000000000",
                     relationshipType = RelationshipType.FRIEND,
                     targetGoal = "建立长期合作关系"
                 ),

@@ -301,7 +301,7 @@ private fun ProviderCardSingleModelPreview() {
             provider = AiProvider(
                 id = "3",
                 name = "自定义服务",
-                baseUrl = "https://custom-api.example.com/v1",
+                baseUrl = "https://custom-api.example.invalid/v1",
                 apiKey = "sk-custom789",
                 models = listOf(
                     AiModel(id = "custom-model")

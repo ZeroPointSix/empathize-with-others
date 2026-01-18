@@ -177,8 +177,8 @@ class RoomTypeConvertersTest {
     fun `完整转换循环 - Map应该可以序列化后反序列化`() {
         // Given
         val originalMap = mapOf(
-            "phone" to "13812345678",
-            "address" to "Beijing",
+            "phone" to "13000000000",
+            "address" to "SampleAddress",
             "personality" to "吃软不吃硬"
         )
 

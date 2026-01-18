@@ -24,14 +24,14 @@ class TimelineItemTest {
             id = "photo_1",
             timestamp = 1702656000000L,
             emotionType = EmotionType.SWEET,
-            photoUrl = "https://example.com/photo.jpg",
+            photoUrl = "https://example.invalid/photo.jpg",
             description = "美好的一天"
         )
         
         assertEquals("photo_1", item.id)
         assertEquals(1702656000000L, item.timestamp)
         assertEquals(EmotionType.SWEET, item.emotionType)
-        assertEquals("https://example.com/photo.jpg", item.photoUrl)
+        assertEquals("https://example.invalid/photo.jpg", item.photoUrl)
         assertEquals("美好的一天", item.description)
     }
     

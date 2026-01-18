@@ -128,11 +128,11 @@ class RuleEngineTest {
         ruleEngine.addRule(rule)
 
         // When
-        val matches = ruleEngine.evaluate("我的手机号是13800138000")
+        val matches = ruleEngine.evaluate("我的手机号是13000000000")
 
         // Then
         assertEquals(1, matches.size)
-        assertEquals("13800138000", matches[0].matchedText)
+        assertEquals("13000000000", matches[0].matchedText)
         assertEquals("regex_001", matches[0].rule.id)
     }
 
@@ -148,8 +148,8 @@ class RuleEngineTest {
         ruleEngine.addRule(rule)
 
         // When & Then
-        assertTrue(ruleEngine.hasMatch("联系我：test@example.com"))
-        assertTrue(ruleEngine.hasMatch("邮箱是user.name+tag@company.co.uk"))
+        assertTrue(ruleEngine.hasMatch("联系我：project.creator@example.com"))
+        assertTrue(ruleEngine.hasMatch("邮箱是project.creator@example.com"))
     }
 
     // ========== 优先级测试 ==========

@@ -965,10 +965,10 @@ $COMMON_JSON_RULES""".trim()
      *
      * [URL Normalization] 兼容多种 API URL 格式
      * 支持的格式：
-     *   - https://api.example.com/v1/chat/completions（标准）
-     *   - https://api.example.com/chat/completions（无版本号）
-     *   - https://api.example.com/v1（仅版本号）
-     *   - https://api.example.com（基础URL）
+     *   - https://api.example.invalid/v1/chat/completions（标准）
+     *   - https://api.example.invalid/chat/completions（无版本号）
+     *   - https://api.example.invalid/v1（仅版本号）
+     *   - https://api.example.invalid（基础URL）
      *
      * 设计权衡：
      *   - 自动补全版本号路径，提升用户体验

@@ -15,10 +15,10 @@
 ## 1. 工作树状态收集
 
 ### 工作树列表（来自 `git worktree list`）
-1. `E:\hushaokang\Data-code\Love`（main）
-2. `E:\hushaokang\Data-code\EnsoAi\Love\fix-arch`（fix-arch）
-3. `E:\hushaokang\Data-code\EnsoAi\Love\freedom`（freedom）
-4. `E:\hushaokang\Data-code\EnsoAi\Love\PRD36-picture`（PRD36-picture）
+1. `E:\项目的创建者\Data-code\Love`（main）
+2. `E:\项目的创建者\Data-code\EnsoAi\Love\fix-arch`（fix-arch）
+3. `E:\项目的创建者\Data-code\EnsoAi\Love\freedom`（freedom）
+4. `E:\项目的创建者\Data-code\EnsoAi\Love\PRD36-picture`（PRD36-picture）
 
 ### 工作树状态快照
 
@@ -33,7 +33,7 @@
 **PRD36-picture**
 - 状态：当前无决策日志，MA/BUGFIX 目录无报告（仅 .gitkeep）
 
-**main (E:\hushaokang\Data-code\Love)**
+**main (E:\项目的创建者\Data-code\Love)**
 - 状态：未发现 MA 目录与 DECISION_JOURNAL
 
 ---
@@ -73,14 +73,14 @@
 ## 4. 决策日志审查（必须项）
 
 ### fix-arch
-路径：`E:\hushaokang\Data-code\EnsoAi\Love\fix-arch\DECISION_JOURNAL.md`
+路径：`E:\项目的创建者\Data-code\EnsoAi\Love\fix-arch\DECISION_JOURNAL.md`
 评价：⭐⭐⭐⭐⭐
 理由：
 - 决策完整、结构化，包含影响评估、方案对比、取舍原因、时间线与后续建议。
 - 失败尝试与风险都有记录。
 
 ### freedom
-路径：`E:\hushaokang\Data-code\EnsoAi\Love\freedom\DECISION_JOURNAL.md`
+路径：`E:\项目的创建者\Data-code\EnsoAi\Love\freedom\DECISION_JOURNAL.md`
 评价：⭐⭐⭐⭐⭐
 理由：
 - 决策覆盖广，含失败与超时记录，动机充分。
@@ -156,5 +156,5 @@
 ## 8. 附录：已抽查内容
 
 已抽查文件：
-- `E:\hushaokang\Data-code\EnsoAi\Love\fix-arch\文档\开发文档\MA\ARCH\ARCH-20260112-architecture-review.md`
-- `E:\hushaokang\Data-code\EnsoAi\Love\freedom\文档\开发文档\MA\FREE\FREE-20260112-contact-search-highlight.md`
+- `E:\项目的创建者\Data-code\EnsoAi\Love\fix-arch\文档\开发文档\MA\ARCH\ARCH-20260112-architecture-review.md`
+- `E:\项目的创建者\Data-code\EnsoAi\Love\freedom\文档\开发文档\MA\FREE\FREE-20260112-contact-search-highlight.md`

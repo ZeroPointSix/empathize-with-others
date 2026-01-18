@@ -47,10 +47,10 @@ val url = "${provider.baseUrl}/v1/chat/completions"
  * 智能处理 baseUrl，自动标准化为完整的 API 端点
  *
  * 用户输入示例及处理结果：
- * - https://api.example.com → https://api.example.com/v1/chat/completions
- * - https://api.example.com/v1 → https://api.example.com/v1/chat/completions
- * - https://api.example.com/v1/chat/completions → https://api.example.com/v1/chat/completions
- * - https://api.example.com/chat/completions → https://api.example.com/v1/chat/completions
+ * - https://api.example.invalid → https://api.example.invalid/v1/chat/completions
+ * - https://api.example.invalid/v1 → https://api.example.invalid/v1/chat/completions
+ * - https://api.example.invalid/v1/chat/completions → https://api.example.invalid/v1/chat/completions
+ * - https://api.example.invalid/chat/completions → https://api.example.invalid/v1/chat/completions
  *
  * @param baseUrl 用户配置的基础 URL
  * @return 完整的 Chat Completions API URL

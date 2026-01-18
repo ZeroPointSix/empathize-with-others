@@ -218,8 +218,8 @@ class AiProviderRepositoryThreadingTest {
             "https://api.openai.com/v1" to "https://api.openai.com/v1/models",
             "https://api.openai.com/v1/" to "https://api.openai.com/v1/models",
             "https://api.deepseek.com" to "https://api.deepseek.com/v1/models",
-            "https://api.example.com/v1/chat/completions" to "https://api.example.com/v1/models",
-            "https://api.example.com/chat/completions" to "https://api.example.com/v1/models"
+            "https://api.example.invalid/v1/chat/completions" to "https://api.example.invalid/v1/models",
+            "https://api.example.invalid/chat/completions" to "https://api.example.invalid/v1/models"
         )
 
         testCases.forEach { (input, expected) ->

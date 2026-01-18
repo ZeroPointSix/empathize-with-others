@@ -49,7 +49,7 @@ class AiResponseParserPhase1ImprovementTest {
         // 模拟默认提供商
         val mockProvider = mockk<com.empathy.ai.domain.model.AiProvider>()
         every { mockProvider.name } returns "TestProvider"
-        every { mockProvider.baseUrl } returns "https://api.example.com"
+        every { mockProvider.baseUrl } returns "https://api.example.invalid"
         every { mockProvider.apiKey } returns "test-api-key"
         every { mockProvider.defaultModelId } returns "gpt-3.5-turbo"
         

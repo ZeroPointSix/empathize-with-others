@@ -21,7 +21,7 @@
 ### 1.2 错误详情
 
 ```
-e: file:///E:/hushaokang/Data-code/Love/app/src/main/java/com/empathy/ai/di/MemoryModule.kt:67:65 
+e: file:///E:/项目的创建者/Data-code/Love/app/src/main/java/com/empathy/ai/di/MemoryModule.kt:67:65 
 No value passed for parameter 'logger'.
 ```
 

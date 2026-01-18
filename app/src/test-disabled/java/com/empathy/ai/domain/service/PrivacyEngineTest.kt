@@ -14,10 +14,10 @@ class PrivacyEngineTest {
     @Test
     fun `mask should replace sensitive information correctly`() {
         // Given
-        val rawText = "我叫张三，手机号是13800138000"
+        val rawText = "我叫张三，手机号是13000000000"
         val privacyMapping = mapOf(
             "张三" to "[NAME_01]",
-            "13800138000" to "[PHONE_01]"
+            "13000000000" to "[PHONE_01]"
         )
 
         // When
@@ -60,12 +60,12 @@ class PrivacyEngineTest {
         // Given
         val rawTexts = listOf(
             "我叫张三",
-            "我的手机号是13800138000",
-            "张三的号码是13800138000"
+            "我的手机号是13000000000",
+            "张三的号码是13000000000"
         )
         val privacyMapping = mapOf(
             "张三" to "[NAME_01]",
-            "13800138000" to "[PHONE_01]"
+            "13000000000" to "[PHONE_01]"
         )
 
         // When
@@ -83,7 +83,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskByPattern should detect and mask phone numbers`() {
         // Given
-        val rawText = "我的手机号是13800138000，另一个是13912345678"
+        val rawText = "我的手机号是13000000000，另一个是13000000000"
         val phonePattern = PrivacyEngine.Patterns.PHONE_NUMBER
 
         // When
@@ -96,7 +96,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskByPattern should detect and mask ID cards`() {
         // Given
-        val rawText = "身份证号：11010519491231002X"
+        val rawText = "身份证号：11010119900101001X"
         val idCardPattern = PrivacyEngine.Patterns.ID_CARD
 
         // When
@@ -124,7 +124,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskWithAutoDetection should detect phone numbers automatically`() {
         // Given
-        val rawText = "我的手机号是13800138000，请记下"
+        val rawText = "我的手机号是13000000000，请记下"
 
         // When
         val maskedText = PrivacyEngine.maskWithAutoDetection(rawText, listOf("手机号"))
@@ -136,7 +136,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskWithAutoDetection should detect multiple types of sensitive info`() {
         // Given
-        val rawText = "联系我：13800138000，邮箱：test@example.com"
+        val rawText = "联系我：13000000000，邮箱：project.creator@example.com"
 
         // When
         val maskedText = PrivacyEngine.maskWithAutoDetection(
@@ -153,7 +153,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskWithAutoDetection should handle overlapping patterns`() {
         // Given
-        val rawText = "我的手机号13800138000，紧急电话也是13800138000"
+        val rawText = "我的手机号13000000000，紧急电话也是13000000000"
 
         // When
         val maskedText = PrivacyEngine.maskWithAutoDetection(rawText, listOf("手机号"))
@@ -167,7 +167,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskHybrid should combine mapping and pattern detection`() {
         // Given
-        val rawText = "我叫张三，手机号是13800138000"
+        val rawText = "我叫张三，手机号是13000000000"
         val mapping = mapOf("张三" to "[NAME_01]")
 
         // When
@@ -184,7 +184,7 @@ class PrivacyEngineTest {
     @Test
     fun `maskHybrid should work with empty mapping but enabled patterns`() {
         // Given
-        val rawText = "联系我的邮箱：test@example.com"
+        val rawText = "联系我的邮箱：project.creator@example.com"
 
         // When
         val maskedText = PrivacyEngine.maskHybrid(
@@ -214,22 +214,22 @@ class PrivacyEngineTest {
     @Test
     fun `detectSensitiveInfo should detect all phone numbers`() {
         // Given
-        val rawText = "我的电话13800138000，备用13912345678"
+        val rawText = "我的电话13000000000，备用13000000000"
 
         // When
         val detected = PrivacyEngine.detectSensitiveInfo(rawText, listOf("手机号"))
 
         // Then
         assertEquals(2, detected.size)
-        assertEquals("13800138000", detected[0].matchedText)
-        assertEquals("13912345678", detected[1].matchedText)
+        assertEquals("13000000000", detected[0].matchedText)
+        assertEquals("13000000000", detected[1].matchedText)
         assertEquals("手机号", detected[0].patternName)
     }
 
     @Test
     fun `detectSensitiveInfo should detect ID card and phone together`() {
         // Given
-        val rawText = "我的身份证11010519491231002X，手机号13800138000"
+        val rawText = "我的身份证11010119900101001X，手机号13000000000"
 
         // When
         val detected = PrivacyEngine.detectSensitiveInfo(
@@ -245,14 +245,14 @@ class PrivacyEngineTest {
 
         assertTrue(phoneInfo != null)
         assertTrue(idCardInfo != null)
-        assertEquals("13800138000", phoneInfo?.matchedText)
-        assertEquals("11010519491231002X", idCardInfo?.matchedText)
+        assertEquals("13000000000", phoneInfo?.matchedText)
+        assertEquals("11010119900101001X", idCardInfo?.matchedText)
     }
 
     @Test
     fun `detectSensitiveInfo should return sorted by position`() {
         // Given
-        val rawText = "手机13800138000然后后面的身份证号11010519491231002X"
+        val rawText = "手机13000000000然后后面的身份证号11010119900101001X"
 
         // When
         val detected = PrivacyEngine.detectSensitiveInfo(

@@ -90,7 +90,7 @@ class ContactListViewModelTest {
         viewModel.onEvent(
             ContactListUiEvent.AddContact(
                 name = "测试联系人",
-                phone = "13800138000",
+                phone = "13000000000",
                 targetGoal = "建立合作关系"
             )
         )
@@ -100,7 +100,7 @@ class ContactListViewModelTest {
         coVerify {
             saveProfileUseCase(match { profile ->
                 profile.name == "测试联系人" &&
-                profile.facts["电话"] == "13800138000" &&
+                profile.facts["电话"] == "13000000000" &&
                 profile.targetGoal == "建立合作关系"
             })
         }
