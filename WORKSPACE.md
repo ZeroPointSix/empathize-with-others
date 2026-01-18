@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-17 09:43 | 更新者: Codex (截图失败日志埋点排查)
+> 最后更新: 2026-01-18 22:04 | 更新者: Codex (构建与安装完成)
 
 
 ## 📋 当前工作状态
@@ -17,10 +17,17 @@
 | BUG-00072-LOG | 截图失败日志埋点与排查 | Codex | 进行中 | P0 | 2026-01-17 09:43 | 2026-01-17 |
 
 ### 测试记录
+- 2026-01-18 22:03 `./gradlew assembleDebug` ✅；22:04 `adb install -r` ✅（MuMu 设备 127.0.0.1:7555）。
+- 2026-01-18 21:38 MuMu(127.0.0.1:7555) 执行 `:presentation:connectedAndroidTest` 通过（FloatingViewV2PreviewTest 2/2，BUILD SUCCESSFUL）。
+- 2026-01-18 21:28 `ANDROID_SERIAL=127.0.0.1:7555` 运行 `:presentation:connectedAndroidTest` 成功（V2324HA 2/2 通过，仅该设备执行）。
+- 2026-01-18 21:14 `:presentation:connectedAndroidTest` 部分成功（V2324HA 2/2 通过；emulator-5556 Instrumentation 崩溃，0/0）。
+- 2026-01-18 21:00 `:presentation:connectedAndroidTest` 失败（FloatingViewV2PreviewTest 报 InflateException: MaterialButton 无法在 floating_tab_switcher 中解析，emulator-5556 运行失败，实体机未执行测试）。
+- 2026-01-18 20:42 `:presentation:connectedAndroidTest` 失败（无在线设备，emulator-5556 / 127.0.0.1:7555 均 OFFLINE）。
 - 2026-01-16 21:44 `:presentation:testDebugUnitTest` 失败（29/1004），为既有用例失败，需后续单独处理。
 - 2026-01-16 21:56 OPPO 崩溃：`ScreenshotPermissionActivity` 内调用 `getMediaProjection` 触发 `SecurityException`。
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-18 - **PRD-00036 截图预览功能完善** - Codex - 相关文档: [FEATURE-20260118](文档/开发文档/MA/FEATURE/FEATURE-20260118-截图预览功能完善.md)
 - [x] 2026-01-15 - **MANAGE-20260115 工作树管理与探索审查** - Codex - 相关文档: [MANAGE-20260115](文档/开发文档/MA/MANAGE/MANAGE-20260115-worktree-manager.md)
 - [x] 2026-01-15 - **BUG-00073 OPPO 真机悬浮球不显示修复** - Codex - 相关文档: [BUG-00073](文档/开发文档/BUG/BUG-00073-OPPO真机悬浮球不显示问题.md)
 - [x] 2026-01-15 - **RULE-00001 口语化输入规则补充** - Codex - 相关文档: [RulesReadMe](Rules/RulesReadMe.md)

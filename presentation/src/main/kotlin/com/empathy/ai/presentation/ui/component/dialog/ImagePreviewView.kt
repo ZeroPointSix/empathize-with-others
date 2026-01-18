@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -15,34 +16,28 @@ import android.widget.Toast
 import coil.load
 
 /**
- * 图片预览视图
+ * 图片预览视图 (PRD-00036 截图预览功能)
  *
- * 功能: 全屏显示截图预览
+ * 业务背景:
+ *   - PRD-00036: 悬浮窗截图缩略图太小，用户无法清楚看到截图内容
+ *   - FEATURE-20260118: 补齐返回键处理、背景透明度、90%尺寸规则
  *
- * ## 使用方式
- * ```kotlin
- * val previewView = ImagePreviewView(context, windowManager, imagePath)
- * previewView.show()
- * ```
+ * 设计决策 (FEATURE-20260118 决策 #4):
+ *   - 使用 WindowManager 叠层而非 Dialog，兼容 Service context 显示
+ *   - 全屏显示，黑色半透明背景 (alpha=0.9 即 #E6000000)
+ *   - 图片居中显示，保持宽高比，最大尺寸为屏幕宽高的 90%
+ *   - 点击外部或按返回键关闭预览
  *
- * ## 设计决策
- * - 使用WindowManager而不是Dialog，避免Service context的限制
- * - 全屏显示，黑色半透明背景
- * - 图片居中显示，保持宽高比
- * - 使用Coil加载图片
- * - 点击外部关闭预览
- *
- * ## 技术实现
- * - 参考RefinementOverlay的实现方式
- * - 使用TYPE_APPLICATION_OVERLAY允许从Service显示
- * - 使用FLAG_NOT_TOUCH_MODAL | FLAG_WATCH_OUTSIDE_TOUCH支持点击外部关闭
+ * 数据流:
+ *   FloatingViewV2.onScreenshotPreviewListener → FloatingWindowService.showScreenshotPreview() → ImagePreviewView.show()
  *
  * @param context 上下文
- * @param windowManager WindowManager实例
+ * @param windowManager WindowManager 实例
  * @param imagePath 图片本地路径
  *
  * @see com.empathy.ai.presentation.ui.floating.RefinementOverlay
  * @see PRD-00036 截图预览功能
+ * @see FEATURE-20260118 截图预览功能完善
  * @see BUG-00074 截图预览功能无法显示问题分析
  */
 class ImagePreviewView(
@@ -71,20 +66,22 @@ class ImagePreviewView(
         )
 
         // 背景遮罩（点击外部关闭预览）
+        // PRD-00036: 黑色半透明背景 alpha=0.9 (#E6000000)，点击外部关闭预览
         // BUG-00074 修复: 分离背景点击区域，避免与图片点击事件冲突
         backgroundView = View(context).apply {
             layoutParams = LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.parseColor("#CC000000"))
+            setBackgroundColor(Color.parseColor("#E6000000"))
             isClickable = true
             setOnClickListener { dismiss() }
         }
 
-        // 计算图片最大显示尺寸（留出 64dp 边距）
-        val maxWidthPx = (resources.displayMetrics.widthPixels - dpToPx(64)).coerceAtLeast(1)
-        val maxHeightPx = (resources.displayMetrics.heightPixels - dpToPx(64)).coerceAtLeast(1)
+        // PRD-00036: 图片最大显示尺寸为屏幕宽高的 90%
+        // 权衡: 留出边距确保图片不被截断，同时最大化显示区域
+        val maxWidthPx = (resources.displayMetrics.widthPixels * 0.9f).toInt().coerceAtLeast(1)
+        val maxHeightPx = (resources.displayMetrics.heightPixels * 0.9f).toInt().coerceAtLeast(1)
 
         // 创建ImageView
         imageView = ImageView(context).apply {
@@ -97,7 +94,7 @@ class ImagePreviewView(
             maxHeight = maxHeightPx
             scaleType = ImageView.ScaleType.FIT_CENTER
             adjustViewBounds = true
-            // 点击图片不关闭预览（阻止事件传递）
+            // PRD-00036: 点击图片不关闭预览（只有关击外部背景才关闭）
             setOnClickListener { /* 阻止事件传递到容器 */ }
         }
 
@@ -109,6 +106,18 @@ class ImagePreviewView(
                 Gravity.CENTER
             )
             isIndeterminate = true
+        }
+
+        // PRD-00036: 支持返回键关闭预览
+        // FEATURE-20260118 补齐: 设置 focusableInTouchMode 并请求焦点，确保能接收按键事件
+        isFocusableInTouchMode = true
+        setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                dismiss()
+                true
+            } else {
+                false
+            }
         }
 
         addView(backgroundView)
@@ -145,6 +154,8 @@ class ImagePreviewView(
         try {
             windowManager.addView(this, params)
             isShowing = true
+            // FEATURE-20260118 补齐: 请求焦点以确保能接收返回键事件
+            requestFocus()
             loadPreviewImage()
             android.util.Log.d(TAG, "预览视图显示成功: $imagePath")
         } catch (e: Exception) {
