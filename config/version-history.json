@@ -1,11 +1,24 @@
 {
     "currentVersion": {
-        "version": "1.12.3",
-        "versionCode": 11203,
+        "version": "1.13.0",
+        "versionCode": 11300,
         "stage": "dev",
-        "updatedAt": "2026-01-18T13:57:34.7532298Z"
+        "updatedAt": "2026-01-19T14:00:13.680212152Z"
     },
     "history": [
+        {
+            "version": "1.13.0",
+            "versionCode": 11300,
+            "stage": "dev",
+            "date": "2026-01-19T14:00:13.680212152Z",
+            "commits": [
+                "更新项目文档至v3.7并修复状态管理问题",
+                "update persona tab, context limits, tests",
+                "align tests and validation mapping",
+                "实现联系人搜索历史功能 (FREE-20260118)"
+            ],
+            "changelog": "### ✨ 新功能\n- update persona tab, context limits, tests\n- 实现联系人搜索历史功能 (FREE-20260118)\n\n### 🐛 Bug修复\n- align tests and validation mapping\n\n### 📝 文档更新\n- 更新项目文档至v3.7并修复状态管理问题"
+        },
         {
             "version": "1.12.3",
             "versionCode": 11203,
