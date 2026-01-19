@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.ContactSortOption
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
+import com.empathy.ai.domain.usecase.GetContactSearchHistoryUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
 import com.empathy.ai.domain.usecase.GetContactSortOptionUseCase
 import com.empathy.ai.domain.usecase.SaveContactSortOptionUseCase
+import com.empathy.ai.domain.usecase.SaveContactSearchQueryUseCase
 import com.empathy.ai.domain.usecase.SortContactsUseCase
+import com.empathy.ai.domain.usecase.ClearContactSearchHistoryUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +29,7 @@ import javax.inject.Inject
  * 管理联系人列表的完整交互逻辑：
  * - 联系人列表加载和分页
  * - 搜索过滤（按名称、标签、关系阶段）
+ * - 搜索历史记录（最近搜索词）
  * - 排序方式切换（姓名/最近互动/关系分数）
  * - 批量操作支持（删除、标签管理）
  * - 多选模式和全选功能
@@ -56,7 +60,10 @@ class ContactListViewModel @Inject constructor(
     private val deleteContactUseCase: DeleteContactUseCase,
     private val getContactSortOptionUseCase: GetContactSortOptionUseCase,
     private val saveContactSortOptionUseCase: SaveContactSortOptionUseCase,
-    private val sortContactsUseCase: SortContactsUseCase
+    private val sortContactsUseCase: SortContactsUseCase,
+    private val getContactSearchHistoryUseCase: GetContactSearchHistoryUseCase,
+    private val saveContactSearchQueryUseCase: SaveContactSearchQueryUseCase,
+    private val clearContactSearchHistoryUseCase: ClearContactSearchHistoryUseCase
 ) : ViewModel() {
 
     // 私有可变状态（只能内部修改）
@@ -69,6 +76,8 @@ class ContactListViewModel @Inject constructor(
         // ViewModel创建时自动加载数据
         // 先加载排序选项，确保联系人列表排序时使用正确的排序选项
         loadSortOption()
+        // 加载最近搜索历史，便于搜索模式快速回填
+        loadSearchHistory()
         // loadSortOption 完成后会自动触发 loadContacts
     }
 
@@ -91,6 +100,8 @@ class ContactListViewModel @Inject constructor(
             is ContactListUiEvent.StartSearch -> startSearch()
             is ContactListUiEvent.ClearSearch -> clearSearch()
             is ContactListUiEvent.CancelSearch -> cancelSearch()
+            is ContactListUiEvent.SaveSearchHistory -> saveSearchHistoryIfNeeded()
+            is ContactListUiEvent.ClearSearchHistory -> clearSearchHistory()
 
             // === 选择相关事件 ===
             is ContactListUiEvent.SelectContact -> selectContact(event.contactId)
@@ -275,13 +286,13 @@ class ContactListViewModel @Inject constructor(
     private fun clearSearchResults() {
         _uiState.update {
             it.copy(
-                isSearching = false,
                 searchResults = emptyList()
             )
         }
     }
 
     private fun cancelSearch() {
+        saveSearchHistoryIfNeeded()
         clearSearch()
     }
 
@@ -451,6 +462,39 @@ class ContactListViewModel @Inject constructor(
                 filteredContacts = sortedContacts,
                 searchResults = sortedSearchResults
             )
+        }
+    }
+
+    // === 搜索历史相关方法 ===
+
+    private fun loadSearchHistory() {
+        viewModelScope.launch {
+            getContactSearchHistoryUseCase()
+                .onSuccess { history ->
+                    _uiState.update { it.copy(searchHistory = history) }
+                }
+        }
+    }
+
+    private fun saveSearchHistoryIfNeeded() {
+        val currentState = _uiState.value
+        val query = currentState.searchQuery.trim()
+        if (query.isBlank() || currentState.searchResults.isEmpty()) return
+
+        viewModelScope.launch {
+            saveContactSearchQueryUseCase(query)
+                .onSuccess { history ->
+                    _uiState.update { it.copy(searchHistory = history) }
+                }
+        }
+    }
+
+    private fun clearSearchHistory() {
+        viewModelScope.launch {
+            clearContactSearchHistoryUseCase()
+                .onSuccess {
+                    _uiState.update { it.copy(searchHistory = emptyList()) }
+                }
         }
     }
 

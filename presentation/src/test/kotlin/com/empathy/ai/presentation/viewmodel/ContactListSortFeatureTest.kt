@@ -9,6 +9,9 @@ import com.empathy.ai.domain.usecase.GetAllContactsUseCase
 import com.empathy.ai.domain.usecase.GetContactSortOptionUseCase
 import com.empathy.ai.domain.usecase.SaveContactSortOptionUseCase
 import com.empathy.ai.domain.usecase.SortContactsUseCase
+import com.empathy.ai.domain.usecase.GetContactSearchHistoryUseCase
+import com.empathy.ai.domain.usecase.SaveContactSearchQueryUseCase
+import com.empathy.ai.domain.usecase.ClearContactSearchHistoryUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -45,6 +48,9 @@ class ContactListSortFeatureTest {
     private lateinit var getContactSortOptionUseCase: GetContactSortOptionUseCase
     private lateinit var saveContactSortOptionUseCase: SaveContactSortOptionUseCase
     private lateinit var sortContactsUseCase: SortContactsUseCase
+    private lateinit var getContactSearchHistoryUseCase: GetContactSearchHistoryUseCase
+    private lateinit var saveContactSearchQueryUseCase: SaveContactSearchQueryUseCase
+    private lateinit var clearContactSearchHistoryUseCase: ClearContactSearchHistoryUseCase
 
     private val sampleContacts = listOf(
         ContactProfile(
@@ -84,6 +90,9 @@ class ContactListSortFeatureTest {
         getContactSortOptionUseCase = mockk()
         saveContactSortOptionUseCase = mockk()
         sortContactsUseCase = SortContactsUseCase()
+        getContactSearchHistoryUseCase = mockk()
+        saveContactSearchQueryUseCase = mockk()
+        clearContactSearchHistoryUseCase = mockk()
     }
 
     @After
@@ -98,13 +107,19 @@ class ContactListSortFeatureTest {
         coEvery { getAllContactsUseCase() } returns flowOf(contacts)
         coEvery { getContactSortOptionUseCase() } returns Result.success(initialSortOption)
         coEvery { saveContactSortOptionUseCase(any()) } returns Result.success(Unit)
+        coEvery { getContactSearchHistoryUseCase() } returns Result.success(emptyList())
+        coEvery { saveContactSearchQueryUseCase(any()) } returns Result.success(emptyList())
+        coEvery { clearContactSearchHistoryUseCase() } returns Result.success(Unit)
 
         return ContactListViewModel(
             getAllContactsUseCase,
             deleteContactUseCase,
             getContactSortOptionUseCase,
             saveContactSortOptionUseCase,
-            sortContactsUseCase
+            sortContactsUseCase,
+            getContactSearchHistoryUseCase,
+            saveContactSearchQueryUseCase,
+            clearContactSearchHistoryUseCase
         )
     }
 
@@ -200,13 +215,19 @@ class ContactListSortFeatureTest {
         coEvery { getContactSortOptionUseCase() } returns Result.success(ContactSortOption.NAME)
         // 关键：不设置 saveContactSortOptionUseCase 的默认成功行为，而是设置为失败
         coEvery { saveContactSortOptionUseCase(any()) } returns Result.failure(Exception("保存失败"))
+        coEvery { getContactSearchHistoryUseCase() } returns Result.success(emptyList())
+        coEvery { saveContactSearchQueryUseCase(any()) } returns Result.success(emptyList())
+        coEvery { clearContactSearchHistoryUseCase() } returns Result.success(Unit)
 
         val viewModel = ContactListViewModel(
             getAllContactsUseCase,
             deleteContactUseCase,
             getContactSortOptionUseCase,
             saveContactSortOptionUseCase,
-            sortContactsUseCase
+            sortContactsUseCase,
+            getContactSearchHistoryUseCase,
+            saveContactSearchQueryUseCase,
+            clearContactSearchHistoryUseCase
         )
         testDispatcher.scheduler.advanceUntilIdle()
 

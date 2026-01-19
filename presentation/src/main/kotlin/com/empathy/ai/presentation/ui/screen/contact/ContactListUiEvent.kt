@@ -53,6 +53,16 @@ sealed interface ContactListUiEvent {
      */
     data object CancelSearch : ContactListUiEvent
 
+    /**
+     * 保存当前搜索词到历史
+     */
+    data object SaveSearchHistory : ContactListUiEvent
+
+    /**
+     * 清空搜索历史
+     */
+    data object ClearSearchHistory : ContactListUiEvent
+
     // === 选择相关事件 ===
 
     /**

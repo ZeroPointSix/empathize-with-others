@@ -9,6 +9,9 @@ import com.empathy.ai.domain.usecase.GetContactSortOptionUseCase
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
 import com.empathy.ai.domain.usecase.SaveContactSortOptionUseCase
 import com.empathy.ai.domain.usecase.SortContactsUseCase
+import com.empathy.ai.domain.usecase.GetContactSearchHistoryUseCase
+import com.empathy.ai.domain.usecase.SaveContactSearchQueryUseCase
+import com.empathy.ai.domain.usecase.ClearContactSearchHistoryUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -40,6 +43,9 @@ class BUG00063ContactSearchTest {
     private lateinit var getContactSortOptionUseCase: GetContactSortOptionUseCase
     private lateinit var saveContactSortOptionUseCase: SaveContactSortOptionUseCase
     private lateinit var sortContactsUseCase: SortContactsUseCase
+    private lateinit var getContactSearchHistoryUseCase: GetContactSearchHistoryUseCase
+    private lateinit var saveContactSearchQueryUseCase: SaveContactSearchQueryUseCase
+    private lateinit var clearContactSearchHistoryUseCase: ClearContactSearchHistoryUseCase
 
     private val sampleContacts = listOf(
         ContactProfile(
@@ -78,6 +84,9 @@ class BUG00063ContactSearchTest {
         getContactSortOptionUseCase = mockk()
         saveContactSortOptionUseCase = mockk()
         sortContactsUseCase = SortContactsUseCase()
+        getContactSearchHistoryUseCase = mockk()
+        saveContactSearchQueryUseCase = mockk()
+        clearContactSearchHistoryUseCase = mockk()
     }
 
     @After
@@ -89,12 +98,18 @@ class BUG00063ContactSearchTest {
         coEvery { getAllContactsUseCase() } returns flowOf(contacts)
         coEvery { getContactSortOptionUseCase() } returns Result.success(ContactSortOption.NAME)
         coEvery { saveContactSortOptionUseCase(any()) } returns Result.success(Unit)
+        coEvery { getContactSearchHistoryUseCase() } returns Result.success(emptyList())
+        coEvery { saveContactSearchQueryUseCase(any()) } returns Result.success(emptyList())
+        coEvery { clearContactSearchHistoryUseCase() } returns Result.success(Unit)
         return ContactListViewModel(
             getAllContactsUseCase,
             deleteContactUseCase,
             getContactSortOptionUseCase,
             saveContactSortOptionUseCase,
-            sortContactsUseCase
+            sortContactsUseCase,
+            getContactSearchHistoryUseCase,
+            saveContactSearchQueryUseCase,
+            clearContactSearchHistoryUseCase
         )
     }
 

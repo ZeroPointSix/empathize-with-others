@@ -190,10 +190,15 @@ private fun ContactListScreenContent(
                     // BUG-00063修复：搜索模式UI
                     SearchModeContent(
                         searchQuery = uiState.searchQuery,
-                        searchResults = uiState.displayContacts,
+                        searchResults = uiState.searchResults,
+                        searchHistory = uiState.searchHistory,
                         onQueryChange = { onEvent(ContactListUiEvent.UpdateSearchQuery(it)) },
                         onSearchClose = { onEvent(ContactListUiEvent.CancelSearch) },
-                        onContactClick = onNavigateToDetail
+                        onClearHistory = { onEvent(ContactListUiEvent.ClearSearchHistory) },
+                        onContactClick = { contactId ->
+                            onEvent(ContactListUiEvent.SaveSearchHistory)
+                            onNavigateToDetail(contactId)
+                        }
                     )
                 }
                 uiState.isEmptyState -> {
@@ -483,8 +488,10 @@ private fun ContactSortOption.toLabel(): String {
 private fun SearchModeContent(
     searchQuery: String,
     searchResults: List<ContactProfile>,
+    searchHistory: List<String>,
     onQueryChange: (String) -> Unit,
     onSearchClose: () -> Unit,
+    onClearHistory: () -> Unit,
     onContactClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -509,7 +516,7 @@ private fun SearchModeContent(
             focusRequester = focusRequester
         )
         
-        // 搜索结果
+        // 搜索结果/搜索历史
         when {
             searchResults.isEmpty() && searchQuery.isNotBlank() -> {
                 // 无结果提示
@@ -556,18 +563,136 @@ private fun SearchModeContent(
                 }
             }
             else -> {
-                // 搜索词为空，显示提示
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "输入关键词搜索联系人",
-                        color = iOSTextSecondary,
-                        fontSize = dimensions.fontSizeBody
+                if (searchHistory.isEmpty()) {
+                    // 搜索词为空且无历史
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "输入关键词搜索联系人",
+                            color = iOSTextSecondary,
+                            fontSize = dimensions.fontSizeBody
+                        )
+                    }
+                } else {
+                    SearchHistorySection(
+                        history = searchHistory,
+                        onHistoryClick = onQueryChange,
+                        onClearHistory = onClearHistory
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchHistorySection(
+    history: List<String>,
+    onHistoryClick: (String) -> Unit,
+    onClearHistory: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimensions = AdaptiveDimensions.current
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(iOSBackground)
+    ) {
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensions.spacingMedium),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "最近搜索",
+                    fontSize = dimensions.fontSizeBody,
+                    color = iOSTextSecondary,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = onClearHistory) {
+                    Text(
+                        text = "清空",
+                        fontSize = dimensions.fontSizeBody,
+                        color = iOSBlue
+                    )
+                }
+            }
+        }
+
+        item {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensions.spacingMedium),
+                shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
+                color = iOSCardBackground,
+                shadowElevation = 1.dp
+            ) {
+                Column {
+                    history.forEachIndexed { index, query ->
+                        SearchHistoryItem(
+                            query = query,
+                            showDivider = index < history.size - 1,
+                            onClick = { onHistoryClick(query) }
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(dimensions.spacingLarge))
+        }
+    }
+}
+
+@Composable
+private fun SearchHistoryItem(
+    query: String,
+    showDivider: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimensions = AdaptiveDimensions.current
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = dimensions.spacingMedium,
+                    vertical = dimensions.spacingSmall
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = iOSTextSecondary,
+                modifier = Modifier.size(dimensions.iconSizeSmall)
+            )
+            Spacer(modifier = Modifier.width(dimensions.spacingSmall))
+            Text(
+                text = query,
+                fontSize = dimensions.fontSizeBody,
+                color = iOSTextPrimary
+            )
+        }
+        if (showDivider) {
+            HorizontalDivider(color = iOSBackground)
         }
     }
 }
