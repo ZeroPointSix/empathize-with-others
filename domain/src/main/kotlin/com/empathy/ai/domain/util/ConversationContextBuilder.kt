@@ -216,10 +216,10 @@ class ConversationContextBuilder @Inject constructor() {
         var truncated = false
         val trimmed = messages.map { message ->
             val content = message.content
-            if (content.length > config.maxSingleMessageLength) {
+            val clamped = clampContentToLimit(content, config.maxSingleMessageLength)
+            if (clamped.length < content.length) {
                 truncated = true
-                val trimmedContent = content.take(config.maxSingleMessageLength) + "..."
-                message.copy(content = trimmedContent)
+                message.copy(content = clamped)
             } else {
                 message
             }

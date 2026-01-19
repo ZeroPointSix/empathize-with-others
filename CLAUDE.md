@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 项目概览
 
@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - **语言**: Kotlin 2.0.21 (K2 Compiler)
 - **版本**: v1.12.3 (versionCode: 11203, Dev)
 - **模块**: `:domain` | `:data` | `:presentation` | `:app`
+- **平台**: Android (minSdk 24, targetSdk 35)
 
 ## 常用命令
 
@@ -86,7 +87,15 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 ## 数据库
 
 - **版本**: Room v16（16个增量迁移脚本）
-- **表**: profiles、brain_tags、ai_providers、conversation_logs、conversation_topics、daily_summaries、failed_summary_tasks、api_usage_records、ai_advisor_sessions、ai_advisor_conversations、ai_advisor_message_blocks
+- **位置**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
+- **迁移**: `data/src/main/kotlin/com/empathy/ai/data/di/DatabaseModule.kt`
+- **核心表**:
+  - `profiles` - 联系人画像
+  - `brain_tags` - 大脑标签
+  - `ai_providers` - AI服务商配置
+  - `conversation_logs` - 对话记录
+  - `daily_summaries` - 每日总结
+  - `ai_advisor_sessions/conversations/message_blocks` - AI军师会话
 
 ## 组件系统
 
@@ -119,3 +128,16 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 - 构建缓存: `org.gradle.caching=true`
 - JVM 内存: `-Xmx4g`
 - 最大工作线程: 8
+- Kotlin 增量编译: 已启用
+
+**注意**: 配置针对 24GB RAM + i7-13650HX (14核20线程) 优化
+
+## 重要文件位置
+
+- **构建配置**: `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`
+- **版本管理**: `config/version-history.json`, `buildSrc/src/main/kotlin/com/empathy/ai/build/VersionUpdatePlugin.kt`
+- **依赖声明**: `gradle/libs.versions.toml`
+- **导航系统**: `presentation/navigation/NavGraph.kt`, `presentation/navigation/NavRoutes.kt`
+- **DI配置**: `app/src/main/java/com/empathy/ai/di/` (16个模块)
+- **数据库**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
+- **AI调试**: `scripts/ai-debug.bat`, `scripts/ai-debug-full.bat`

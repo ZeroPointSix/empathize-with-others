@@ -304,12 +304,15 @@ class ContactDetailTabViewModel @Inject constructor(
                     val facts = contact?.facts ?: emptyList()
                     val categories = refreshCategories(facts)
                     val availableCategories = categories.map { it.key }
+                    searchJob?.cancel()
                     
                     _uiState.update {
                         it.copy(
                             usePersonaTabV2 = true,
                             factCategories = categories,
-                            availableCategories = availableCategories
+                            availableCategories = availableCategories,
+                            personaSearchState = PersonaSearchState(),
+                            editModeState = EditModeState()
                         )
                     }
                     
