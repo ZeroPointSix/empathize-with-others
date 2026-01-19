@@ -88,6 +88,7 @@ android {
             isMinifyEnabled = false
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
+            matchingFallbacks += listOf("debug")
 
             // AGP 8.7.3 兼容的基础优化
             // 主要通过 applicationIdSuffix 区分版本，避免配置冲突

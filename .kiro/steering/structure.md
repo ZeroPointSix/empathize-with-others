@@ -21,8 +21,9 @@
 
 > 2026-01-18 更新 - 基于实际代码架构扫描
 >
-> 当前分支: explore/free-20260118（自由探索分支）
-> 当前版本: v1.12.1 (versionCode: 11201, dev阶段)
+> 当前分支: freedom-feature（悬浮窗与截图功能修复分支）
+> 当前工作: 截图预览功能完善与版本迭代
+> 当前版本: v1.12.3 (versionCode: 11203, dev阶段)
 
 ### 模块结构
 
@@ -456,6 +457,6 @@ class ChatViewModel @Inject constructor(
 **文档版本**: 3.6
 **最后更新**: 2026-01-18
 **更新内容**:
-- 更新当前分支为 explore/free-20260118
-- 更新版本信息至 v1.12.1 (versionCode: 11201)
+- 更新当前分支为 freedom-feature
+- 更新版本到 v1.12.3 (versionCode: 11203)
 - 保持架构统计同步

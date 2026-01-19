@@ -1,6 +1,7 @@
 package com.empathy.ai.domain.service
 
 import com.empathy.ai.data.local.FloatingWindowPreferences
+import com.empathy.ai.service.FloatingWindowService
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
