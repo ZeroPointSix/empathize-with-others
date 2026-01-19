@@ -105,11 +105,18 @@ class SettingsViewModelBug00070Test {
         // Given: FloatingWindowManager mock
         every { mockFloatingWindowManager.hasPermission() } returns FloatingWindowManager.PermissionResult.Granted
         every { mockFloatingWindowManager.startService(any()) } returns FloatingWindowManager.ServiceStartResult.Success
-        coEvery { mockPreferencesRepository.saveEnabled(true) } just Runs
+        every { mockPreferencesRepository.saveEnabled(true) } just Runs
 
-        // When: 创建ViewModel（会调用loadFloatingWindowState）
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When: 触发悬浮窗启动
+        val displayId = 2
+        viewModel.onEvent(SettingsUiEvent.ToggleFloatingWindow(displayId))
+        testDispatcher.scheduler.advanceUntilIdle()
+
         // Then: startService应该被调用，且参数正确传递
-        verify { mockFloatingWindowManager.startService(any()) }
+        verify { mockFloatingWindowManager.startService(displayId) }
     }
 
     /**
@@ -141,16 +148,19 @@ class SettingsViewModelBug00070Test {
     fun `should reset enabled state when permission is lost`() = runTest {
         // Given: 权限检查返回Denined
         every { mockFloatingWindowManager.hasPermission() } returns FloatingWindowManager.PermissionResult.Denied("权限被拒绝")
-        coEvery { mockPreferencesRepository.saveEnabled(false) } just Runs
+        every { mockPreferencesRepository.saveEnabled(false) } just Runs
+        every { mockPreferencesRepository.loadState() } returns FloatingWindowState(
+            isEnabled = true,
+            buttonX = 0,
+            buttonY = 0
+        )
 
-        // When: 检查权限并处理
-        val permissionResult = mockFloatingWindowManager.hasPermission()
-        val hasPermission = permissionResult is FloatingWindowManager.PermissionResult.Granted
+        // When: 创建ViewModel触发状态恢复逻辑
+        createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then: 权限丢失，should重置状态
-        if (!hasPermission) {
-            coVerify { mockPreferencesRepository.saveEnabled(false) }
-        }
+        verify { mockPreferencesRepository.saveEnabled(false) }
     }
 
     /**

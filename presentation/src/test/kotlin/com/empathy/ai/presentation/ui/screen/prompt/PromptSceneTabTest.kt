@@ -15,8 +15,8 @@ class PromptSceneTabTest {
     // ========== PromptScene.SETTINGS_SCENE_ORDER测试 ==========
 
     @Test
-    fun `SETTINGS_SCENE_ORDER contains exactly 4 scenes`() {
-        assertEquals(4, PromptScene.SETTINGS_SCENE_ORDER.size)
+    fun `SETTINGS_SCENE_ORDER contains exactly 5 scenes`() {
+        assertEquals(5, PromptScene.SETTINGS_SCENE_ORDER.size)
     }
 
     @Test
@@ -40,6 +40,11 @@ class PromptSceneTabTest {
     }
 
     @Test
+    fun `SETTINGS_SCENE_ORDER contains AI_ADVISOR scene`() {
+        assertTrue(PromptScene.SETTINGS_SCENE_ORDER.contains(PromptScene.AI_ADVISOR))
+    }
+
+    @Test
     fun `SETTINGS_SCENE_ORDER does not contain CHECK scene`() {
         assertTrue(!PromptScene.SETTINGS_SCENE_ORDER.contains(PromptScene.CHECK))
     }
@@ -53,22 +58,27 @@ class PromptSceneTabTest {
 
     @Test
     fun `ANALYZE displayName is correct`() {
-        assertEquals("分析", PromptScene.ANALYZE.displayName)
+        assertEquals("聊天分析", PromptScene.ANALYZE.displayName)
     }
 
     @Test
     fun `POLISH displayName is correct`() {
-        assertEquals("润色", PromptScene.POLISH.displayName)
+        assertEquals("润色优化", PromptScene.POLISH.displayName)
     }
 
     @Test
     fun `REPLY displayName is correct`() {
-        assertEquals("回复", PromptScene.REPLY.displayName)
+        assertEquals("生成回复", PromptScene.REPLY.displayName)
     }
 
     @Test
     fun `SUMMARY displayName is correct`() {
-        assertEquals("总结", PromptScene.SUMMARY.displayName)
+        assertEquals("每日总结", PromptScene.SUMMARY.displayName)
+    }
+
+    @Test
+    fun `AI_ADVISOR displayName is correct`() {
+        assertEquals("AI军师", PromptScene.AI_ADVISOR.displayName)
     }
 
     // ========== 场景顺序测试 ==========
@@ -79,7 +89,8 @@ class PromptSceneTabTest {
             PromptScene.ANALYZE,
             PromptScene.POLISH,
             PromptScene.REPLY,
-            PromptScene.SUMMARY
+            PromptScene.SUMMARY,
+            PromptScene.AI_ADVISOR
         )
         assertEquals(expectedOrder, PromptScene.SETTINGS_SCENE_ORDER)
     }

@@ -1,6 +1,6 @@
 package com.empathy.ai.presentation.ui.component.contact
 
-import android.net.Uri
+import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -26,7 +26,7 @@ class AvatarPickerTest {
     @Test
     fun `empty state should show camera icon`() {
         // Given
-        val avatarUri: Uri? = null
+        val avatarUri: URI? = null
         
         // Then
         assertNull(avatarUri)
@@ -36,7 +36,7 @@ class AvatarPickerTest {
     @Test
     fun `empty state should show dashed border`() {
         // Given
-        val avatarUri: Uri? = null
+        val avatarUri: URI? = null
         
         // Then - empty state should have dashed border
         assertTrue(avatarUri == null)
@@ -60,7 +60,7 @@ class AvatarPickerTest {
     @Test
     fun `avatar state should show image`() {
         // Given
-        val avatarUri = Uri.parse("content://test/avatar.jpg")
+        val avatarUri = URI.create("content://test/avatar.jpg")
         
         // Then
         assertNotNull(avatarUri)
@@ -69,7 +69,7 @@ class AvatarPickerTest {
     @Test
     fun `avatar state should show edit overlay`() {
         // Given
-        val avatarUri = Uri.parse("content://test/avatar.jpg")
+        val avatarUri = URI.create("content://test/avatar.jpg")
         
         // Then - when avatar exists, edit overlay should be shown
         assertTrue(avatarUri != null)
@@ -79,7 +79,7 @@ class AvatarPickerTest {
     fun `avatar state should be clickable for editing`() {
         // Given
         var clicked = false
-        val avatarUri = Uri.parse("content://test/avatar.jpg")
+        val avatarUri = URI.create("content://test/avatar.jpg")
         val onPickAvatar = { clicked = true }
         
         // When
@@ -94,25 +94,25 @@ class AvatarPickerTest {
     @Test
     fun `should handle content URI`() {
         // Given
-        val contentUri = Uri.parse("content://media/external/images/123")
+        val contentUri = URI.create("content://media/external/images/123")
         
         // Then
-        assertEquals("content", contentUri.scheme)
+        assertEquals("content", contentUri?.scheme)
     }
 
     @Test
     fun `should handle file URI`() {
         // Given
-        val fileUri = Uri.parse("file:///storage/emulated/0/avatar.jpg")
+        val fileUri = URI.create("file:///storage/emulated/0/avatar.jpg")
         
         // Then
-        assertEquals("file", fileUri.scheme)
+        assertEquals("file", fileUri?.scheme)
     }
 
     @Test
     fun `should handle null URI gracefully`() {
         // Given
-        val nullUri: Uri? = null
+        val nullUri: URI? = null
         
         // Then
         assertNull(nullUri)
@@ -241,10 +241,10 @@ class AvatarPickerTest {
     @Test
     fun `should transition from empty to avatar state`() {
         // Given
-        var avatarUri: Uri? = null
+        var avatarUri: URI? = null
         
         // When
-        avatarUri = Uri.parse("content://test/new_avatar.jpg")
+        avatarUri = URI.create("content://test/new_avatar.jpg")
         
         // Then
         assertNotNull(avatarUri)
@@ -253,7 +253,7 @@ class AvatarPickerTest {
     @Test
     fun `should transition from avatar to empty state`() {
         // Given
-        var avatarUri: Uri? = Uri.parse("content://test/avatar.jpg")
+        var avatarUri: URI? = URI.create("content://test/avatar.jpg")
         
         // When
         avatarUri = null
@@ -265,13 +265,13 @@ class AvatarPickerTest {
     @Test
     fun `should update avatar URI`() {
         // Given
-        var avatarUri: Uri? = Uri.parse("content://test/old_avatar.jpg")
+        var avatarUri: URI? = URI.create("content://test/old_avatar.jpg")
         
         // When
-        avatarUri = Uri.parse("content://test/new_avatar.jpg")
+        avatarUri = URI.create("content://test/new_avatar.jpg")
         
         // Then
-        assertEquals("content://test/new_avatar.jpg", avatarUri.toString())
+        assertEquals("content://test/new_avatar.jpg", avatarUri?.toString())
     }
 
     // ==================== 图片加载测试 ====================

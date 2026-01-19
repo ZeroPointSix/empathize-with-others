@@ -36,11 +36,12 @@ class PromptMigrationTest {
     fun `createDefault应该只包含活跃场景`() {
         val config = GlobalPromptConfig.createDefault()
 
-        assertEquals(4, config.prompts.size)
+        assertEquals(5, config.prompts.size)
         assertTrue(config.prompts.containsKey(PromptScene.ANALYZE))
         assertTrue(config.prompts.containsKey(PromptScene.POLISH))
         assertTrue(config.prompts.containsKey(PromptScene.REPLY))
         assertTrue(config.prompts.containsKey(PromptScene.SUMMARY))
+        assertTrue(config.prompts.containsKey(PromptScene.AI_ADVISOR))
     }
 
     @Test

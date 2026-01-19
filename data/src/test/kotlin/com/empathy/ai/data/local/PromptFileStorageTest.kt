@@ -74,8 +74,8 @@ class PromptFileStorageTest {
         assertTrue(result.isSuccess)
         val config = result.getOrNull()
         assertNotNull(config)
-        assertEquals(1, config?.version)
-        assertEquals(PromptScene.entries.size, config?.prompts?.size)
+        assertEquals(GlobalPromptConfig.CURRENT_VERSION, config?.version)
+        assertEquals(PromptScene.getActiveScenes().size, config?.prompts?.size)
     }
 
     @Test
@@ -119,7 +119,7 @@ class PromptFileStorageTest {
         assertTrue(result.isSuccess)
         val readConfig = result.getOrNull()
         assertNotNull(readConfig)
-        assertEquals(2, readConfig?.version)
+        assertEquals(GlobalPromptConfig.CURRENT_VERSION, readConfig?.version)
         assertEquals("测试分析提示词", readConfig?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
     }
 
@@ -256,8 +256,8 @@ class PromptFileStorageTest {
     fun `writeGlobalConfig should preserve all scene configs`() = runTest(testDispatcher) {
         // Given
         val config = GlobalPromptConfig(
-            version = 1,
-            prompts = PromptScene.entries.associateWith { scene ->
+            version = GlobalPromptConfig.CURRENT_VERSION,
+            prompts = PromptScene.getActiveScenes().associateWith { scene ->
                 ScenePromptConfig(
                     userPrompt = "提示词 for ${scene.name}",
                     enabled = true,
@@ -278,8 +278,8 @@ class PromptFileStorageTest {
         assertTrue(result.isSuccess)
         val readConfig = result.getOrNull()
         assertNotNull(readConfig)
-        assertEquals(PromptScene.entries.size, readConfig?.prompts?.size)
-        PromptScene.entries.forEach { scene ->
+        assertEquals(PromptScene.getActiveScenes().size, readConfig?.prompts?.size)
+        PromptScene.getActiveScenes().forEach { scene ->
             assertEquals(
                 "提示词 for ${scene.name}",
                 readConfig?.prompts?.get(scene)?.userPrompt
@@ -327,17 +327,19 @@ class PromptFileStorageTest {
         assertNotNull(config)
 
         // 版本应该升级到2
-        assertEquals(2, config?.version)
+        assertEquals(GlobalPromptConfig.CURRENT_VERSION, config?.version)
 
         // ANALYZE场景的提示词应该被清空（因为包含变量占位符）
         assertEquals("", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
 
-        // CHECK场景的提示词应该保留（因为不包含变量占位符）
-        assertEquals("检查以下内容是否安全", config?.prompts?.get(PromptScene.CHECK)?.userPrompt)
+        // CHECK场景会被合并并移除，内容应转移到POLISH
+        assertEquals(null, config?.prompts?.get(PromptScene.CHECK))
+        val polishPrompt = config?.prompts?.get(PromptScene.POLISH)?.userPrompt ?: ""
+        assertTrue(polishPrompt.contains("检查以下内容是否安全"))
     }
 
     @Test
-    fun `readGlobalConfig should not migrate v2 config`() = runTest(testDispatcher) {
+    fun `readGlobalConfig should migrate v2 config without changing content`() = runTest(testDispatcher) {
         // Given - 创建v2配置文件
         val promptsDir = File(context.filesDir, "prompts")
         promptsDir.mkdirs()
@@ -367,8 +369,8 @@ class PromptFileStorageTest {
         val config = result.getOrNull()
         assertNotNull(config)
 
-        // 版本应该保持为2
-        assertEquals(2, config?.version)
+        // 版本应该升级到3
+        assertEquals(GlobalPromptConfig.CURRENT_VERSION, config?.version)
 
         // 提示词应该保持不变
         assertEquals("请分析聊天内容并给出建议", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
@@ -420,10 +422,10 @@ class PromptFileStorageTest {
         val config = result.getOrNull()
         assertNotNull(config)
 
-        // 包含变量的场景应该被清空
+        // 包含变量的场景应该被清空或移除
         assertEquals("", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
-        assertEquals("", config?.prompts?.get(PromptScene.CHECK)?.userPrompt)
-        assertEquals("", config?.prompts?.get(PromptScene.EXTRACT)?.userPrompt)
+        assertEquals(null, config?.prompts?.get(PromptScene.CHECK))
+        assertEquals(null, config?.prompts?.get(PromptScene.EXTRACT))
 
         // 不包含变量的场景应该保留
         assertEquals("无变量的正常提示词", config?.prompts?.get(PromptScene.SUMMARY)?.userPrompt)
@@ -463,10 +465,10 @@ class PromptFileStorageTest {
         val result = storage.readGlobalConfig()
         advanceUntilIdle()
 
-        // Then - 文件应该已经被更新为v2
+        // Then - 文件应该已经被更新为v3
         assertTrue(result.isSuccess)
         val config = result.getOrNull()
-        assertEquals(2, config?.version)
+        assertEquals(GlobalPromptConfig.CURRENT_VERSION, config?.version)
         assertEquals("", config?.prompts?.get(PromptScene.ANALYZE)?.userPrompt)
     }
 }

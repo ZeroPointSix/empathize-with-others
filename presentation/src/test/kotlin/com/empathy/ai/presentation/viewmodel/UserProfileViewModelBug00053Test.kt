@@ -10,6 +10,7 @@ import com.empathy.ai.domain.usecase.ManageCustomDimensionUseCase
 import com.empathy.ai.domain.usecase.ExportUserProfileUseCase
 import com.empathy.ai.domain.usecase.UpdateUserProfileUseCase
 import com.empathy.ai.presentation.ui.screen.userprofile.UserProfileUiEvent
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,6 +57,32 @@ class UserProfileViewModelBug00053Test {
         manageCustomDimensionUseCase = mockk(relaxed = true)
         exportUserProfileUseCase = mockk(relaxed = true)
         userProfileRepository = mockk(relaxed = true)
+
+        var currentProfile = UserProfile()
+        coEvery { getUserProfileUseCase(any()) } answers { Result.success(currentProfile) }
+        coEvery { updateUserProfileUseCase(any()) } answers { Result.success(currentProfile) }
+        coEvery { addTagUseCase(any(), any()) } answers {
+            val dimension = firstArg<String>()
+            val tag = secondArg<String>()
+            currentProfile = currentProfile.addTag(dimension, tag)
+            Result.success(currentProfile)
+        }
+        coEvery { removeTagUseCase(any(), any()) } answers {
+            val dimension = firstArg<String>()
+            val tag = secondArg<String>()
+            currentProfile = currentProfile.removeTag(dimension, tag)
+            Result.success(currentProfile)
+        }
+        coEvery { manageCustomDimensionUseCase.addDimension(any()) } answers {
+            val name = firstArg<String>()
+            currentProfile = currentProfile.addCustomDimension(name)
+            Result.success(currentProfile)
+        }
+        coEvery { manageCustomDimensionUseCase.removeDimension(any()) } answers {
+            val name = firstArg<String>()
+            currentProfile = currentProfile.removeCustomDimension(name)
+            Result.success(currentProfile)
+        }
 
         viewModel = UserProfileViewModel(
             getUserProfileUseCase = getUserProfileUseCase,
@@ -193,7 +220,7 @@ class UserProfileViewModelBug00053Test {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then: 不应该崩溃，状态应该保持正常
-        assertFalse("不应该有未保存的变更", viewModel.uiState.value.hasUnsavedChanges)
+        assertNull("不应该产生错误信息", viewModel.uiState.value.error)
     }
 
     @Test

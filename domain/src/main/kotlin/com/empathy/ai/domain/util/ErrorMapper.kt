@@ -1,6 +1,7 @@
 package com.empathy.ai.domain.util
 
 import com.empathy.ai.domain.model.AppError
+import com.empathy.ai.domain.usecase.ValidationException
 
 /**
  * 错误映射工具
@@ -16,6 +17,10 @@ object ErrorMapper {
      */
     fun mapToAppError(error: Throwable): AppError {
         return when (error) {
+            is ValidationException -> AppError.ValidationError(
+                field = "validation",
+                reason = error.message ?: "验证失败"
+            )
             is IllegalArgumentException -> AppError.ValidationError(
                 field = "input",
                 reason = error.message ?: "无效输入"

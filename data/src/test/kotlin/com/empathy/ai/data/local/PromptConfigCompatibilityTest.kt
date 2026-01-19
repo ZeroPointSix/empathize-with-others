@@ -69,17 +69,18 @@ class PromptConfigCompatibilityTest {
     }
 
     @Test
-    fun `v3配置应该只包含4个活跃场景`() {
+    fun `v3配置应该只包含5个活跃场景`() {
         // Given & When: 创建v3配置
         val v3Config = GlobalPromptConfig.createDefault()
 
         // Then: 验证v3配置结构
         assertEquals(3, v3Config.version)
-        assertEquals(4, v3Config.prompts.size)
+        assertEquals(5, v3Config.prompts.size)
         assertTrue(v3Config.prompts.containsKey(PromptScene.ANALYZE))
         assertTrue(v3Config.prompts.containsKey(PromptScene.POLISH))
         assertTrue(v3Config.prompts.containsKey(PromptScene.REPLY))
         assertTrue(v3Config.prompts.containsKey(PromptScene.SUMMARY))
+        assertTrue(v3Config.prompts.containsKey(PromptScene.AI_ADVISOR))
     }
 
     @Test
@@ -202,7 +203,8 @@ class PromptConfigCompatibilityTest {
             PromptScene.ANALYZE,
             PromptScene.POLISH,
             PromptScene.REPLY,
-            PromptScene.SUMMARY
+            PromptScene.SUMMARY,
+            PromptScene.AI_ADVISOR
         )
 
         activeScenes.forEach { scene ->

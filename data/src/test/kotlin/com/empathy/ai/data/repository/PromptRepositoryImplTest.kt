@@ -156,16 +156,27 @@ class PromptRepositoryImplTest {
     }
 
     @Test
-    fun `saveGlobalPrompt should return error for empty prompt`() = runTest(testDispatcher) {
+    fun `saveGlobalPrompt should allow empty prompt`() = runTest(testDispatcher) {
         // Given
         val prompt = ""
+        val config = GlobalPromptConfig(
+            version = 1,
+            prompts = mapOf(
+                PromptScene.ANALYZE to ScenePromptConfig(
+                    userPrompt = "已有提示词",
+                    enabled = true,
+                    history = emptyList()
+                )
+            )
+        )
+        coEvery { fileStorage.readGlobalConfig() } returns Result.success(config)
+        coEvery { fileStorage.writeGlobalConfig(any()) } returns Result.success(Unit)
 
         // When
         val result = repository.saveGlobalPrompt(PromptScene.ANALYZE, prompt)
 
         // Then
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is PromptError.ValidationError)
+        assertTrue(result.isSuccess)
     }
 
     @Test
@@ -324,17 +335,18 @@ class PromptRepositoryImplTest {
     }
 
     @Test
-    fun `saveContactPrompt should return error for too long prompt`() = runTest(testDispatcher) {
+    fun `saveContactPrompt should allow too long prompt`() = runTest(testDispatcher) {
         // Given
         val contactId = "contact_123"
         val prompt = PromptTestDataFactory.createOverLengthPrompt()
+        coEvery { contactDao.updateCustomPrompt(contactId, prompt) } returns Unit
 
         // When
         val result = repository.saveContactPrompt(contactId, prompt)
 
         // Then
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is PromptError.ValidationError)
+        assertTrue(result.isSuccess)
+        coVerify { contactDao.updateCustomPrompt(contactId, prompt) }
     }
 
     // ========== restoreDefault() 测试 ==========
@@ -407,7 +419,12 @@ class PromptRepositoryImplTest {
 
         // Then
         assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is PromptError.BackupError)
+        val error = result.exceptionOrNull()
+        assertTrue(error is PromptError.ValidationError)
+        assertEquals(
+            PromptValidationResult.ErrorType.INVALID_FORMAT,
+            (error as PromptError.ValidationError).errorType
+        )
     }
 
     // ========== getHistory() 测试 ==========

@@ -108,6 +108,7 @@ class AiProviderRepositoryBug00054Test {
     fun `getDefaultProvider_whenNoDefault_returnsNull`() = runTest {
         // Given: 没有默认供应商
         coEvery { dao.getDefaultProvider() } returns flowOf(null)
+        coEvery { dao.getAllProviders() } returns flowOf(emptyList())
 
         // When
         val result = repository.getDefaultProvider()
@@ -129,10 +130,9 @@ class AiProviderRepositoryBug00054Test {
         // Then: 修复后应该返回第一个供应商
         // 注意：这个测试在修复前会失败，修复后应该通过
         assertTrue(result.isSuccess)
-        // 修复后取消下面的注释
-        // val provider = result.getOrNull()
-        // assertNotNull(provider)
-        // assertEquals("test-provider-1", provider?.id)
+        val provider = result.getOrNull()
+        assertNotNull(provider)
+        assertEquals("test-provider-1", provider?.id)
     }
 
     @Test

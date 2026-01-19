@@ -54,7 +54,7 @@ class FactStreamTabTest {
     fun `FilterType enum has correct values`() {
         val filters = FilterType.values()
         
-        assertEquals(7, filters.size)
+        assertEquals(8, filters.size)
         assertTrue(filters.contains(FilterType.ALL))
         assertTrue(filters.contains(FilterType.SWEET))
         assertTrue(filters.contains(FilterType.CONFLICT))
@@ -62,6 +62,7 @@ class FactStreamTabTest {
         assertTrue(filters.contains(FilterType.GIFT))
         assertTrue(filters.contains(FilterType.DATE))
         assertTrue(filters.contains(FilterType.DEEP_TALK))
+        assertTrue(filters.contains(FilterType.AI_SUMMARY))
     }
 
     @Test
@@ -80,6 +81,7 @@ class FactStreamTabTest {
         assertEquals("礼物", FilterType.GIFT.displayName)
         assertEquals("约会", FilterType.DATE.displayName)
         assertEquals("深谈", FilterType.DEEP_TALK.displayName)
+        assertEquals("AI总结", FilterType.AI_SUMMARY.displayName)
     }
 
     // ============================================================

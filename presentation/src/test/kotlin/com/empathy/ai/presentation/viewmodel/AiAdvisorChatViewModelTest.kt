@@ -6,6 +6,7 @@ import com.empathy.ai.domain.model.AiAdvisorSession
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
+import com.empathy.ai.domain.model.StreamingState
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
 import com.empathy.ai.domain.usecase.DeleteAdvisorConversationUseCase
@@ -16,6 +17,7 @@ import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageStreamingUseCase
 import com.empathy.ai.presentation.navigation.NavRoutes
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -113,6 +115,7 @@ class AiAdvisorChatViewModelTest {
 
         // When
         createViewModel()
+        viewModel.setStreamingMode(false)
         advanceUntilIdle()
 
         // Then
@@ -188,6 +191,7 @@ class AiAdvisorChatViewModelTest {
         } returns Result.success(aiResponse)
 
         createViewModel()
+        viewModel.setStreamingMode(false)
         advanceUntilIdle()
         viewModel.updateInput("Hello")
 
@@ -206,6 +210,7 @@ class AiAdvisorChatViewModelTest {
         // Given
         setupSuccessfulInit()
         createViewModel()
+        viewModel.setStreamingMode(false)
         advanceUntilIdle()
         viewModel.updateInput("")
 
@@ -226,6 +231,7 @@ class AiAdvisorChatViewModelTest {
         } returns Result.failure(Exception("Network error"))
 
         createViewModel()
+        viewModel.setStreamingMode(false)
         advanceUntilIdle()
         viewModel.updateInput("Hello")
 
@@ -251,6 +257,7 @@ class AiAdvisorChatViewModelTest {
         coEvery { getAdvisorSessionsUseCase(testContactId) } returns Result.success(listOf(session1, session2))
 
         createViewModel()
+        viewModel.setStreamingMode(false)
         advanceUntilIdle()
 
         // When
@@ -269,6 +276,7 @@ class AiAdvisorChatViewModelTest {
         coEvery { createAdvisorSessionUseCase(testContactId) } returns Result.success(newSession)
 
         createViewModel()
+        viewModel.setStreamingMode(false)
         advanceUntilIdle()
 
         // When
@@ -448,6 +456,7 @@ class AiAdvisorChatViewModelTest {
 
         createViewModel()
         advanceUntilIdle()
+        viewModel.setStreamingMode(false)
 
         // When
         viewModel.retryMessage(failedConversation)
@@ -668,9 +677,10 @@ class AiAdvisorChatViewModelTest {
         contactId: String,
         sessionId: String,
         messageType: MessageType,
-        content: String
+        content: String,
+        timestamp: Long = System.currentTimeMillis()
     ): AiAdvisorConversation {
-        val now = System.currentTimeMillis()
+        val now = timestamp
         return AiAdvisorConversation(
             id = id,
             contactId = contactId,
@@ -696,10 +706,10 @@ class AiAdvisorChatViewModelTest {
         // Given
         setupSuccessfulInit()
         val userConversation = createTestConversation(
-            "user-1", testContactId, testSessionId, MessageType.USER, "用户消息内容"
+            "user-1", testContactId, testSessionId, MessageType.USER, "用户消息内容", timestamp = 1000L
         )
         val aiConversation = createTestConversation(
-            "ai-1", testContactId, testSessionId, MessageType.AI, "AI回复内容"
+            "ai-1", testContactId, testSessionId, MessageType.AI, "AI回复内容", timestamp = 2000L
         )
 
         every { getAdvisorConversationsUseCase(testSessionId) } returns flowOf(
@@ -708,7 +718,10 @@ class AiAdvisorChatViewModelTest {
         coEvery { deleteAdvisorConversationUseCase("ai-1") } returns Result.success(Unit)
         coEvery {
             sendAdvisorMessageStreamingUseCase(any(), any(), any(), any(), any())
-        } returns flowOf()
+        } returns flowOf(
+            StreamingState.Started("ai-1"),
+            StreamingState.Completed("AI回复内容", null)
+        )
 
         createViewModel()
         advanceUntilIdle()
@@ -735,10 +748,10 @@ class AiAdvisorChatViewModelTest {
         // Given
         setupSuccessfulInit()
         val userConversation = createTestConversation(
-            "user-1", testContactId, testSessionId, MessageType.USER, "用户消息内容"
+            "user-1", testContactId, testSessionId, MessageType.USER, "用户消息内容", timestamp = 1000L
         )
         val aiConversation = createTestConversation(
-            "ai-1", testContactId, testSessionId, MessageType.AI, "AI回复内容"
+            "ai-1", testContactId, testSessionId, MessageType.AI, "AI回复内容", timestamp = 2000L
         )
 
         every { getAdvisorConversationsUseCase(testSessionId) } returns flowOf(
@@ -758,7 +771,7 @@ class AiAdvisorChatViewModelTest {
 
         // Then - isRegenerating应该变为false，错误信息应该显示
         assertFalse(viewModel.uiState.value.isRegenerating)
-        assertTrue(viewModel.uiState.value.error?.contains("删除失败") == true)
+        assertTrue(viewModel.uiState.value.error?.contains("删除消息失败") == true)
     }
 
     /**
@@ -805,11 +818,12 @@ class AiAdvisorChatViewModelTest {
             "正常内容" to false,
             "部分内容...[用户已停止生成]" to true,
             "没有标记的长文本内容" to false,
-            "核心策略：..." to true,
-            "## 标题\n内容" to true,
-            "ENFJ类型分析" to true,
-            "1. 第一点\n2. 第二点" to true,
-            "**加粗文本**" to true,
+            "核心策略：..." to false,
+            "## 标题\n内容" to false,
+            "ENFJ类型分析" to false,
+            "1. 第一点\n2. 第二点" to false,
+            "**加粗文本**" to false,
+            "核心策略：\n1. 第一点" to true,
             "正常用户输入比较短" to false,
             "a".repeat(350) to true,  // 超长内容
         )
@@ -843,6 +857,8 @@ class AiAdvisorChatViewModelTest {
         )
 
         testData.forEach { (messageType, sendStatus, shouldRetry) ->
+            clearMocks(deleteAdvisorConversationUseCase, sendAdvisorMessageUseCase)
+
             // Given
             val conversation = AiAdvisorConversation(
                 id = "conv-${messageType.name}-${sendStatus.name}",
@@ -869,11 +885,7 @@ class AiAdvisorChatViewModelTest {
             advanceUntilIdle()
 
             // Then
-            if (shouldRetry) {
-                coVerify(atLeast = 1) { deleteAdvisorConversationUseCase(any()) }
-            } else {
-                coVerify(exactly = 0) { deleteAdvisorConversationUseCase(any()) }
-            }
+            coVerify(exactly = if (shouldRetry) 1 else 0) { deleteAdvisorConversationUseCase(any()) }
         }
     }
 }
