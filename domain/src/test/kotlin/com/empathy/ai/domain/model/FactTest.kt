@@ -243,6 +243,41 @@ class FactTest {
     }
 
     @Test
+    fun `copyWithEdit应更新编辑追踪字段`() {
+        val original = Fact(
+            id = "fact-1",
+            key = "职业",
+            value = "产品经理",
+            timestamp = 1_000L,
+            source = FactSource.MANUAL
+        )
+
+        val edited = original.copyWithEdit("工作", "高级产品经理")
+
+        assertEquals("工作", edited.key)
+        assertEquals("高级产品经理", edited.value)
+        assertTrue(edited.isUserModified)
+        assertEquals("职业", edited.originalKey)
+        assertEquals("产品经理", edited.originalValue)
+        assertTrue(edited.lastModifiedTime >= original.timestamp)
+    }
+
+    @Test
+    fun `hasChanges应正确判断是否有变化`() {
+        val fact = Fact(
+            id = "fact-1",
+            key = "职业",
+            value = "产品经理",
+            timestamp = 1_000L,
+            source = FactSource.MANUAL
+        )
+
+        assertFalse(fact.hasChanges("职业", "产品经理"))
+        assertTrue(fact.hasChanges("工作", "产品经理"))
+        assertTrue(fact.hasChanges("职业", "高级产品经理"))
+    }
+
+    @Test
     fun `Fact的equals方法正确工作`() {
         val timestamp = System.currentTimeMillis()
         val id = "same-id"

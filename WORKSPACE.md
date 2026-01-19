@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-18 22:04 | 更新者: Codex (构建与安装完成)
+> 最后更新: 2026-01-18 22:19 | 更新者: Codex (PRD-00014 联系人画像界面升级补齐完成)
 
 
 ## 📋 当前工作状态
@@ -25,9 +25,14 @@
 - 2026-01-18 20:42 `:presentation:connectedAndroidTest` 失败（无在线设备，emulator-5556 / 127.0.0.1:7555 均 OFFLINE）。
 - 2026-01-16 21:44 `:presentation:testDebugUnitTest` 失败（29/1004），为既有用例失败，需后续单独处理。
 - 2026-01-16 21:56 OPPO 崩溃：`ScreenshotPermissionActivity` 内调用 `getMediaProjection` 触发 `SecurityException`。
+- 2026-01-18 23:12 `assembleDebug` 成功；MuMu 安装成功（`adb install -r -d`）。
 
 ### 已完成任务（最近7条）
-- [x] 2026-01-18 - **PRD-00036 截图预览功能完善** - Codex - 相关文档: [FEATURE-20260118](文档/开发文档/MA/FEATURE/FEATURE-20260118-截图预览功能完善.md)
+- [x] 2026-01-18 - **PRD-00014 联系人画像界面升级补齐** - Codex - 相关文档: [FEATURE-20260118-联系人画像界面升级补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-联系人画像界面升级补齐.md)
+- [x] 2026-01-18 - **PRD-00007 对话上下文连续性增强补齐** - Codex - 相关文档: [FEATURE-20260118-对话上下文连续性增强补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-对话上下文连续性增强补齐.md)
+- [x] 2026-01-18 - **PRD-00012 事实流内容编辑功能补齐** - Codex - 相关文档: [FEATURE-20260118-事实流编辑补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-事实流编辑补齐.md)
+- [x] 2026-01-18 - **PRD-00036 截图预览功能补齐** - Codex - 相关文档: [FEATURE-20260118-截图预览补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-截图预览补齐.md)
+- [x] 2026-01-18 - **PRD-00008 输入内容身份识别与双向对话历史（补齐测试与提示词）** - Codex - 相关文档: [FEATURE-20260118](文档/开发文档/MA/FEATURE/FEATURE-20260118-身份前缀补齐.md)
 - [x] 2026-01-15 - **MANAGE-20260115 工作树管理与探索审查** - Codex - 相关文档: [MANAGE-20260115](文档/开发文档/MA/MANAGE/MANAGE-20260115-worktree-manager.md)
 - [x] 2026-01-15 - **BUG-00073 OPPO 真机悬浮球不显示修复** - Codex - 相关文档: [BUG-00073](文档/开发文档/BUG/BUG-00073-OPPO真机悬浮球不显示问题.md)
 - [x] 2026-01-15 - **RULE-00001 口语化输入规则补充** - Codex - 相关文档: [RulesReadMe](Rules/RulesReadMe.md)
@@ -458,6 +463,79 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ## 📝 变更日志
+### 2026-01-18 - Codex (PRD-00014 联系人画像界面升级补齐)
+- 接入 PersonaTabV2 并默认启用，补齐事件映射与编辑路径。
+- 新增 GroupFacts/BatchDelete/BatchMove 用例单元测试，更新 TE-00014 测试指南。
+- 测试：未运行（未触发构建与版本号更新）。
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactDetailTabScreen.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/ContactDetailTabViewModel.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/GroupFactsByCategoryUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/BatchDeleteFactsUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/BatchMoveFactsUseCaseTest.kt`
+  - `文档/开发文档/TE/TE-00014-联系人画像界面升级人工测试指南.md`
+  - `文档/开发文档/MA/FEATURE/FEATURE-20260118-联系人画像界面升级补齐.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
+### 2026-01-18 - Codex (PRD-00007 对话上下文连续性增强补齐)
+- 新增历史上下文截断配置（单条/总长）并更新 ConversationContextBuilder 的头部提示与截断策略。
+- 补齐 ConversationContextBuilder 单元测试（截断、总长移除、时间标记）。
+- 新增 PRD-00007 测试用例文档与 Feature 报告。
+- 测试：未运行（未触发构建与版本号更新）。
+- 修改的文件列表：
+  - `domain/src/main/kotlin/com/empathy/ai/domain/model/ConversationContextConfig.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/util/ConversationContextBuilder.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/util/ConversationContextBuilderTest.kt`
+  - `文档/开发文档/TE/TE-00007-对话上下文连续性增强测试用例.md`
+  - `文档/开发文档/MA/FEATURE/FEATURE-20260118-对话上下文连续性增强补齐.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
+### 2026-01-18 - Codex (PRD-00012 事实流内容编辑补齐)
+- 对话编辑改为走 EditConversationUseCase，确保身份前缀校验与编辑追踪落库。
+- 补齐 Domain 层编辑用例与 ContentValidator 单元测试，并为编辑模型方法增加覆盖。
+- 更新测试用例文档与决策日志，新增 Feature 报告。
+- 测试：未运行（未触发构建与版本号更新）。
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/ContactDetailTabViewModel.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/EditFactUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/EditConversationUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/EditSummaryUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/EditContactInfoUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/util/ContentValidatorTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/model/FactTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/model/ConversationLogTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/model/DailySummaryTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/model/ContactProfileTest.kt`
+  - `文档/开发文档/TE/TE-00065-事实流编辑功能测试用例.md`
+  - `文档/开发文档/MA/FEATURE/FEATURE-20260118-事实流编辑补齐.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
+### 2026-01-18 - Codex (PRD-00036 截图预览补齐)
+- 补齐 ImagePreviewView 返回键关闭与 90% 尺寸/背景透明度细节。
+- 同步更新 ImagePreviewDialog 的显示参数。
+- 新增 ImagePreviewView instrumentation 测试并更新测试用例文档。
+- 测试：未运行（依赖 Overlay 权限）。
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/dialog/ImagePreviewView.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/component/dialog/ImagePreviewDialog.kt`
+  - `app/src/androidTest/kotlin/com/empathy/ai/ui/ImagePreviewViewTest.kt`
+  - `文档/开发文档/TE/TE-00036-截图预览功能测试用例.md`
+  - `文档/开发文档/MA/FEATURE/FEATURE-20260118-截图预览补齐.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
+### 2026-01-18 - Codex (PRD-00008 身份前缀补齐)
+- 补齐 SystemPrompts 的防回声提示，明确禁止输出身份前缀。
+- 新增身份前缀相关单元测试（Analyze/Check/历史上下文）。
+- 输出 FEATURE 报告与更新决策日志。
+- 测试：未运行（待主流程验证）。
+- 修改的文件列表：
+  - `domain/src/main/kotlin/com/empathy/ai/domain/util/SystemPrompts.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/AnalyzeChatUseCaseIdentityPrefixTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/CheckDraftUseCaseIdentityPrefixTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/util/ConversationContextBuilderTest.kt`
+  - `文档/开发文档/MA/FEATURE/FEATURE-20260118-身份前缀补齐.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
 ### 2026-01-16 - Codex (BUG-00072 授权缓存与日志补齐)
 - 截图权限缓存改为进程级缓存，避免授权落盘失败导致设置页开关不刷新。
 - 权限回调与截图入口增加日志，便于定位授权保存与恢复链路。

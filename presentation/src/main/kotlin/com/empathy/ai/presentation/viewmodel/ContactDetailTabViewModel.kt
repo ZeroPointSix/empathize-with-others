@@ -300,14 +300,14 @@ class ContactDetailTabViewModel @Inject constructor(
                     }
                     
                     // TD-00014: 刷新分类数据
-                    // 注意：usePersonaTabV2 = false 使用现代化iOS风格的PersonaTab
+                    // 默认启用 PersonaTabV2（支持搜索/编辑模式/批量操作）
                     val facts = contact?.facts ?: emptyList()
                     val categories = refreshCategories(facts)
                     val availableCategories = categories.map { it.key }
                     
                     _uiState.update {
                         it.copy(
-                            usePersonaTabV2 = false,  // 使用现代化iOS风格的PersonaTab
+                            usePersonaTabV2 = true,
                             factCategories = categories,
                             availableCategories = availableCategories
                         )
@@ -552,22 +552,47 @@ class ContactDetailTabViewModel @Inject constructor(
      * 编辑对话记录
      */
     private fun editConversation(logId: Long, newContent: String) {
-        if (newContent.isBlank()) return
-        
+        if (newContent.isBlank()) {
+            _uiState.update { it.copy(error = "内容不能为空") }
+            return
+        }
+
         viewModelScope.launch {
             try {
-                conversationRepository.updateUserInput(logId, newContent).onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            showEditConversationDialog = false,
-                            selectedConversationId = null,
-                            editingConversationContent = "",
-                            successMessage = "对话已更新"
-                        )
-                    }
-                    // 刷新数据
-                    _uiState.value.contact?.id?.let { contactId ->
-                        loadContactDetail(contactId)
+                editConversationUseCase(logId, newContent).onSuccess { result ->
+                    when (result) {
+                        is com.empathy.ai.domain.model.EditResult.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    showEditConversationDialog = false,
+                                    selectedConversationId = null,
+                                    editingConversationContent = "",
+                                    successMessage = "对话已更新"
+                                )
+                            }
+                            _uiState.value.contact?.id?.let { contactId ->
+                                loadContactDetail(contactId)
+                            }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.ValidationError -> {
+                            _uiState.update { it.copy(error = result.message) }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                            _uiState.update { it.copy(error = "未找到对话") }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.NoChanges -> {
+                            _uiState.update {
+                                it.copy(
+                                    showEditConversationDialog = false,
+                                    selectedConversationId = null,
+                                    editingConversationContent = "",
+                                    successMessage = "内容未变化"
+                                )
+                            }
+                        }
+                        is com.empathy.ai.domain.model.EditResult.DatabaseError -> {
+                            _uiState.update { it.copy(error = result.getErrorMessage() ?: "更新对话失败") }
+                        }
                     }
                 }.onFailure { error ->
                     _uiState.update {

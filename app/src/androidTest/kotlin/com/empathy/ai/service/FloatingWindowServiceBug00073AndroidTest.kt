@@ -272,7 +272,7 @@ class FloatingWindowServiceBug00073AndroidTest {
             // 记录实际版本信息
             throw AssertionError(
                 "Service failed to start on Android ${android.os.Build.VERSION.SDK_INT} " +
-                        "(API ${android.os.Build.VERSION_CODES.SDK_INT})",
+                        "(API ${android.os.Build.VERSION.SDK_INT})",
                 e
             )
         }

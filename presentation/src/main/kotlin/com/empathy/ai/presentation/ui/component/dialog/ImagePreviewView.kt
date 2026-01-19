@@ -64,6 +64,8 @@ class ImagePreviewView(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
+        isFocusable = true
+        isFocusableInTouchMode = true
 
         // 背景遮罩（点击外部关闭预览）
         // PRD-00036: 黑色半透明背景 alpha=0.9 (#E6000000)，点击外部关闭预览
@@ -108,18 +110,6 @@ class ImagePreviewView(
             isIndeterminate = true
         }
 
-        // PRD-00036: 支持返回键关闭预览
-        // FEATURE-20260118 补齐: 设置 focusableInTouchMode 并请求焦点，确保能接收按键事件
-        isFocusableInTouchMode = true
-        setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                dismiss()
-                true
-            } else {
-                false
-            }
-        }
-
         addView(backgroundView)
         addView(imageView)
         addView(progressBar)
@@ -154,7 +144,6 @@ class ImagePreviewView(
         try {
             windowManager.addView(this, params)
             isShowing = true
-            // FEATURE-20260118 补齐: 请求焦点以确保能接收返回键事件
             requestFocus()
             loadPreviewImage()
             android.util.Log.d(TAG, "预览视图显示成功: $imagePath")
@@ -172,10 +161,11 @@ class ImagePreviewView(
 
         try {
             windowManager.removeView(this)
-            isShowing = false
             android.util.Log.d(TAG, "预览视图已关闭")
         } catch (e: Exception) {
             android.util.Log.e(TAG, "关闭预览视图失败", e)
+        } finally {
+            isShowing = false
         }
     }
 
@@ -185,6 +175,14 @@ class ImagePreviewView(
      * @return true 如果正在显示
      */
     fun isShowing(): Boolean = isShowing
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+            dismiss()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     /**
      * 加载预览图片

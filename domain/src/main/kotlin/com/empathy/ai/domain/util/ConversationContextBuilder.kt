@@ -61,37 +61,44 @@ class ConversationContextBuilder @Inject constructor() {
     ): String {
         if (messages.isEmpty()) return ""
 
-        return buildString {
-            appendLine("【历史对话】(最近${messages.size}条)")
+        val truncatedResult = truncateMessages(messages, config)
+        var trimmedMessages = truncatedResult.messages
+        var removedByTotalLimit = false
+        var truncatedByTotalLimit = false
+        var context = ""
 
-            var previousTimestamp: Long? = null
-            var previousDate: String? = null
+        while (trimmedMessages.isNotEmpty()) {
+            val header = buildHeader(
+                messageCount = trimmedMessages.size,
+                hasTruncation = truncatedResult.truncated || removedByTotalLimit || truncatedByTotalLimit
+            )
+            context = buildHistoryContextInternal(trimmedMessages, header, config).trimEnd()
 
-            messages.forEach { message ->
-                // 计算时间标记
-                val marker = calculateTimeMarker(
-                    previousTimestamp = previousTimestamp,
-                    currentTimestamp = message.timestamp,
-                    previousDate = previousDate,
+            if (context.length <= config.maxTotalContextLength) {
+                break
+            }
+
+            if (trimmedMessages.size == 1) {
+                val headerForClamp = buildHeader(
+                    messageCount = 1,
+                    hasTruncation = truncatedResult.truncated || removedByTotalLimit || true
+                )
+                val adjusted = clampMessageForTotalLimit(
+                    message = trimmedMessages.first(),
+                    header = headerForClamp,
                     config = config
                 )
-
-                // 插入时间标记（如果有）
-                val markerStr = marker.toDisplayString()
-                if (markerStr.isNotEmpty()) {
-                    appendLine(markerStr)
-                }
-
-                // 【PRD-00008】直接使用原始内容（已包含身份前缀）
-                // 格式：[历史记录 - HH:mm]: 【对方说】：xxx 或 [历史记录 - HH:mm]: xxx（旧数据）
-                val timeStr = message.getFormattedTime()
-                appendLine("[历史记录 - $timeStr]: ${message.content}")
-
-                // 更新前一条消息的信息
-                previousTimestamp = message.timestamp
-                previousDate = message.getFormattedDate()
+                truncatedByTotalLimit = adjusted.truncated
+                trimmedMessages = listOf(adjusted.message)
+                context = buildHistoryContextInternal(trimmedMessages, headerForClamp, config).trimEnd()
+                break
             }
-        }.trimEnd()
+
+            trimmedMessages = trimmedMessages.drop(1)
+            removedByTotalLimit = true
+        }
+
+        return context.trimEnd()
     }
 
     /**
@@ -147,5 +154,107 @@ class ConversationContextBuilder @Inject constructor() {
      */
     private fun formatDate(timestamp: Long): String {
         return dateFormatter.format(Instant.ofEpochMilli(timestamp))
+    }
+
+    private fun buildHistoryContextInternal(
+        messages: List<TimestampedMessage>,
+        header: String,
+        config: ConversationContextConfig
+    ): String {
+        return buildString {
+            appendLine(header)
+
+            var previousTimestamp: Long? = null
+            var previousDate: String? = null
+
+            messages.forEach { message ->
+                val marker = calculateTimeMarker(
+                    previousTimestamp = previousTimestamp,
+                    currentTimestamp = message.timestamp,
+                    previousDate = previousDate,
+                    config = config
+                )
+
+                val markerStr = marker.toDisplayString()
+                if (markerStr.isNotEmpty()) {
+                    appendLine(markerStr)
+                }
+
+                // 【PRD-00008】直接使用原始内容（已包含身份前缀）
+                // 格式：[历史记录 - HH:mm]: 【对方说】：xxx 或 [历史记录 - HH:mm]: xxx（旧数据）
+                val timeStr = message.getFormattedTime()
+                appendLine("[历史记录 - $timeStr]: ${message.content}")
+
+                previousTimestamp = message.timestamp
+                previousDate = message.getFormattedDate()
+            }
+        }
+    }
+
+    private fun buildHeader(messageCount: Int, hasTruncation: Boolean): String {
+        return if (hasTruncation) {
+            "【历史对话回顾】(最近${messageCount}条，部分内容已截断)"
+        } else {
+            "【历史对话回顾】(最近${messageCount}条)"
+        }
+    }
+
+    private data class TruncatedMessagesResult(
+        val messages: List<TimestampedMessage>,
+        val truncated: Boolean
+    )
+
+    private data class TotalLimitAdjustResult(
+        val message: TimestampedMessage,
+        val truncated: Boolean
+    )
+
+    private fun truncateMessages(
+        messages: List<TimestampedMessage>,
+        config: ConversationContextConfig
+    ): TruncatedMessagesResult {
+        var truncated = false
+        val trimmed = messages.map { message ->
+            val content = message.content
+            if (content.length > config.maxSingleMessageLength) {
+                truncated = true
+                val trimmedContent = content.take(config.maxSingleMessageLength) + "..."
+                message.copy(content = trimmedContent)
+            } else {
+                message
+            }
+        }
+        return TruncatedMessagesResult(trimmed, truncated)
+    }
+
+    private fun clampMessageForTotalLimit(
+        message: TimestampedMessage,
+        header: String,
+        config: ConversationContextConfig
+    ): TotalLimitAdjustResult {
+        val timeStr = message.getFormattedTime()
+        val prefix = "[历史记录 - $timeStr]: "
+        val baseLength = header.length + 1 + prefix.length
+        val budget = config.maxTotalContextLength - baseLength
+        val clamped = clampContentToLimit(message.content, budget)
+        return TotalLimitAdjustResult(
+            message = message.copy(content = clamped),
+            truncated = clamped.length < message.content.length
+        )
+    }
+
+    private fun clampContentToLimit(content: String, limit: Int): String {
+        val safeLimit = limit.coerceAtLeast(1)
+        if (content.length <= safeLimit) return content
+        val suffixLength = TRUNCATION_SUFFIX.length
+        if (safeLimit <= suffixLength) {
+            return TRUNCATION_SUFFIX.take(safeLimit)
+        }
+        val keep = safeLimit - suffixLength
+        return content.take(keep) + TRUNCATION_SUFFIX
+    }
+
+    private companion object {
+        const val TRUNCATION_SUFFIX = "..."
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.empathy.ai.service.FloatingWindowService
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith

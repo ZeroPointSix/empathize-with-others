@@ -98,6 +98,40 @@ class ConversationLogTest {
     }
 
     @Test
+    fun `copyWithEdit应更新编辑追踪字段`() {
+        val original = ConversationLog(
+            id = 1L,
+            contactId = "contact_123",
+            userInput = "原内容",
+            aiResponse = null,
+            timestamp = 1_000L,
+            isSummarized = false
+        )
+
+        val edited = original.copyWithEdit("新内容")
+
+        assertEquals("新内容", edited.userInput)
+        assertTrue(edited.isUserModified)
+        assertEquals("原内容", edited.originalUserInput)
+        assertTrue(edited.lastModifiedTime >= original.timestamp)
+    }
+
+    @Test
+    fun `hasChanges应正确判断是否有变化`() {
+        val log = ConversationLog(
+            id = 1L,
+            contactId = "contact_123",
+            userInput = "原内容",
+            aiResponse = null,
+            timestamp = 1_000L,
+            isSummarized = false
+        )
+
+        assertFalse(log.hasChanges("原内容"))
+        assertTrue(log.hasChanges("新内容"))
+    }
+
+    @Test
     fun `ConversationLog的equals方法正确工作`() {
         val timestamp = System.currentTimeMillis()
         val log1 = ConversationLog(1L, "contact_123", "你好", "回复", timestamp, false)

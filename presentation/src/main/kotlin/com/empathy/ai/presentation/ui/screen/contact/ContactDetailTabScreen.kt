@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +58,7 @@ import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiEvent
 import com.empathy.ai.presentation.ui.screen.contact.ContactDetailUiState
 import com.empathy.ai.presentation.ui.screen.contact.overview.OverviewTab
 import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTab
+import com.empathy.ai.presentation.ui.screen.contact.persona.PersonaTabV2
 import com.empathy.ai.presentation.ui.screen.contact.summary.ConflictResolutionDialog
 import com.empathy.ai.presentation.ui.screen.contact.summary.DateRangePickerDialog
 import com.empathy.ai.presentation.ui.screen.contact.summary.ManualSummaryFab
@@ -574,18 +576,79 @@ private fun PersonaTabContent(
     uiState: ContactDetailUiState,
     onEvent: (ContactDetailUiEvent) -> Unit
 ) {
-    // 直接使用简化版PersonaTab，传递所有facts
-    PersonaTab(
-        facts = uiState.facts,
-        onFactClick = { fact ->
-            // 点击：编辑事实
-            onEvent(ContactDetailUiEvent.StartEditFact(fact))
-        },
-        onFactLongClick = { fact ->
-            // 长按：删除事实
-            onEvent(ContactDetailUiEvent.DeleteFactById(fact.id))
-        }
-    )
+    if (uiState.usePersonaTabV2) {
+        PersonaTabV2(
+            categories = uiState.factCategories,
+            searchState = uiState.personaSearchState,
+            editModeState = uiState.editModeState,
+            availableCategories = uiState.availableCategories,
+            isDarkMode = isSystemInDarkTheme(),
+            onSearchQueryChange = { query ->
+                onEvent(ContactDetailUiEvent.UpdatePersonaSearch(query))
+            },
+            onClearSearch = {
+                onEvent(ContactDetailUiEvent.ClearPersonaSearch)
+            },
+            onToggleCategoryExpand = { categoryKey ->
+                onEvent(ContactDetailUiEvent.ToggleCategoryExpand(categoryKey))
+            },
+            onFactClick = { factId ->
+                val fact = uiState.factCategories
+                    .asSequence()
+                    .flatMap { it.facts.asSequence() }
+                    .firstOrNull { it.id == factId }
+                if (fact != null) {
+                    onEvent(ContactDetailUiEvent.StartEditFact(fact))
+                }
+            },
+            onFactLongClick = { factId ->
+                onEvent(ContactDetailUiEvent.EnterEditMode(factId))
+            },
+            onToggleFactSelection = { factId ->
+                onEvent(ContactDetailUiEvent.ToggleFactSelection(factId))
+            },
+            onExitEditMode = {
+                onEvent(ContactDetailUiEvent.ExitEditMode)
+            },
+            onSelectAll = {
+                onEvent(ContactDetailUiEvent.SelectAllFacts)
+            },
+            onDeselectAll = {
+                onEvent(ContactDetailUiEvent.DeselectAllFacts)
+            },
+            onShowDeleteConfirm = {
+                onEvent(ContactDetailUiEvent.ShowBatchDeleteConfirm)
+            },
+            onHideDeleteConfirm = {
+                onEvent(ContactDetailUiEvent.HideBatchDeleteConfirm)
+            },
+            onConfirmDelete = {
+                onEvent(ContactDetailUiEvent.ConfirmBatchDelete)
+            },
+            onShowMoveDialog = {
+                onEvent(ContactDetailUiEvent.ShowBatchMoveDialog)
+            },
+            onHideMoveDialog = {
+                onEvent(ContactDetailUiEvent.HideBatchMoveDialog)
+            },
+            onConfirmMove = { targetCategory ->
+                onEvent(ContactDetailUiEvent.ConfirmBatchMove(targetCategory))
+            }
+        )
+    } else {
+        // 直接使用简化版PersonaTab，传递所有facts
+        PersonaTab(
+            facts = uiState.facts,
+            onFactClick = { fact ->
+                // 点击：编辑事实
+                onEvent(ContactDetailUiEvent.StartEditFact(fact))
+            },
+            onFactLongClick = { fact ->
+                // 长按：删除事实
+                onEvent(ContactDetailUiEvent.DeleteFactById(fact.id))
+            }
+        )
+    }
     
     // BUG-00066: 编辑事实对话框（画像标签页）
     if (uiState.showEditFactDialog && uiState.editingFact != null) {

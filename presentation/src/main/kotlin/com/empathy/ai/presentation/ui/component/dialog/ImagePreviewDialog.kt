@@ -58,7 +58,7 @@ class ImagePreviewDialog(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.parseColor("#CC000000"))
+            setBackgroundColor(Color.parseColor("#E6000000"))
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -67,12 +67,16 @@ class ImagePreviewDialog(
             }
         }
 
+        val displayMetrics = context.resources.displayMetrics
+        val horizontalPadding = (displayMetrics.widthPixels * 0.05f).toInt().coerceAtLeast(dpToPx(16))
+        val verticalPadding = (displayMetrics.heightPixels * 0.05f).toInt().coerceAtLeast(dpToPx(16))
+
         imageView = ImageView(context).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setPadding(dpToPx(32), dpToPx(32), dpToPx(32), dpToPx(32))
+            setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
             scaleType = ImageView.ScaleType.FIT_CENTER
             adjustViewBounds = true
         }
