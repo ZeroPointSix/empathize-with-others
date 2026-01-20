@@ -17,6 +17,7 @@ import com.empathy.ai.domain.usecase.DeleteBrainTagUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
 import com.empathy.ai.domain.usecase.GetBrainTagsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
+import com.empathy.ai.domain.usecase.RecordContactVisitUseCase
 import com.empathy.ai.domain.usecase.SaveBrainTagUseCase
 import com.empathy.ai.domain.usecase.SaveProfileUseCase
 import com.empathy.ai.domain.util.MemoryConstants
@@ -74,6 +75,7 @@ class ContactDetailViewModel @Inject constructor(
     private val saveBrainTagUseCase: SaveBrainTagUseCase,
     private val deleteBrainTagUseCase: DeleteBrainTagUseCase,
     private val saveProfileUseCase: SaveProfileUseCase,
+    private val recordContactVisitUseCase: RecordContactVisitUseCase,
     private val dailySummaryRepository: DailySummaryRepository
 ) : ViewModel() {
 
@@ -263,6 +265,9 @@ class ContactDetailViewModel @Inject constructor(
                             facts = profile.facts
                         )
                     }
+
+                    // Record visit without blocking the detail load.
+                    recordContactVisitUseCase(contactId)
 
                     // 加载标签
                     loadBrainTags(contactId)

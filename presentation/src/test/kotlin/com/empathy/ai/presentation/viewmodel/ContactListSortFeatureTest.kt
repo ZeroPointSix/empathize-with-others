@@ -12,6 +12,8 @@ import com.empathy.ai.domain.usecase.SortContactsUseCase
 import com.empathy.ai.domain.usecase.GetContactSearchHistoryUseCase
 import com.empathy.ai.domain.usecase.SaveContactSearchQueryUseCase
 import com.empathy.ai.domain.usecase.ClearContactSearchHistoryUseCase
+import com.empathy.ai.domain.usecase.ClearContactRecentHistoryUseCase
+import com.empathy.ai.domain.usecase.GetContactRecentHistoryUseCase
 import com.empathy.ai.presentation.ui.screen.contact.ContactListUiEvent
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -51,6 +53,8 @@ class ContactListSortFeatureTest {
     private lateinit var getContactSearchHistoryUseCase: GetContactSearchHistoryUseCase
     private lateinit var saveContactSearchQueryUseCase: SaveContactSearchQueryUseCase
     private lateinit var clearContactSearchHistoryUseCase: ClearContactSearchHistoryUseCase
+    private lateinit var getContactRecentHistoryUseCase: GetContactRecentHistoryUseCase
+    private lateinit var clearContactRecentHistoryUseCase: ClearContactRecentHistoryUseCase
 
     private val sampleContacts = listOf(
         ContactProfile(
@@ -93,6 +97,8 @@ class ContactListSortFeatureTest {
         getContactSearchHistoryUseCase = mockk()
         saveContactSearchQueryUseCase = mockk()
         clearContactSearchHistoryUseCase = mockk()
+        getContactRecentHistoryUseCase = mockk()
+        clearContactRecentHistoryUseCase = mockk()
     }
 
     @After
@@ -110,6 +116,8 @@ class ContactListSortFeatureTest {
         coEvery { getContactSearchHistoryUseCase() } returns Result.success(emptyList())
         coEvery { saveContactSearchQueryUseCase(any()) } returns Result.success(emptyList())
         coEvery { clearContactSearchHistoryUseCase() } returns Result.success(Unit)
+        coEvery { getContactRecentHistoryUseCase() } returns Result.success(emptyList())
+        coEvery { clearContactRecentHistoryUseCase() } returns Result.success(Unit)
 
         return ContactListViewModel(
             getAllContactsUseCase,
@@ -119,7 +127,9 @@ class ContactListSortFeatureTest {
             sortContactsUseCase,
             getContactSearchHistoryUseCase,
             saveContactSearchQueryUseCase,
-            clearContactSearchHistoryUseCase
+            clearContactSearchHistoryUseCase,
+            getContactRecentHistoryUseCase,
+            clearContactRecentHistoryUseCase
         )
     }
 
@@ -218,6 +228,8 @@ class ContactListSortFeatureTest {
         coEvery { getContactSearchHistoryUseCase() } returns Result.success(emptyList())
         coEvery { saveContactSearchQueryUseCase(any()) } returns Result.success(emptyList())
         coEvery { clearContactSearchHistoryUseCase() } returns Result.success(Unit)
+        coEvery { getContactRecentHistoryUseCase() } returns Result.success(emptyList())
+        coEvery { clearContactRecentHistoryUseCase() } returns Result.success(Unit)
 
         val viewModel = ContactListViewModel(
             getAllContactsUseCase,
@@ -227,7 +239,9 @@ class ContactListSortFeatureTest {
             sortContactsUseCase,
             getContactSearchHistoryUseCase,
             saveContactSearchQueryUseCase,
-            clearContactSearchHistoryUseCase
+            clearContactSearchHistoryUseCase,
+            getContactRecentHistoryUseCase,
+            clearContactRecentHistoryUseCase
         )
         testDispatcher.scheduler.advanceUntilIdle()
 

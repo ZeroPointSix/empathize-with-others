@@ -25,8 +25,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.ContactSortOption
 import com.empathy.ai.domain.model.Fact
@@ -114,6 +117,25 @@ fun ContactListScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // ========== 最近访问刷新逻辑 ==========
+    // 使用 LifecycleEventObserver 监听 ON_RESUME 事件
+    // 当页面从后台返回前台时，自动刷新最近访问列表
+    //
+    // 设计决策:
+    // - 使用 DisposableEffect 确保生命周期监听正确清理
+    // - ON_RESUME 比 LaunchedEffect(onResume) 更可靠
+    // - 从详情页返回联系人列表时触发刷新
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onEvent(ContactListUiEvent.RefreshRecentContacts)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     ContactListScreenContent(
         uiState = uiState,
@@ -233,6 +255,7 @@ private fun ContactListScreenContent(
                 else -> {
                     ContactListWithHeader(
                         contacts = uiState.displayContacts,
+                        recentContacts = uiState.recentContacts,
                         sortOption = uiState.sortOption,
                         isSortMenuExpanded = isSortMenuExpanded,
                         onSortMenuExpandedChange = { isSortMenuExpanded = it },
@@ -241,7 +264,8 @@ private fun ContactListScreenContent(
                         onSortOptionSelected = { option ->
                             isSortMenuExpanded = false
                             onEvent(ContactListUiEvent.UpdateSortOption(option))
-                        }
+                        },
+                        onClearRecentContacts = { onEvent(ContactListUiEvent.ClearRecentContacts) }
                     )
                 }
             }
@@ -373,12 +397,14 @@ private fun SortMenuItem(
 @Composable
 private fun ContactListWithHeader(
     contacts: List<ContactProfile>,
+    recentContacts: List<ContactProfile>,
     sortOption: ContactSortOption,
     isSortMenuExpanded: Boolean,
     onSortMenuExpandedChange: (Boolean) -> Unit,
     onContactClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     onSortOptionSelected: (ContactSortOption) -> Unit,
+    onClearRecentContacts: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimensions = AdaptiveDimensions.current
@@ -398,6 +424,19 @@ private fun ContactListWithHeader(
                 onSearchClick = onSearchClick,
                 onSortOptionSelected = onSortOptionSelected
             )
+        }
+
+        if (recentContacts.isNotEmpty()) {
+            item {
+                RecentContactsSection(
+                    contacts = recentContacts,
+                    onContactClick = onContactClick,
+                    onClearRecentContacts = onClearRecentContacts
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.height(dimensions.spacingSmall))
+            }
         }
 
         // 白色圆角卡片容器
@@ -453,6 +492,87 @@ private fun ContactList(
                 onClick = { onContactClick(contact.id) },
                 showDivider = index < contacts.size - 1
             )
+        }
+    }
+}
+
+/**
+ * 最近访问联系人区块
+ *
+ * ## 功能说明
+ * 展示用户最近访问的联系人列表，提供快速回访入口。
+ * 显示在联系人列表顶部，独立于主列表之外。
+ *
+ * ## 设计决策
+ * - **顶部独立区块**: 与主列表分离，提高可见性
+ * - **支持清空**: 提供"清空"按钮重置历史
+ * - **点击跳转**: 点击联系人直接进入详情页
+ *
+ * ## 数据来源
+ * 从 [ContactListUiState.recentContacts] 获取数据
+ * 数据由 [com.empathy.ai.domain.usecase.RecordContactVisitUseCase] 记录
+ *
+ * ## 关联文档
+ * - FREE-20260119: 最近访问联系人快捷入口
+ * - TE-00077: 最近访问联系人测试用例
+ *
+ * @param contacts 最近访问的联系人列表
+ * @param onContactClick 联系人点击事件
+ * @param onClearRecentContacts 清空历史事件
+ * @param modifier Modifier
+ */
+@Composable
+private fun RecentContactsSection(
+    contacts: List<ContactProfile>,
+    onContactClick: (String) -> Unit,
+    onClearRecentContacts: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimensions = AdaptiveDimensions.current
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(iOSBackground)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dimensions.spacingMedium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "最近访问",
+                fontSize = dimensions.fontSizeBody,
+                color = iOSTextSecondary,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onClearRecentContacts) {
+                Text(
+                    text = "清空",
+                    fontSize = dimensions.fontSizeBody,
+                    color = iOSBlue
+                )
+            }
+        }
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dimensions.spacingMedium),
+            shape = RoundedCornerShape(dimensions.cornerRadiusMedium),
+            color = iOSCardBackground,
+            shadowElevation = 1.dp
+        ) {
+            Column {
+                contacts.forEachIndexed { index, contact ->
+                    ContactListItem(
+                        contact = contact,
+                        onClick = { onContactClick(contact.id) },
+                        showDivider = index < contacts.size - 1
+                    )
+                }
+            }
         }
     }
 }

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.ContactSortOption
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
+import com.empathy.ai.domain.usecase.ClearContactRecentHistoryUseCase
+import com.empathy.ai.domain.usecase.GetContactRecentHistoryUseCase
 import com.empathy.ai.domain.usecase.GetContactSearchHistoryUseCase
 import com.empathy.ai.domain.usecase.DeleteContactUseCase
 import com.empathy.ai.domain.usecase.GetContactSortOptionUseCase
@@ -30,6 +32,7 @@ import javax.inject.Inject
  * - 联系人列表加载和分页
  * - 搜索过滤（按名称、标签、关系阶段）
  * - 搜索历史记录（最近搜索词）
+ * - 最近访问联系人（快速回访）
  * - 排序方式切换（姓名/最近互动/关系分数）
  * - 批量操作支持（删除、标签管理）
  * - 多选模式和全选功能
@@ -63,11 +66,16 @@ class ContactListViewModel @Inject constructor(
     private val sortContactsUseCase: SortContactsUseCase,
     private val getContactSearchHistoryUseCase: GetContactSearchHistoryUseCase,
     private val saveContactSearchQueryUseCase: SaveContactSearchQueryUseCase,
-    private val clearContactSearchHistoryUseCase: ClearContactSearchHistoryUseCase
+    private val clearContactSearchHistoryUseCase: ClearContactSearchHistoryUseCase,
+    private val getContactRecentHistoryUseCase: GetContactRecentHistoryUseCase,
+    private val clearContactRecentHistoryUseCase: ClearContactRecentHistoryUseCase
 ) : ViewModel() {
 
     // 私有可变状态（只能内部修改）
     private val _uiState = MutableStateFlow(ContactListUiState())
+
+    // Cache recent ids to preserve storage order for UI mapping.
+    private var recentContactIds: List<String> = emptyList()
 
     // 公开不可变状态（外部只读）
     val uiState: StateFlow<ContactListUiState> = _uiState.asStateFlow()
@@ -78,6 +86,8 @@ class ContactListViewModel @Inject constructor(
         loadSortOption()
         // 加载最近搜索历史，便于搜索模式快速回填
         loadSearchHistory()
+        // 加载最近访问联系人，用于列表顶部展示
+        loadRecentContacts()
         // loadSortOption 完成后会自动触发 loadContacts
     }
 
@@ -102,6 +112,8 @@ class ContactListViewModel @Inject constructor(
             is ContactListUiEvent.CancelSearch -> cancelSearch()
             is ContactListUiEvent.SaveSearchHistory -> saveSearchHistoryIfNeeded()
             is ContactListUiEvent.ClearSearchHistory -> clearSearchHistory()
+            is ContactListUiEvent.RefreshRecentContacts -> loadRecentContacts()
+            is ContactListUiEvent.ClearRecentContacts -> clearRecentContacts()
 
             // === 选择相关事件 ===
             is ContactListUiEvent.SelectContact -> selectContact(event.contactId)
@@ -150,10 +162,15 @@ class ContactListViewModel @Inject constructor(
                             contacts,
                             currentState.sortOption
                         )
+                        val recentContacts = resolveRecentContacts(
+                            contacts = contacts,
+                            recentIds = recentContactIds
+                        )
                         currentState.copy(
                             isLoading = false,
                             contacts = contacts,
                             filteredContacts = sortedContacts,
+                            recentContacts = recentContacts,
                             hasMore = contacts.size >= currentState.pageSize,
                             hasLoadedContacts = true,
                             error = null
@@ -496,6 +513,62 @@ class ContactListViewModel @Inject constructor(
                     _uiState.update { it.copy(searchHistory = emptyList()) }
                 }
         }
+    }
+
+    // === 最近访问相关方法 ===
+
+    private fun loadRecentContacts() {
+        viewModelScope.launch {
+            getContactRecentHistoryUseCase()
+                .onSuccess { history ->
+                    recentContactIds = history
+                    val currentContacts = _uiState.value.contacts
+                    _uiState.update {
+                        it.copy(
+                            recentContacts = resolveRecentContacts(
+                                contacts = currentContacts,
+                                recentIds = history
+                            )
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun clearRecentContacts() {
+        viewModelScope.launch {
+            clearContactRecentHistoryUseCase()
+                .onSuccess {
+                    recentContactIds = emptyList()
+                    _uiState.update { it.copy(recentContacts = emptyList()) }
+                }
+        }
+    }
+
+    /**
+     * 将最近访问的联系人ID列表解析为完整的联系人对象列表
+     *
+     * ## 功能说明
+     * - 从完整联系人列表中查找最近访问的联系人
+     * - 保持历史记录中的顺序
+     * - 自动过滤已删除的联系人
+     *
+     * ## 设计决策
+     * - 使用 associateBy 创建 ID→联系人 映射，提高查找效率
+     * - mapNotNull 自动过滤找不到的联系人（可能已删除）
+     * - 返回空列表当无数据时，简化 UI 处理
+     *
+     * @param contacts 完整联系人列表
+     * @param recentIds 最近访问的联系人ID列表
+     * @return 按访问顺序排列的联系人对象列表
+     */
+    private fun resolveRecentContacts(
+        contacts: List<ContactProfile>,
+        recentIds: List<String>
+    ): List<ContactProfile> {
+        if (contacts.isEmpty() || recentIds.isEmpty()) return emptyList()
+        val contactMap = contacts.associateBy { it.id }
+        return recentIds.mapNotNull { contactMap[it] }
     }
 
     // === 对话框管理方法 ===

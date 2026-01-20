@@ -22,7 +22,7 @@
 > 2026-01-20 更新 - 基于实际代码架构扫描
 >
 > 当前分支: explore/free-20260119
-> 当前版本: v1.12.3 (versionCode: 11203, dev阶段)
+> 当前版本: v1.13.0 (versionCode: 11300, dev阶段)
 > 数据库版本: Room v16
 
 ### 模块结构
@@ -62,7 +62,7 @@
 | `:presentation` | Android Library | Compose UI、ViewModel、Navigation、Theme | :domain |
 | `:app` | Application | 应用入口、Android服务、应用级DI模块 | :domain, :data, :presentation |
 
-**当前版本**: v1.1.0 (versionCode: 10101)
+**当前版本**: v1.13.0 (versionCode: 11300)
 **发布阶段**: dev
 **数据库版本**: Room v16
 
@@ -458,5 +458,5 @@ class ChatViewModel @Inject constructor(
 **最后更新**: 2026-01-20
 **更新内容**:
 - 更新当前分支为 explore/free-20260119
-- 同步最新版本号 v1.12.3
+- 同步最新版本号 v1.13.0
 - 基于实际代码扫描更新统计数据

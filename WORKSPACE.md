@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-18 22:19 | 更新者: Codex (PRD-00014 联系人画像界面升级补齐完成)
+> 最后更新: 2026-01-20 13:55 | 更新者: Codex (修复最近访问记录未触发)
 
 
 ## 📋 当前工作状态
@@ -17,6 +17,51 @@
 | BUG-00072-LOG | 截图失败日志埋点与排查 | Codex | 进行中 | P0 | 2026-01-17 09:43 | 2026-01-17 |
 
 ### 测试记录
+- 2026-01-20 13:54 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-20 13:54 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-20 13:54 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-20 13:53 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-20 13:50 `./gradlew :presentation:testDebugUnitTest --tests "*ContactDetailTabRecentVisitTest"` ✅（存在既有编译警告）
+- 2026-01-20 13:27 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-20 13:27 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-20 13:27 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-20 13:26 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-20 12:42 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-20 12:42 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-20 12:42 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-20 12:41 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-20 12:40 `./gradlew :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"` ✅（首次失败因 SDK 未配置，重试成功）
+- 2026-01-20 12:37 `./gradlew :domain:test --tests "*ContactRecentHistoryUseCaseTest" --tests "*RecordContactVisitUseCaseTest" --tests "*ClearContactRecentHistoryUseCaseTest"` ✅
+- 2026-01-20 12:30 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-20 12:30 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-20 12:29 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-20 12:28 清理 Medium_Phone.avd 锁文件 ✅
+- 2026-01-20 00:48 `emulator.exe -avd Medium_Phone -no-window -no-audio -no-boot-anim` ❌（设置 ANDROID_SDK_ROOT/ANDROID_HOME 后仍提示 "too many emulator instances"）
+- 2026-01-20 00:46 `emulator.exe -avd Medium_Phone -no-window -no-audio -no-boot-anim -no-snapshot -wipe-data -port 5558` ⚠️（进程启动但 adb 无设备，最终停止）
+- 2026-01-20 00:45 清理 AVD 锁文件与 test.avd 锁目录 ✅（仍未恢复设备）
+- 2026-01-20 00:06 `adb connect 192.0.2.1:7555` ❌（failed to connect；短暂显示 offline）
+- 2026-01-20 00:06 `adb devices -l` ⚠️（192.0.2.1:7555 offline）
+- 2026-01-20 00:06 `adb reconnect offline` ✅（提示重连 192.0.2.1:7555）
+- 2026-01-20 00:06 `adb devices -l` ❌（无设备）
+- 2026-01-20 00:02 `adb connect 127.0.0.1:5554` ❌（连接被拒绝）
+- 2026-01-20 00:02 `adb devices -l` ❌（无设备）
+- 2026-01-19 23:59 `adb reconnect` ❌（no devices/emulators found）
+- 2026-01-19 23:59 `adb devices -l` ❌（无设备）
+- 2026-01-19 23:59 `adb start-server` ✅；`adb kill-server` ✅（重启 adb）
+- 2026-01-19 23:55 `adb connect 127.0.0.1:7555` ❌（连接被拒绝）
+- 2026-01-19 23:55 `adb connect 127.0.0.1:5555` ❌（连接被拒绝）
+- 2026-01-19 23:55 `adb devices -l` ❌（无设备）
+- 2026-01-19 23:48 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ❌（device not found；adb devices 为空）
+- 2026-01-19 23:47 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）。
+- 2026-01-19 23:36 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅（进入人工验证准备态）
+- 2026-01-19 23:35 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅。
+- 2026-01-19 23:34 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）。
+- 2026-01-19 23:29 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅（进入人工验证准备态）
+- 2026-01-19 23:22 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）；23:23 `adb -s 3HMUN24A25G09044 install -r` ✅。
+- 2026-01-19 22:50 `./gradlew :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"` ✅（目标用例通过；编译警告为既有）
+- 2026-01-19 22:47 `./gradlew :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"` ✅（目标用例通过；编译警告为既有）
+- 2026-01-19 22:42 `./gradlew :presentation:test --tests "*ContactRecentContactsFeatureTest"` ❌（Android模块 test 任务不支持 --tests）
+- 2026-01-19 22:42 `./gradlew :domain:test --tests "*ContactRecentHistoryUseCaseTest" --tests "*RecordContactVisitUseCaseTest" --tests "*ClearContactRecentHistoryUseCaseTest"` ✅（有既有弃用/测试警告）
 - 2026-01-18 22:03 `./gradlew assembleDebug` ✅；22:04 `adb install -r` ✅（MuMu 设备 127.0.0.1:7555）。
 - 2026-01-18 21:38 MuMu(127.0.0.1:7555) 执行 `:presentation:connectedAndroidTest` 通过（FloatingViewV2PreviewTest 2/2，BUILD SUCCESSFUL）。
 - 2026-01-18 21:28 `ANDROID_SERIAL=127.0.0.1:7555` 运行 `:presentation:connectedAndroidTest` 成功（V2324HA 2/2 通过，仅该设备执行）。
@@ -28,6 +73,7 @@
 - 2026-01-18 23:12 `assembleDebug` 成功；MuMu 安装成功（`adb install -r -d`）。
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-19 - **FREE-00008 最近访问联系人快捷入口** - Codex - 相关文档: [FREE-20260119-最近访问联系人快捷入口](文档/开发文档/MA/FREE/FREE-20260119-最近访问联系人快捷入口.md)
 - [x] 2026-01-18 - **PRD-00014 联系人画像界面升级补齐** - Codex - 相关文档: [FEATURE-20260118-联系人画像界面升级补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-联系人画像界面升级补齐.md)
 - [x] 2026-01-18 - **PRD-00007 对话上下文连续性增强补齐** - Codex - 相关文档: [FEATURE-20260118-对话上下文连续性增强补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-对话上下文连续性增强补齐.md)
 - [x] 2026-01-18 - **PRD-00012 事实流内容编辑功能补齐** - Codex - 相关文档: [FEATURE-20260118-事实流编辑补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-事实流编辑补齐.md)
@@ -463,6 +509,77 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ## 📝 变更日志
+### 2026-01-20 - Codex (修复最近访问记录未触发)
+- 新详情页补齐最近访问记录逻辑，并新增单测覆盖。
+- 版本更新至 1.12.9，构建并安装到设备 3HMUN24A25G09044。
+- 修改的文件列表：
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/ContactDetailTabViewModel.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/ContactDetailTabRecentVisitTest.kt`
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/TE/TE-00077-最近访问联系人测试用例.md`
+  - `文档/开发文档/MA/FREE/FREE-20260119-最近访问联系人快捷入口.md`
+  - `WORKSPACE.md`
+  - `CODE_ANALYSIS/freedom-feature3/findings/got_graph_state.md`
+  - `CODE_ANALYSIS/freedom-feature3/findings/got_operations_log.md`
+  - `CODE_ANALYSIS/freedom-feature3/findings/got_nodes/1.md`
+  - `CODE_ANALYSIS/freedom-feature3/findings/got_nodes/2.md`
+  - `CODE_ANALYSIS/freedom-feature3/findings/got_nodes/3.md`
+### 2026-01-20 - Codex (重新构建并安装 1.12.8)
+- 版本更新至 1.12.8 并重新构建调试包。
+- 安装到设备 3HMUN24A25G09044 并启动主界面。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-20 - Codex (FREE-00008 测试/构建/安装复跑)
+- 版本更新至 1.12.7，重新运行最近访问相关单测。
+- `assembleDebug` 构建完成并安装到设备 3HMUN24A25G09044，启动主界面。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/TE/TE-00077-最近访问联系人测试用例.md`
+  - `WORKSPACE.md`
+### 2026-01-20 - Codex (FREE-00008 安装验证完成与报告重建)
+- 设备恢复后完成 1.12.6 APK 安装与启动验证。
+- 重建自由探索报告并补齐决策/测试记录。
+- 修改的文件列表：
+  - `文档/开发文档/MA/FREE/FREE-20260119-最近访问联系人快捷入口.md`
+  - `DECISION_JOURNAL.md`
+  - `文档/开发文档/TE/TE-00077-最近访问联系人测试用例.md`
+  - `WORKSPACE.md`
+### 2026-01-19 - Codex (FREE-00008 最近访问联系人快捷入口)
+- 新增最近访问联系人持久化与列表顶部展示，支持清空与返回刷新。
+- ContactDetailViewModel 记录访问；ContactListViewModel 读取并映射最新历史。
+- 版本：更新到 1.12.4（versionCode 11204），完成 Debug 构建与安装验证。
+- 版本：更新到 1.12.5（versionCode 11205），复跑 Debug 构建/安装并启动主界面。
+- 版本：更新到 1.12.6（versionCode 11206），Debug 构建完成；安装失败（设备未连接）。
+- 测试：`./gradlew :domain:test --tests "*ContactRecentHistoryUseCaseTest" --tests "*RecordContactVisitUseCaseTest" --tests "*ClearContactRecentHistoryUseCaseTest"` ✅；`./gradlew :presentation:test --tests "*ContactRecentContactsFeatureTest"` ❌（不支持 --tests）；`./gradlew :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"` ✅；`./gradlew assembleDebug` ✅；`adb -s 3HMUN24A25G09044 install -r` ✅。
+- 修改的文件列表：
+  - `domain/src/main/kotlin/com/empathy/ai/domain/repository/ContactRecentHistoryRepository.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/usecase/GetContactRecentHistoryUseCase.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/usecase/RecordContactVisitUseCase.kt`
+  - `domain/src/main/kotlin/com/empathy/ai/domain/usecase/ClearContactRecentHistoryUseCase.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/local/ContactRecentHistoryPreferences.kt`
+  - `data/src/main/kotlin/com/empathy/ai/data/di/RepositoryModule.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactListUiState.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactListUiEvent.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/ContactListViewModel.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/ui/screen/contact/ContactListScreen.kt`
+  - `presentation/src/main/kotlin/com/empathy/ai/presentation/viewmodel/ContactDetailViewModel.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/GetContactRecentHistoryUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/RecordContactVisitUseCaseTest.kt`
+  - `domain/src/test/kotlin/com/empathy/ai/domain/usecase/ClearContactRecentHistoryUseCaseTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/ContactRecentContactsFeatureTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/BUG00063ContactSearchTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/ContactListSortFeatureTest.kt`
+  - `presentation/src/test/kotlin/com/empathy/ai/presentation/viewmodel/ContactSearchHistoryFeatureTest.kt`
+  - `文档/开发文档/TE/TE-00077-最近访问联系人测试用例.md`
+  - `文档/开发文档/MA/FREE/FREE-20260119-最近访问联系人快捷入口.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
 ### 2026-01-18 - Codex (PRD-00014 联系人画像界面升级补齐)
 - 接入 PersonaTabV2 并默认启用，补齐事件映射与编辑路径。
 - 新增 GroupFacts/BatchDelete/BatchMove 用例单元测试，更新 TE-00014 测试指南。

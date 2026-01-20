@@ -7,9 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **共情AI助手 (Empathy AI)** - Android 隐私优先智能社交沟通辅助应用
 - **架构**: Clean Architecture + MVVM + Jetpack Compose
 - **语言**: Kotlin 2.0.21 (K2 Compiler)
-- **版本**: v1.12.3 (versionCode: 11203, Dev)
+- **版本**: v1.12.9 (versionCode: 11209, Dev)
 - **模块**: `:domain` | `:data` | `:presentation` | `:app`
 - **平台**: Android (minSdk 24, targetSdk 35)
+- **当前分支**: freedom-feature3
 
 ## 常用命令
 
@@ -24,7 +25,9 @@ gradlew.bat test               # 所有单元测试
 gradlew.bat :domain:test       # domain 模块测试
 gradlew.bat :presentation:test # presentation 模块测试
 gradlew.bat :data:test         # data 模块测试
+<<<<<<< HEAD
 gradlew.bat :presentation:testDebugUnitTest --tests "*.AiAdvisorChatViewModelTest"  # 运行单个测试类
+gradlew.bat :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"  # 运行单个测试
 gradlew.bat connectedAndroidTest # 仪器测试
 
 # 代码质量
@@ -37,8 +40,15 @@ gradlew.bat clean
 
 # AI 调试
 scripts\ai-debug.bat           # AI请求日志（简略）
+scripts\ai-debug.bat -h        # 获取最近100条AI日志
+scripts\ai-debug.bat -h -n 200 # 获取最近200条AI日志
 scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 ```
+
+**设备调试**:
+- MuMu 模拟器: `adb -s 192.0.2.1:7555`
+- OPPO 真机: `adb -s 3HMUN24A25G09044`
+- 清华同方测试机: `adb -s emulator-5556`
 
 ## 架构
 
@@ -88,7 +98,7 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 
 ## 数据库
 
-- **版本**: Room v16（16个增量迁移脚本）
+- **版本**: Room v16（16个增量迁移脚本 v1→v16）
 - **位置**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
 - **迁移**: `data/src/main/kotlin/com/empathy/ai/data/di/DatabaseModule.kt`
 - **核心表**:
@@ -116,6 +126,19 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 - **Codex**: Free Explorer（功能开发、Bug修复）
 - **Roo**: Review（代码审查）
 - **Kiro**: Code & Debug（代码与调试）
+- **Multi-Agent Explorer**: 独立工作树并行开发
+
+**工作树管理**:
+```bash
+# 创建新工作树
+git worktree add ../feature-branch main
+
+# 列出所有工作树
+git worktree list
+
+# 清理已合并的工作树
+git worktree prune
+```
 
 文档位置:
 - BUG 文档: `文档/开发文档/BUG/`
@@ -142,4 +165,8 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 - **导航系统**: `presentation/navigation/NavGraph.kt`, `presentation/navigation/NavRoutes.kt`
 - **DI配置**: `data/src/main/kotlin/com/empathy/ai/data/di/` (8个模块) + `app/src/main/java/com/empathy/ai/di/` (16个模块)
 - **数据库**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
+- **AI军师模块**: `presentation/ui/screen/advisor/`, `domain/model/AiAdvisor*.kt`
+- **悬浮窗服务**: `app/src/main/java/com/empathy/ai/service/FloatingWindowService.kt`
 - **AI调试**: `scripts/ai-debug.bat`, `scripts/ai-debug-full.bat`
+- **工作空间**: `WORKSPACE.md` (任务协调)
+- **决策日志**: `DECISION_JOURNAL.md` (功能开发记录)
