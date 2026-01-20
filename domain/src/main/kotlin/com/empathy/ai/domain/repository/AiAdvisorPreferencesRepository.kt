@@ -60,6 +60,38 @@ interface AiAdvisorPreferencesRepository {
     fun setLastSessionId(sessionId: String?)
 
     /**
+     * 获取指定会话的草稿内容
+     *
+     * 业务规则:
+     * - 返回null表示无草稿或草稿已清除
+     * - 草稿为空字符串时应视为无草稿
+     *
+     * @param sessionId 会话ID
+     * @return 草稿内容，或null
+     */
+    fun getDraft(sessionId: String): String?
+
+    /**
+     * 保存指定会话的草稿内容
+     *
+     * @param sessionId 会话ID
+     * @param draft 草稿内容
+     */
+    fun setDraft(sessionId: String, draft: String)
+
+    /**
+     * 清除指定会话的草稿内容
+     *
+     * @param sessionId 会话ID
+     */
+    fun clearDraft(sessionId: String)
+
+    /**
+     * 清除所有会话草稿
+     */
+    fun clearAllDrafts()
+
+    /**
      * 清除所有偏好设置
      *
      * 使用场景:

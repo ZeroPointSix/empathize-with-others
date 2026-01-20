@@ -7,7 +7,10 @@ import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
 import com.empathy.ai.domain.repository.SettingsRepository
+import com.empathy.ai.domain.usecase.ClearAllAdvisorDraftsUseCase
+import com.empathy.ai.domain.usecase.ClearAdvisorPreferencesUseCase
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.presentation.R
 import com.empathy.ai.presentation.ui.screen.settings.SettingsUiEvent
 import com.empathy.ai.presentation.ui.screen.settings.SettingsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -63,6 +66,8 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val floatingWindowPreferencesRepository: FloatingWindowPreferencesRepository,
     private val aiProviderRepository: AiProviderRepository,
+    private val clearAllAdvisorDraftsUseCase: ClearAllAdvisorDraftsUseCase,
+    private val clearAdvisorPreferencesUseCase: ClearAdvisorPreferencesUseCase,
     private val floatingWindowManager: FloatingWindowManager
 ) : AndroidViewModel(application) {
 
@@ -97,6 +102,9 @@ class SettingsViewModel @Inject constructor(
             is SettingsUiEvent.ShowClearDataDialog -> showClearDataDialog()
             is SettingsUiEvent.HideClearDataDialog -> hideClearDataDialog()
             is SettingsUiEvent.ClearAllData -> clearAllData()
+            is SettingsUiEvent.ShowClearAdvisorDraftsDialog -> showClearAdvisorDraftsDialog()
+            is SettingsUiEvent.HideClearAdvisorDraftsDialog -> hideClearAdvisorDraftsDialog()
+            is SettingsUiEvent.ClearAdvisorDrafts -> clearAdvisorDrafts()
             is SettingsUiEvent.ToggleFloatingWindow -> toggleFloatingWindow(event.displayId)
             is SettingsUiEvent.ToggleContinuousScreenshot -> toggleContinuousScreenshot()
             is SettingsUiEvent.ToggleScreenshotPermission -> toggleScreenshotPermission()
@@ -317,10 +325,52 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(showClearDataDialog = false) }
     }
 
+    private fun showClearAdvisorDraftsDialog() {
+        _uiState.update { it.copy(showClearAdvisorDraftsDialog = true) }
+    }
+
+    private fun hideClearAdvisorDraftsDialog() {
+        _uiState.update { it.copy(showClearAdvisorDraftsDialog = false) }
+    }
+
+    private fun clearAdvisorDrafts() {
+        viewModelScope.launch {
+            clearAllAdvisorDraftsUseCase()
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            showClearAdvisorDraftsDialog = false,
+                            successMessage = getApplication<Application>()
+                                .getString(R.string.settings_clear_advisor_drafts_success)
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            error = error.message
+                                ?.takeIf { it.isNotBlank() }
+                                ?: getApplication<Application>()
+                                    .getString(R.string.settings_clear_advisor_drafts_failed)
+                        )
+                    }
+                }
+        }
+    }
+
     private fun clearAllData() {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true, error = null) }
+
+                val clearPreferencesResult = clearAdvisorPreferencesUseCase()
+                if (clearPreferencesResult.isFailure) {
+                    android.util.Log.w("SettingsViewModel", "清除偏好失败", clearPreferencesResult.exceptionOrNull())
+                    clearAllAdvisorDraftsUseCase()
+                        .onFailure { error ->
+                            android.util.Log.w("SettingsViewModel", "清除草稿失败", error)
+                        }
+                }
 
                 val providers = _uiState.value.providersList
                 providers.forEach { provider ->

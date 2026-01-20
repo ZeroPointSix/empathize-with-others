@@ -99,6 +99,10 @@
     <string name="settings_prompt_check">安全检查指令</string>
     <string name="settings_prompt_extract">信息提取指令</string>
     <string name="settings_prompt_summary">每日总结指令</string>
+    <string name="settings_clear_advisor_drafts_title">清除 AI 军师草稿</string>
+    <string name="settings_clear_advisor_drafts_subtitle">不会影响会话记录</string>
+    <string name="settings_clear_advisor_drafts_message">确定要清除所有 AI 军师会话草稿吗？\n\n将被清除：\n• 未发送的草稿输入\n\n不会清除：\n• 已保存的会话记录\n• 联系人数据\n\n此操作不可恢复！</string>
+    <string name="settings_clear_advisor_drafts_confirm">确定清除</string>
     
     <!-- AI 分析设置 -->
     <string name="settings_history_count_title">历史对话条数</string>
@@ -134,6 +138,12 @@
     <string name="save">保存</string>
     <string name="cancel">取消</string>
     <string name="delete">删除</string>
+
+    <!-- AI军师草稿 -->
+    <string name="advisor_draft_restored_message">已恢复上次草稿</string>
+    <string name="advisor_draft_restored_ack">知道了</string>
+    <string name="settings_clear_advisor_drafts_success">AI 军师草稿已清除</string>
+    <string name="settings_clear_advisor_drafts_failed">清除草稿失败</string>
     
     <!-- 事实编辑 -->
     <string name="edit_fact_title">编辑事实</string>

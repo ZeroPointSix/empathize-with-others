@@ -5,7 +5,10 @@ import com.empathy.ai.domain.model.FloatingWindowState
 import com.empathy.ai.domain.repository.AiProviderRepository
 import com.empathy.ai.domain.repository.FloatingWindowPreferencesRepository
 import com.empathy.ai.domain.repository.SettingsRepository
+import com.empathy.ai.domain.usecase.ClearAllAdvisorDraftsUseCase
+import com.empathy.ai.domain.usecase.ClearAdvisorPreferencesUseCase
 import com.empathy.ai.domain.util.FloatingWindowManager
+import com.empathy.ai.presentation.R
 import com.empathy.ai.presentation.ui.screen.settings.SettingsUiEvent
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -57,6 +60,12 @@ class SettingsViewModelBug00070Test {
 
     @RelaxedMockK
     private lateinit var mockAiProviderRepository: AiProviderRepository
+
+    @MockK
+    private lateinit var mockClearAllAdvisorDraftsUseCase: ClearAllAdvisorDraftsUseCase
+
+    @MockK
+    private lateinit var mockClearAdvisorPreferencesUseCase: ClearAdvisorPreferencesUseCase
 
     @MockK
     private lateinit var mockFloatingWindowManager: FloatingWindowManager
@@ -250,6 +259,126 @@ class SettingsViewModelBug00070Test {
         assertEquals("截图权限已清除", viewModel.uiState.value.successMessage)
     }
 
+    @Test
+    fun `clear advisor drafts should clear data and show success message`() = runTest {
+        // Given
+        coEvery { mockClearAllAdvisorDraftsUseCase() } returns Result.success(Unit)
+        every {
+            mockApplication.getString(R.string.settings_clear_advisor_drafts_success)
+        } returns "AI 军师草稿已清除"
+        val viewModel = createViewModel()
+
+        // When
+        viewModel.onEvent(SettingsUiEvent.ShowClearAdvisorDraftsDialog)
+        viewModel.onEvent(SettingsUiEvent.ClearAdvisorDrafts)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { mockClearAllAdvisorDraftsUseCase() }
+        assertFalse(viewModel.uiState.value.showClearAdvisorDraftsDialog)
+        assertEquals("AI 军师草稿已清除", viewModel.uiState.value.successMessage)
+    }
+
+    @Test
+    fun `clear advisor drafts failure should show error message`() = runTest {
+        // Given
+        val error = IllegalStateException()
+        coEvery { mockClearAllAdvisorDraftsUseCase() } returns Result.failure(error)
+        every {
+            mockApplication.getString(R.string.settings_clear_advisor_drafts_failed)
+        } returns "清除草稿失败"
+        val viewModel = createViewModel()
+
+        // When
+        viewModel.onEvent(SettingsUiEvent.ShowClearAdvisorDraftsDialog)
+        viewModel.onEvent(SettingsUiEvent.ClearAdvisorDrafts)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { mockClearAllAdvisorDraftsUseCase() }
+        assertEquals("清除草稿失败", viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `clear advisor drafts failure should fallback when error message is blank`() = runTest {
+        // Given
+        val error = IllegalStateException("")
+        coEvery { mockClearAllAdvisorDraftsUseCase() } returns Result.failure(error)
+        every {
+            mockApplication.getString(R.string.settings_clear_advisor_drafts_failed)
+        } returns "清除草稿失败"
+        val viewModel = createViewModel()
+
+        // When
+        viewModel.onEvent(SettingsUiEvent.ShowClearAdvisorDraftsDialog)
+        viewModel.onEvent(SettingsUiEvent.ClearAdvisorDrafts)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals("清除草稿失败", viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `clear all data should clear advisor preferences`() = runTest {
+        // Given
+        coEvery { mockClearAdvisorPreferencesUseCase() } returns Result.success(Unit)
+        coEvery { mockSettingsRepository.setDataMaskingEnabled(true) } returns Result.success(Unit)
+        coEvery { mockSettingsRepository.setLocalFirstModeEnabled(true) } returns Result.success(Unit)
+        every { mockPreferencesRepository.saveEnabled(false) } just Runs
+        every { mockPreferencesRepository.saveContinuousScreenshotEnabled(false) } just Runs
+        val viewModel = createViewModel()
+
+        // When
+        viewModel.onEvent(SettingsUiEvent.ClearAllData)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { mockClearAdvisorPreferencesUseCase() }
+        assertEquals("所有设置已清除", viewModel.uiState.value.successMessage)
+    }
+
+    @Test
+    fun `clear all data should fallback to clear drafts when preferences fail`() = runTest {
+        // Given
+        coEvery { mockClearAdvisorPreferencesUseCase() } returns Result.failure(IllegalStateException("prefs fail"))
+        coEvery { mockClearAllAdvisorDraftsUseCase() } returns Result.success(Unit)
+        coEvery { mockSettingsRepository.setDataMaskingEnabled(true) } returns Result.success(Unit)
+        coEvery { mockSettingsRepository.setLocalFirstModeEnabled(true) } returns Result.success(Unit)
+        every { mockPreferencesRepository.saveEnabled(false) } just Runs
+        every { mockPreferencesRepository.saveContinuousScreenshotEnabled(false) } just Runs
+        val viewModel = createViewModel()
+
+        // When
+        viewModel.onEvent(SettingsUiEvent.ClearAllData)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { mockClearAdvisorPreferencesUseCase() }
+        coVerify { mockClearAllAdvisorDraftsUseCase() }
+        assertEquals("所有设置已清除", viewModel.uiState.value.successMessage)
+    }
+
+    @Test
+    fun `clear all data should succeed even when clear drafts fails`() = runTest {
+        // Given
+        coEvery { mockClearAdvisorPreferencesUseCase() } returns Result.failure(IllegalStateException("prefs fail"))
+        coEvery { mockClearAllAdvisorDraftsUseCase() } returns Result.failure(IllegalStateException("draft fail"))
+        coEvery { mockSettingsRepository.setDataMaskingEnabled(true) } returns Result.success(Unit)
+        coEvery { mockSettingsRepository.setLocalFirstModeEnabled(true) } returns Result.success(Unit)
+        every { mockPreferencesRepository.saveEnabled(false) } just Runs
+        every { mockPreferencesRepository.saveContinuousScreenshotEnabled(false) } just Runs
+        val viewModel = createViewModel()
+
+        // When
+        viewModel.onEvent(SettingsUiEvent.ClearAllData)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { mockClearAdvisorPreferencesUseCase() }
+        coVerify { mockClearAllAdvisorDraftsUseCase() }
+        assertEquals("所有设置已清除", viewModel.uiState.value.successMessage)
+    }
+
     // ==================== 多显示屏支持测试 ====================
 
     /**
@@ -325,6 +454,8 @@ class SettingsViewModelBug00070Test {
             mockSettingsRepository,
             mockPreferencesRepository,
             mockAiProviderRepository,
+            mockClearAllAdvisorDraftsUseCase,
+            mockClearAdvisorPreferencesUseCase,
             mockFloatingWindowManager
         )
     }

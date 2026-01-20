@@ -13,13 +13,17 @@ import com.empathy.ai.domain.model.StreamingState
 import com.empathy.ai.domain.model.TokenUsage
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
+import com.empathy.ai.domain.usecase.GetAdvisorDraftUseCase
 import com.empathy.ai.domain.usecase.DeleteAdvisorConversationUseCase
+import com.empathy.ai.domain.usecase.ClearAdvisorDraftUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorConversationsUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorSessionsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
+import com.empathy.ai.domain.usecase.SaveAdvisorDraftUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageStreamingUseCase
+import com.empathy.ai.presentation.R
 import com.empathy.ai.presentation.navigation.NavRoutes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -76,11 +80,17 @@ class AiAdvisorChatViewModel @Inject constructor(
     private val sendAdvisorMessageUseCase: SendAdvisorMessageUseCase,
     private val sendAdvisorMessageStreamingUseCase: SendAdvisorMessageStreamingUseCase,
     private val deleteAdvisorConversationUseCase: DeleteAdvisorConversationUseCase,
+    private val getAdvisorDraftUseCase: GetAdvisorDraftUseCase,
+    private val saveAdvisorDraftUseCase: SaveAdvisorDraftUseCase,
+    private val clearAdvisorDraftUseCase: ClearAdvisorDraftUseCase,
     private val aiAdvisorRepository: AiAdvisorRepository
 ) : ViewModel() {
 
     companion object {
         private const val TAG = "AiAdvisorChatViewModel"
+        private const val DRAFT_SAVE_DEBOUNCE_MS = 350L
+        private val DRAFT_RESTORED_MESSAGE_RES_ID = R.string.advisor_draft_restored_message
+        private const val DRAFT_RESTORED_AUTO_DISMISS_MS = 3000L
     }
 
     private val contactId: String = savedStateHandle[NavRoutes.AI_ADVISOR_CHAT_ARG_ID] ?: ""
@@ -93,6 +103,12 @@ class AiAdvisorChatViewModel @Inject constructor(
 
     /** conversations Flow收集Job，用于避免多个收集器冲突 - BUG-046修复 */
     private var conversationsJob: Job? = null
+
+    /** 草稿保存Job，避免频繁写入 */
+    private var draftSaveJob: Job? = null
+
+    /** 草稿恢复提示自动关闭Job */
+    private var draftRestoredMessageJob: Job? = null
 
     /** 是否启用流式模式（可配置） */
     private var useStreamingMode: Boolean = true
@@ -153,9 +169,12 @@ class AiAdvisorChatViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         sessions = sessions,
-                        currentSessionId = activeSession.id
+                        currentSessionId = activeSession.id,
+                        inputText = "",
+                        draftRestoredMessageResId = null
                     )
                 }
+                restoreDraftForSession(activeSession.id)
                 loadConversations(activeSession.id)
             }
         }.onFailure { error ->
@@ -199,7 +218,96 @@ class AiAdvisorChatViewModel @Inject constructor(
      * 更新输入文本
      */
     fun updateInput(text: String) {
-        _uiState.update { it.copy(inputText = text) }
+        draftRestoredMessageJob?.cancel()
+        draftRestoredMessageJob = null
+        _uiState.update { it.copy(inputText = text, draftRestoredMessageResId = null) }
+        queueDraftSave(text)
+    }
+
+    /**
+     * 延迟保存草稿，避免频繁写入
+     */
+    private fun queueDraftSave(text: String) {
+        val sessionId = _uiState.value.currentSessionId ?: return
+        draftSaveJob?.cancel()
+        draftSaveJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(DRAFT_SAVE_DEBOUNCE_MS)
+            persistDraft(sessionId, text)
+        }
+    }
+
+    /**
+     * 立即保存当前草稿（切换会话前调用）
+     */
+    private fun flushDraftSave() {
+        val sessionId = _uiState.value.currentSessionId ?: return
+        val text = _uiState.value.inputText
+        draftSaveJob?.cancel()
+        draftSaveJob = null
+        viewModelScope.launch {
+            persistDraft(sessionId, text)
+        }
+    }
+
+    private suspend fun persistDraft(sessionId: String, text: String) {
+        if (_uiState.value.currentSessionId != sessionId) return
+        if (text.isBlank()) {
+            clearAdvisorDraftUseCase(sessionId)
+                .onFailure { error -> android.util.Log.w(TAG, "clear draft failed", error) }
+        } else {
+            saveAdvisorDraftUseCase(sessionId, text)
+                .onFailure { error -> android.util.Log.w(TAG, "save draft failed", error) }
+        }
+    }
+
+    private fun clearDraftForSession(sessionId: String) {
+        draftSaveJob?.cancel()
+        draftSaveJob = null
+        viewModelScope.launch {
+            clearAdvisorDraftUseCase(sessionId)
+                .onFailure { error -> android.util.Log.w(TAG, "clear draft failed", error) }
+        }
+    }
+
+    private fun restoreDraftForSession(sessionId: String) {
+        viewModelScope.launch {
+            getAdvisorDraftUseCase(sessionId)
+                .onSuccess { draft ->
+                    val restoredDraft = draft?.takeIf { it.isNotBlank() } ?: return@onSuccess
+                    var shouldScheduleDismiss = false
+                    _uiState.update { state ->
+                        if (state.currentSessionId != sessionId) {
+                            state
+                        } else if (state.inputText.isNotBlank()) {
+                            state
+                        } else {
+                            shouldScheduleDismiss = true
+                            state.copy(
+                                inputText = restoredDraft,
+                                draftRestoredMessageResId = DRAFT_RESTORED_MESSAGE_RES_ID
+                            )
+                        }
+                    }
+                    if (shouldScheduleDismiss) {
+                        scheduleDraftRestoredMessageAutoDismiss(sessionId)
+                    }
+                }
+                .onFailure { error -> android.util.Log.w(TAG, "restore draft failed", error) }
+        }
+    }
+
+    private fun scheduleDraftRestoredMessageAutoDismiss(sessionId: String) {
+        draftRestoredMessageJob?.cancel()
+        draftRestoredMessageJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(DRAFT_RESTORED_AUTO_DISMISS_MS)
+            _uiState.update { state ->
+                if (state.currentSessionId == sessionId) {
+                    state.copy(draftRestoredMessageResId = null)
+                } else {
+                    state
+                }
+            }
+        }
     }
 
     /**
@@ -214,6 +322,8 @@ class AiAdvisorChatViewModel @Inject constructor(
         if (message.isEmpty() || currentState.isSending || currentState.isStreaming) return
 
         val sessionId = currentState.currentSessionId ?: return
+
+        clearDraftForSession(sessionId)
 
         if (useStreamingMode) {
             sendMessageStreaming(message, sessionId)
@@ -269,7 +379,8 @@ class AiAdvisorChatViewModel @Inject constructor(
                 thinkingContent = "",
                 thinkingElapsedMs = 0,
                 currentStreamingMessageId = null,
-                lastUserInput = message // BUG-048: 记录用户输入
+                lastUserInput = message, // BUG-048: 记录用户输入
+                draftRestoredMessageResId = null
             )
         }
 
@@ -365,7 +476,14 @@ class AiAdvisorChatViewModel @Inject constructor(
      */
     private fun sendMessageNonStreaming(message: String, sessionId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isSending = true, inputText = "", error = null) }
+            _uiState.update {
+                it.copy(
+                    isSending = true,
+                    inputText = "",
+                    error = null,
+                    draftRestoredMessageResId = null
+                )
+            }
 
             sendAdvisorMessageUseCase(contactId, sessionId, message).onSuccess {
                 _uiState.update { it.copy(isSending = false) }
@@ -822,7 +940,7 @@ class AiAdvisorChatViewModel @Inject constructor(
         viewModelScope.launch {
             // Delete failed/cancelled message and resend
             deleteAdvisorConversationUseCase(conversation.id)
-            _uiState.update { it.copy(inputText = conversation.content) }
+            updateInput(conversation.content)
             sendMessage()
         }
     }
@@ -836,6 +954,8 @@ class AiAdvisorChatViewModel @Inject constructor(
     fun switchSession(sessionId: String) {
         // BUG-044-P1-005: 先停止当前流式响应
         stopGeneration()
+
+        flushDraftSave()
         
         // BUG-046修复：取消conversations收集器
         conversationsJob?.cancel()
@@ -848,10 +968,13 @@ class AiAdvisorChatViewModel @Inject constructor(
                 streamingContent = "",
                 thinkingContent = "",
                 thinkingElapsedMs = 0,
+                inputText = "",
+                draftRestoredMessageResId = null,
                 error = null,
                 hasLoadedConversations = false
             )
         }
+        restoreDraftForSession(sessionId)
         loadConversations(sessionId)
     }
 
@@ -859,6 +982,7 @@ class AiAdvisorChatViewModel @Inject constructor(
      * 创建新会话
      */
     fun createNewSession(forContactId: String = contactId) {
+        flushDraftSave()
         viewModelScope.launch {
             createAdvisorSessionUseCase(forContactId).onSuccess { session ->
                 _uiState.update { currentState ->
@@ -866,9 +990,12 @@ class AiAdvisorChatViewModel @Inject constructor(
                         sessions = listOf(session) + currentState.sessions,
                         currentSessionId = session.id,
                         isLoading = false,
-                        hasLoadedConversations = false
+                        hasLoadedConversations = false,
+                        inputText = "",
+                        draftRestoredMessageResId = null
                     )
                 }
+                restoreDraftForSession(session.id)
                 loadConversations(session.id)
             }.onFailure { error ->
                 _uiState.update {
@@ -890,6 +1017,7 @@ class AiAdvisorChatViewModel @Inject constructor(
      * - 如果不存在空会话，创建新会话
      */
     fun createNewSessionFromNavigation() {
+        flushDraftSave()
         viewModelScope.launch {
             // 先清空当前对话状态
             _uiState.update { currentState ->
@@ -900,7 +1028,9 @@ class AiAdvisorChatViewModel @Inject constructor(
                     thinkingContent = "",
                     currentStreamingMessageId = null,
                     isLoading = true,
-                    hasLoadedConversations = false
+                    hasLoadedConversations = false,
+                    inputText = "",
+                    draftRestoredMessageResId = null
                 )
             }
             
@@ -912,9 +1042,12 @@ class AiAdvisorChatViewModel @Inject constructor(
                         currentState.copy(
                             currentSessionId = emptySession.id,
                             isLoading = false,
-                            hasLoadedConversations = false
+                            hasLoadedConversations = false,
+                            inputText = "",
+                            draftRestoredMessageResId = null
                         )
                     }
+                    restoreDraftForSession(emptySession.id)
                     // 重新加载会话列表以确保UI同步
                     loadSessions(contactId)
                 } else {
@@ -925,9 +1058,12 @@ class AiAdvisorChatViewModel @Inject constructor(
                                 sessions = listOf(session) + currentState.sessions,
                                 currentSessionId = session.id,
                                 isLoading = false,
-                                hasLoadedConversations = false
+                                hasLoadedConversations = false,
+                                inputText = "",
+                                draftRestoredMessageResId = null
                             )
                         }
+                        restoreDraftForSession(session.id)
                         // 加载新会话的对话（应该是空的）
                         loadConversations(session.id)
                     }.onFailure { error ->
@@ -946,9 +1082,12 @@ class AiAdvisorChatViewModel @Inject constructor(
                         currentState.copy(
                             sessions = listOf(session) + currentState.sessions,
                             currentSessionId = session.id,
-                            isLoading = false
+                            isLoading = false,
+                            inputText = "",
+                            draftRestoredMessageResId = null
                         )
                     }
+                    restoreDraftForSession(session.id)
                     loadConversations(session.id)
                 }.onFailure { createError ->
                     _uiState.update {
@@ -970,6 +1109,7 @@ class AiAdvisorChatViewModel @Inject constructor(
      * @param sessionId 要加载的会话ID
      */
     fun loadSessionById(sessionId: String) {
+        flushDraftSave()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
@@ -979,9 +1119,12 @@ class AiAdvisorChatViewModel @Inject constructor(
                         currentState.copy(
                             currentSessionId = session.id,
                             isLoading = false,
-                            hasLoadedConversations = false
+                            hasLoadedConversations = false,
+                            inputText = "",
+                            draftRestoredMessageResId = null
                         )
                     }
+                    restoreDraftForSession(session.id)
                     // 加载该会话的对话内容
                     loadConversations(session.id)
                     // 同时加载会话列表以保持UI同步
@@ -1042,6 +1185,7 @@ class AiAdvisorChatViewModel @Inject constructor(
      */
     fun confirmSwitch() {
         val pendingId = _uiState.value.pendingContactId ?: return
+        flushDraftSave()
         _uiState.update {
             it.copy(
                 showSwitchConfirmDialog = false,
@@ -1081,6 +1225,12 @@ class AiAdvisorChatViewModel @Inject constructor(
      */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearDraftRestoredMessage() {
+        draftRestoredMessageJob?.cancel()
+        draftRestoredMessageJob = null
+        _uiState.update { it.copy(draftRestoredMessageResId = null) }
     }
 
     /**
@@ -1139,6 +1289,7 @@ class AiAdvisorChatViewModel @Inject constructor(
  * @property thinkingElapsedMs 思考耗时（毫秒）
  * @property currentStreamingMessageId 当前流式消息ID
  * @property lastTokenUsage 最后一次Token使用统计
+ * @property draftRestoredMessageResId 草稿恢复提示文案资源ID
  */
 data class AiAdvisorChatUiState(
     val isLoading: Boolean = false,
@@ -1165,5 +1316,6 @@ data class AiAdvisorChatUiState(
     // BUG-048新增：记录最后一次用户输入，用于重新生成时避免消息角色混淆
     val lastUserInput: String = "",
     // BUG-00069: 等待首次对话加载完成，避免空状态闪现
-    val hasLoadedConversations: Boolean = false
+    val hasLoadedConversations: Boolean = false,
+    val draftRestoredMessageResId: Int? = null
 )

@@ -17,8 +17,8 @@
 
 > 项目已完成Clean Architecture多模块改造
 >
-> 当前分支: **freedom-feature3**
-> 当前版本: **v1.12.9** (versionCode: 11209, dev阶段)
+> 当前分支: explore/free-20260119
+> 当前版本: v1.13.0 (versionCode: 11300, dev阶段)
 > 数据库版本: Room v16
 
 ### 模块配置（基于实际代码）
@@ -338,6 +338,6 @@ implementation("androidx.core:core-ktx:1.15.0")
 **文档版本**: 3.8
 **最后更新**: 2026-01-20
 **更新内容**:
-- 更新当前分支为 freedom-feature3
-- 同步最新版本号 v1.12.9
+- 更新当前分支为 explore/free-20260119
+- 同步最新版本号 v1.13.0
 - 基于实际代码扫描更新技术栈

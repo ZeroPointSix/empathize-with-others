@@ -44,6 +44,7 @@ import com.empathy.ai.domain.model.AiProvider
  * @property hasScreenshotPermission 是否已缓存截图权限
  * @property showProviderDialog 是否显示服务商选择对话框
  * @property showClearDataDialog 是否显示清除数据确认对话框
+ * @property showClearAdvisorDraftsDialog 是否显示清除AI军师草稿确认对话框
  * @property showPermissionDialog 是否显示悬浮窗权限请求对话框
  * @property pendingPermissionRequest 是否需要触发权限请求（ViewModel → UI）
  * @property pendingScreenshotPermissionRequest 是否需要触发截图权限请求（ViewModel → UI）
@@ -83,6 +84,7 @@ data class SettingsUiState(
     // 交互状态
     val showProviderDialog: Boolean = false,
     val showClearDataDialog: Boolean = false,
+    val showClearAdvisorDraftsDialog: Boolean = false,
     val showPermissionDialog: Boolean = false,
 
     // 权限请求

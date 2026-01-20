@@ -25,12 +25,15 @@ gradlew.bat test               # 所有单元测试
 gradlew.bat :domain:test       # domain 模块测试
 gradlew.bat :presentation:test # presentation 模块测试
 gradlew.bat :data:test         # data 模块测试
+<<<<<<< HEAD
+gradlew.bat :presentation:testDebugUnitTest --tests "*.AiAdvisorChatViewModelTest"  # 运行单个测试类
 gradlew.bat :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"  # 运行单个测试
 gradlew.bat connectedAndroidTest # 仪器测试
 
 # 代码质量
 gradlew.bat lint               # Lint 检查
 gradlew.bat ktlintCheck        # 代码风格检查
+gradlew.bat ktlintFormat       # 自动修复代码风格
 
 # 清理
 gradlew.bat clean
@@ -50,10 +53,10 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 ## 架构
 
 ```
-:app/           -> Application 入口、Service、通知、应用级DI (16个模块)
-:presentation/  -> Compose UI、ViewModel、Navigation、Theme (依赖 :domain)
 :domain/        -> 纯 Kotlin 业务逻辑、UseCase、Repository 接口 (无 Android 依赖)
 :data/          -> Room DB、Retrofit、Repository 实现、DI模块 (8个模块)
+:presentation/  -> Compose UI、ViewModel、Navigation、Theme (依赖 :domain)
+:app/           -> Application 入口、Service、通知、应用级DI (16个模块)
 ```
 
 **依赖规则**: `app` -> `data`/`presentation` -> `domain`。`domain` 层**严禁**依赖 Android SDK。
@@ -65,7 +68,7 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 1. **状态管理**: 使用 `StateFlow` + `data class UiState`，Compose 中避免直接使用 `mutableStateOf`
 2. **错误处理**: 统一使用 `Result<T>`
 3. **协程**: ViewModel 用 `viewModelScope`，Compose 用 `rememberCoroutineScope`，**严禁**使用 `GlobalScope`
-4. **数据库**: Room Schema 变更必须伴随 Migration 脚本 (`MIGRATION_x_y`) 和测试
+4. **数据库**: Room Schema 变更必须伴随 Migration 脚本 (`MIGRATION_x_y`) 和测试，迁移测试位于 `app/src/androidTest-disabled/java/...DatabaseMigrationTest.kt`
 5. **UI 组件**: 优先复用 `presentation/ui/component/` 下的现有组件，使用 `Ios*` 组件保持 iOS 风格一致性
 6. **文档语言**: 所有文档和回答必须使用中文（代码注释保持英文）
 
@@ -81,7 +84,7 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 
 | 类别 | 技术 | 版本 |
 |------|------|------|
-| 构建 | Gradle | 8.13 |
+| 构建 | Gradle | 8.7 |
 | 编译 | AGP | 8.7.3 |
 | 语言 | Kotlin | 2.0.21 |
 | DI | Hilt | 2.52 |
@@ -160,7 +163,7 @@ git worktree prune
 - **版本管理**: `config/version-history.json`, `buildSrc/src/main/kotlin/com/empathy/ai/build/VersionUpdatePlugin.kt`
 - **依赖声明**: `gradle/libs.versions.toml`
 - **导航系统**: `presentation/navigation/NavGraph.kt`, `presentation/navigation/NavRoutes.kt`
-- **DI配置**: `app/src/main/java/com/empathy/ai/di/` (16个模块)
+- **DI配置**: `data/src/main/kotlin/com/empathy/ai/data/di/` (8个模块) + `app/src/main/java/com/empathy/ai/di/` (16个模块)
 - **数据库**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
 - **AI军师模块**: `presentation/ui/screen/advisor/`, `domain/model/AiAdvisor*.kt`
 - **悬浮窗服务**: `app/src/main/java/com/empathy/ai/service/FloatingWindowService.kt`

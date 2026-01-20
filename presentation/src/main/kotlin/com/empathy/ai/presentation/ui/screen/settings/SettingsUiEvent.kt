@@ -61,6 +61,21 @@ sealed interface SettingsUiEvent {
      */
     data object ClearAllData : SettingsUiEvent
 
+    /**
+     * 显示清除AI军师草稿对话框
+     */
+    data object ShowClearAdvisorDraftsDialog : SettingsUiEvent
+
+    /**
+     * 隐藏清除AI军师草稿对话框
+     */
+    data object HideClearAdvisorDraftsDialog : SettingsUiEvent
+
+    /**
+     * 清除AI军师草稿
+     */
+    data object ClearAdvisorDrafts : SettingsUiEvent
+
     // === 悬浮窗事件 ===
     
     /**

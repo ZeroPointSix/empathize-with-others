@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.empathy.ai.domain.model.PromptScene
 import com.empathy.ai.domain.util.FloatingWindowManager
 import com.empathy.ai.domain.util.MediaProjectionPermissionConstants
+import com.empathy.ai.presentation.R
 import com.empathy.ai.presentation.navigation.NavRoutes
 import com.empathy.ai.presentation.navigation.PromptEditorRoutes
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
@@ -475,6 +477,14 @@ private fun SettingsScreenContent(
                 IOSSettingsSection(title = "数据管理") {
                     IOSSettingsItem(
                         icon = Icons.Default.Delete,
+                        iconBackgroundColor = iOSPurple,
+                        title = stringResource(R.string.settings_clear_advisor_drafts_title),
+                        subtitle = stringResource(R.string.settings_clear_advisor_drafts_subtitle),
+                        showDivider = true,
+                        onClick = { onEvent(SettingsUiEvent.ShowClearAdvisorDraftsDialog) }
+                    )
+                    IOSSettingsItem(
+                        icon = Icons.Default.Delete,
                         iconBackgroundColor = iOSRed,
                         title = "清除所有设置",
                         showDivider = false,
@@ -528,6 +538,19 @@ private fun SettingsScreenContent(
                 dismissText = "取消",
                 onConfirm = { onEvent(SettingsUiEvent.ClearAllData) },
                 onDismiss = { onEvent(SettingsUiEvent.HideClearDataDialog) },
+                isDestructive = true,
+                showDismissButton = true
+            )
+        }
+
+        if (uiState.showClearAdvisorDraftsDialog) {
+            IOSAlertDialog(
+                title = stringResource(R.string.settings_clear_advisor_drafts_title),
+                message = stringResource(R.string.settings_clear_advisor_drafts_message),
+                confirmText = stringResource(R.string.settings_clear_advisor_drafts_confirm),
+                dismissText = stringResource(R.string.btn_cancel),
+                onConfirm = { onEvent(SettingsUiEvent.ClearAdvisorDrafts) },
+                onDismiss = { onEvent(SettingsUiEvent.HideClearAdvisorDraftsDialog) },
                 isDestructive = true,
                 showDismissButton = true
             )
