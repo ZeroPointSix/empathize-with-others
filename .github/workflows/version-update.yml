@@ -282,31 +282,42 @@ jobs:
 
             # 按类型分组显示提交
             NOTES+="#### ✨ 新功能\n"
-            git log ${PREV_TAG}..HEAD --oneline --grep="^feat" --no-merges || true
+            FEAT_LOGS=$(git log ${PREV_TAG}..HEAD --oneline --grep="^feat" --no-merges || true)
+            if [ -n "$FEAT_LOGS" ]; then
+              NOTES+="$FEAT_LOGS\n"
+            else
+              NOTES+="- 无\n"
+            fi
             NOTES+="\n"
 
             NOTES+="#### 🐛 问题修复\n"
-            git log ${PREV_TAG}..HEAD --oneline --grep="^fix" --no-merges || true
+            FIX_LOGS=$(git log ${PREV_TAG}..HEAD --oneline --grep="^fix" --no-merges || true)
+            if [ -n "$FIX_LOGS" ]; then
+              NOTES+="$FIX_LOGS\n"
+            else
+              NOTES+="- 无\n"
+            fi
             NOTES+="\n"
 
             NOTES+="#### 🔧 其他变更\n"
-            git log ${PREV_TAG}..HEAD --oneline --grep="^chore" --no-merges || true
-            git log ${PREV_TAG}..HEAD --oneline --grep="^docs" --no-merges || true
-            git log ${PREV_TAG}..HEAD --oneline --no-merges \
+            OTHER_LOGS=$(git log ${PREV_TAG}..HEAD --oneline --no-merges \
               --grep="^feat" --invert-grep \
-              --grep="^fix" --invert-grep \
-              --grep="^chore" --invert-grep \
-              --grep="^docs" --invert-grep || true
+              --grep="^fix" --invert-grep || true)
+            if [ -n "$OTHER_LOGS" ]; then
+              NOTES+="$OTHER_LOGS\n"
+            else
+              NOTES+="- 无\n"
+            fi
             NOTES+="\n"
 
             NOTES+="#### 📊 完整提交列表\n"
-            git log ${PREV_TAG}..HEAD --oneline --no-merges || true
+            NOTES+="$(git log ${PREV_TAG}..HEAD --oneline --no-merges || true)\n"
           else
             # 没有上一个版本标签，显示所有提交
             NOTES="## 🎉 发布 v$VERSION\n\n"
             NOTES+="### 📝 变更内容\n\n"
             NOTES+="#### 📊 提交列表\n"
-            git log HEAD --oneline -20 || true
+            NOTES+="$(git log HEAD --oneline -20 || true)\n"
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
