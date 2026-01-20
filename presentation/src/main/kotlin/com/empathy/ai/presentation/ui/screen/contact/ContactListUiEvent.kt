@@ -63,6 +63,18 @@ sealed interface ContactListUiEvent {
      */
     data object ClearSearchHistory : ContactListUiEvent
 
+    // === 最近访问相关事件 ===
+
+    /**
+     * 刷新最近访问联系人
+     */
+    data object RefreshRecentContacts : ContactListUiEvent
+
+    /**
+     * 清空最近访问联系人
+     */
+    data object ClearRecentContacts : ContactListUiEvent
+
     // === 选择相关事件 ===
 
     /**

@@ -1,11 +1,116 @@
 {
     "currentVersion": {
-        "version": "1.12.3",
-        "versionCode": 11203,
+        "version": "1.13.0",
+        "versionCode": 11300,
         "stage": "dev",
-        "updatedAt": "2026-01-18T13:57:34.7532298Z"
+        "updatedAt": "2026-01-20T07:43:01.528543800Z"
     },
     "history": [
+        {
+            "version": "1.13.0",
+            "versionCode": 11300,
+            "stage": "dev",
+            "date": "2026-01-20T07:43:01.528543800Z",
+            "commits": [
+                "更新项目文档至v3.7并修复状态管理问题",
+                "update persona tab, context limits, tests",
+                "align tests and validation mapping",
+                "实现联系人搜索历史功能 (FREE-20260118)",
+                "补齐截图预览交互细节与测试 (PRD-00036)",
+                "生成完整的 Release 说明包含所有提交变更",
+                "更新版本号到 1.12.0",
+                "remove skip ci from version update",
+                "更新版本号到 1.12.0 [skip ci]",
+                "更新版本号到 1.12.0 [skip ci]",
+                "替换测试数据为RFC标准示例以符合安全合规",
+                "添加免责声明和数据安全说明到 README"
+            ],
+            "changelog": "### ✨ 新功能\n- update persona tab, context limits, tests\n- 实现联系人搜索历史功能 (FREE-20260118)\n- 补齐截图预览交互细节与测试 (PRD-00036)\n\n### 🐛 Bug修复\n- align tests and validation mapping\n- 生成完整的 Release 说明包含所有提交变更\n\n### 📝 文档更新\n- 更新项目文档至v3.7并修复状态管理问题\n- 添加免责声明和数据安全说明到 README\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.0\n- 🔧 remove skip ci from version update\n- 🔧 更新版本号到 1.12.0 [skip ci]\n- 🔧 更新版本号到 1.12.0 [skip ci]\n- 🔧 替换测试数据为RFC标准示例以符合安全合规"
+        },
+        {
+            "version": "1.12.9",
+            "versionCode": 11209,
+            "stage": "dev",
+            "date": "2026-01-20T05:54:31.6314324Z",
+            "commits": [
+                "修复联系人详情新标签页未记录最近访问的问题",
+                "新增 ContactDetailTabRecentVisitTest 单测",
+                "运行 ContactDetailTabRecentVisitTest",
+                "构建调试包（assembleDebug）",
+                "安装调试包到设备 3HMUN24A25G09044",
+                "启动主界面 MainActivity",
+                "更新版本号到 1.12.9 [local build]"
+            ],
+            "changelog": "### 🐛 问题修复\n- 联系人详情新标签页补齐最近访问记录\n\n### 🧪 测试\n- 新增 ContactDetailTabRecentVisitTest\n- 运行 ContactDetailTabRecentVisitTest\n\n### 🧪 构建与安装\n- 构建调试包（assembleDebug）\n- 安装调试包到设备 3HMUN24A25G09044\n- 启动主界面 MainActivity\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.9 [local build]"
+        },
+        {
+            "version": "1.12.8",
+            "versionCode": 11208,
+            "stage": "dev",
+            "date": "2026-01-20T05:25:24.6646675Z",
+            "commits": [
+                "构建调试包（assembleDebug）",
+                "安装调试包到设备 3HMUN24A25G09044",
+                "启动主界面 MainActivity",
+                "更新版本号到 1.12.8 [local build]"
+            ],
+            "changelog": "### 🧪 构建与安装\n- 构建调试包（assembleDebug）\n- 安装调试包到设备 3HMUN24A25G09044\n- 启动主界面 MainActivity\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.8 [local build]"
+        },
+        {
+            "version": "1.12.7",
+            "versionCode": 11207,
+            "stage": "dev",
+            "date": "2026-01-20T04:41:48.4091979Z",
+            "commits": [
+                "重新运行最近访问用例单测（domain 3 项）",
+                "重新运行 ContactRecentContactsFeatureTest（首次失败：SDK 未配置，重试成功）",
+                "构建调试包（assembleDebug）",
+                "安装调试包到设备 3HMUN24A25G09044",
+                "启动主界面 MainActivity",
+                "更新版本号到 1.12.7 [local build]"
+            ],
+            "changelog": "### 🧪 测试\n- 重新运行最近访问用例单测（domain 3 项）\n- 重新运行 ContactRecentContactsFeatureTest（首次失败：SDK 未配置，重试成功）\n\n### 🧪 构建与安装\n- 构建调试包（assembleDebug）\n- 安装调试包到设备 3HMUN24A25G09044\n- 启动主界面 MainActivity\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.7 [local build]"
+        },
+        {
+            "version": "1.12.6",
+            "versionCode": 11206,
+            "stage": "dev",
+            "date": "2026-01-19T15:42:39.3715439Z",
+            "commits": [
+                "再次构建调试包（最近访问联系人复核）",
+                "安装调试包失败（设备缺失）",
+                "尝试连接本地模拟器失败（仍无设备）",
+                "重启 adb 并 reconnect 失败（仍无设备）",
+                "尝试连接 5554 端口失败（仍无设备）",
+                "尝试连接 192.0.2.1:7555 失败（仍无设备）",
+                "更新版本号到 1.12.6 [local build]"
+            ],
+            "changelog": "### 🧪 测试\n- 再次构建调试包（最近访问联系人复核）\n- 安装调试包失败（设备缺失）\n- 尝试连接本地模拟器失败（仍无设备）\n- 重启 adb 并 reconnect 失败（仍无设备）\n- 尝试连接 5554 端口失败（仍无设备）\n- 尝试连接 192.0.2.1:7555 失败（仍无设备）\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.6 [local build]"
+        },
+        {
+            "version": "1.12.5",
+            "versionCode": 11205,
+            "stage": "dev",
+            "date": "2026-01-19T15:29:42.598704Z",
+            "commits": [
+                "重复构建并安装调试包（最近访问联系人复核）",
+                "更新版本号到 1.12.5 [local build]"
+            ],
+            "changelog": "### 🧪 测试\n- 重复构建并安装调试包（最近访问联系人复核）\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.5 [local build]"
+        },
+        {
+            "version": "1.12.4",
+            "versionCode": 11204,
+            "stage": "dev",
+            "date": "2026-01-19T15:21:55.898068Z",
+            "commits": [
+                "FREE-00008 最近访问联系人快捷入口",
+                "补充最近访问测试用例与文档",
+                "构建并安装调试包（最近访问联系人验证）",
+                "更新版本号到 1.12.4 [local build]"
+            ],
+            "changelog": "### ✨ 新功能\n- 新增联系人列表最近访问快捷入口（顶部区块+清空+返回刷新）\n\n### 🧪 测试\n- 新增最近访问相关用例测试与 TE-00077\n\n### 📝 文档更新\n- 更新自由探索报告与决策日志\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.12.4 [local build]\n- 🔧 构建并安装调试包（最近访问联系人验证）"
+        },
         {
             "version": "1.12.3",
             "versionCode": 11203,
@@ -885,16 +990,6 @@
                 "重组项目文档结构，将历史文档迁移至历史文档目录"
             ],
             "changelog": "### ✨ 新功能\n- **multi-agent-explorer**: 引入决策日志(Decision Journal)机制并增强智能体工作流\n- **ma**: 引入 Task Runner 智能体及诚实性监督体系\n- 实现iOS风格对话框组件并优化响应式字体适配系统\n- 更新项目文档与统计信息\n- **ui**: 优化悬浮球UI为iOS风格设计并添加开发调试工具\n- 重构用户画像界面为iOS风格并添加代码分析技能支持\n- **TD-00021**: 实现AI配置页面iOS风格UI优化\n- 实现PRD-00021设置界面UI优化设计稿和文档体系\\n\\n- 创建iOS风格的设置界面HTML设计稿（AI配置、添加服务商、个人画像）\\n- 建立完整的PRD-00021文档体系（PRD、FD、TDD、CN、RE、TD）\\n- 删除过时的.specify配置目录和临时文件\\n- 准备iOS风格UI组件（IOSLargeNavigationBar、IOSProviderItem）\\n\\n这些变更为设置界面UI优化项目提供了完整的设计参考和实施指南，\\n确保后续开发能够严格按照iOS风格规范进行实现。\n- UI/UX系统化改进与联系人详情页优化\n- 实现对话主题功能(TD-00016) - 完整的五层架构实现\n- 实现用户画像系统完整功能\n- 实现用户画像系统完整功能\n- 完成TD-00010悬浮球状态指示与拖动功能，修复BUG-00014/BUG-00015\n- 添加悬浮窗功能重构完整设计文档集\n- 优化AI回复质量与人设，清理冗余测试代码\n- 提示词管理系统全面实现与项目文档刷新\n- 实现对话记录编辑功能与AI上下文传递调试优化\n- 完成悬浮窗功能完整设计文档并优化项目文档结构\n- 完成悬浮窗功能完整设计文档\n\n### 🐛 Bug修复\n- 完成BUG-00038 UI交互与适配问题系统性修复V2\n- 修复悬浮窗首次启动不显示问题\n\n### ♻️ 代码重构\n- 重构技能体系并更新项目统计文档\n- 代码简洁化重构与配置优化\n- 完成Clean Architecture多模块改造(TD-00017 65/65)\n\n### 📝 文档更新\n- 提交多智能体探索报告作为主分支参考\n- 添加TD-00026 AI军师对话功能探索报告及工作树管理审查报告\n- 添加工作树管理报告和探索报告 (TD-00027 Phase1)\n- 更新WORKSPACE并新增AI配置、军师对话及项目修复相关开发文档\n- 添加图标和版本号自动更新功能(Task 00024)相关文档及审查报告\n- 添加智能体工作审查报告和PRD-00023文档\n- 添加架构审查报告\n- 添加test分支测试探索报告文档\n- 更新代码分析报告格式\n- 添加BUG-00038-UI交互与适配问题系统性分析V2文档\n- 重组项目文档结构，将历史文档迁移至历史文档目录"
-        },
-        {
-            "version": "1.0.0",
-            "versionCode": 10000,
-            "stage": "dev",
-            "date": "2026-01-01T00:00:00Z",
-            "commits": [
-                "初始版本"
-            ],
-            "changelog": "### 🎉 初始版本\n\n- 项目初始化\n- 基础架构搭建完成"
         }
     ]
 }

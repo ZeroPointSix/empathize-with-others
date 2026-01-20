@@ -26,6 +26,7 @@ import com.empathy.ai.domain.usecase.EditContactInfoUseCase
 import com.empathy.ai.domain.usecase.GroupFactsByCategoryUseCase
 import com.empathy.ai.domain.usecase.BatchDeleteFactsUseCase
 import com.empathy.ai.domain.usecase.BatchMoveFactsUseCase
+import com.empathy.ai.domain.usecase.RecordContactVisitUseCase
 import com.empathy.ai.domain.util.FactSearchFilter
 import com.empathy.ai.domain.model.EditModeState
 import com.empathy.ai.domain.model.PersonaSearchState
@@ -83,6 +84,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ContactDetailTabViewModel @Inject constructor(
     private val getContactUseCase: GetContactUseCase,
+    private val recordContactVisitUseCase: RecordContactVisitUseCase,
     private val getBrainTagsUseCase: GetBrainTagsUseCase,
     private val saveBrainTagUseCase: SaveBrainTagUseCase,
     private val saveProfileUseCase: SaveProfileUseCase,
@@ -298,7 +300,13 @@ class ContactDetailTabViewModel @Inject constructor(
                             summaryCount = summaries.size
                         )
                     }
-                    
+
+                    // ========== 最近访问记录 ==========
+                    // 加载联系人成功后记录访问历史
+                    // 用于"最近访问联系人快捷入口"功能
+                    // 详见: FREE-20260119
+                    recordContactVisitUseCase(contactId)
+
                     // TD-00014: 刷新分类数据
                     // 默认启用 PersonaTabV2（支持搜索/编辑模式/批量操作）
                     val facts = contact?.facts ?: emptyList()

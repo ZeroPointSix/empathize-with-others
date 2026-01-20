@@ -42,6 +42,7 @@ import com.empathy.ai.domain.model.ContactSortOption
  * @property isSearching 是否正在搜索（激活搜索模式）
  * @property searchResults 搜索结果列表
  * @property searchHistory 最近搜索历史
+ * @property recentContacts 最近访问联系人
  * @property selectedContactIds 选中的联系人ID集合（多选用）
  * @property isSelectionMode 是否处于多选模式
  * @property showAddContactDialog 是否显示添加联系人对话框
@@ -71,6 +72,7 @@ data class ContactListUiState(
     val isSearching: Boolean = false,
     val searchResults: List<ContactProfile> = emptyList(),
     val searchHistory: List<String> = emptyList(),
+    val recentContacts: List<ContactProfile> = emptyList(),
 
     // 选择状态
     val selectedContactIds: Set<String> = emptySet(),
@@ -113,4 +115,7 @@ data class ContactListUiState(
 
     /** 选中的联系人数量 */
     val selectedCount: Int get() = selectedContactIds.size
+
+    /** 是否有最近访问联系人 */
+    val hasRecentContacts: Boolean get() = recentContacts.isNotEmpty()
 }

@@ -8,10 +8,10 @@
 
 ## 🆕 多模块架构 (TD-00017)
 
-> 2026-01-19 更新 - 项目已完成Clean Architecture多模块改造
+> 2026-01-20 更新 - 项目已完成Clean Architecture多模块改造
 >
-> 当前分支: main
-> 当前版本: v1.12.3 (versionCode: 11203, dev阶段)
+> 当前分支: **freedom-feature3**
+> 当前版本: **v1.12.9** (versionCode: 11209, dev阶段)
 
 项目采用Clean Architecture多模块架构：
 ```
@@ -300,4 +300,9 @@ adb logcat > logcat.txt      # 保存到文件
 ./gradlew :presentation:test --tests "*BUG00058*"
 ./gradlew :presentation:test --tests "*ContactListScreen*"
 ./gradlew :presentation:test --tests "*BUG00068*"
+
+# 最近访问联系人功能测试
+./gradlew :presentation:test --tests "*ContactRecentContactsFeatureTest*"
+./gradlew :domain:test --tests "*GetContactRecentHistoryUseCaseTest*"
+./gradlew :domain:test --tests "*RecordContactVisitUseCaseTest*"
 ```

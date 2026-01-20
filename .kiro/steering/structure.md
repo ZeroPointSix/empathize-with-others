@@ -19,10 +19,10 @@
 
 ## 多模块架构 (TD-00017 Clean Architecture模块化改造)
 
-> 2026-01-19 更新 - 基于实际代码架构扫描
+> 2026-01-20 更新 - 基于实际代码架构扫描
 >
-> 当前分支: main
-> 当前版本: v1.12.3 (versionCode: 11203, dev阶段)
+> 当前分支: **freedom-feature3**
+> 当前版本: **v1.12.9** (versionCode: 11209, dev阶段)
 > 数据库版本: Room v16
 
 ### 模块结构
@@ -62,7 +62,7 @@
 | `:presentation` | Android Library | Compose UI、ViewModel、Navigation、Theme | :domain |
 | `:app` | Application | 应用入口、Android服务、应用级DI模块 | :domain, :data, :presentation |
 
-**当前版本**: v1.1.0 (versionCode: 10101)
+**当前版本**: v1.12.9 (versionCode: 11209)
 **发布阶段**: dev
 **数据库版本**: Room v16
 
@@ -454,9 +454,9 @@ class ChatViewModel @Inject constructor(
 
 ---
 
-**文档版本**: 3.7
-**最后更新**: 2026-01-19
+**文档版本**: 3.8
+**最后更新**: 2026-01-20
 **更新内容**:
-- 更新当前分支为 main
-- 同步最新版本号 v1.12.3
+- 更新当前分支为 freedom-feature3
+- 同步最新版本号 v1.12.9
 - 基于实际代码扫描更新统计数据
