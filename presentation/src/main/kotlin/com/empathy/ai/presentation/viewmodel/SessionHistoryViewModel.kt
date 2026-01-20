@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.empathy.ai.domain.model.AiAdvisorSession
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.ContactRepository
+import com.empathy.ai.domain.usecase.ClearAdvisorDraftUseCase
 import com.empathy.ai.presentation.navigation.NavRoutes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,6 +50,7 @@ import javax.inject.Inject
 class SessionHistoryViewModel @Inject constructor(
     private val aiAdvisorRepository: AiAdvisorRepository,
     private val contactRepository: ContactRepository,
+    private val clearAdvisorDraftUseCase: ClearAdvisorDraftUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -124,6 +126,8 @@ class SessionHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             aiAdvisorRepository.deleteSession(sessionId)
                 .onSuccess {
+                    // Keep draft storage in sync with session deletion.
+                    clearAdvisorDraftUseCase(sessionId)
                     loadSessions() // 重新加载列表
                 }
                 .onFailure { error ->

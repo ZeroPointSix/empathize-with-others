@@ -8,12 +8,15 @@ import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
 import com.empathy.ai.domain.model.StreamingState
 import com.empathy.ai.domain.repository.AiAdvisorRepository
+import com.empathy.ai.domain.usecase.ClearAdvisorDraftUseCase
 import com.empathy.ai.domain.usecase.CreateAdvisorSessionUseCase
 import com.empathy.ai.domain.usecase.DeleteAdvisorConversationUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorConversationsUseCase
+import com.empathy.ai.domain.usecase.GetAdvisorDraftUseCase
 import com.empathy.ai.domain.usecase.GetAdvisorSessionsUseCase
 import com.empathy.ai.domain.usecase.GetAllContactsUseCase
 import com.empathy.ai.domain.usecase.GetContactUseCase
+import com.empathy.ai.domain.usecase.SaveAdvisorDraftUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageUseCase
 import com.empathy.ai.domain.usecase.SendAdvisorMessageStreamingUseCase
 import com.empathy.ai.presentation.navigation.NavRoutes
@@ -56,6 +59,9 @@ class AiAdvisorChatViewModelTest {
     private lateinit var sendAdvisorMessageUseCase: SendAdvisorMessageUseCase
     private lateinit var sendAdvisorMessageStreamingUseCase: SendAdvisorMessageStreamingUseCase
     private lateinit var deleteAdvisorConversationUseCase: DeleteAdvisorConversationUseCase
+    private lateinit var getAdvisorDraftUseCase: GetAdvisorDraftUseCase
+    private lateinit var saveAdvisorDraftUseCase: SaveAdvisorDraftUseCase
+    private lateinit var clearAdvisorDraftUseCase: ClearAdvisorDraftUseCase
     private lateinit var aiAdvisorRepository: AiAdvisorRepository
 
     private val testDispatcher = StandardTestDispatcher()
@@ -75,11 +81,17 @@ class AiAdvisorChatViewModelTest {
         sendAdvisorMessageUseCase = mockk()
         sendAdvisorMessageStreamingUseCase = mockk()
         deleteAdvisorConversationUseCase = mockk()
+        getAdvisorDraftUseCase = mockk()
+        saveAdvisorDraftUseCase = mockk()
+        clearAdvisorDraftUseCase = mockk()
         aiAdvisorRepository = mockk()
 
         // Default mock behaviors
         every { getAllContactsUseCase() } returns flowOf(emptyList())
         every { getAdvisorConversationsUseCase(any()) } returns flowOf(emptyList())
+        coEvery { getAdvisorDraftUseCase(any()) } returns Result.success(null)
+        coEvery { saveAdvisorDraftUseCase(any(), any()) } returns Result.success(Unit)
+        coEvery { clearAdvisorDraftUseCase(any()) } returns Result.success(Unit)
     }
 
     @After
@@ -98,6 +110,9 @@ class AiAdvisorChatViewModelTest {
             sendAdvisorMessageUseCase = sendAdvisorMessageUseCase,
             sendAdvisorMessageStreamingUseCase = sendAdvisorMessageStreamingUseCase,
             deleteAdvisorConversationUseCase = deleteAdvisorConversationUseCase,
+            getAdvisorDraftUseCase = getAdvisorDraftUseCase,
+            saveAdvisorDraftUseCase = saveAdvisorDraftUseCase,
+            clearAdvisorDraftUseCase = clearAdvisorDraftUseCase,
             aiAdvisorRepository = aiAdvisorRepository
         )
     }

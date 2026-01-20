@@ -5,6 +5,7 @@ import com.empathy.ai.domain.model.AiAdvisorSession
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.repository.AiAdvisorRepository
 import com.empathy.ai.domain.repository.ContactRepository
+import com.empathy.ai.domain.usecase.ClearAdvisorDraftUseCase
 import com.empathy.ai.presentation.navigation.NavRoutes
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -43,6 +44,7 @@ class SessionHistoryViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var aiAdvisorRepository: AiAdvisorRepository
     private lateinit var contactRepository: ContactRepository
+    private lateinit var clearAdvisorDraftUseCase: ClearAdvisorDraftUseCase
     private lateinit var savedStateHandle: SavedStateHandle
 
     private val testContactId = "contact-123"
@@ -72,7 +74,10 @@ class SessionHistoryViewModelTest {
         Dispatchers.setMain(testDispatcher)
         aiAdvisorRepository = mockk(relaxed = true)
         contactRepository = mockk(relaxed = true)
+        clearAdvisorDraftUseCase = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle(mapOf(NavRoutes.AI_ADVISOR_SESSIONS_ARG_ID to testContactId))
+
+        coEvery { clearAdvisorDraftUseCase(any()) } returns Result.success(Unit)
     }
 
     @After
@@ -237,6 +242,7 @@ class SessionHistoryViewModelTest {
         return SessionHistoryViewModel(
             aiAdvisorRepository = aiAdvisorRepository,
             contactRepository = contactRepository,
+            clearAdvisorDraftUseCase = clearAdvisorDraftUseCase,
             savedStateHandle = savedStateHandle
         )
     }

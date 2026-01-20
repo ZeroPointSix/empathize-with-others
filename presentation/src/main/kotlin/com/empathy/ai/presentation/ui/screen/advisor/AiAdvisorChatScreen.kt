@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -70,10 +71,12 @@ import com.empathy.ai.domain.model.AiAdvisorSession
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.domain.model.MessageType
 import com.empathy.ai.domain.model.SendStatus
+import com.empathy.ai.presentation.R
 import com.empathy.ai.presentation.theme.AdaptiveDimensions
 import com.empathy.ai.presentation.theme.iOSBackground
 import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
+import com.empathy.ai.presentation.theme.iOSGreen
 import com.empathy.ai.presentation.theme.iOSPurple
 import com.empathy.ai.presentation.theme.iOSRed
 import com.empathy.ai.presentation.theme.iOSSeparator
@@ -319,6 +322,13 @@ fun AiAdvisorChatScreen(
                     }
                 }
             }
+        }
+
+        uiState.draftRestoredMessageResId?.let { messageResId ->
+            DraftRestoredBanner(
+                message = stringResource(messageResId),
+                onDismiss = { viewModel.clearDraftRestoredMessage() }
+            )
         }
 
         // 错误提示
@@ -848,6 +858,40 @@ private fun ErrorBanner(
             Text(
                 text = "关闭",
                 fontSize = dimensions.fontSizeBody,  // BUG-00052: 使用响应式字体替代 14.sp
+                color = iOSBlue
+            )
+        }
+    }
+}
+
+@Composable
+private fun DraftRestoredBanner(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    val dimensions = AdaptiveDimensions.current
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onDismiss),
+        color = iOSGreen.copy(alpha = 0.12f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = message,
+                modifier = Modifier.weight(1f),
+                fontSize = dimensions.fontSizeBody,
+                color = iOSGreen
+            )
+            Text(
+                text = stringResource(R.string.advisor_draft_restored_ack),
+                fontSize = dimensions.fontSizeBody,
                 color = iOSBlue
             )
         }
