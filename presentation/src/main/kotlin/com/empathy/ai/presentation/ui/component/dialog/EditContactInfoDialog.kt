@@ -38,6 +38,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.empathy.ai.presentation.R
 import com.empathy.ai.domain.util.ContentValidator
 import com.empathy.ai.presentation.theme.iOSBlue
+import com.empathy.ai.presentation.ui.component.contact.AvatarPicker
+import android.net.Uri
 
 // ============================================================
 // 极简风格颜色定义
@@ -78,6 +80,8 @@ private fun MinimalTextField(
     onValueChange: (String) -> Unit,
     label: String,
     maxLength: Int,
+    placeholder: String? = null,
+    showCounter: Boolean = true,
     singleLine: Boolean = true,
     minLines: Int = 1,
     modifier: Modifier = Modifier
@@ -131,8 +135,9 @@ private fun MinimalTextField(
                             .padding(top = 4.dp, bottom = 4.dp)
                     ) {
                         if (value.isEmpty()) {
+                            val placeholderText = placeholder ?: "请输入$label"
                             Text(
-                                text = "请输入$label",
+                                text = placeholderText,
                                 fontSize = 16.sp,
                                 color = LabelColor
                             )
@@ -153,13 +158,14 @@ private fun MinimalTextField(
         
         Spacer(modifier = Modifier.height(6.dp))
         
-        // 字数统计 - 右对齐
-        Text(
-            text = "${value.length}/$maxLength",
-            fontSize = 12.sp,
-            color = CounterColor,
-            modifier = Modifier.align(Alignment.End)
-        )
+        if (showCounter) {
+            Text(
+                text = "${value.length}/$maxLength",
+                fontSize = 12.sp,
+                color = CounterColor,
+                modifier = Modifier.align(Alignment.End)
+            )
+        }
     }
 }
 
@@ -372,17 +378,33 @@ fun EditContactGoalDialog(
 fun EditContactInfoDialog(
     initialName: String,
     initialTargetGoal: String,
+    initialContactInfo: String,
+    initialAvatarUrl: String?,
+    initialAvatarColorSeed: Int,
     onDismiss: () -> Unit,
-    onConfirm: (newName: String, newTargetGoal: String) -> Unit
+    onConfirm: (
+        newName: String,
+        newTargetGoal: String,
+        newContactInfo: String,
+        newAvatarUrl: String?,
+        newAvatarColorSeed: Int
+    ) -> Unit
 ) {
     var name by remember { mutableStateOf(initialName) }
     var targetGoal by remember { mutableStateOf(initialTargetGoal) }
+    var contactInfo by remember { mutableStateOf(initialContactInfo) }
+    var avatarUri by remember {
+        mutableStateOf(initialAvatarUrl?.let { Uri.parse(it) })
+    }
 
     val contentValidator = remember { ContentValidator() }
     val nameValidation = contentValidator.validateContactName(name)
     val goalValidation = contentValidator.validateContactGoal(targetGoal)
     val isValid = nameValidation.isValid() && goalValidation.isValid()
-    val hasChanges = name.trim() != initialName || targetGoal.trim() != initialTargetGoal
+    val hasChanges = name.trim() != initialName ||
+        targetGoal.trim() != initialTargetGoal ||
+        contactInfo.trim() != initialContactInfo ||
+        avatarUri?.toString() != initialAvatarUrl
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -411,6 +433,16 @@ fun EditContactInfoDialog(
                 
                 // 标题与输入框间距 - 增加呼吸感
                 Spacer(modifier = Modifier.height(32.dp))
+
+                // 头像编辑入口
+                AvatarPicker(
+                    avatarUri = avatarUri,
+                    displayName = name,
+                    avatarColorSeed = initialAvatarColorSeed,
+                    onAvatarChange = { avatarUri = it }
+                )
+                
+                Spacer(modifier = Modifier.height(28.dp))
                 
                 // 姓名输入框 - 极简线条风格
                 MinimalTextField(
@@ -431,6 +463,19 @@ fun EditContactInfoDialog(
                     maxLength = ContentValidator.MAX_CONTACT_GOAL_LENGTH,
                     singleLine = false,
                     minLines = 1
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // 联系方式输入框
+                MinimalTextField(
+                    value = contactInfo,
+                    onValueChange = { contactInfo = it },
+                    label = "联系方式",
+                    maxLength = Int.MAX_VALUE,
+                    placeholder = "占位文本",
+                    showCounter = false,
+                    singleLine = true
                 )
                 
                 // 输入框与按钮间距 - 增加呼吸感
@@ -462,7 +507,15 @@ fun EditContactInfoDialog(
                     
                     // 保存按钮 - 品牌蓝色，CTA行动召唤
                     Button(
-                        onClick = { onConfirm(name.trim(), targetGoal.trim()) },
+                        onClick = {
+                            onConfirm(
+                                name.trim(),
+                                targetGoal.trim(),
+                                contactInfo.trim(),
+                                avatarUri?.toString(),
+                                initialAvatarColorSeed
+                            )
+                        },
                         enabled = isValid && hasChanges,
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(

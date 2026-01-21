@@ -138,4 +138,84 @@ class EditContactInfoUseCase @Inject constructor(
             Result.success(EditResult.DatabaseError(e))
         }
     }
+
+    /**
+     * 编辑联系方式
+     *
+     * @param contactId 联系人ID
+     * @param newContactInfo 新的联系方式（允许为空）
+     * @return 编辑结果
+     */
+    suspend fun editContactInfo(
+        contactId: String,
+        newContactInfo: String?
+    ): Result<EditResult> = withContext(dispatchers.io) {
+        try {
+            val profile = contactRepository.getProfile(contactId).getOrNull()
+                ?: return@withContext Result.success(EditResult.NotFound)
+
+            val normalized = newContactInfo?.trim().orEmpty()
+            val normalizedValue = normalized.ifBlank { null }
+
+            if (profile.contactInfo == normalizedValue) {
+                return@withContext Result.success(EditResult.NoChanges)
+            }
+
+            val rowsAffected = contactRepository.updateContactInfo(
+                contactId = contactId,
+                contactInfo = normalizedValue
+            )
+
+            if (rowsAffected > 0) {
+                logger.d(TAG, "联系人联系方式编辑成功: contactId=$contactId")
+                Result.success(EditResult.Success)
+            } else {
+                logger.w(TAG, "联系人联系方式编辑失败: 未找到记录 contactId=$contactId")
+                Result.success(EditResult.NotFound)
+            }
+        } catch (e: Exception) {
+            logger.e(TAG, "联系人联系方式编辑失败", e)
+            Result.success(EditResult.DatabaseError(e))
+        }
+    }
+
+    /**
+     * 更新联系人头像
+     *
+     * @param contactId 联系人ID
+     * @param avatarUrl 头像URI
+     * @param avatarColorSeed 默认头像颜色索引
+     * @return 编辑结果
+     */
+    suspend fun editAvatar(
+        contactId: String,
+        avatarUrl: String?,
+        avatarColorSeed: Int
+    ): Result<EditResult> = withContext(dispatchers.io) {
+        try {
+            val profile = contactRepository.getProfile(contactId).getOrNull()
+                ?: return@withContext Result.success(EditResult.NotFound)
+
+            if (profile.avatarUrl == avatarUrl && profile.avatarColorSeed == avatarColorSeed) {
+                return@withContext Result.success(EditResult.NoChanges)
+            }
+
+            val rowsAffected = contactRepository.updateAvatar(
+                contactId = contactId,
+                avatarUrl = avatarUrl,
+                avatarColorSeed = avatarColorSeed
+            )
+
+            if (rowsAffected > 0) {
+                logger.d(TAG, "联系人头像更新成功: contactId=$contactId")
+                Result.success(EditResult.Success)
+            } else {
+                logger.w(TAG, "联系人头像更新失败: 未找到记录 contactId=$contactId")
+                Result.success(EditResult.NotFound)
+            }
+        } catch (e: Exception) {
+            logger.e(TAG, "联系人头像更新失败", e)
+            Result.success(EditResult.DatabaseError(e))
+        }
+    }
 }

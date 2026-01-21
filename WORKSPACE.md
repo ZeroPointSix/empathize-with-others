@@ -2,7 +2,7 @@
 
 
 
-> 最后更新: 2026-01-20 13:55 | 更新者: Codex (修复最近访问记录未触发)
+> 最后更新: 2026-01-21 15:22 | 更新者: Codex (准备发布 release 并推送 GitHub)
 
 
 ## 📋 当前工作状态
@@ -16,8 +16,87 @@
 | BUG-00071 | 截图黑屏问题排查 | Codex | 进行中 | P0 | 2026-01-14 20:40 | 2026-01-14 |
 | BUG-00072 | 截图权限缓存失效与 MediaProjection 恢复失败修复（待验收） | Codex | 进行中 | P0 | 2026-01-16 20:10 | 2026-01-16 |
 | BUG-00072-LOG | 截图失败日志埋点与排查 | Codex | 进行中 | P0 | 2026-01-17 09:43 | 2026-01-17 |
+| PRD-00037-REG | 头像颜色回填与头像持久化回归修复 | Codex | 已完成 | P2 | 2026-01-21 14:07 | 2026-01-21 |
 
 ### 测试记录
+- 2026-01-21 13:06 `adb -s QCUKF6DUW46XKVU8 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 13:06 `adb -s QCUKF6DUW46XKVU8 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 13:05 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 13:02 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:57 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 12:55 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:52 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 12:52 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 12:51 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 12:47 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:41 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 12:41 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 12:41 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 12:40 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:34 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 12:34 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 12:33 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 12:30 `./gradlew :data:connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.empathy.ai.data.local.Migration16To17Test"` ✅
+- 2026-01-21 12:30 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:29 `./gradlew :data:connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.empathy.ai.data.local.Migration16To17Test"` ❌（androidTest assets 与 schemas 重复导致合并失败）
+- 2026-01-21 12:28 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:26 `./gradlew :data:connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.empathy.ai.data.local.Migration16To17Test"` ⚠️（Migration16To17Test 在设备上被跳过）
+- 2026-01-21 12:24 `./gradlew :data:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.empathy.ai.data.local.Migration16To17Test` ❌（Gradle 识别为任务名，参数未生效）
+- 2026-01-21 12:24 `./gradlew :data:connectedAndroidTest --tests "*Migration16To17Test"` ❌（Gradle 不支持 --tests）
+- 2026-01-21 12:23 `./gradlew :data:testDebugUnitTest --tests "*ContactRepositoryImplTest"` ✅（存在既有编译警告）
+- 2026-01-21 12:20 `./gradlew :data:test --tests "*ContactRepositoryImplTest"` ❌（Gradle 不支持 --tests）
+- 2026-01-21 12:14 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 12:14 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 12:14 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 12:08 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:06 `./gradlew assembleDebug` ❌（AvatarPicker AvatarSourceItem 参数顺序导致编译失败）
+- 2026-01-21 12:03 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 12:02 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 10:43 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 10:43 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 10:43 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 10:42 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 10:38 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:40 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:39 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:39 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:38 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:38 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:36 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:35 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:35 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:35 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:34 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:33 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:32 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:32 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:32 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:31 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:30 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:29 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:29 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:28 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:27 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:26 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:25 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:25 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:25 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:24 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:23 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:22 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:22 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:22 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:21 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:20 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:19 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:19 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:19 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:18 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
+- 2026-01-21 00:16 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
+- 2026-01-21 00:16 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
+- 2026-01-21 00:15 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
+- 2026-01-21 00:15 `./gradlew assembleDebug` ✅（存在既有弃用/编译警告）
+- 2026-01-21 00:11 `./gradlew updateVersionAndIcon --force` ⚠️（图标切换失败：缺少 `软件图标.png`）
 - 2026-01-20 13:54 `adb -s 3HMUN24A25G09044 shell am start -n com.empathy.ai/.ui.MainActivity` ✅
 - 2026-01-20 13:54 `adb -s 3HMUN24A25G09044 install -r app/build/outputs/apk/debug/app-debug.apk` ✅
 - 2026-01-20 13:54 `adb devices -l` ✅（检测到设备 3HMUN24A25G09044）
@@ -74,6 +153,7 @@
 - 2026-01-18 23:12 `assembleDebug` 成功；MuMu 安装成功（`adb install -r -d`）。
 
 ### 已完成任务（最近7条）
+- [x] 2026-01-21 - **PRD-00037 头像颜色回填与头像持久化回归修复** - Codex - 相关文档: [TD-00037](文档/开发文档/TD/TD-00037-联系人头像与联系方式任务清单.md)
 - [x] 2026-01-19 - **FREE-00008 最近访问联系人快捷入口** - Codex - 相关文档: [FREE-20260119-最近访问联系人快捷入口](文档/开发文档/MA/FREE/FREE-20260119-最近访问联系人快捷入口.md)
 - [x] 2026-01-18 - **PRD-00014 联系人画像界面升级补齐** - Codex - 相关文档: [FEATURE-20260118-联系人画像界面升级补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-联系人画像界面升级补齐.md)
 - [x] 2026-01-18 - **PRD-00007 对话上下文连续性增强补齐** - Codex - 相关文档: [FEATURE-20260118-对话上下文连续性增强补齐](文档/开发文档/MA/FEATURE/FEATURE-20260118-对话上下文连续性增强补齐.md)
@@ -510,6 +590,90 @@ scripts\quick-error.bat           # 获取最近的ERROR日志
 
 
 ## 📝 变更日志
+### 2026-01-21 - Codex (PRD-00037 构建与安装持续执行)
+- 版本更新至 1.14.9（versionCode 11409），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+  - `DECISION_JOURNAL.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装持续执行)
+- 版本更新至 1.14.8（versionCode 11408），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装重复执行)
+- 版本更新至 1.14.7（versionCode 11407），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装连续验证)
+- 版本更新至 1.14.6（versionCode 11406），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装重复验证)
+- 版本更新至 1.14.5（versionCode 11405），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装再复测)
+- 版本更新至 1.14.4（versionCode 11404），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装再次验证)
+- 版本更新至 1.14.3（versionCode 11403），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装复测)
+- 版本更新至 1.14.2（versionCode 11402），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 构建与安装验证)
+- 版本更新至 1.14.1（versionCode 11401），构建并安装到设备 3HMUN24A25G09044。
+- `updateVersionAndIcon --force` 图标切换失败：缺少 `软件图标.png`（版本号已更新）。
+- 测试：`./gradlew assembleDebug` ✅；`adb install` ✅；`adb shell am start` ✅。
+- 修改的文件列表：
+  - `gradle.properties`
+  - `config/version-history.json`
+  - `WORKSPACE.md`
+### 2026-01-21 - Codex (PRD-00037 联系人头像与联系方式文档补齐)
+- 完成 PRD/FD/TDD/TD 文档与测试用例输出。
+- 测试：未运行（未触发构建与版本号更新）。
+- 修改的文件列表：
+  - `文档/开发文档/PRD/PRD-00037-联系人头像与联系方式需求.md`
+  - `文档/开发文档/FD/FD-00037-联系人头像与联系方式功能设计.md`
+  - `文档/开发文档/TDD/TDD-00037-联系人头像与联系方式技术设计.md`
+  - `文档/开发文档/TD/TD-00037-联系人头像与联系方式任务清单.md`
+  - `文档/开发文档/TE/TE-00078-联系人头像与联系方式测试用例.md`
+  - `DECISION_JOURNAL.md`
+  - `WORKSPACE.md`
 ### 2026-01-20 - Codex (修复最近访问记录未触发)
 - 新详情页补齐最近访问记录逻辑，并新增单测覆盖。
 - 版本更新至 1.12.9，构建并安装到设备 3HMUN24A25G09044。

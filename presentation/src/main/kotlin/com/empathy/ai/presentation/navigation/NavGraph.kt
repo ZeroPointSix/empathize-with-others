@@ -542,13 +542,9 @@ fun NavGraph(
             
             CreateContactScreen(
                 onCancel = { navController.navigateUp() },
-                onDone = { formData, avatarUri, facts ->
+                onDone = { formData, avatarUri, facts, avatarColorSeed ->
                     // 调用ViewModel保存联系人
-                    viewModel.saveContact(formData, avatarUri, facts)
-                },
-                onPickAvatar = {
-                    // TODO: 集成图片选择器
-                    // 后续可以使用ActivityResultLauncher实现
+                    viewModel.saveContact(formData, avatarUri, facts, avatarColorSeed)
                 }
             )
         }

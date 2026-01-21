@@ -89,6 +89,21 @@ data class ContactDetailUiState(
      * 沟通目标
      */
     val targetGoal: String = "",
+
+    /**
+     * 联系方式
+     */
+    val contactInfo: String = "",
+
+    /**
+     * 头像URI
+     */
+    val avatarUrl: String? = null,
+
+    /**
+     * 默认头像颜色索引
+     */
+    val avatarColorSeed: Int = 0,
     
     /**
      * 上下文深度

@@ -54,6 +54,12 @@ data class ContactProfileEntity(
     @ColumnInfo(name = "avatar_url")
     val avatarUrl: String? = null,
 
+    @ColumnInfo(name = "contact_info")
+    val contactInfo: String? = null,
+
+    @ColumnInfo(name = "avatar_color_seed", defaultValue = "0")
+    val avatarColorSeed: Int = 0,
+
     @ColumnInfo(name = "custom_prompt")
     val customPrompt: String? = null,
 

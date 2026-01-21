@@ -194,4 +194,34 @@ interface ContactDao {
         modifiedTime: Long,
         originalGoal: String
     ): Int
+
+    /**
+     * 更新联系方式
+     *
+     * @param contactId 联系人ID
+     * @param contactInfo 联系方式（允许为空）
+     * @return 受影响的行数
+     */
+    @Query("UPDATE profiles SET contact_info = :contactInfo WHERE id = :contactId")
+    suspend fun updateContactInfo(
+        contactId: String,
+        contactInfo: String?
+    ): Int
+
+    /**
+     * 更新头像信息
+     *
+     * @param contactId 联系人ID
+     * @param avatarUrl 头像URI
+     * @param avatarColorSeed 默认头像颜色索引
+     * @return 受影响的行数
+     */
+    @Query(
+        "UPDATE profiles SET avatar_url = :avatarUrl, avatar_color_seed = :avatarColorSeed WHERE id = :contactId"
+    )
+    suspend fun updateAvatar(
+        contactId: String,
+        avatarUrl: String?,
+        avatarColorSeed: Int
+    ): Int
 }

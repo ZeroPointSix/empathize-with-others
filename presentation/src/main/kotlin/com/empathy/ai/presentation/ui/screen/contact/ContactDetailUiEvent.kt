@@ -26,6 +26,8 @@ sealed class ContactDetailUiEvent {
     // ========== 表单字段更新事件 ==========
     data class UpdateName(val name: String) : ContactDetailUiEvent()
     data class UpdateTargetGoal(val targetGoal: String) : ContactDetailUiEvent()
+    data class UpdateContactInfo(val contactInfo: String) : ContactDetailUiEvent()
+    data class UpdateAvatar(val avatarUrl: String?, val avatarColorSeed: Int) : ContactDetailUiEvent()
     data class UpdateContextDepth(val contextDepth: Int) : ContactDetailUiEvent()
     
     // ========== 事实管理事件 ==========
@@ -96,7 +98,13 @@ sealed class ContactDetailUiEvent {
     
     // 联系人信息编辑
     data object StartEditContactInfo : ContactDetailUiEvent()
-    data class ConfirmEditContactInfo(val newName: String, val newTargetGoal: String) : ContactDetailUiEvent()
+    data class ConfirmEditContactInfo(
+        val newName: String,
+        val newTargetGoal: String,
+        val newContactInfo: String,
+        val newAvatarUrl: String?,
+        val newAvatarColorSeed: Int
+    ) : ContactDetailUiEvent()
     data object CancelEditContactInfo : ContactDetailUiEvent()
     
     // ========== 标签画像V2事件（TD-00014） ==========

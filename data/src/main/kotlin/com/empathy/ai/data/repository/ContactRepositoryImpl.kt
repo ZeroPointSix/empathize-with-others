@@ -235,6 +235,21 @@ class ContactRepositoryImpl @Inject constructor(
         dao.updateGoal(contactId, newGoal, modifiedTime, originalGoal)
     }
 
+    override suspend fun updateContactInfo(
+        contactId: String,
+        contactInfo: String?
+    ): Int = withContext(Dispatchers.IO) {
+        dao.updateContactInfo(contactId, contactInfo)
+    }
+
+    override suspend fun updateAvatar(
+        contactId: String,
+        avatarUrl: String?,
+        avatarColorSeed: Int
+    ): Int = withContext(Dispatchers.IO) {
+        dao.updateAvatar(contactId, avatarUrl, avatarColorSeed)
+    }
+
     /**
      * entityToDomain 实体转领域模型
      *
@@ -266,6 +281,8 @@ class ContactRepositoryImpl @Inject constructor(
             relationshipScore = entity.relationshipScore,
             lastInteractionDate = entity.lastInteractionDate,
             avatarUrl = entity.avatarUrl,
+            contactInfo = entity.contactInfo,
+            avatarColorSeed = entity.avatarColorSeed,
             isNameUserModified = entity.isNameUserModified,
             isGoalUserModified = entity.isGoalUserModified,
             nameLastModifiedTime = entity.nameLastModifiedTime,
@@ -289,6 +306,8 @@ class ContactRepositoryImpl @Inject constructor(
             relationshipScore = profile.relationshipScore,
             lastInteractionDate = profile.lastInteractionDate,
             avatarUrl = profile.avatarUrl,
+            contactInfo = profile.contactInfo,
+            avatarColorSeed = profile.avatarColorSeed,
             isNameUserModified = profile.isNameUserModified,
             isGoalUserModified = profile.isGoalUserModified,
             nameLastModifiedTime = profile.nameLastModifiedTime,

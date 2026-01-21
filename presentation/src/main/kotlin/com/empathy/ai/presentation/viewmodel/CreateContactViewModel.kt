@@ -44,7 +44,8 @@ class CreateContactViewModel @Inject constructor(
     fun saveContact(
         formData: ContactFormData,
         avatarUri: Uri?,
-        facts: List<Fact>
+        facts: List<Fact>,
+        avatarColorSeed: Int
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
@@ -58,7 +59,9 @@ class CreateContactViewModel @Inject constructor(
                     contextDepth = 10,
                     facts = facts,
                     relationshipScore = formData.initialRelationshipScore,
-                    avatarUrl = avatarUri?.toString()
+                    avatarUrl = avatarUri?.toString(),
+                    contactInfo = formData.contact.trim().ifBlank { null },
+                    avatarColorSeed = avatarColorSeed
                 )
 
                 // 调用UseCase保存

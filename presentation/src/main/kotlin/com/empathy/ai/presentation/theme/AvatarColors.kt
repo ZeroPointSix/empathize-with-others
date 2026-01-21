@@ -49,6 +49,17 @@ object AvatarColors {
     }
 
     /**
+     * 获取颜色配对（基于颜色索引）
+     *
+     * @param seed 颜色索引
+     * @return Pair<背景色, 文字色>
+     */
+    fun getColorPairBySeed(seed: Int): Pair<Color, Color> {
+        val index = abs(seed) % backgroundColors.size
+        return Pair(backgroundColors[index], textColors[index])
+    }
+
+    /**
      * 获取背景色
      *
      * @param name 联系人名称

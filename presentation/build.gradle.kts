@@ -101,6 +101,9 @@ dependencies {
     // Coil for image loading
     implementation(libs.coil.compose)
 
+    // UCrop (头像裁剪)
+    implementation(libs.ucrop)
+
     // Markdown Rendering (FD-00030: AI军师Markdown渲染)
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui.material3)

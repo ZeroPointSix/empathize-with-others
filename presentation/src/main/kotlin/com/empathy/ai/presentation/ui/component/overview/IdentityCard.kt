@@ -25,14 +25,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.empathy.ai.domain.model.ContactProfile
+import com.empathy.ai.presentation.theme.AvatarColors
 import com.empathy.ai.presentation.theme.EmpathyTheme
-import com.empathy.ai.presentation.theme.iOSBlue
 import com.empathy.ai.presentation.theme.iOSCardBackground
 import com.empathy.ai.presentation.theme.iOSTextPrimary
 import com.empathy.ai.presentation.theme.iOSTextSecondary
@@ -91,7 +92,8 @@ fun IdentityCard(
                 // 头像 - 带白色描边和双层投影
                 AvatarWithShadow(
                     avatarUrl = contact.avatarUrl,
-                    name = contact.name
+                    name = contact.name,
+                    avatarColorSeed = contact.avatarColorSeed
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -109,6 +111,23 @@ fun IdentityCard(
                 
                 // 相识天数 - 精致的灰色小胶囊标签
                 DaysKnownChip(days = daysSinceFirstMet)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 联系方式
+                val contactInfoText = contact.contactInfo?.takeIf { it.isNotBlank() } ?: "占位文本"
+                Text(
+                    text = "联系方式",
+                    fontSize = 12.sp,
+                    color = iOSTextSecondary
+                )
+                Text(
+                    text = contactInfoText,
+                    fontSize = 14.sp,
+                    color = iOSTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
@@ -121,8 +140,10 @@ fun IdentityCard(
 private fun AvatarWithShadow(
     avatarUrl: String?,
     name: String,
+    avatarColorSeed: Int,
     modifier: Modifier = Modifier
 ) {
+    val (backgroundColor, textColor) = AvatarColors.getColorPairBySeed(avatarColorSeed)
     Box(
         modifier = modifier
             .shadow(
@@ -159,7 +180,7 @@ private fun AvatarWithShadow(
                     modifier = Modifier
                         .size(94.dp)
                         .background(
-                            color = iOSBlue.copy(alpha = 0.15f),
+                            color = backgroundColor,
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -168,7 +189,7 @@ private fun AvatarWithShadow(
                         text = name.take(1),
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
-                        color = iOSBlue
+                        color = textColor
                     )
                 }
             }

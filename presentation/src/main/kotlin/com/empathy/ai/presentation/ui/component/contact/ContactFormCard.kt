@@ -113,7 +113,7 @@ fun ContactFormCard(
                 label = "联系方式",
                 value = formData.contact,
                 onValueChange = { onFormDataChange(formData.copy(contact = it)) },
-                placeholder = "手机号/微信号（可选）"
+                placeholder = "占位文本"
             )
             
             HorizontalDivider(color = iOSSeparator)

@@ -118,6 +118,10 @@ class ContactDetailViewModel @Inject constructor(
             updateName(event.name)
         } else if (event is ContactDetailUiEvent.UpdateTargetGoal) {
             updateTargetGoal(event.targetGoal)
+        } else if (event is ContactDetailUiEvent.UpdateContactInfo) {
+            updateContactInfo(event.contactInfo)
+        } else if (event is ContactDetailUiEvent.UpdateAvatar) {
+            updateAvatar(event.avatarUrl, event.avatarColorSeed)
         } else if (event is ContactDetailUiEvent.UpdateContextDepth) {
             updateContextDepth(event.contextDepth)
         }
@@ -243,7 +247,10 @@ class ContactDetailViewModel @Inject constructor(
                             isLoading = false,
                             isEditMode = true,
                             isNewContact = true,
-                            contactId = newContactId  // 设置临时ID
+                            contactId = newContactId,  // 设置临时ID
+                            contactInfo = "",
+                            avatarUrl = null,
+                            avatarColorSeed = 0
                         )
                     }
                     // 启动标签监听，确保新建联系人时添加的标签能正确显示
@@ -262,7 +269,10 @@ class ContactDetailViewModel @Inject constructor(
                             name = profile.name,
                             targetGoal = profile.targetGoal,
                             contextDepth = profile.contextDepth,
-                            facts = profile.facts
+                            facts = profile.facts,
+                            contactInfo = profile.contactInfo.orEmpty(),
+                            avatarUrl = profile.avatarUrl,
+                            avatarColorSeed = profile.avatarColorSeed
                         )
                     }
 
@@ -313,7 +323,10 @@ class ContactDetailViewModel @Inject constructor(
             name = currentState.name,
             targetGoal = currentState.targetGoal,
             contextDepth = currentState.contextDepth,
-            facts = currentState.facts
+            facts = currentState.facts,
+            contactInfo = currentState.contactInfo.trim().ifBlank { null },
+            avatarUrl = currentState.avatarUrl,
+            avatarColorSeed = currentState.avatarColorSeed
         )
 
         _uiState.update {
@@ -434,6 +447,40 @@ class ContactDetailViewModel @Inject constructor(
                 targetGoal = targetGoal,
                 hasUnsavedChanges = hasChanges || currentState.hasUnsavedChanges,
                 targetGoalError = null
+            )
+        }
+
+        if (currentState.isEditMode) {
+            updateEditedProfile()
+        }
+    }
+
+    private fun updateContactInfo(contactInfo: String) {
+        val currentState = _uiState.value
+        val hasChanges = contactInfo != currentState.originalProfile?.contactInfo.orEmpty()
+
+        _uiState.update {
+            it.copy(
+                contactInfo = contactInfo,
+                hasUnsavedChanges = hasChanges || currentState.hasUnsavedChanges
+            )
+        }
+
+        if (currentState.isEditMode) {
+            updateEditedProfile()
+        }
+    }
+
+    private fun updateAvatar(avatarUrl: String?, avatarColorSeed: Int) {
+        val currentState = _uiState.value
+        val hasChanges = avatarUrl != currentState.originalProfile?.avatarUrl ||
+            avatarColorSeed != currentState.originalProfile?.avatarColorSeed
+
+        _uiState.update {
+            it.copy(
+                avatarUrl = avatarUrl,
+                avatarColorSeed = avatarColorSeed,
+                hasUnsavedChanges = hasChanges || currentState.hasUnsavedChanges
             )
         }
 
@@ -890,7 +937,10 @@ class ContactDetailViewModel @Inject constructor(
             name = currentState.name,
             targetGoal = currentState.targetGoal,
             contextDepth = currentState.contextDepth,
-            facts = currentState.facts
+            facts = currentState.facts,
+            contactInfo = currentState.contactInfo.trim().ifBlank { null },
+            avatarUrl = currentState.avatarUrl,
+            avatarColorSeed = currentState.avatarColorSeed
         )
 
         _uiState.update { it.copy(editedProfile = editedProfile) }
@@ -924,6 +974,9 @@ class ContactDetailViewModel @Inject constructor(
                     targetGoal = originalProfile.targetGoal,
                     contextDepth = originalProfile.contextDepth,
                     facts = originalProfile.facts,
+                    contactInfo = originalProfile.contactInfo.orEmpty(),
+                    avatarUrl = originalProfile.avatarUrl,
+                    avatarColorSeed = originalProfile.avatarColorSeed,
                     editedProfile = originalProfile,
                     // 清除错误
                     nameError = null,
@@ -943,6 +996,9 @@ class ContactDetailViewModel @Inject constructor(
                     targetGoal = "",
                     contextDepth = 10,
                     facts = emptyList(),
+                    contactInfo = "",
+                    avatarUrl = null,
+                    avatarColorSeed = 0,
                     editedProfile = null,
                     // 清除错误
                     nameError = null,

@@ -30,6 +30,8 @@ import com.empathy.ai.domain.util.MemoryConstants
  * @property relationshipScore 关系分数 (0-100，默认50)
  * @property lastInteractionDate 最后互动日期 (格式: "yyyy-MM-dd")
  * @property avatarUrl 头像URL
+ * @property contactInfo 联系方式
+ * @property avatarColorSeed 默认头像颜色索引
  * @property isNameUserModified 姓名是否被用户修改过
  * @property isGoalUserModified 目标是否被用户修改过
  * @property nameLastModifiedTime 姓名最后修改时间
@@ -46,6 +48,8 @@ data class ContactProfile(
     val relationshipScore: Int = MemoryConstants.DEFAULT_RELATIONSHIP_SCORE,
     val lastInteractionDate: String? = null,
     val avatarUrl: String? = null,
+    val contactInfo: String? = null,
+    val avatarColorSeed: Int = 0,
     // ==================== 编辑追踪字段 ====================
     val isNameUserModified: Boolean = false,
     val isGoalUserModified: Boolean = false,

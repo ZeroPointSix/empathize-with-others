@@ -47,6 +47,8 @@ import com.empathy.ai.presentation.ui.component.contact.ContactFormCard
 import com.empathy.ai.presentation.ui.component.contact.ContactFormData
 import com.empathy.ai.presentation.ui.component.dialog.IOSAddFactBottomSheet
 import com.empathy.ai.presentation.ui.component.ios.IOSNavigationBar
+import com.empathy.ai.presentation.theme.AvatarColors
+import kotlin.random.Random
 
 
 /**
@@ -66,7 +68,6 @@ import com.empathy.ai.presentation.ui.component.ios.IOSNavigationBar
  * 
  * @param onCancel 取消回调
  * @param onDone 完成回调，参数为表单数据、头像URI和事实列表
- * @param onPickAvatar 选择头像回调（可选，用于外部图片选择器集成）
  * @param modifier 修饰符
  * 
  * @see TDD-00020 8.5 CreateContactScreen新建联系人页重写
@@ -75,8 +76,7 @@ import com.empathy.ai.presentation.ui.component.ios.IOSNavigationBar
 @Composable
 fun CreateContactScreen(
     onCancel: () -> Unit,
-    onDone: (ContactFormData, Uri?, List<Fact>) -> Unit,
-    onPickAvatar: (() -> Unit)? = null,
+    onDone: (ContactFormData, Uri?, List<Fact>, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 表单数据状态
@@ -84,6 +84,8 @@ fun CreateContactScreen(
     
     // 头像URI状态
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
+
+    val avatarColorSeed = remember { Random.nextInt(AvatarColors.colorCount) }
     
     // 事实列表状态
     val facts = remember { mutableStateListOf<Fact>() }
@@ -103,7 +105,7 @@ fun CreateContactScreen(
         IOSNavigationBar(
             title = "新建联系人",
             onCancel = onCancel,
-            onDone = { onDone(formData, avatarUri, facts.toList()) },
+            onDone = { onDone(formData, avatarUri, facts.toList(), avatarColorSeed) },
             isDoneEnabled = isDoneEnabled
         )
         
@@ -121,11 +123,9 @@ fun CreateContactScreen(
             // 头像选择器
             AvatarPicker(
                 avatarUri = avatarUri,
-                onPickAvatar = {
-                    onPickAvatar?.invoke()
-                    // 如果没有外部处理，暂时不做任何操作
-                    // 后续可以集成图片选择器
-                }
+                displayName = formData.name,
+                avatarColorSeed = avatarColorSeed,
+                onAvatarChange = { avatarUri = it }
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -196,8 +196,7 @@ fun CreateContactScreen(
 ) {
     CreateContactScreen(
         onCancel = onCancel,
-        onDone = { formData, avatarUri, _ -> onDone(formData, avatarUri) },
-        onPickAvatar = null,
+        onDone = { formData, avatarUri, _, _ -> onDone(formData, avatarUri) },
         modifier = modifier
     )
 }
@@ -292,8 +291,7 @@ private fun CreateContactScreenPreview() {
     EmpathyTheme {
         CreateContactScreen(
             onCancel = {},
-            onDone = { _, _, _ -> },
-            onPickAvatar = {}
+            onDone = { _, _, _, _ -> }
         )
     }
 }
@@ -304,7 +302,7 @@ private fun CreateContactScreenNoAvatarPreview() {
     EmpathyTheme {
         CreateContactScreen(
             onCancel = {},
-            onDone = { _, _, _ -> }
+            onDone = { _, _, _, _ -> }
         )
     }
 }

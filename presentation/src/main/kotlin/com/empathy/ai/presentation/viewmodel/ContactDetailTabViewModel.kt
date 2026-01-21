@@ -185,9 +185,19 @@ class ContactDetailTabViewModel @Inject constructor(
         } else if (event is ContactDetailUiEvent.StartEditContactInfo) {
             startEditContactInfo()
         } else if (event is ContactDetailUiEvent.ConfirmEditContactInfo) {
-            confirmEditContactInfo(event.newName, event.newTargetGoal)
+            confirmEditContactInfo(
+                event.newName,
+                event.newTargetGoal,
+                event.newContactInfo,
+                event.newAvatarUrl,
+                event.newAvatarColorSeed
+            )
         } else if (event is ContactDetailUiEvent.CancelEditContactInfo) {
             cancelEditContactInfo()
+        } else if (event is ContactDetailUiEvent.UpdateContactInfo) {
+            updateContactInfo(event.contactInfo)
+        } else if (event is ContactDetailUiEvent.UpdateAvatar) {
+            updateAvatar(event.avatarUrl, event.avatarColorSeed)
         }
         // TD-00014: 标签画像V2事件
         else if (event is ContactDetailUiEvent.UpdatePersonaSearch) {
@@ -288,6 +298,9 @@ class ContactDetailTabViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             contact = contact,
+                            contactInfo = contact?.contactInfo.orEmpty(),
+                            avatarUrl = contact?.avatarUrl,
+                            avatarColorSeed = contact?.avatarColorSeed ?: 0,
                             error = null,
                             hasLoadedContact = true,
                             summaries = summaries,
@@ -1163,7 +1176,13 @@ class ContactDetailTabViewModel @Inject constructor(
     /**
      * 确认编辑联系人信息
      */
-    private fun confirmEditContactInfo(newName: String, newTargetGoal: String) {
+    private fun confirmEditContactInfo(
+        newName: String,
+        newTargetGoal: String,
+        newContactInfo: String,
+        newAvatarUrl: String?,
+        newAvatarColorSeed: Int
+    ) {
         if (newName.isBlank()) {
             _uiState.update { it.copy(error = "姓名不能为空") }
             return
@@ -1173,6 +1192,8 @@ class ContactDetailTabViewModel @Inject constructor(
             try {
                 val currentState = _uiState.value
                 val contact = currentState.contact ?: return@launch
+
+                val normalizedContactInfo = newContactInfo.trim().ifBlank { null }
 
                 // 分别编辑姓名和目标
                 var hasError = false
@@ -1228,15 +1249,63 @@ class ContactDetailTabViewModel @Inject constructor(
                     return@launch
                 }
 
+                // 编辑联系方式
+                if (normalizedContactInfo != contact.contactInfo) {
+                    editContactInfoUseCase.editContactInfo(contact.id, normalizedContactInfo).onSuccess { result ->
+                        when (result) {
+                            is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                                hasError = true
+                                errorMessage = "未找到联系人"
+                            }
+                            else -> { /* Success or NoChanges */ }
+                        }
+                    }.onFailure { error ->
+                        hasError = true
+                        errorMessage = error.message ?: "更新联系方式失败"
+                    }
+                }
+
+                if (hasError) {
+                    _uiState.update { it.copy(error = errorMessage) }
+                    return@launch
+                }
+
+                // 编辑头像
+                if (newAvatarUrl != contact.avatarUrl || newAvatarColorSeed != contact.avatarColorSeed) {
+                    editContactInfoUseCase.editAvatar(contact.id, newAvatarUrl, newAvatarColorSeed).onSuccess { result ->
+                        when (result) {
+                            is com.empathy.ai.domain.model.EditResult.NotFound -> {
+                                hasError = true
+                                errorMessage = "未找到联系人"
+                            }
+                            else -> { /* Success or NoChanges */ }
+                        }
+                    }.onFailure { error ->
+                        hasError = true
+                        errorMessage = error.message ?: "更新头像失败"
+                    }
+                }
+
+                if (hasError) {
+                    _uiState.update { it.copy(error = errorMessage) }
+                    return@launch
+                }
+
                 // 更新本地状态
                 val updatedContact = contact.copy(
                     name = newName,
-                    targetGoal = newTargetGoal
+                    targetGoal = newTargetGoal,
+                    contactInfo = normalizedContactInfo,
+                    avatarUrl = newAvatarUrl,
+                    avatarColorSeed = newAvatarColorSeed
                 )
 
                 _uiState.update {
                     it.copy(
                         contact = updatedContact,
+                        contactInfo = normalizedContactInfo.orEmpty(),
+                        avatarUrl = newAvatarUrl,
+                        avatarColorSeed = newAvatarColorSeed,
                         showEditContactInfoDialog = false,
                         successMessage = "联系人信息已更新"
                     )
@@ -1255,6 +1324,19 @@ class ContactDetailTabViewModel @Inject constructor(
     private fun cancelEditContactInfo() {
         _uiState.update {
             it.copy(showEditContactInfoDialog = false)
+        }
+    }
+
+    private fun updateContactInfo(contactInfo: String) {
+        _uiState.update { it.copy(contactInfo = contactInfo) }
+    }
+
+    private fun updateAvatar(avatarUrl: String?, avatarColorSeed: Int) {
+        _uiState.update {
+            it.copy(
+                avatarUrl = avatarUrl,
+                avatarColorSeed = avatarColorSeed
+            )
         }
     }
 

@@ -769,6 +769,34 @@ object DatabaseModule {
     }
 
     /**
+     * 数据库迁移 v16 → v17
+     *
+     * PRD-00037: 联系方式与头像颜色字段
+     *
+     * 变更内容：
+     * 1. profiles表添加contact_info字段（联系方式）
+     * 2. profiles表添加avatar_color_seed字段（默认头像颜色索引）
+     */
+    @Suppress("ClassName")
+    internal val MIGRATION_16_17 = object : Migration(16, 17) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                ALTER TABLE profiles
+                ADD COLUMN contact_info TEXT
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                ALTER TABLE profiles
+                ADD COLUMN avatar_color_seed INTEGER NOT NULL DEFAULT 0
+                """.trimIndent()
+            )
+            backfillAvatarColorSeed(db)
+        }
+    }
+
+    /**
      * 提供 AppDatabase 实例
      *
      * 数据库配置说明（T057/T058）：
@@ -792,6 +820,7 @@ object DatabaseModule {
      * - v13→v14: 添加AI军师消息块表（FD-00028流式对话升级）
      * - v14→v15: 添加related_user_message_id字段（BUG-00048-V4修复）
      * - v15→v16: 添加is_pinned字段（BUG-00060会话管理增强）
+     * - v16→v17: 添加联系方式与头像颜色字段（PRD-00037）
      */
     @Provides
     @Singleton
@@ -816,7 +845,8 @@ object DatabaseModule {
                 MIGRATION_12_13,
                 MIGRATION_13_14,  // FD-00028: 流式对话升级
                 MIGRATION_14_15,  // BUG-00048-V4: 终止后重新生成消息角色错误修复
-                MIGRATION_15_16   // BUG-00060: 会话管理增强（置顶功能）
+                MIGRATION_15_16,  // BUG-00060: 会话管理增强（置顶功能）
+                MIGRATION_16_17   // PRD-00037: 联系方式与头像颜色字段
             )
             // T058: 已移除fallbackToDestructiveMigration()
             // 确保数据安全，迁移失败时抛出异常而不是删除数据
@@ -828,6 +858,25 @@ object DatabaseModule {
 
     @Provides
     fun provideBrainTagDao(database: AppDatabase): BrainTagDao = database.brainTagDao()
+
+    private fun backfillAvatarColorSeed(db: SupportSQLiteDatabase) {
+        db.compileStatement("UPDATE profiles SET avatar_color_seed = ? WHERE id = ?").use {
+            val cursor = db.query("SELECT id, name FROM profiles WHERE avatar_color_seed = 0")
+            cursor.use { rows ->
+                val idIndex = rows.getColumnIndexOrThrow("id")
+                val nameIndex = rows.getColumnIndexOrThrow("name")
+                while (rows.moveToNext()) {
+                    val id = rows.getString(idIndex)
+                    val name = rows.getString(nameIndex).orEmpty()
+                    val seed = name.hashCode()
+                    it.bindLong(1, seed.toLong())
+                    it.bindString(2, id)
+                    it.executeUpdateDelete()
+                    it.clearBindings()
+                }
+            }
+        }
+    }
 
     @Provides
     fun provideAiProviderDao(database: AppDatabase): AiProviderDao = database.aiProviderDao()

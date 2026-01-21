@@ -7,56 +7,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **共情AI助手 (Empathy AI)** - Android 隐私优先智能社交沟通辅助应用
 - **架构**: Clean Architecture + MVVM + Jetpack Compose
 - **语言**: Kotlin 2.0.21 (K2 Compiler)
-- **版本**: v1.12.9 (versionCode: 11209, Dev)
+- **版本**: v1.14.17 (versionCode: 11417, dev)
 - **模块**: `:domain` | `:data` | `:presentation` | `:app`
 - **平台**: Android (minSdk 24, targetSdk 35)
-- **当前分支**: freedom-feature3
+- **当前分支**: main
 
 ## 常用命令
 
 ```bash
 # 构建 (Windows)
-gradlew.bat assembleDebug      # Debug 构建
-gradlew.bat assembleRelease    # Release 构建
-gradlew.bat installDebug       # 安装到设备
+gradlew.bat assembleDebug
+
+gradlew.bat assembleRelease
+
+gradlew.bat installDebug
 
 # 测试
-gradlew.bat test               # 所有单元测试
-gradlew.bat :domain:test       # domain 模块测试
-gradlew.bat :presentation:test # presentation 模块测试
-gradlew.bat :data:test         # data 模块测试
-<<<<<<< HEAD
-gradlew.bat :presentation:testDebugUnitTest --tests "*.AiAdvisorChatViewModelTest"  # 运行单个测试类
-gradlew.bat :presentation:testDebugUnitTest --tests "*ContactRecentContactsFeatureTest"  # 运行单个测试
-gradlew.bat connectedAndroidTest # 仪器测试
+gradlew.bat test
 
-# 代码质量
-gradlew.bat lint               # Lint 检查
-gradlew.bat ktlintCheck        # 代码风格检查
-gradlew.bat ktlintFormat       # 自动修复代码风格
+gradlew.bat :domain:test
+
+gradlew.bat :data:test
+
+gradlew.bat :presentation:test
+
+gradlew.bat :presentation:testDebugUnitTest --tests "*BUG00058*"
+
+gradlew.bat connectedAndroidTest
 
 # 清理
 gradlew.bat clean
-
-# AI 调试
-scripts\ai-debug.bat           # AI请求日志（简略）
-scripts\ai-debug.bat -h        # 获取最近100条AI日志
-scripts\ai-debug.bat -h -n 200 # 获取最近200条AI日志
-scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 ```
-
-**设备调试**:
-- MuMu 模拟器: `adb -s 192.0.2.1:7555`
-- OPPO 真机: `adb -s 3HMUN24A25G09044`
-- 清华同方测试机: `adb -s emulator-5556`
 
 ## 架构
 
 ```
 :domain/        -> 纯 Kotlin 业务逻辑、UseCase、Repository 接口 (无 Android 依赖)
-:data/          -> Room DB、Retrofit、Repository 实现、DI模块 (8个模块)
+:data/          -> Room DB、Retrofit、Repository 实现、DI
 :presentation/  -> Compose UI、ViewModel、Navigation、Theme (依赖 :domain)
-:app/           -> Application 入口、Service、通知、应用级DI (16个模块)
+:app/           -> Application 入口、Service、通知、应用级 DI
 ```
 
 **依赖规则**: `app` -> `data`/`presentation` -> `domain`。`domain` 层**严禁**依赖 Android SDK。
@@ -65,11 +54,12 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 
 ## 关键规则
 
-1. **状态管理**: 使用 `StateFlow` + `data class UiState`，Compose 中避免直接使用 `mutableStateOf`
+1. **状态管理**: 使用 `StateFlow` + `data class UiState`
 2. **错误处理**: 统一使用 `Result<T>`
-3. **协程**: ViewModel 用 `viewModelScope`，Compose 用 `rememberCoroutineScope`，**严禁**使用 `GlobalScope`
-4. **数据库**: Room Schema 变更必须伴随 Migration 脚本 (`MIGRATION_x_y`) 和测试，迁移测试位于 `app/src/androidTest-disabled/java/...DatabaseMigrationTest.kt`
-5. **UI 组件**: 优先复用 `presentation/ui/component/` 下的现有组件，使用 `Ios*` 组件保持 iOS 风格一致性
+3. **协程**: ViewModel 用 `viewModelScope`，Compose 用 `rememberCoroutineScope`，**严禁** `GlobalScope`
+4. **数据库**: Room Schema 变更必须伴随 Migration 脚本 (`MIGRATION_x_y`) 和测试
+   - 迁移测试集中在 `app/src/androidTest-disabled`
+5. **UI 组件**: 优先复用 `presentation/ui/component/` 下的组件，保持 iOS 风格一致性
 6. **文档语言**: 所有文档和回答必须使用中文（代码注释保持英文）
 
 ## 导航
@@ -77,14 +67,13 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 - 单一 Activity (`MainActivity`) + Compose Navigation
 - 路由定义: `presentation/navigation/NavRoutes.kt`
 - 路由图: `presentation/navigation/NavGraph.kt`
-- 使用 `BottomNavScaffold` 管理 Tab 页和页面缓存
-- **重要**: 注意 `popUpTo` 策略避免栈堆积，AI军师模块需使用锚点回退机制
+- 底部 Tab: CONTACT_LIST / AI_ADVISOR / SETTINGS
 
 ## 技术栈
 
 | 类别 | 技术 | 版本 |
 |------|------|------|
-| 构建 | Gradle | 8.7 |
+| 构建 | Gradle | 8.13 |
 | 编译 | AGP | 8.7.3 |
 | 语言 | Kotlin | 2.0.21 |
 | DI | Hilt | 2.52 |
@@ -94,20 +83,28 @@ scripts\ai-debug-full.bat      # 完整日志（含Prompt）
 | JSON | Moshi | 1.15.1 |
 | 异步 | Coroutines | 1.9.0 |
 
-**AI 服务商支持**: OpenAI、Azure OpenAI、阿里云、百度、智谱、腾讯混元、讯飞星火（7家）
+## AI 服务商预设
+
+- OpenAI GPT-4 / GPT-3.5
+- Google Gemini Pro
+- DeepSeek
+- 自定义 OpenAI 兼容服务商
 
 ## 数据库
 
-- **版本**: Room v16（16个增量迁移脚本 v1→v16）
+- **版本**: Room v17（迁移 1→17）
 - **位置**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
 - **迁移**: `data/src/main/kotlin/com/empathy/ai/data/di/DatabaseModule.kt`
 - **核心表**:
   - `profiles` - 联系人画像
   - `brain_tags` - 大脑标签
-  - `ai_providers` - AI服务商配置
+  - `ai_providers` - AI 服务商配置
   - `conversation_logs` - 对话记录
+  - `conversation_topics` - 对话主题
   - `daily_summaries` - 每日总结
-  - `ai_advisor_sessions/conversations/message_blocks` - AI军师会话
+  - `failed_summary_tasks` - 失败任务
+  - `api_usage_records` - 用量记录
+  - `ai_advisor_sessions/conversations/message_blocks` - AI 军师会话
 
 ## 组件系统
 
@@ -151,11 +148,9 @@ git worktree prune
 `gradle.properties` 已配置:
 - 并行构建: `org.gradle.parallel=true`
 - 构建缓存: `org.gradle.caching=true`
-- JVM 内存: `-Xmx4g`
-- 最大工作线程: 8
+- JVM 内存: `-Xmx4g -Xms1g`
+- 最大工作线程: `org.gradle.workers.max=8`
 - Kotlin 增量编译: 已启用
-
-**注意**: 配置针对 24GB RAM + i7-13650HX (14核20线程) 优化
 
 ## 重要文件位置
 
@@ -163,10 +158,11 @@ git worktree prune
 - **版本管理**: `config/version-history.json`, `buildSrc/src/main/kotlin/com/empathy/ai/build/VersionUpdatePlugin.kt`
 - **依赖声明**: `gradle/libs.versions.toml`
 - **导航系统**: `presentation/navigation/NavGraph.kt`, `presentation/navigation/NavRoutes.kt`
-- **DI配置**: `data/src/main/kotlin/com/empathy/ai/data/di/` (8个模块) + `app/src/main/java/com/empathy/ai/di/` (16个模块)
+- **DI 配置**: `data/src/main/kotlin/com/empathy/ai/data/di/` + `app/src/main/java/com/empathy/ai/di/`
 - **数据库**: `data/src/main/kotlin/com/empathy/ai/data/local/AppDatabase.kt`
-- **AI军师模块**: `presentation/ui/screen/advisor/`, `domain/model/AiAdvisor*.kt`
+- **AI 军师模块**: `presentation/ui/screen/advisor/`, `domain/model/AiAdvisor*.kt`
+- **提示词场景**: `domain/model/PromptScene.kt`
+- **服务商预设**: `domain/model/ProviderPresets.kt`
 - **悬浮窗服务**: `app/src/main/java/com/empathy/ai/service/FloatingWindowService.kt`
-- **AI调试**: `scripts/ai-debug.bat`, `scripts/ai-debug-full.bat`
-- **工作空间**: `WORKSPACE.md` (任务协调)
-- **决策日志**: `DECISION_JOURNAL.md` (功能开发记录)
+- **工作空间**: `WORKSPACE.md`
+- **决策日志**: `DECISION_JOURNAL.md`

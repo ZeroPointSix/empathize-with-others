@@ -71,6 +71,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
  *   - v12→v13: 添加AI军师对话功能表（TD-00026）
  *   - v13→v14: 添加AI军师消息块表（FD-00028流式对话升级）
  *   - v14→v15: 添加related_user_message_id字段（BUG-00048-V4修复）
+ *   - v16→v17: 添加联系方式与头像颜色字段（PRD-00037）
  *
  * @property entities 数据库包含的实体类列表
  * @property version 数据库版本号
@@ -91,7 +92,7 @@ import com.empathy.ai.data.local.entity.FailedSummaryTaskEntity
         AiAdvisorConversationEntity::class,
         AiAdvisorMessageBlockEntity::class  // FD-00028: 流式对话消息块
     ],
-    version = 16,  // BUG-00060: 版本升级（添加is_pinned字段）
+    version = 17,  // PRD-00037: 版本升级（添加联系方式与头像颜色字段）
     exportSchema = true // TD-001: 启用Schema导出，用于版本管理和迁移测试
 )
 @TypeConverters(RoomTypeConverters::class, FactListConverter::class)

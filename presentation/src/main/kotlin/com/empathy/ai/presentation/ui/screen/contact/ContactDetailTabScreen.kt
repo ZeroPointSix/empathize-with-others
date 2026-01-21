@@ -412,9 +412,20 @@ private fun OverviewTabContent(
         com.empathy.ai.presentation.ui.component.dialog.EditContactInfoDialog(
             initialName = contact.name,
             initialTargetGoal = contact.targetGoal,
+            initialContactInfo = contact.contactInfo.orEmpty(),
+            initialAvatarUrl = contact.avatarUrl,
+            initialAvatarColorSeed = contact.avatarColorSeed,
             onDismiss = { onEvent(ContactDetailUiEvent.CancelEditContactInfo) },
-            onConfirm = { newName, newTargetGoal ->
-                onEvent(ContactDetailUiEvent.ConfirmEditContactInfo(newName, newTargetGoal))
+            onConfirm = { newName, newTargetGoal, newContactInfo, newAvatarUrl, newAvatarColorSeed ->
+                onEvent(
+                    ContactDetailUiEvent.ConfirmEditContactInfo(
+                        newName,
+                        newTargetGoal,
+                        newContactInfo,
+                        newAvatarUrl,
+                        newAvatarColorSeed
+                    )
+                )
             }
         )
     }

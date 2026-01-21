@@ -54,6 +54,9 @@ material = "1.12.0"
 # Coil (Image Loading)
 coil = "2.5.0"
 
+# UCrop (Avatar Crop)
+ucrop = "2.2.8"
+
 # Markdown Rendering (FD-00030: AI军师Markdown渲染)
 # 使用compose-richtext库，在Maven Central上可用
 composeRichtext = "1.0.0-alpha01"
@@ -132,6 +135,9 @@ material = { group = "com.google.android.material", name = "material", version.r
 
 # Coil (Image Loading)
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# UCrop (Avatar Crop)
+ucrop = { group = "com.github.yalantis", name = "ucrop", version.ref = "ucrop" }
 
 # Markdown Rendering (FD-00030: AI军师Markdown渲染)
 # 使用compose-richtext库，在Maven Central上可用

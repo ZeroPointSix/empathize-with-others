@@ -157,6 +157,32 @@ interface ContactRepository {
     // ============================================================================
 
     /**
+     * 更新联系方式
+     *
+     * @param contactId 联系人ID
+     * @param contactInfo 联系方式（允许为空）
+     * @return 受影响的行数
+     */
+    suspend fun updateContactInfo(
+        contactId: String,
+        contactInfo: String?
+    ): Int
+
+    /**
+     * 更新头像
+     *
+     * @param contactId 联系人ID
+     * @param avatarUrl 头像URI
+     * @param avatarColorSeed 默认头像颜色索引
+     * @return 受影响的行数
+     */
+    suspend fun updateAvatar(
+        contactId: String,
+        avatarUrl: String?,
+        avatarColorSeed: Int
+    ): Int
+
+    /**
      * 更新联系人姓名（编辑追踪）
      *
      * 业务规则:

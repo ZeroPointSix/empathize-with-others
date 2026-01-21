@@ -23,13 +23,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.empathy.ai.domain.model.ContactProfile
 import com.empathy.ai.presentation.theme.AvatarColors
 import com.empathy.ai.presentation.theme.EmpathyTheme
@@ -63,7 +66,8 @@ fun ContactListItem(
     relativeTime: String? = null,
     highlightQuery: String = ""
 ) {
-    val (backgroundColor, textColor) = AvatarColors.getColorPair(contact.name)
+    val (backgroundColor, textColor) = AvatarColors.getColorPairBySeed(contact.avatarColorSeed)
+    val avatarShape = RoundedCornerShape(4.dp)
     val dividerColor = iOSSeparator
     val highlightStyle = createSearchHighlightStyle(
         isDarkTheme = isSystemInDarkTheme(),
@@ -95,16 +99,27 @@ fun ContactListItem(
                 .size(48.dp)
                 .background(
                     color = backgroundColor,
-                    shape = RoundedCornerShape(4.dp)
+                    shape = avatarShape
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = contact.name.firstOrNull()?.toString()?.uppercase() ?: "?",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = textColor
-            )
+            if (!contact.avatarUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = contact.avatarUrl,
+                    contentDescription = "头像",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(avatarShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(
+                    text = contact.name.firstOrNull()?.toString()?.uppercase() ?: "?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = textColor
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(12.dp))
