@@ -19,6 +19,12 @@
 ```
 AI 请求日志可用 `scripts\ai-debug.bat` 与 `scripts\ai-debug-full.bat`。macOS/Linux 将 `.\gradlew` 替换为 `./gradlew`。
 
+## 发布流程与 Release 日志
+每次发布必须满足以下要求：
+- **Release 日志**：发布前必须输出详细发布说明（新增功能、修复、重要变更/迁移、测试结果），并同步到 GitHub Release 页面。
+- **构建成功**：必须完成 `assembleRelease` 且构建成功。
+- **安装验证**：必须安装到设备并启动验证（设备不可用时需先告知并征询用户处理方式）。
+
 ## 编码风格与命名规范
 遵循 Kotlin 官方规范，默认 4 空格缩进。类用 `PascalCase`，函数/变量用 `camelCase`，测试类以 `*Test` 结尾。状态管理使用 `StateFlow + UiState`，错误处理使用 `Result<T>`，ViewModel 使用 `viewModelScope`，禁止 `GlobalScope`。优先复用 `presentation/ui/component/` 组件，`Ios*` 组件用于统一 iOS 风格。文档与沟通使用中文，代码注释使用英文。
 

@@ -61,6 +61,14 @@ gradlew.bat clean
    - 迁移测试集中在 `app/src/androidTest-disabled`
 5. **UI 组件**: 优先复用 `presentation/ui/component/` 下的组件，保持 iOS 风格一致性
 6. **文档语言**: 所有文档和回答必须使用中文（代码注释保持英文）
+7. **发布流程**: 每次发布必须提供详细 Release 日志（功能/修复/变更/测试），完成 `assembleRelease` 构建并安装启动验证；设备不可用时需先说明并征询用户处理方式
+
+## Git 工作流（发布）
+
+发布必须遵循以下流程并记录到版本历史：
+- **Release 日志**：GitHub Release 页面必须包含详细发布介绍（新功能/修复/变更/测试）。如提交前缀未体现新功能，必须手动补齐说明。
+- **版本历史同步**：`config/version-history.json` 的 changelog 必须与 Release 说明一致，明确本次新增功能与变更。
+- **构建与安装**：必须 `assembleRelease` 成功并完成安装启动验证；设备不可用时先说明并征询处理方式。
 
 ## 导航
 

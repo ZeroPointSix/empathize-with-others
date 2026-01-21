@@ -27,7 +27,7 @@
                 "PRD-00037 联系人头像持久化与资料修复",
                 "修复Release说明生成"
             ],
-            "changelog": "### 🐛 Bug修复\n- **contact**: PRD-00037 联系人头像持久化与资料修复\n- **ci**: 修复Release说明生成"
+            "changelog": "### ✨ 新功能\n- 联系人头像支持选择/裁剪/展示并持久化（头像 URI + 颜色种子）\n- 联系人资料新增联系方式字段（创建/编辑同步）\n- 联系人列表与详情卡片展示头像，默认头像色回退\n\n### 🐛 Bug修复\n- **ci**: 修复Release说明生成\n\n### 🔧 其他变更\n- Room 升级至 v17，profiles 增加 avatar_url/contact_info/avatar_color_seed\n- 新增 16→17 迁移与 schema 资产\n\n### 🧪 测试\n- 新增 ContactRepositoryImplTest\n- 新增 EditContactInfoUseCaseTest\n- 新增 Migration16To17Test"
         },
         {
             "version": "1.14.17",
