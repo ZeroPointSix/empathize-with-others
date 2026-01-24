@@ -3,9 +3,21 @@
         "version": "1.14.19",
         "versionCode": 11419,
         "stage": "dev",
-        "updatedAt": "2026-01-21T08:34:55.472551908Z"
+        "updatedAt": "2026-01-24T08:01:34.946136680Z"
     },
     "history": [
+        {
+            "version": "1.14.19",
+            "versionCode": 11419,
+            "stage": "dev",
+            "date": "2026-01-24T08:01:34.946136680Z",
+            "commits": [
+                "添加 GitHub 仓库配置（Issue模板、PR模板、Labels、Dependabot）",
+                "更新版本号到 1.14.19",
+                "完善发布流程并补齐版本日志"
+            ],
+            "changelog": "### 📝 文档更新\n- 添加 GitHub 仓库配置（Issue模板、PR模板、Labels、Dependabot）\n- 完善发布流程并补齐版本日志\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.14.19"
+        },
         {
             "version": "1.14.19",
             "versionCode": 11419,
@@ -727,33 +739,6 @@
                 "write keystore under app for release"
             ],
             "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.15 [skip ci]\n- 🔧 更新版本号到 1.2.14 [skip ci]\n- 🔧 更新版本号到 1.2.13 [skip ci]\n- 🔧 更新版本号到 1.2.12 [skip ci]\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
-        },
-        {
-            "version": "1.2.15",
-            "versionCode": 10215,
-            "stage": "dev",
-            "date": "2026-01-12T03:55:07.242688354Z",
-            "commits": [
-                "更新版本号到 1.2.14 [skip ci]",
-                "更新版本号到 1.2.13 [skip ci]",
-                "更新版本号到 1.2.12 [skip ci]",
-                "更新版本号到 1.2.11 [skip ci]",
-                "更新版本号到 1.2.10 [skip ci]",
-                "触发 GitHub Actions 验证签名配置修复",
-                "更新版本号到 1.2.9 [skip ci]",
-                "更新版本号到 1.2.8 [skip ci]",
-                "更新版本号到 1.2.7 [skip ci]",
-                "更新版本号到 1.2.6 [skip ci]",
-                "更新版本号到 1.2.5 [skip ci]",
-                "resolve signing keystore path from root",
-                "更新版本号到 1.2.4 [skip ci]",
-                "trigger workflow",
-                "更新版本号到 1.2.4 [skip ci]",
-                "fix release keystore path",
-                "更新版本号到 1.2.4 [skip ci]",
-                "write keystore under app for release"
-            ],
-            "changelog": "### 🐛 Bug修复\n- resolve signing keystore path from root\n\n### 🔧 其他变更\n- 🔧 更新版本号到 1.2.14 [skip ci]\n- 🔧 更新版本号到 1.2.13 [skip ci]\n- 🔧 更新版本号到 1.2.12 [skip ci]\n- 🔧 更新版本号到 1.2.11 [skip ci]\n- 🔧 更新版本号到 1.2.10 [skip ci]\n- 🔧 触发 GitHub Actions 验证签名配置修复\n- 🔧 更新版本号到 1.2.9 [skip ci]\n- 🔧 更新版本号到 1.2.8 [skip ci]\n- 🔧 更新版本号到 1.2.7 [skip ci]\n- 🔧 更新版本号到 1.2.6 [skip ci]\n- 🔧 更新版本号到 1.2.5 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 trigger workflow\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 🔧 更新版本号到 1.2.4 [skip ci]\n- 👷 fix release keystore path\n- 👷 write keystore under app for release"
         }
     ]
 }
