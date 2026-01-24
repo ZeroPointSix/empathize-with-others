@@ -1,0 +1,44 @@
+# Dependabot 依赖更新配置
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Gradle 依赖更新
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "build"
+      prefix-development: "chore"
+      include: "all"
+    labels:
+      - "dependencies"
+      - "gradle"
+    ignore:
+      - dependency-type: "direct"
+        versions: ["[0-9]", "[0-9].[0-9]"]
+    # 自动合并次要版本和补丁版本更新
+    allow:
+      - dependency-type: "development"
+      - dependency-type: "production"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
+
+  # GitHub Actions 更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 20
+    commit-message:
+      prefix: "ci"
+      prefix-development: "ci"
+      include: "all"
+    labels:
+      - "dependencies"
+      - "github-actions"

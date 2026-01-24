@@ -1,0 +1,93 @@
+# GitHub Issue 和 PR 标签配置
+
+- name: "breaking-change"
+  color: ee0701
+  description: "针对现有用户的重大变更"
+
+- name: "bug"
+  color: ee0701
+  description: "导致用户或实现者遇到问题的不一致或问题"
+
+- name: "documentation"
+  color: 0052cc
+  description: "仅关于项目的文档"
+
+- name: "enhancement"
+  color: 1d76db
+  description: "代码增强，引入新功能"
+
+- name: "refactor"
+  color: 1d76db
+  description: "改进现有代码，不引入新功能"
+
+- name: "performance"
+  color: 1d76db
+  description: "提升性能，不引入新功能"
+
+- name: "new-feature"
+  color: 0e8a16
+  description: "新功能或选项"
+
+- name: "maintenance"
+  color: 2af79e
+  description: "通用维护任务"
+
+- name: "ci"
+  color: 1d76db
+  description: "改善持续集成的工作"
+
+- name: "dependencies"
+  color: 1d76db
+  description: "升级或降级项目依赖"
+
+- name: "in-progress"
+  color: fbca04
+  description: "开发者正在解决此问题"
+
+- name: "stale"
+  color: fef2c0
+  description: "此 Issue 或 PR 已长时间无活动"
+
+- name: "no-stale"
+  color: fef2c0
+  description: "此 Issue 或 PR 免于稳定机器人的处理"
+
+- name: "security"
+  color: ee0701
+  description: "标记需要尽快解决的安全问题"
+
+- name: "invalid"
+  color: fef2c0
+  description: "标记无效的 PR 或 Issue"
+
+- name: "beginner-friendly"
+  color: 0e8a16
+  description: "适合新手贡献的第一个 Issue"
+
+- name: "help-wanted"
+  color: 0e8a16
+  description: "我们需要额外的帮助来完成此任务"
+
+- name: "priority-critical"
+  color: ee0701
+  description: "应立即处理，忽略此 Issue 将是严重错误"
+
+- name: "priority-high"
+  color: b60205
+  description: "在关键问题修复后应优先处理"
+
+- name: "priority-medium"
+  color: 0e8a16
+  description: "此 Issue 可能有价值，需要关注"
+
+- name: "priority-low"
+  color: e4ea8a
+  description: "锦上添花，也许有一天会实现"
+
+- name: "major"
+  color: b60205
+  description: "此 PR 导致版本号重大更新"
+
+- name: "minor"
+  color: 0e8a16
+  description: "此 PR 导致版本号次要更新"
